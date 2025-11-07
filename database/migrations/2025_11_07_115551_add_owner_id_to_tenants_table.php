@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('roles', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        Schema::table('tenants', function (Blueprint $table) {
+            $table->foreignId('owner_id')->after('id')->nullable()->constrained('users')->cascadeOnDelete();
         });
     }
 
@@ -22,6 +21,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('roles');
+        Schema::table('tenants', function (Blueprint $table) {
+            $table->dropForeign(['owner_id']);
+            $table->dropColumn('owner_id');
+        });
     }
 };
