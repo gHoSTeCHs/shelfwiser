@@ -1,11 +1,11 @@
 <?php
 
+use App\Models\Tenant;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,13 +13,31 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('first_name');
-            $table->string('last_name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->foreignIdFor(Tenant::class);
+
+            $table->string('name');
+            $table->string('email');
+            $table->string('phone')->nullable();
             $table->string('password');
+
+            $table->boolean('is_tenant_owner')->default(false);
+
+            $table->string('avatar_path')->nullable();
+            $table->date('date_of_birth')->nullable();
+            $table->date('hire_date')->nullable();
+
+            $table->boolean('is_active')->default(true);
+            $table->string('role')->default('owner');
+
             $table->rememberToken();
+            $table->timestamp('email_verified_at')->nullable();
+
             $table->timestamps();
+            $table->softDeletes();
+
+            $table->unique(['email']);
+            $table->index(['tenant_id', 'is_active']);
+            $table->index(['tenant_id', 'is_tenant_owner']);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
