@@ -1,5 +1,6 @@
 import { InertiaLinkProps } from '@inertiajs/react';
 import { LucideIcon } from 'lucide-react';
+import { UserRoleValue } from '@/types/user-role.ts';
 
 export interface Auth {
     user: User;
@@ -35,9 +36,12 @@ export interface User {
     id: number;
     first_name: string;
     last_name: string;
-    name: string; // Computed accessor that combines first_name + last_name
+    name: string;
     email: string;
     avatar?: string;
+    role: UserRoleValue;
+    is_tenant_owner: boolean;
+    is_active: boolean;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
     created_at: string;

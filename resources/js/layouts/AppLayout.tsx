@@ -1,3 +1,6 @@
+import { UserRoleProvider } from '@/context/UserRoleContext.tsx';
+import { SharedData } from '@/types';
+import { usePage } from '@inertiajs/react';
 import React from 'react';
 import { SidebarProvider, useSidebar } from '../context/SidebarContext';
 import AppHeader from './AppHeader';
@@ -10,6 +13,7 @@ interface LayoutContentProps {
 
 const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
     const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+    const { auth } = usePage<SharedData>().props;
 
     return (
         <div className="min-h-screen xl:flex">
@@ -24,7 +28,9 @@ const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
             >
                 <AppHeader />
                 <div className="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6 dark:bg-gray-900 dark:text-white">
-                    {children}
+                    <UserRoleProvider userRole={auth.user.role}>
+                        {children}
+                    </UserRoleProvider>
                 </div>
             </div>
         </div>

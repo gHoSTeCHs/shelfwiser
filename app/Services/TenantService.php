@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Services;
+namespace App\Services;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
@@ -37,8 +37,6 @@ class TenantService extends Controller
 
                 'is_active' => true,
             ]);
-
-
 
             return [
                 'tenant' => $tenant,

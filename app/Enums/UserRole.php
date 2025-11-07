@@ -25,6 +25,22 @@ enum UserRole: string
         };
     }
 
+    /**
+     * Get a brief description of the role's responsibilities.
+     */
+    public function description(): string
+    {
+        return match ($this) {
+            self::OWNER => 'Full system access. Manages tenant settings, all stores, users, billing, and has complete visibility across the entire organization.',
+            self::GENERAL_MANAGER => 'Manages multiple stores, oversees store managers, handles cross-store reporting, inventory, and user management within the tenant.',
+            self::STORE_MANAGER => 'Manages a single store location, including staff, inventory, products, orders, and customer relationships for that store.',
+            self::ASSISTANT_MANAGER => 'Supports store manager with daily operations. Can manage inventory, process orders, and handle customer management tasks.',
+            self::SALES_REP => 'Focuses on sales activities, customer acquisition, and order processing. Can view products and inventory to support sales efforts.',
+            self::CASHIER => 'Processes customer sales transactions, handles basic customer inquiries, and has access to product information at checkout.',
+            self::INVENTORY_CLERK => 'Manages stock levels, receives shipments, performs stock transfers, and maintains accurate inventory records for the store.',
+        };
+    }
+
     public function level(): int
     {
         return match ($this) {
