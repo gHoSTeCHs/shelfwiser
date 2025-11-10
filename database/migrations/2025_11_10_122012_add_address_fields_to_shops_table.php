@@ -21,13 +21,19 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('shops', function (Blueprint $table) {
-            $table->dropColumn(['address', 'city', 'state', 'country', 'phone', 'email']);
+            $table->dropColumn([
+                'address_line1',
+                'address_line2',
+                'city',
+                'state',
+                'postal_code',
+                'country',
+                'phone',
+                'email',
+            ]);
         });
     }
 };
