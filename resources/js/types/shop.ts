@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Product } from '@/types/product.ts';
 
 export interface ShopType {
     slug: string;

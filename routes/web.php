@@ -18,8 +18,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [StaffManagementController::class, 'index'])->name('index');
     });
 
-    Route::resource('shops', ShopController::class)
-        ->only(['index', 'create', 'store', 'show', 'update', 'destroy']);
+    Route::resource('shops', ShopController::class);
 
 });
 

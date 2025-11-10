@@ -69,7 +69,6 @@ class ShopController extends Controller
             $request->user()
         );
 
-        // Redirect to shop detail page with success message
         return Redirect::route('shops.show', $shop)
             ->with('success', "Shop '$shop->name' created successfully.");
     }
