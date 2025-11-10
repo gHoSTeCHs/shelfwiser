@@ -9,50 +9,63 @@ use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 class ShopCreationService
 {
     public function create(array $data, Tenant $tenant, User $creator): Shop
     {
-        return DB::transaction(function () use ($data, $tenant, $creator) {
-            $shopType = $this->resolveShopType($data['shop_type_slug'], $tenant);
+        Log::info('Shop creation process started.', [
+            'tenant_id' => $tenant->id,
+            'creator_id' => $creator->id,
+            'data' => $data,
+        ]);
 
-            $this->enforceTenantLimits($tenant);
+        try {
+            return DB::transaction(function () use ($data, $tenant, $creator) {
+                $shopType = $this->resolveShopType($data['shop_type_slug'], $tenant);
 
-            $handler = ShopConfigHandlerFactory::make($shopType);
-            $config = array_merge($handler->getDefaults(), $data['config']);
+                $this->enforceTenantLimits($tenant);
 
-            $slug = $this->generateUniqueSlug($data['name'], $tenant);
+                $handler = ShopConfigHandlerFactory::make($shopType);
+                $config = array_merge($handler->getDefaults(), $data['config']);
 
-            $shop = Shop::query()->create([
-                'tenant_id' => $tenant->id,
-                'shop_type_id' => $shopType->id,
-                'slug' => $slug,
-                'name' => $data['name'],
-                'address_line1' => $data['address_line1'] ?? null,
-                'address_line2' => $data['address_line2'] ?? null,
-                'city' => $data['city'] ?? null,
-                'state' => $data['state'] ?? null,
-                'postal_code' => $data['postal_code'] ?? null,
-                'country' => $data['country'] ?? 'Nigeria',
-                'phone' => $data['phone'] ?? null,
-                'email' => $data['email'] ?? null,
-                'config' => $config,
-                'is_active' => $data['is_active'] ?? true,
-            ]);
+                $slug = $this->generateUniqueSlug($data['name'], $tenant);
 
-            if ($creator->can('manage', $shop)) {
-                $shop->users()->attach($creator->id);
-            }
+                $shopData = array_merge($data, [
+                    'tenant_id' => $tenant->id,
+                    'shop_type_id' => $shopType->id,
+                    'slug' => $slug,
+                    'config' => $config,
+                    'is_active' => $data['is_active'] ?? true,
+                ]);
+
+                $shop = Shop::query()->create($shopData);
+
+                if ($creator->can('manage', $shop)) {
+                    $shop->users()->attach($creator->id, ['tenant_id' => $tenant->id]);
+                }
 
 //            event(new \App\Events\ShopCreated($shop, $creator));
 
-            // 8. Clear relevant caches
-            Cache::tags(["tenant:$tenant->id:shops"])->flush();
+                Cache::tags(["tenant:$tenant->id:shops"])->flush();
 
-            return $shop->load('type', 'users');
-        });
+                Log::info('Shop created successfully.', ['shop_id' => $shop->id]);
+
+                return $shop->load('type', 'users');
+            });
+        } catch (Throwable $e) {
+            Log::error('Shop creation failed.', [
+                'tenant_id' => $tenant->id,
+                'creator_id' => $creator->id,
+                'data' => $data,
+                'exception' => $e,
+            ]);
+
+            throw $e;
+        }
     }
 
     private function resolveShopType(string $slug, Tenant $tenant): ShopType

@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Head, Link, Form } from '@inertiajs/react';
-import AppLayout from '@/layouts/AppLayout';
-import ShopController from '@/actions/App/Http/Controllers/ShopController';
-import { ShopType } from '@/types/shop';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import ShopController from '@/actions/App/Http/Controllers/ShopController.ts';
 import Input from '@/components/form/input/InputField';
+import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
 import InputError from '@/components/form/InputError';
@@ -12,6 +11,26 @@ import Button from '@/components/ui/button/Button';
 import DynamicSchemaField from '@/components/shops/DynamicSchemaField';
 import { ArrowLeft, Building2, Save, MapPin, Phone as PhoneIcon, Mail } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
+import { ShopType } from '@/types/shop';
+import { Form, Head, Link } from '@inertiajs/react';
+import { ArrowLeft, Building2, Save } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+interface SchemaProperty {
+    type: 'string' | 'integer' | 'number' | 'boolean' | 'array' | 'object';
+    title?: string;
+    default?: any;
+    enum?: any[];
+    minimum?: number;
+    maximum?: number;
+    minLength?: number;
+    maxLength?: number;
+    items?: {
+        type?: string;
+        enum?: any[];
+    };
+}
 
 interface Props {
     shopTypes: ShopType[];
@@ -67,7 +86,7 @@ export default function Create({ shopTypes }: Props) {
                 <div className="flex items-center justify-between">
                     <div>
                         <Link
-                            href="/shops"
+                            href={'/shops'}
                             className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -89,7 +108,7 @@ export default function Create({ shopTypes }: Props) {
                 >
                     {({ errors, processing }) => (
                         <>
-                            <Card className="p-6">
+                            <Card>
                                 <div className="mb-6 flex items-center gap-3 border-b border-gray-200 pb-4 dark:border-gray-700">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/20">
                                         <Building2 className="h-5 w-5 text-brand-600 dark:text-brand-400" />
@@ -357,7 +376,7 @@ export default function Create({ shopTypes }: Props) {
                             </Card>
 
                             {selectedType?.config_schema?.properties && (
-                                <Card className="p-6">
+                                <Card>
                                     <div className="mb-6 border-b border-gray-200 pb-4 dark:border-gray-700">
                                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                                             {selectedType.label} Configuration
@@ -397,9 +416,11 @@ export default function Create({ shopTypes }: Props) {
                                                 >
                                                     <DynamicSchemaField
                                                         fieldName={fieldName}
-                                                        schema={schema}
+                                                        schema={schema as SchemaProperty}
                                                         value={
-                                                            shopConfig[fieldName]
+                                                            shopConfig[
+                                                                fieldName
+                                                            ]
                                                         }
                                                         onChange={(value) =>
                                                             handleConfigChange(
@@ -466,7 +487,7 @@ export default function Create({ shopTypes }: Props) {
                             )}
 
                             {!selectedType && (
-                                <Card className="p-12">
+                                <Card className="p-6">
                                     <div className="text-center">
                                         <Building2 className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
                                         <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
@@ -481,8 +502,11 @@ export default function Create({ shopTypes }: Props) {
                             )}
 
                             <div className="flex items-center justify-between border-t border-gray-200 pt-6 dark:border-gray-700">
-                                <Link href="/shops">
-                                    <Button variant="outline" disabled={processing}>
+                                <Link href={'/shops'}>
+                                    <Button
+                                        variant="outline"
+                                        disabled={processing}
+                                    >
                                         Cancel
                                     </Button>
                                 </Link>
@@ -514,3 +538,5 @@ export default function Create({ shopTypes }: Props) {
         </AppLayout>
     );
 }
+
+

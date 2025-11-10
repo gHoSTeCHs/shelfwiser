@@ -6,6 +6,7 @@ import { SidebarProvider, useSidebar } from '../context/SidebarContext';
 import AppHeader from './AppHeader';
 import AppSidebar from './AppSidebar';
 import Backdrop from './Backdrop';
+import FlashMessage from '@/components/FlashMessage.tsx';
 
 interface LayoutContentProps {
     children: React.ReactNode;
@@ -27,6 +28,7 @@ const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
                 } ${isMobileOpen ? 'ml-0' : ''}`}
             >
                 <AppHeader />
+                <FlashMessage />
                 <div className="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6 ">
                     <UserRoleProvider userRole={auth.user.role}>
                         {children}

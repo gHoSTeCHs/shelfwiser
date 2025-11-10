@@ -13,11 +13,11 @@ class ShopTypeSeeder extends Seeder
     public function run(): void
     {
         $types = [
-            // PHASE 1: ESSENTIAL SHOP TYPES (Launch Priority)
             [
                 'slug' => 'general_retail',
                 'label' => 'General Retail',
                 'description' => 'General merchandise retail for electronics, hardware, bookstores, cosmetics, stationery, toys, and other non-perishable goods',
+
                 'config_schema' => $this->generalRetailSchema(),
             ],
             [
@@ -57,7 +57,6 @@ class ShopTypeSeeder extends Seeder
                 'config_schema' => $this->agricultureProduceSchema(),
             ],
 
-            // PHASE 2: GROWTH SHOP TYPES (Post-Launch)
             [
                 'slug' => 'building_construction',
                 'label' => 'Building & Construction',

@@ -1,4 +1,4 @@
-import RegisteredUserController from '@/actions/App/Http/Controllers/Auth/RegisteredUserController';
+import RegisteredUserController from '@/actions/App/Http/Controllers/Auth/RegisteredUserController.ts';
 import { Form, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from '../../icons';
@@ -35,7 +35,7 @@ export default function SignUpForm() {
                     </div>
                     <div>
                         <Form
-                            {...RegisteredUserController.store.form()}
+                                {...RegisteredUserController.store.post()}
                             resetOnSuccess={[
                                 'password',
                                 'password_confirmation',

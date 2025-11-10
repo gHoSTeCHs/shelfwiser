@@ -13,20 +13,8 @@ class Shop extends Model
     use HasFactory;
 
     protected $fillable = [
-        'tenant_id',
-        'shop_type_id',
-        'slug',
-        'name',
-        'address_line1',
-        'address_line2',
-        'city',
-        'state',
-        'postal_code',
-        'country',
-        'phone',
-        'email',
-        'config',
-        'is_active',
+        'tenant_id', 'shop_type_id', 'name', 'slug', 'config',
+        'address', 'city', 'state', 'country', 'phone', 'email'
     ];
 
     protected $casts = [
