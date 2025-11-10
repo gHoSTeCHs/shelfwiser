@@ -19,7 +19,9 @@ class StaffManagementController extends Controller
 {
     public function __construct(
         protected StaffManagementService $staffService
-    ) {}
+    )
+    {
+    }
 
     /**
      * Display a listing of staff members.
@@ -58,33 +60,11 @@ class StaffManagementController extends Controller
     {
         Gate::authorize('create', User::class);
 
-        $currentUser = auth()->user();
-
-        // Get roles that current user can assign
-        $assignableRoles = collect(UserRole::cases())
-            ->filter(function ($role) use ($currentUser) {
-                return $role !== UserRole::OWNER
-                    && $currentUser->role->level() > $role->level();
-            })
-            ->mapWithKeys(fn($role) => [
-                $role->value => [
-                    'value' => $role->value,
-                    'label' => $role->label(),
-                    'description' => $role->description(),
-                    'level' => $role->level(),
-                    'can_access_multiple_shops' => $role->canAccessMultipleStores(),
-                ]
-            ])
-            ->values();
-
-        $shops = $currentUser->tenant->shops()
-            ->select('id', 'name', 'slug', 'city', 'state')
-            ->where('is_active', true)
-            ->get();
+        $accessData = $this->getAccessData();
 
         return Inertia::render('StaffManagement/Create', [
-            'roles' => $assignableRoles,
-            'shops' => $shops,
+            'roles' => $accessData['assignableRoles'],
+            'shops' => $accessData['shops'],
         ]);
     }
 
@@ -100,7 +80,7 @@ class StaffManagementController extends Controller
         );
 
         return Redirect::route('users.index')
-            ->with('success', "Staff member '{$staff->name}' has been created successfully.");
+            ->with('success', "Staff member '$staff->name' has been created successfully.");
     }
 
     /**
@@ -124,36 +104,14 @@ class StaffManagementController extends Controller
     {
         Gate::authorize('update', $staff);
 
-        $currentUser = auth()->user();
-
-        // Get roles that current user can assign
-        $assignableRoles = collect(UserRole::cases())
-            ->filter(function ($role) use ($currentUser) {
-                return $role !== UserRole::OWNER
-                    && $currentUser->role->level() > $role->level();
-            })
-            ->mapWithKeys(fn($role) => [
-                $role->value => [
-                    'value' => $role->value,
-                    'label' => $role->label(),
-                    'description' => $role->description(),
-                    'level' => $role->level(),
-                    'can_access_multiple_shops' => $role->canAccessMultipleStores(),
-                ]
-            ])
-            ->values();
-
-        $shops = $currentUser->tenant->shops()
-            ->select('id', 'name', 'slug', 'city', 'state')
-            ->where('is_active', true)
-            ->get();
-
         $staff->load('shops');
+
+        $accessData = $this->getAccessData();
 
         return Inertia::render('StaffManagement/Edit', [
             'staff' => $staff,
-            'roles' => $assignableRoles,
-            'shops' => $shops,
+            'roles' => $accessData['assignableRoles'],
+            'shops' => $accessData['shops'],
         ]);
     }
 
@@ -169,7 +127,7 @@ class StaffManagementController extends Controller
         );
 
         return Redirect::route('users.index')
-            ->with('success', "Staff member '{$staff->name}' has been updated successfully.");
+            ->with('success', "Staff member '$staff->name' has been updated successfully.");
     }
 
     /**
@@ -184,6 +142,39 @@ class StaffManagementController extends Controller
         $this->staffService->delete($staff);
 
         return Redirect::route('users.index')
-            ->with('success', "Staff member '{$staffName}' has been removed successfully.");
+            ->with('success', "Staff member '$staffName' has been removed successfully.");
+    }
+
+    /**
+     * Get assignable roles and shops based on current user's access level.
+     */
+    private function getAccessData(): array
+    {
+        $currentUser = auth()->user();
+
+        $assignableRoles = collect(UserRole::cases())
+            ->filter(function ($role) use ($currentUser) {
+
+                return $role !== UserRole::OWNER
+                    && $currentUser->role->level() > $role->level();
+            })
+            ->map(fn($role) => [
+                'value' => $role->value,
+                'label' => $role->label(),
+                'description' => $role->description(),
+                'level' => $role->level(),
+                'can_access_multiple_shops' => $role->canAccessMultipleStores(),
+            ])
+            ->values();
+
+        $shops = $currentUser->tenant->shops()
+            ->select('id', 'name', 'slug', 'city', 'state')
+            ->where('is_active', true)
+            ->get();
+
+        return [
+            'assignableRoles' => $assignableRoles,
+            'shops' => $shops,
+        ];
     }
 }
