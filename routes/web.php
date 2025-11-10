@@ -16,6 +16,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('staff')->name('users.')->group(function () {
         Route::get('/', [StaffManagementController::class, 'index'])->name('index');
+        Route::get('/create', [StaffManagementController::class, 'create'])->name('create');
+        Route::post('/', [StaffManagementController::class, 'store'])->name('store');
+        Route::get('/{staff}', [StaffManagementController::class, 'show'])->name('show');
+        Route::get('/{staff}/edit', [StaffManagementController::class, 'edit'])->name('edit');
+        Route::put('/{staff}', [StaffManagementController::class, 'update'])->name('update');
+        Route::delete('/{staff}', [StaffManagementController::class, 'destroy'])->name('destroy');
     });
 
     Route::resource('shops', ShopController::class);
