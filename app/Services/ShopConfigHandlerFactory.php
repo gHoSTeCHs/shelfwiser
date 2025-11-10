@@ -19,7 +19,6 @@ class ShopConfigHandlerFactory
             ? $schemaSource->config_schema
             : $schemaSource;
 
-        // If schema is null or empty, return a permissive handler
         if (empty($schema)) {
             $schema = ['properties' => [], 'required' => []];
         }

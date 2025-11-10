@@ -14,6 +14,21 @@ import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Building2, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+interface SchemaProperty {
+    type: 'string' | 'integer' | 'number' | 'boolean' | 'array' | 'object';
+    title?: string;
+    default?: any;
+    enum?: any[];
+    minimum?: number;
+    maximum?: number;
+    minLength?: number;
+    maxLength?: number;
+    items?: {
+        type?: string;
+        enum?: any[];
+    };
+}
+
 interface Props {
     shopTypes: ShopType[];
 }
@@ -73,7 +88,39 @@ export default function Create({ shopTypes }: Props) {
                     </div>
                 </div>
 
-                <Form {...ShopController.store.post()} className="space-y-6">
+                <Form
+                    action={ShopController.store.url()}
+                    method="post"
+                    className="space-y-6"
+                    transform={(data) => {
+                        const transformedConfig: Record<string, any> = {};
+                        const configProperties = selectedType?.config_schema?.properties;
+
+                        if (configProperties && data.config) {
+                            Object.entries(data.config).forEach(([key, value]) => {
+                                const schema = configProperties[key] as SchemaProperty | undefined;
+                                if (schema) {
+                                    if (schema.type === 'integer') {
+                                        transformedConfig[key] = parseInt(value as string);
+                                    } else if (schema.type === 'number') {
+                                        transformedConfig[key] = parseFloat(value as string);
+                                    } else if (schema.type === 'boolean') {
+                                        transformedConfig[key] = value === 'true';
+                                    } else {
+                                        transformedConfig[key] = value;
+                                    }
+                                } else {
+                                    transformedConfig[key] = value;
+                                }
+                            });
+                        }
+
+                        return {
+                            ...data,
+                            config: transformedConfig,
+                        };
+                    }}
+                >
                     {({ errors, processing }) => (
                         <>
                             <Card>
@@ -198,7 +245,7 @@ export default function Create({ shopTypes }: Props) {
                                                 >
                                                     <DynamicSchemaField
                                                         fieldName={fieldName}
-                                                        schema={schema}
+                                                        schema={schema as SchemaProperty}
                                                         value={
                                                             shopConfig[
                                                                 fieldName
@@ -320,3 +367,5 @@ export default function Create({ shopTypes }: Props) {
         </AppLayout>
     );
 }
+
+

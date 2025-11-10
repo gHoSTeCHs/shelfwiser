@@ -12,6 +12,10 @@ class Shop extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'tenant_id', 'shop_type_id', 'name', 'slug', 'config'
+    ];
+
     protected $casts = [
         'config' => 'array',
         'is_active' => 'boolean',

@@ -60,16 +60,18 @@ class ShopController extends Controller
 
     /**
      * Store new shop (Inertia POST)
+     * @throws \Throwable
      */
     public function store(CreateShopRequest $request): RedirectResponse
     {
+
         $shop = $this->creationService->create(
             $request->validated(),
             $request->user()->tenant,
             $request->user()
         );
 
-        return Redirect::route('shops.show', $shop)
+        return Redirect::route('shops.index', $shop)
             ->with('success', "Shop '$shop->name' created successfully.");
     }
 
