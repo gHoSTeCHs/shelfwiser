@@ -34,14 +34,15 @@ class ShopCreationService
 
                 $slug = $this->generateUniqueSlug($data['name'], $tenant);
 
-                $shop = Shop::query()->create([
+                $shopData = array_merge($data, [
                     'tenant_id' => $tenant->id,
                     'shop_type_id' => $shopType->id,
                     'slug' => $slug,
-                    'name' => $data['name'],
                     'config' => $config,
                     'is_active' => $data['is_active'] ?? true,
                 ]);
+
+                $shop = Shop::query()->create($shopData);
 
                 if ($creator->can('manage', $shop)) {
                     $shop->users()->attach($creator->id, ['tenant_id' => $tenant->id]);

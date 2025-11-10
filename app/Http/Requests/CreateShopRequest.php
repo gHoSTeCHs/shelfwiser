@@ -22,6 +22,12 @@ class CreateShopRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'shop_type_slug' => ['required', 'exists:shop_types,slug'],
+            'address' => ['nullable', 'string'],
+            'city' => ['required', 'string', 'max:255'],
+            'state' => ['required', 'string', 'max:255'],
+            'country' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
             'config' => ['required', 'array', function ($attribute, $value, $fail) use ($shopType) {
                 $handler = ShopConfigHandlerFactory::make($shopType);
                 if (!$handler->validate($value)) {

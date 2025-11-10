@@ -55,6 +55,7 @@ class ShopController extends Controller
 
         return Inertia::render('Shops/Create', [
             'shopTypes' => $shopTypes,
+            'countries' => config('countries'),
         ]);
     }
 
