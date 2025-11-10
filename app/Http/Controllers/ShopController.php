@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateShopRequest;
+use App\Http\Resources\ShopResource;
 use App\Models\Shop;
 use App\Models\ShopType;
 use App\Services\ShopCreationService;
@@ -79,13 +80,13 @@ class ShopController extends Controller
     /**
      * Show single shop (Inertia page)
      */
-    public function show(Shop $shop): Response
+    public function show(Shop $shop)
     {
         Gate::authorize('view', $shop);
 
         return Inertia::render('Shops/Show', [
-            'shop' => $shop->load('type', 'users'),
-            'can_manage' => auth()->user()->can('manage', $shop),
+            'shop' => (new ShopResource($shop->load('type', 'users')))->toArray(request()),
+            'can_manage' => auth()->user()->can('manage', 'shop'),
         ]);
     }
 

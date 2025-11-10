@@ -87,6 +87,44 @@ export default function Create({ shopTypes }: Props) {
                     action={ShopController.store.url()}
                     method="post"
                     className="space-y-6"
+                    transform={(data) => {
+                        const transformedConfig: Record<string, any> = {};
+                        const configProperties =
+                            selectedType?.config_schema?.properties;
+
+                        if (configProperties && data.config) {
+                            Object.entries(data.config).forEach(
+                                ([key, value]) => {
+                                    const schema = configProperties[key] as
+                                        | SchemaProperty
+                                        | undefined;
+                                    if (schema) {
+                                        if (schema.type === 'integer') {
+                                            transformedConfig[key] = parseInt(
+                                                value as string,
+                                            );
+                                        } else if (schema.type === 'number') {
+                                            transformedConfig[key] = parseFloat(
+                                                value as string,
+                                            );
+                                        } else if (schema.type === 'boolean') {
+                                            transformedConfig[key] =
+                                                value === 'true';
+                                        } else {
+                                            transformedConfig[key] = value;
+                                        }
+                                    } else {
+                                        transformedConfig[key] = value;
+                                    }
+                                },
+                            );
+                        }
+
+                        return {
+                            ...data,
+                            config: transformedConfig,
+                        };
+                    }}
                 >
                     {({ errors, processing }) => (
                         <>
@@ -181,7 +219,8 @@ export default function Create({ shopTypes }: Props) {
                                                 htmlFor="is_active"
                                                 className="mb-0 font-normal text-gray-700 dark:text-gray-400"
                                             >
-                                                Shop is active and ready to accept orders
+                                                Shop is active and ready to
+                                                accept orders
                                             </Label>
                                         </div>
                                         <input
@@ -271,7 +310,9 @@ export default function Create({ shopTypes }: Props) {
                                                 error={!!errors.state}
                                                 required
                                             />
-                                            <InputError message={errors.state} />
+                                            <InputError
+                                                message={errors.state}
+                                            />
                                         </div>
                                     </div>
 
@@ -314,7 +355,9 @@ export default function Create({ shopTypes }: Props) {
                                                 placeholder="+234 XXX XXX XXXX"
                                                 error={!!errors.phone}
                                             />
-                                            <InputError message={errors.phone} />
+                                            <InputError
+                                                message={errors.phone}
+                                            />
                                         </div>
 
                                         <div>
@@ -332,7 +375,9 @@ export default function Create({ shopTypes }: Props) {
                                                 placeholder="shop@example.com"
                                                 error={!!errors.email}
                                             />
-                                            <InputError message={errors.email} />
+                                            <InputError
+                                                message={errors.email}
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -379,7 +424,9 @@ export default function Create({ shopTypes }: Props) {
                                                 >
                                                     <DynamicSchemaField
                                                         fieldName={fieldName}
-                                                        schema={schema as SchemaProperty}
+                                                        schema={
+                                                            schema as SchemaProperty
+                                                        }
                                                         value={
                                                             shopConfig[
                                                                 fieldName
@@ -501,5 +548,3 @@ export default function Create({ shopTypes }: Props) {
         </AppLayout>
     );
 }
-
-

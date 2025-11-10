@@ -191,7 +191,7 @@ export default function Index({ shops, shopTypes }: Props) {
 
                                     <div className="flex gap-2">
                                         <Link
-                                            href={`/shops/${shop.slug}`}
+                                            href={`/shops/${shop.id}`}
                                             className="flex-1"
                                             onClick={(e) => e.stopPropagation()}
                                         >

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { InertiaLinkProps } from '@inertiajs/react';
 import { LucideIcon } from 'lucide-react';
 import { UserRoleValue } from '@/types/user-role.ts';
@@ -48,3 +50,19 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export interface SchemaProperty {
+    type: 'string' | 'integer' | 'number' | 'boolean' | 'array' | 'object';
+    title?: string;
+    default?: any;
+    enum?: any[];
+    minimum?: number;
+    maximum?: number;
+    minLength?: number;
+    maxLength?: number;
+    items?: {
+        type?: string;
+        enum?: any[];
+    };
+}
+

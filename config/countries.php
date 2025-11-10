@@ -36,7 +36,7 @@ return [
     ['name' => 'Brunei Darussalam', 'code' => 'BN'],
     ['name' => 'Bulgaria', 'code' => 'BG'],
     ['name' => 'Burkina Faso', 'code' => 'BF'],
-    ['name' =>. 'Burundi', 'code' => 'BI'],
+    ['name' => 'Burundi', 'code' => 'BI'],
     ['name' => 'Cambodia', 'code' => 'KH'],
     ['name' => 'Cameroon', 'code' => 'CM'],
     ['name' => 'Canada', 'code' => 'CA'],
