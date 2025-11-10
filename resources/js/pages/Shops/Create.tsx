@@ -71,7 +71,11 @@ export default function Create({ shopTypes }: Props) {
                     </div>
                 </div>
 
-                <Form {...ShopController.store.form()} className="space-y-6">
+                <Form
+                    action={ShopController.store.url()}
+                    method="post"
+                    className="space-y-6"
+                >
                     {({ errors, processing }) => (
                         <>
                             <Card className="p-6">
