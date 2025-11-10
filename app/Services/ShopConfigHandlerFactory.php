@@ -3,22 +3,27 @@
 namespace App\Services;
 
 use App\Contracts\ShopConfigHandler;
-use App\Services\ShopConfigHandlers\GenericConfigHandler;
-use App\Services\ShopConfigHandlers\PharmacyConfigHandler;
-use App\Services\ShopConfigHandlers\RestaurantConfigHandler;
-use App\Services\ShopConfigHandlers\RetailConfigHandler;
+use App\Models\ShopType;
 
 class ShopConfigHandlerFactory
 {
-    private const HANDLERS = [
-        'retail' => RetailConfigHandler::class,
-        'pharmacy' => PharmacyConfigHandler::class,
-        'restaurant' => RestaurantConfigHandler::class,
-    ];
-
-    public static function make(string $slug): ShopConfigHandler
+    /**
+     * Create a schema-based config handler from a shop type or schema array.
+     *
+     * @param ShopType|array $schemaSource
+     * @return ShopConfigHandler
+     */
+    public static function make(ShopType|array $schemaSource): ShopConfigHandler
     {
-        $handler = self::HANDLERS[$slug] ?? GenericConfigHandler::class;
-        return new $handler();
+        $schema = $schemaSource instanceof ShopType
+            ? $schemaSource->config_schema
+            : $schemaSource;
+
+        // If schema is null or empty, return a permissive handler
+        if (empty($schema)) {
+            $schema = ['properties' => [], 'required' => []];
+        }
+
+        return new SchemaBasedConfigHandler($schema);
     }
 }
