@@ -20,7 +20,7 @@ class ShopCreationService
 
             $this->enforceTenantLimits($tenant);
 
-            $handler = ShopConfigHandlerFactory::make($shopType->slug);
+            $handler = ShopConfigHandlerFactory::make($shopType);
             $config = array_merge($handler->getDefaults(), $data['config']);
 
             $slug = $this->generateUniqueSlug($data['name'], $tenant);

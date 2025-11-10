@@ -23,9 +23,9 @@ class CreateShopRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'shop_type_slug' => ['required', 'exists:shop_types,slug'],
             'config' => ['required', 'array', function ($attribute, $value, $fail) use ($shopType) {
-                $handler = ShopConfigHandlerFactory::make($shopType->slug);
+                $handler = ShopConfigHandlerFactory::make($shopType);
                 if (!$handler->validate($value)) {
-                    $fail('Configuration validation failed for shop type: ' . $shopType->slug);
+                    $fail('Configuration validation failed for shop type: ' . $shopType->label);
                 }
             }],
         ];
