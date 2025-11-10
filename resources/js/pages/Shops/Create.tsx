@@ -26,11 +26,9 @@ export default function Create({ shopTypes }: Props) {
     const [shopName, setShopName] = useState<string>('');
     const [isActive, setIsActive] = useState<boolean>(true);
 
-    const [addressLine1, setAddressLine1] = useState<string>('');
-    const [addressLine2, setAddressLine2] = useState<string>('');
+    const [address, setAddress] = useState<string>('');
     const [city, setCity] = useState<string>('');
     const [state, setState] = useState<string>('');
-    const [postalCode, setPostalCode] = useState<string>('');
     const [country, setCountry] = useState<string>('Nigeria');
     const [phone, setPhone] = useState<string>('');
     const [email, setEmail] = useState<string>('');
@@ -251,48 +249,32 @@ export default function Create({ shopTypes }: Props) {
 
                                 <div className="space-y-5">
                                     <div>
-                                        <Label htmlFor="address_line1">
-                                            Address Line 1
+                                        <Label htmlFor="address">
+                                            Address
                                         </Label>
-                                        <Input
-                                            type="text"
-                                            id="address_line1"
-                                            name="address_line1"
-                                            value={addressLine1}
+                                        <textarea
+                                            id="address"
+                                            name="address"
+                                            value={address}
                                             onChange={(e) =>
-                                                setAddressLine1(e.target.value)
+                                                setAddress(e.target.value)
                                             }
-                                            placeholder="Street address, building name"
-                                            error={!!errors.address_line1}
+                                            placeholder="Street address, building name, apartment, suite, etc."
+                                            rows={3}
+                                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-400"
                                         />
-                                        <InputError
-                                            message={errors.address_line1}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <Label htmlFor="address_line2">
-                                            Address Line 2
-                                        </Label>
-                                        <Input
-                                            type="text"
-                                            id="address_line2"
-                                            name="address_line2"
-                                            value={addressLine2}
-                                            onChange={(e) =>
-                                                setAddressLine2(e.target.value)
-                                            }
-                                            placeholder="Apartment, suite, unit, floor (optional)"
-                                            error={!!errors.address_line2}
-                                        />
-                                        <InputError
-                                            message={errors.address_line2}
-                                        />
+                                        <InputError message={errors.address} />
                                     </div>
 
                                     <div className="grid gap-5 sm:grid-cols-2">
                                         <div>
-                                            <Label htmlFor="city">City</Label>
+                                            <Label htmlFor="city">
+                                                City
+                                                <span className="text-error-500">
+                                                    {' '}
+                                                    *
+                                                </span>
+                                            </Label>
                                             <Input
                                                 type="text"
                                                 id="city"
@@ -303,6 +285,7 @@ export default function Create({ shopTypes }: Props) {
                                                 }
                                                 placeholder="Enter city"
                                                 error={!!errors.city}
+                                                required
                                             />
                                             <InputError message={errors.city} />
                                         </div>
@@ -310,6 +293,10 @@ export default function Create({ shopTypes }: Props) {
                                         <div>
                                             <Label htmlFor="state">
                                                 State/Province
+                                                <span className="text-error-500">
+                                                    {' '}
+                                                    *
+                                                </span>
                                             </Label>
                                             <Input
                                                 type="text"
@@ -321,6 +308,7 @@ export default function Create({ shopTypes }: Props) {
                                                 }
                                                 placeholder="Enter state"
                                                 error={!!errors.state}
+                                                required
                                             />
                                             <InputError
                                                 message={errors.state}
@@ -328,48 +316,27 @@ export default function Create({ shopTypes }: Props) {
                                         </div>
                                     </div>
 
-                                    <div className="grid gap-5 sm:grid-cols-2">
-                                        <div>
-                                            <Label htmlFor="postal_code">
-                                                Postal Code
-                                            </Label>
-                                            <Input
-                                                type="text"
-                                                id="postal_code"
-                                                name="postal_code"
-                                                value={postalCode}
-                                                onChange={(e) =>
-                                                    setPostalCode(
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                placeholder="Enter postal code"
-                                                error={!!errors.postal_code}
-                                            />
-                                            <InputError
-                                                message={errors.postal_code}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="country">
-                                                Country
-                                            </Label>
-                                            <Input
-                                                type="text"
-                                                id="country"
-                                                name="country"
-                                                value={country}
-                                                onChange={(e) =>
-                                                    setCountry(e.target.value)
-                                                }
-                                                placeholder="Enter country"
-                                                error={!!errors.country}
-                                            />
-                                            <InputError
-                                                message={errors.country}
-                                            />
-                                        </div>
+                                    <div>
+                                        <Label htmlFor="country">
+                                            Country
+                                            <span className="text-error-500">
+                                                {' '}
+                                                *
+                                            </span>
+                                        </Label>
+                                        <Input
+                                            type="text"
+                                            id="country"
+                                            name="country"
+                                            value={country}
+                                            onChange={(e) =>
+                                                setCountry(e.target.value)
+                                            }
+                                            placeholder="Enter country"
+                                            error={!!errors.country}
+                                            required
+                                        />
+                                        <InputError message={errors.country} />
                                     </div>
 
                                     <div className="grid gap-5 sm:grid-cols-2">
