@@ -16,7 +16,7 @@ const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
     const { auth } = usePage<SharedData>().props;
 
     return (
-        <div className="min-h-screen xl:flex">
+        <div className="min-h-screen xl:flex dark:bg-gray-900 dark:text-white">
             <div>
                 <AppSidebar />
                 <Backdrop />
@@ -27,7 +27,7 @@ const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
                 } ${isMobileOpen ? 'ml-0' : ''}`}
             >
                 <AppHeader />
-                <div className="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6 dark:bg-gray-900 dark:text-white">
+                <div className="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6 ">
                     <UserRoleProvider userRole={auth.user.role}>
                         {children}
                     </UserRoleProvider>

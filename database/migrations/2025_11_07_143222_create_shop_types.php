@@ -10,18 +10,18 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('shops', function (Blueprint $table) {
+        Schema::create('shop_types', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('shop_type_id')->constrained()->restrictOnDelete();
+            $table->foreignId('tenant_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('slug')->unique();
-            $table->string('name');
-            $table->json('config');
+            $table->string('label');
+            $table->text('description')->nullable();
+            $table->json('config_schema');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
             $table->unique(['tenant_id', 'slug']);
-            $table->index(['tenant_id', 'shop_type_id']);
+            $table->index(['tenant_id', 'is_active']);
         });
     }
 
@@ -30,6 +30,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('shops');
+        Schema::dropIfExists('shop_types');
     }
 };

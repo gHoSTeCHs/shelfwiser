@@ -34,13 +34,13 @@ class Tenant extends Model
         return $this->hasMany(User::class);
     }
 
-    public function roles(): HasMany
-    {
-        return $this->hasMany(Role::class);
-    }
-
     public function isActive(): bool
     {
         return $this->is_active;
+    }
+
+    public function shops(): HasMany
+    {
+        return $this->hasMany(Shop::class);
     }
 }
