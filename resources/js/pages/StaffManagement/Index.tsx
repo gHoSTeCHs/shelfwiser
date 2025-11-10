@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { User } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { Mail, MoreVertical, Phone, UserPlus, Users } from 'lucide-react';
+import { Mail, UserPlus, Users } from 'lucide-react';
 import React, { useState } from 'react';
 
 interface Shop {

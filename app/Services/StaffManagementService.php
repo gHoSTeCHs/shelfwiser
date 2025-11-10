@@ -17,6 +17,7 @@ class StaffManagementService
 {
     /**
      * Create a new staff member.
+     * @throws Throwable
      */
     public function create(array $data, Tenant $tenant, User $creator): User
     {
@@ -33,23 +34,21 @@ class StaffManagementService
                     'first_name' => $data['first_name'],
                     'last_name' => $data['last_name'],
                     'email' => $data['email'],
-                    'role' => UserRole::from($data['role']),
+                    'role' => $this->normalizeRole($data['role']),
                     'password' => Hash::make($data['password']),
                     'is_tenant_owner' => false,
                 ]);
 
-                // Assign shops if provided
                 if (!empty($data['shop_ids'])) {
                     $this->assignShops($staff, $data['shop_ids'], $tenant);
                 }
 
                 // TODO: Send invitation email if requested
                 if ($data['send_invitation'] ?? false) {
-                    // Implement invitation logic here
                     Log::info('Invitation email queued for staff.', ['staff_id' => $staff->id]);
                 }
 
-                Cache::tags(["tenant:{$tenant->id}:staff"])->flush();
+                Cache::tags(["tenant:$tenant->id:staff"])->flush();
 
                 Log::info('Staff member created successfully.', [
                     'staff_id' => $staff->id,
@@ -71,6 +70,7 @@ class StaffManagementService
 
     /**
      * Update an existing staff member.
+     * @throws Throwable
      */
     public function update(User $staff, array $data, User $updater): User
     {
@@ -85,7 +85,7 @@ class StaffManagementService
                     'first_name' => $data['first_name'] ?? null,
                     'last_name' => $data['last_name'] ?? null,
                     'email' => $data['email'] ?? null,
-                    'role' => isset($data['role']) ? UserRole::from($data['role']) : null,
+                    'role' => isset($data['role']) ? $this->normalizeRole($data['role']) : null,
                 ], fn($value) => $value !== null);
 
                 if (isset($data['is_active'])) {
@@ -94,12 +94,11 @@ class StaffManagementService
 
                 $staff->update($updateData);
 
-                // Update shop assignments if provided
                 if (isset($data['shop_ids'])) {
                     $this->assignShops($staff, $data['shop_ids'], $staff->tenant);
                 }
 
-                Cache::tags(["tenant:{$staff->tenant_id}:staff"])->flush();
+                Cache::tags(["tenant:$staff->tenant_id:staff"])->flush();
 
                 Log::info('Staff member updated successfully.', ['staff_id' => $staff->id]);
 
@@ -126,22 +125,18 @@ class StaffManagementService
             ->with(['shops' => fn($q) => $q->select('shops.id', 'shops.name', 'shops.slug')])
             ->orderBy('created_at', 'desc');
 
-        // Filter by role
         if (!empty($filters['role'])) {
             $query->where('role', $filters['role']);
         }
 
-        // Filter by shop
         if (!empty($filters['shop_id'])) {
             $query->whereHas('shops', fn($q) => $q->where('shops.id', $filters['shop_id']));
         }
 
-        // Filter by active status
         if (isset($filters['is_active'])) {
             $query->where('is_active', $filters['is_active']);
         }
 
-        // If requester is a store manager, only show staff in their shops
         if ($requester->role->value === UserRole::STORE_MANAGER->value) {
             $shopIds = $requester->shops()->pluck('shops.id');
             $query->whereHas('shops', fn($q) => $q->whereIn('shops.id', $shopIds));
@@ -171,13 +166,11 @@ class StaffManagementService
 
         try {
             DB::transaction(function () use ($staff) {
-                // Detach all shops
                 $staff->shops()->detach();
 
-                // Deactivate instead of hard delete
                 $staff->update(['is_active' => false]);
 
-                Cache::tags(["tenant:{$staff->tenant_id}:staff"])->flush();
+                Cache::tags(["tenant:$staff->tenant_id:staff"])->flush();
             });
 
             Log::info('Staff member deleted successfully.', ['staff_id' => $staff->id]);
@@ -198,7 +191,6 @@ class StaffManagementService
      */
     protected function assignShops(User $staff, array $shopIds, Tenant $tenant): void
     {
-        // Validate that all shops belong to the tenant
         $validShops = Shop::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('id', $shopIds)
@@ -212,7 +204,6 @@ class StaffManagementService
             ]);
         }
 
-        // Prepare sync data with tenant_id
         $syncData = $validShops->mapWithKeys(function ($shopId) use ($tenant) {
             return [$shopId => ['tenant_id' => $tenant->id]];
         })->toArray();
@@ -238,9 +229,14 @@ class StaffManagementService
             ->select('role', DB::raw('count(*) as count'))
             ->groupBy('role')
             ->get()
-            ->mapWithKeys(fn($item) => [
-                UserRole::from($item->role)->label() => $item->count
-            ]);
+            ->mapWithKeys(function ($item) {
+                // Handle both string and enum values
+                $role = $item->role instanceof UserRole
+                    ? $item->role
+                    : UserRole::from($item->role);
+
+                return [$role->label() => $item->count];
+            });
 
         return [
             'total_staff' => $totalStaff,
@@ -248,5 +244,18 @@ class StaffManagementService
             'inactive_staff' => $totalStaff - $activeStaff,
             'role_distribution' => $roleDistribution,
         ];
+    }
+
+    /**
+     * Normalize role input to UserRole enum.
+     * Handles both string values and UserRole enum instances.
+     */
+    protected function normalizeRole(mixed $role): UserRole
+    {
+        if ($role instanceof UserRole) {
+            return $role;
+        }
+
+        return UserRole::from($role);
     }
 }

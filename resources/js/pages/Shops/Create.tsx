@@ -249,9 +249,7 @@ export default function Create({ shopTypes }: Props) {
 
                                 <div className="space-y-5">
                                     <div>
-                                        <Label htmlFor="address">
-                                            Address
-                                        </Label>
+                                        <Label htmlFor="address">Address</Label>
                                         <textarea
                                             id="address"
                                             name="address"
@@ -261,7 +259,7 @@ export default function Create({ shopTypes }: Props) {
                                             }
                                             placeholder="Street address, building name, apartment, suite, etc."
                                             rows={3}
-                                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-400"
+                                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-400"
                                         />
                                         <InputError message={errors.address} />
                                     </div>
