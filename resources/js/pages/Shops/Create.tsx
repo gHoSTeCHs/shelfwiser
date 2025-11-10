@@ -10,25 +10,11 @@ import DynamicSchemaField from '@/components/shops/DynamicSchemaField';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { SchemaProperty } from '@/types';
 import { ShopType } from '@/types/shop';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Building2, MapPin, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
-
-interface SchemaProperty {
-    type: 'string' | 'integer' | 'number' | 'boolean' | 'array' | 'object';
-    title?: string;
-    default?: any;
-    enum?: any[];
-    minimum?: number;
-    maximum?: number;
-    minLength?: number;
-    maxLength?: number;
-    items?: {
-        type?: string;
-        enum?: any[];
-    };
-}
 
 interface Props {
     shopTypes: ShopType[];

@@ -13,6 +13,12 @@ class ShopResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'address' => $this->address,
+            'city' => $this->city,
+            'state' => $this->state,
+            'country' => $this->country,
+            'phone' => $this->phone,
+            'email' => $this->email,
             'type' => [
                 'slug' => $this->type->slug,
                 'label' => $this->type->label,
@@ -23,6 +29,7 @@ class ShopResource extends JsonResource
             'users_count' => $this->whenLoaded('users', fn() => $this->users->count()),
             'can_manage' => $request->user()->can('manage', $this->resource),
             'created_at' => $this->created_at->toIso8601String(),
+            'updated_at' => $this->updated_at->toIso8601String(),
         ];
     }
 }
