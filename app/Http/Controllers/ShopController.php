@@ -7,6 +7,7 @@ use App\Models\Shop;
 use App\Models\ShopType;
 use App\Services\ShopCreationService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -78,7 +79,7 @@ class ShopController extends Controller
      */
     public function show(Shop $shop): Response
     {
-        Gate::authorize('view', Shop::class);
+        Gate::authorize('view', $shop);
 
         return Inertia::render('Shops/Show', [
             'shop' => $shop->load('type', 'users'),
@@ -91,7 +92,7 @@ class ShopController extends Controller
      */
     public function update(Request $request, Shop $shop): RedirectResponse
     {
-        Gate::authorize('manage', Shop::class);
+        Gate::authorize('manage', $shop);
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
@@ -109,7 +110,7 @@ class ShopController extends Controller
      */
     public function destroy(Shop $shop): RedirectResponse
     {
-        Gate::authorize('delete', Shop::class);
+        Gate::authorize('delete', $shop);
 
         $shop->delete();
 
