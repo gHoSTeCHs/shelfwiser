@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateShopRequest;
+use App\Http\Requests\UpdateShopRequest;
 use App\Http\Resources\ShopResource;
 use App\Models\Shop;
 use App\Models\ShopType;
 use App\Services\ShopCreationService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -91,21 +91,34 @@ class ShopController extends Controller
     }
 
     /**
-     * Update shop (Inertia PUT)
+     * Show shop edit form (Inertia page)
      */
-    public function update(Request $request, Shop $shop): RedirectResponse
+    public function edit(Shop $shop): Response
     {
         Gate::authorize('manage', $shop);
 
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'is_active' => 'sometimes|boolean',
+        $shop->load('type');
+
+        $shopTypes = ShopType::accessibleTo(auth()->user()->tenant_id)
+            ->where('is_active', true)
+            ->get(['id', 'slug', 'label', 'description', 'config_schema']);
+
+        return Inertia::render('Shops/Edit', [
+            'shop' => $shop,
+            'shopTypes' => $shopTypes,
+            'countries' => config('countries'),
         ]);
+    }
 
-        $shop->update($validated);
+    /**
+     * Update shop (Inertia PUT)
+     */
+    public function update(UpdateShopRequest $request, Shop $shop): RedirectResponse
+    {
+        $shop->update($request->validated());
 
-        return Redirect::back()
-            ->with('success', 'Shop updated successfully.');
+        return Redirect::route('shops.show', $shop)
+            ->with('success', "Shop '{$shop->name}' updated successfully.");
     }
 
     /**
