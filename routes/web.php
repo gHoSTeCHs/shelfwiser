@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\Web\StaffManagementController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::resource('shops', ShopController::class);
+
+    Route::resource('products', ProductController::class);
 
 });
 

@@ -2,64 +2,133 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CreateProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
-use Illuminate\Http\Request;
+use App\Models\ProductCategory;
+use App\Models\ProductType;
+use App\Models\Shop;
+use App\Services\ProductService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Redirect;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct(private readonly ProductService $productService)
     {
-        //
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function index(): Response
     {
-        //
+        Gate::authorize('create', Product::class);
+
+        $tenantId = auth()->user()->tenant_id;
+
+        return Inertia::render('Products/Index', [
+            'products' => Product::where('tenant_id', $tenantId)
+                ->with(['type', 'category', 'shop', 'variants'])
+                ->withCount('variants')
+                ->latest()
+                ->paginate(20),
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function create(): Response
     {
-        //
+        Gate::authorize('create', Product::class);
+
+        $tenantId = auth()->user()->tenant_id;
+
+        $shops = Shop::where('tenant_id', $tenantId)
+            ->where('is_active', true)
+            ->get(['id', 'name', 'slug']);
+
+        $productTypes = ProductType::accessibleTo($tenantId)
+            ->where('is_active', true)
+            ->get(['id', 'slug', 'label', 'description', 'config_schema', 'supports_variants', 'requires_batch_tracking', 'requires_serial_tracking']);
+
+        $categories = ProductCategory::where('tenant_id', $tenantId)
+            ->where('is_active', true)
+            ->whereNull('parent_id')
+            ->with('children')
+            ->get(['id', 'name', 'slug']);
+
+        return Inertia::render('Products/Create', [
+            'shops' => $shops,
+            'productTypes' => $productTypes,
+            'categories' => $categories,
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Product $product)
+    public function store(CreateProductRequest $request): RedirectResponse
     {
-        //
+        $shop = Shop::findOrFail($request->input('shop_id'));
+
+        $product = $this->productService->create(
+            $request->validated(),
+            $request->user()->tenant,
+            $shop
+        );
+
+        return Redirect::route('products.index')
+            ->with('success', "Product '{$product->name}' created successfully.");
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Product $product)
+    public function show(Product $product): Response
     {
-        //
+        Gate::authorize('view', $product);
+
+        $product->load(['type', 'category', 'shop', 'variants.inventoryLocations']);
+
+        return Inertia::render('Products/Show', [
+            'product' => $product,
+            'can_manage' => auth()->user()->can('manage', $product),
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Product $product)
+    public function edit(Product $product): Response
     {
-        //
+        Gate::authorize('manage', $product);
+
+        $product->load(['type', 'category', 'variants']);
+
+        $tenantId = auth()->user()->tenant_id;
+
+        $productTypes = ProductType::accessibleTo($tenantId)
+            ->where('is_active', true)
+            ->get(['id', 'slug', 'label', 'description', 'config_schema', 'supports_variants', 'requires_batch_tracking', 'requires_serial_tracking']);
+
+        $categories = ProductCategory::where('tenant_id', $tenantId)
+            ->where('is_active', true)
+            ->whereNull('parent_id')
+            ->with('children')
+            ->get(['id', 'name', 'slug']);
+
+        return Inertia::render('Products/Edit', [
+            'product' => $product,
+            'productTypes' => $productTypes,
+            'categories' => $categories,
+        ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Product $product)
+    public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
-        //
+        $this->productService->update($product, $request->validated());
+
+        return Redirect::route('products.show', $product)
+            ->with('success', "Product '{$product->name}' updated successfully.");
+    }
+
+    public function destroy(Product $product): RedirectResponse
+    {
+        Gate::authorize('delete', $product);
+
+        $product->delete();
+
+        return Redirect::route('products.index')
+            ->with('success', 'Product deleted successfully.');
     }
 }
