@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\StockMovementController;
@@ -27,6 +28,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::resource('shops', ShopController::class);
+
+    Route::resource('categories', ProductCategoryController::class);
 
     Route::resource('products', ProductController::class);
 
