@@ -30,7 +30,10 @@ interface Props {
 
 export default function Show({ staff }: Props) {
     const getRoleBadgeColor = (role: string): string => {
-        const colorMap: Record<string, 'success' | 'info' | 'warning' | 'error'> = {
+        const colorMap: Record<
+            string,
+            'success' | 'info' | 'warning' | 'error'
+        > = {
             owner: 'error',
             general_manager: 'info',
             store_manager: 'success',
