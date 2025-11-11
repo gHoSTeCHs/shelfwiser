@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import ProductController from '@/actions/App/Http/Controllers/ProductController';
 import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
@@ -9,6 +11,7 @@ import DynamicSchemaField from '@/components/shops/DynamicSchemaField';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { flattenCategories } from '@/lib/utils.ts';
 import { SchemaProperty } from '@/types';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Package, Save, Tag } from 'lucide-react';
@@ -82,23 +85,6 @@ export default function Edit({ product, productTypes, categories }: Props) {
         }));
     };
 
-    const flattenCategories = (
-        cats: ProductCategory[],
-        prefix = '',
-    ): { value: number; label: string }[] => {
-        return cats.flatMap((cat) => {
-            const option = {
-                value: cat.id,
-                label: prefix + cat.name,
-            };
-            const children =
-                cat.children && cat.children.length > 0
-                    ? flattenCategories(cat.children, prefix + '  ')
-                    : [];
-            return [option, ...children];
-        });
-    };
-
     return (
         <AppLayout>
             <Head title={`Edit ${product.name}`} />
@@ -123,7 +109,9 @@ export default function Edit({ product, productTypes, categories }: Props) {
                 </div>
 
                 <Form
-                    action={ProductController.update.url({ product: product.id })}
+                    action={ProductController.update.url({
+                        product: product.id,
+                    })}
                     method="put"
                     className="space-y-6"
                     transform={(data) => {

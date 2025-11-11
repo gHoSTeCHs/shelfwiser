@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
@@ -14,26 +16,10 @@ import {
     Package,
     Tag,
     TrendingUp,
-    Warehouse,
+    Warehouse
 } from 'lucide-react';
-
-interface ProductType {
-    id: number;
-    slug: string;
-    label: string;
-}
-
-interface ProductCategory {
-    id: number;
-    name: string;
-    slug: string;
-}
-
-interface Shop {
-    id: number;
-    name: string;
-    slug: string;
-}
+import { ProductCategory, ProductType } from '@/types/product.ts';
+import { Shop } from '@/types/shop.ts';
 
 interface InventoryLocation {
     id: number;
@@ -230,7 +216,7 @@ export default function Show({ product, can_manage }: Props) {
                                             product.custom_attributes,
                                         ).map(([key, value]) => (
                                             <div key={key}>
-                                                <p className="text-sm font-medium capitalize text-gray-500 dark:text-gray-400">
+                                                <p className="text-sm font-medium text-gray-500 capitalize dark:text-gray-400">
                                                     {key.replace(/_/g, ' ')}
                                                 </p>
                                                 <p className="mt-1 text-gray-900 dark:text-white">
@@ -332,7 +318,7 @@ export default function Show({ product, can_manage }: Props) {
                                                         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                                             Barcode
                                                         </p>
-                                                        <p className="mt-1 font-mono text-sm text-gray-900 dark:text-white">
+                                                        <p className="font-mono mt-1 text-sm text-gray-900 dark:text-white">
                                                             {variant.barcode}
                                                         </p>
                                                     </div>
@@ -344,7 +330,9 @@ export default function Show({ product, can_manage }: Props) {
                                                             Batch Number
                                                         </p>
                                                         <p className="mt-1 text-gray-900 dark:text-white">
-                                                            {variant.batch_number}
+                                                            {
+                                                                variant.batch_number
+                                                            }
                                                         </p>
                                                     </div>
                                                 )}
@@ -367,7 +355,7 @@ export default function Show({ product, can_manage }: Props) {
                                                         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                                             Serial Number
                                                         </p>
-                                                        <p className="mt-1 font-mono text-sm text-gray-900 dark:text-white">
+                                                        <p className="font-mono mt-1 text-sm text-gray-900 dark:text-white">
                                                             {
                                                                 variant.serial_number
                                                             }

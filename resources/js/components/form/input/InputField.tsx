@@ -12,7 +12,7 @@ interface InputProps {
     className?: string;
     min?: string | number;
     max?: string | number;
-    step?: number;
+    step?: string | number;
     disabled?: boolean;
     success?: boolean;
     error?: boolean;
