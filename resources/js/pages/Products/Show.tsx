@@ -1,11 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import StockAdjustmentModal from '@/components/stock/StockAdjustmentModal';
+import StockLevelBadge from '@/components/stock/StockLevelBadge';
+import StockTransferModal from '@/components/stock/StockTransferModal';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
+import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
 import { Head, Link } from '@inertiajs/react';
 import {
+    ArrowRightLeft,
     Barcode,
     Box,
     Building2,
@@ -14,12 +19,14 @@ import {
     DollarSign,
     Edit,
     Package,
+    Plus,
     Tag,
     TrendingUp,
     Warehouse
 } from 'lucide-react';
 import { ProductCategory, ProductType } from '@/types/product.ts';
 import { Shop } from '@/types/shop.ts';
+import { useState } from 'react';
 
 interface InventoryLocation {
     id: number;
@@ -69,6 +76,10 @@ interface Props {
 }
 
 export default function Show({ product, can_manage }: Props) {
+    const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+    const adjustStockModal = useModal();
+    const transferStockModal = useModal();
+
     const getTotalStock = (variant: ProductVariant): number => {
         return variant.inventory_locations.reduce(
             (sum, loc) => sum + loc.quantity,
@@ -81,6 +92,16 @@ export default function Show({ product, can_manage }: Props) {
             (sum, loc) => sum + (loc.quantity - loc.reserved_quantity),
             0,
         );
+    };
+
+    const handleAdjustStock = (variant: ProductVariant) => {
+        setSelectedVariant(variant);
+        adjustStockModal.openModal();
+    };
+
+    const handleTransferStock = (variant: ProductVariant) => {
+        setSelectedVariant(variant);
+        transferStockModal.openModal();
     };
 
     const formatPrice = (price: number): string => {
@@ -307,10 +328,13 @@ export default function Show({ product, can_manage }: Props) {
                                                         <Warehouse className="mr-1 h-4 w-4" />
                                                         Stock
                                                     </p>
-                                                    <p className="mt-1 text-gray-900 dark:text-white">
-                                                        {availableStock} /{' '}
-                                                        {totalStock} available
-                                                    </p>
+                                                    <div className="mt-1">
+                                                        <StockLevelBadge
+                                                            totalStock={totalStock}
+                                                            availableStock={availableStock}
+                                                            size="sm"
+                                                        />
+                                                    </div>
                                                 </div>
 
                                                 {variant.barcode && (
@@ -393,6 +417,31 @@ export default function Show({ product, can_manage }: Props) {
                                                         </div>
                                                     </div>
                                                 )}
+
+                                            {can_manage && variant.inventory_locations.length > 0 && (
+                                                <div className="mt-4 flex gap-2 border-t border-gray-200 pt-4 dark:border-gray-700">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => handleAdjustStock(variant)}
+                                                        className="flex-1"
+                                                    >
+                                                        <Plus className="mr-2 h-4 w-4" />
+                                                        Adjust Stock
+                                                    </Button>
+                                                    {variant.inventory_locations.length > 1 && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => handleTransferStock(variant)}
+                                                            className="flex-1"
+                                                        >
+                                                            <ArrowRightLeft className="mr-2 h-4 w-4" />
+                                                            Transfer
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -508,6 +557,51 @@ export default function Show({ product, can_manage }: Props) {
                     </div>
                 </div>
             </div>
+
+            {selectedVariant && (
+                <>
+                    <StockAdjustmentModal
+                        isOpen={adjustStockModal.isOpen}
+                        onClose={adjustStockModal.closeModal}
+                        variant={{
+                            ...selectedVariant,
+                            product: {
+                                id: product.id,
+                                name: product.name,
+                                slug: product.slug,
+                                shop_id: product.shop.id,
+                            },
+                        }}
+                        locations={selectedVariant.inventory_locations.map(loc => ({
+                            ...loc,
+                            locatable: {
+                                id: loc.location_id,
+                                name: product.shop.name,
+                            },
+                        }))}
+                    />
+                    <StockTransferModal
+                        isOpen={transferStockModal.isOpen}
+                        onClose={transferStockModal.closeModal}
+                        variant={{
+                            ...selectedVariant,
+                            product: {
+                                id: product.id,
+                                name: product.name,
+                                slug: product.slug,
+                                shop_id: product.shop.id,
+                            },
+                        }}
+                        locations={selectedVariant.inventory_locations.map(loc => ({
+                            ...loc,
+                            locatable: {
+                                id: loc.location_id,
+                                name: product.shop.name,
+                            },
+                        }))}
+                    />
+                </>
+            )}
         </AppLayout>
     );
 }
