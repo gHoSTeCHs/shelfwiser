@@ -11,9 +11,13 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 class ProductService
 {
+    /**
+     * @throws Throwable
+     */
     public function create(array $data, Tenant $tenant, Shop $shop): Product
     {
         Log::info('Product creation process started.', [
@@ -48,7 +52,7 @@ class ProductService
                     'is_active' => $data['is_active'] ?? true,
                 ];
 
-                $product = Product::create($productData);
+                $product = Product::query()->create($productData);
 
                 if ($hasVariants && isset($data['variants'])) {
                     foreach ($data['variants'] as $variantData) {
@@ -58,13 +62,13 @@ class ProductService
                     $this->createDefaultVariant($product, $data);
                 }
 
-                Cache::tags(["tenant:{$tenant->id}:products"])->flush();
+                Cache::tags(["tenant:$tenant->id:products"])->flush();
 
                 Log::info('Product created successfully.', ['product_id' => $product->id]);
 
                 return $product->load('type', 'category', 'variants');
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::error('Product creation failed.', [
                 'tenant_id' => $tenant->id,
                 'shop_id' => $shop->id,
@@ -76,6 +80,9 @@ class ProductService
         }
     }
 
+    /**
+     * @throws Throwable
+     */
     public function update(Product $product, array $data): Product
     {
         Log::info('Product update process started.', [
@@ -99,13 +106,13 @@ class ProductService
 
                 $product->update($data);
 
-                Cache::tags(["tenant:{$product->tenant_id}:products"])->flush();
+                Cache::tags(["tenant:$product->tenant_id:products"])->flush();
 
                 Log::info('Product updated successfully.', ['product_id' => $product->id]);
 
                 return $product->fresh(['type', 'category', 'variants']);
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::error('Product update failed.', [
                 'product_id' => $product->id,
                 'data' => $data,
@@ -118,7 +125,7 @@ class ProductService
 
     private function createVariant(Product $product, array $data): ProductVariant
     {
-        return ProductVariant::create([
+        return ProductVariant::query()->create([
             'product_id' => $product->id,
             'sku' => $data['sku'],
             'barcode' => $data['barcode'] ?? null,
@@ -138,7 +145,7 @@ class ProductService
 
     private function createDefaultVariant(Product $product, array $data): ProductVariant
     {
-        return ProductVariant::create([
+        return ProductVariant::query()->create([
             'product_id' => $product->id,
             'sku' => $data['sku'],
             'barcode' => $data['barcode'] ?? null,
@@ -153,9 +160,9 @@ class ProductService
 
     private function resolveProductType(string $slug, Tenant $tenant): ProductType
     {
-        $cacheKey = "tenant:{$tenant->id}:product_type:slug:$slug";
+        $cacheKey = "tenant:$tenant->id:product_type:slug:$slug";
 
-        return Cache::tags(["tenant:{$tenant->id}:product_types"])
+        return Cache::tags(["tenant:$tenant->id:product_types"])
             ->remember($cacheKey, 3600, function () use ($slug, $tenant) {
                 return ProductType::accessibleTo($tenant->id)
                     ->where('slug', $slug)
@@ -168,7 +175,7 @@ class ProductService
         $base = Str::slug($name);
         $slug = $base;
 
-        for ($counter = 1; Product::where('tenant_id', $tenant->id)->where('slug', $slug)->exists(); $counter++) {
+        for ($counter = 1; Product::query()->where('tenant_id', $tenant->id)->where('slug', $slug)->exists(); $counter++) {
             $slug = "$base-$counter";
         }
 

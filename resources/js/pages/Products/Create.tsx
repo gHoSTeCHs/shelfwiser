@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import ProductController from '@/actions/App/Http/Controllers/ProductController';
 import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
@@ -10,46 +12,12 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { SchemaProperty } from '@/types';
+import { ProductCategory, ProductType, ProductVariant } from '@/types/product.ts';
+import { Shop } from '@/types/shop.ts';
 import { Form, Head, Link } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Box,
-    DollarSign,
-    Minus,
-    Package,
-    Plus,
-    Save,
-    Tag,
-} from 'lucide-react';
+import { ArrowLeft, Box, Minus, Package, Plus, Save, Tag } from 'lucide-react';
 import { useEffect, useState } from 'react';
-
-interface Shop {
-    id: number;
-    name: string;
-    slug: string;
-}
-
-interface ProductType {
-    id: number;
-    slug: string;
-    label: string;
-    description: string;
-    config_schema: {
-        type: string;
-        properties: Record<string, SchemaProperty>;
-        required: string[];
-    } | null;
-    supports_variants: boolean;
-    requires_batch_tracking: boolean;
-    requires_serial_tracking: boolean;
-}
-
-interface ProductCategory {
-    id: number;
-    name: string;
-    slug: string;
-    children?: ProductCategory[];
-}
+import { flattenCategories } from '@/lib/utils.ts';
 
 interface Props {
     shops: Shop[];
@@ -57,18 +25,6 @@ interface Props {
     categories: ProductCategory[];
 }
 
-interface ProductVariant {
-    id?: string;
-    sku: string;
-    name: string;
-    price: string;
-    cost_price: string;
-    barcode: string;
-    attributes: Record<string, string>;
-    batch_number?: string;
-    expiry_date?: string;
-    serial_number?: string;
-}
 
 export default function Create({ shops, productTypes, categories }: Props) {
     const [selectedTypeSlug, setSelectedTypeSlug] = useState<string>('');
@@ -157,22 +113,6 @@ export default function Create({ shops, productTypes, categories }: Props) {
         );
     };
 
-    const flattenCategories = (
-        cats: ProductCategory[],
-        prefix = '',
-    ): { value: number; label: string }[] => {
-        return cats.flatMap((cat) => {
-            const option = {
-                value: cat.id,
-                label: prefix + cat.name,
-            };
-            const children =
-                cat.children && cat.children.length > 0
-                    ? flattenCategories(cat.children, prefix + '  ')
-                    : [];
-            return [option, ...children];
-        });
-    };
 
     return (
         <AppLayout>
@@ -654,7 +594,8 @@ export default function Create({ shops, productTypes, categories }: Props) {
                                                         <h3 className="font-medium text-gray-900 dark:text-white">
                                                             Variant #{index + 1}
                                                         </h3>
-                                                        {variants.length > 1 && (
+                                                        {variants.length >
+                                                            1 && (
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"

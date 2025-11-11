@@ -5,6 +5,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { ProductListResponse } from '@/types/product.ts';
 import { Head, Link } from '@inertiajs/react';
 import {
     Building2,
@@ -16,51 +17,6 @@ import {
     Tag,
 } from 'lucide-react';
 import { useState } from 'react';
-
-interface ProductType {
-    id: number;
-    slug: string;
-    label: string;
-}
-
-interface ProductCategory {
-    id: number;
-    name: string;
-    slug: string;
-}
-
-interface Shop {
-    id: number;
-    name: string;
-    slug: string;
-}
-
-interface ProductVariant {
-    id: number;
-    sku: string;
-    price: number;
-    is_active: boolean;
-}
-
-interface Product {
-    id: number;
-    name: string;
-    slug: string;
-    description: string | null;
-    has_variants: boolean;
-    is_active: boolean;
-    type: ProductType;
-    category: ProductCategory | null;
-    shop: Shop;
-    variants: ProductVariant[];
-    variants_count: number;
-    created_at: string;
-}
-
-interface ProductListResponse {
-    data: Product[];
-    total: number;
-}
 
 interface Props {
     products: ProductListResponse;
@@ -81,10 +37,7 @@ export default function Index({ products }: Props) {
 
     const getProductTypes = () => {
         const types = products.data.map((p) => p.type);
-        const uniqueTypes = Array.from(
-            new Map(types.map((t) => [t.slug, t])).values(),
-        );
-        return uniqueTypes;
+        return Array.from(new Map(types.map((t) => [t.slug, t])).values());
     };
 
     return (
@@ -159,9 +112,14 @@ export default function Index({ products }: Props) {
                 ) : (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         {filteredProducts.map((product) => {
-                            const minPrice = product.variants.length > 0
-                                ? Math.min(...product.variants.map((v) => parseFloat(v.price.toString())))
-                                : 0;
+                            const minPrice =
+                                product.variants.length > 0
+                                    ? Math.min(
+                                          ...product.variants.map((v) =>
+                                              parseFloat(v.price.toString()),
+                                          ),
+                                      )
+                                    : 0;
 
                             return (
                                 <Card
@@ -239,7 +197,9 @@ export default function Index({ products }: Props) {
                                             <Link
                                                 href={`/products/${product.id}`}
                                                 className="flex-1"
-                                                onClick={(e) => e.stopPropagation()}
+                                                onClick={(e) =>
+                                                    e.stopPropagation()
+                                                }
                                             >
                                                 <Button
                                                     variant="outline"
@@ -251,7 +211,9 @@ export default function Index({ products }: Props) {
                                             <Link
                                                 href={`/products/${product.id}/edit`}
                                                 className="flex-1"
-                                                onClick={(e) => e.stopPropagation()}
+                                                onClick={(e) =>
+                                                    e.stopPropagation()
+                                                }
                                             >
                                                 <Button className="w-full">
                                                     <Settings className="mr-2 h-4 w-4" />
