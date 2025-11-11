@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\Web\StaffManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -28,6 +29,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('shops', ShopController::class);
 
     Route::resource('products', ProductController::class);
+
+    Route::prefix('stock-movements')->name('stock-movements.')->group(function () {
+        Route::get('/', [StockMovementController::class, 'index'])->name('index');
+        Route::get('/{stockMovement}', [StockMovementController::class, 'show'])->name('show');
+        Route::post('/adjust', [StockMovementController::class, 'adjustStock'])->name('adjust');
+        Route::post('/transfer', [StockMovementController::class, 'transferStock'])->name('transfer');
+        Route::post('/stock-take', [StockMovementController::class, 'stockTake'])->name('stock-take');
+        Route::get('/variant/{variant}/history', [StockMovementController::class, 'history'])->name('history');
+    });
 
 });
 
