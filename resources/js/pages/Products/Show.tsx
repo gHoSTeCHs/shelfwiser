@@ -8,6 +8,8 @@ import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
 import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
+import { ProductCategory, ProductType } from '@/types/product.ts';
+import { Shop } from '@/types/shop.ts';
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowRightLeft,
@@ -24,8 +26,6 @@ import {
     TrendingUp,
     Warehouse
 } from 'lucide-react';
-import { ProductCategory, ProductType } from '@/types/product.ts';
-import { Shop } from '@/types/shop.ts';
 import { useState } from 'react';
 
 interface InventoryLocation {
@@ -76,7 +76,12 @@ interface Props {
 }
 
 export default function Show({ product, can_manage }: Props) {
-    const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+    console.log(product);
+
+    // Initialize with first variant if available
+    const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
+        product.variants.length > 0 ? product.variants[0] : null
+    );
     const adjustStockModal = useModal();
     const transferStockModal = useModal();
 
@@ -102,6 +107,10 @@ export default function Show({ product, can_manage }: Props) {
     const handleTransferStock = (variant: ProductVariant) => {
         setSelectedVariant(variant);
         transferStockModal.openModal();
+    };
+
+    const handleVariantSelect = (variant: ProductVariant) => {
+        setSelectedVariant(variant);
     };
 
     const formatPrice = (price: number): string => {
@@ -230,7 +239,7 @@ export default function Show({ product, can_manage }: Props) {
 
                         {product.custom_attributes &&
                             Object.keys(product.custom_attributes).length >
-                                0 && (
+                            0 && (
                                 <Card title="Product Attributes">
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         {Object.entries(
@@ -246,13 +255,13 @@ export default function Show({ product, can_manage }: Props) {
                                                             ? 'Yes'
                                                             : 'No'
                                                         : Array.isArray(value)
-                                                          ? value.join(', ')
-                                                          : typeof value ===
-                                                              'object'
-                                                            ? JSON.stringify(
-                                                                  value,
-                                                              )
-                                                            : value}
+                                                            ? value.join(', ')
+                                                            : typeof value ===
+                                                            'object'
+                                                                ? JSON.stringify(
+                                                                    value,
+                                                                )
+                                                                : value}
                                                 </p>
                                             </div>
                                         ))}
@@ -266,18 +275,33 @@ export default function Show({ product, can_manage }: Props) {
                                     const totalStock = getTotalStock(variant);
                                     const availableStock =
                                         getAvailableStock(variant);
+                                    const isSelected = selectedVariant?.id === variant.id;
 
                                     return (
                                         <div
                                             key={variant.id}
-                                            className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+                                            className={`
+                                                cursor-pointer rounded-lg border p-4 transition-all
+                                                ${isSelected
+                                                ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500 dark:border-brand-400 dark:bg-brand-950/50 dark:ring-brand-400'
+                                                : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                                            }
+                                            `}
+                                            onClick={() => handleVariantSelect(variant)}
                                         >
                                             <div className="mb-3 flex items-start justify-between">
-                                                <div>
-                                                    <h3 className="font-semibold text-gray-900 dark:text-white">
-                                                        {variant.name ||
-                                                            'Default Variant'}
-                                                    </h3>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                                                            {variant.name ||
+                                                                'Default Variant'}
+                                                        </h3>
+                                                        {isSelected && (
+                                                            <Badge variant="solid" color="primary" size="sm">
+                                                                Selected
+                                                            </Badge>
+                                                        )}
+                                                    </div>
                                                     <p className="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
                                                         <Barcode className="mr-1 h-4 w-4" />
                                                         SKU: {variant.sku}
@@ -330,8 +354,12 @@ export default function Show({ product, can_manage }: Props) {
                                                     </p>
                                                     <div className="mt-1">
                                                         <StockLevelBadge
-                                                            totalStock={totalStock}
-                                                            availableStock={availableStock}
+                                                            totalStock={
+                                                                totalStock
+                                                            }
+                                                            availableStock={
+                                                                availableStock
+                                                            }
                                                             size="sm"
                                                         />
                                                     </div>
@@ -400,9 +428,9 @@ export default function Show({ product, can_manage }: Props) {
                                                                 variant.attributes,
                                                             ).map(
                                                                 ([
-                                                                    key,
-                                                                    value,
-                                                                ]) => (
+                                                                     key,
+                                                                     value,
+                                                                 ]) => (
                                                                     <Badge
                                                                         key={
                                                                             key
@@ -418,30 +446,37 @@ export default function Show({ product, can_manage }: Props) {
                                                     </div>
                                                 )}
 
-                                            {can_manage && variant.inventory_locations.length > 0 && (
-                                                <div className="mt-4 flex gap-2 border-t border-gray-200 pt-4 dark:border-gray-700">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => handleAdjustStock(variant)}
-                                                        className="flex-1"
+                                            {can_manage &&
+                                                variant.inventory_locations
+                                                    .length > 0 && (
+                                                    <div
+                                                        className="mt-4 flex gap-2 border-t border-gray-200 pt-4 dark:border-gray-700"
+                                                        onClick={(e) => e.stopPropagation()}
                                                     >
-                                                        <Plus className="mr-2 h-4 w-4" />
-                                                        Adjust Stock
-                                                    </Button>
-                                                    {variant.inventory_locations.length > 1 && (
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
-                                                            onClick={() => handleTransferStock(variant)}
+                                                            onClick={() => handleAdjustStock(variant)}
                                                             className="flex-1"
                                                         >
-                                                            <ArrowRightLeft className="mr-2 h-4 w-4" />
-                                                            Transfer
+                                                            <Plus className="mr-2 h-4 w-4" />
+                                                            Adjust Stock
                                                         </Button>
-                                                    )}
-                                                </div>
-                                            )}
+                                                        {variant
+                                                            .inventory_locations
+                                                            .length > 1 && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => handleTransferStock(variant)}
+                                                                className="flex-1"
+                                                            >
+                                                                <ArrowRightLeft className="mr-2 h-4 w-4" />
+                                                                Transfer
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                )}
                                         </div>
                                     );
                                 })}
@@ -503,28 +538,28 @@ export default function Show({ product, can_manage }: Props) {
                                                 {product.has_variants &&
                                                 product.variants.length > 1
                                                     ? `${formatPrice(
-                                                          Math.min(
-                                                              ...product.variants.map(
-                                                                  (v) =>
-                                                                      parseFloat(
-                                                                          v.price.toString(),
-                                                                      ),
-                                                              ),
-                                                          ),
-                                                      )} - ${formatPrice(
-                                                          Math.max(
-                                                              ...product.variants.map(
-                                                                  (v) =>
-                                                                      parseFloat(
-                                                                          v.price.toString(),
-                                                                      ),
-                                                              ),
-                                                          ),
-                                                      )}`
+                                                        Math.min(
+                                                            ...product.variants.map(
+                                                                (v) =>
+                                                                    parseFloat(
+                                                                        v.price.toString(),
+                                                                    ),
+                                                            ),
+                                                        ),
+                                                    )} - ${formatPrice(
+                                                        Math.max(
+                                                            ...product.variants.map(
+                                                                (v) =>
+                                                                    parseFloat(
+                                                                        v.price.toString(),
+                                                                    ),
+                                                            ),
+                                                        ),
+                                                    )}`
                                                     : formatPrice(
-                                                          product.variants[0]
-                                                              .price,
-                                                      )}
+                                                        product.variants[0]
+                                                            .price,
+                                                    )}
                                             </span>
                                         </div>
                                     </div>
@@ -572,13 +607,15 @@ export default function Show({ product, can_manage }: Props) {
                                 shop_id: product.shop.id,
                             },
                         }}
-                        locations={selectedVariant.inventory_locations.map(loc => ({
-                            ...loc,
-                            locatable: {
-                                id: loc.location_id,
-                                name: product.shop.name,
-                            },
-                        }))}
+                        locations={selectedVariant.inventory_locations.map(
+                            (loc) => ({
+                                ...loc,
+                                locatable: {
+                                    id: loc.location_id,
+                                    name: product.shop.name,
+                                },
+                            }),
+                        )}
                     />
                     <StockTransferModal
                         isOpen={transferStockModal.isOpen}
@@ -592,13 +629,15 @@ export default function Show({ product, can_manage }: Props) {
                                 shop_id: product.shop.id,
                             },
                         }}
-                        locations={selectedVariant.inventory_locations.map(loc => ({
-                            ...loc,
-                            locatable: {
-                                id: loc.location_id,
-                                name: product.shop.name,
-                            },
-                        }))}
+                        locations={selectedVariant.inventory_locations.map(
+                            (loc) => ({
+                                ...loc,
+                                locatable: {
+                                    id: loc.location_id,
+                                    name: product.shop.name,
+                                },
+                            }),
+                        )}
                     />
                 </>
             )}

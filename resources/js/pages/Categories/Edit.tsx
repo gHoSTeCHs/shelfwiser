@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
+import { useState } from 'react';
 
 interface Category {
     id: number;
@@ -27,21 +28,33 @@ interface Props {
 }
 
 export default function Edit({ category, parentCategories }: Props) {
+    const [name, setName] = useState(category.name);
+    const [description, setDescription] = useState(category.description || '');
+    const [parentId, setParentId] = useState(
+        category.parent_id?.toString() || '',
+    );
+    const [isActive, setIsActive] = useState(category.is_active);
+
     const flattenCategories = (
         categories: Category[],
-        level = 0
+        level = 0,
     ): Array<{ id: number; name: string; level: number }> => {
         let result: Array<{ id: number; name: string; level: number }> = [];
 
         categories.forEach((cat) => {
-            result.push({
-                id: cat.id,
-                name: cat.name,
-                level,
-            });
+            // Exclude current category and its children to prevent circular references
+            if (cat.id !== category.id) {
+                result.push({
+                    id: cat.id,
+                    name: cat.name,
+                    level,
+                });
 
-            if (cat.children && cat.children.length > 0) {
-                result = result.concat(flattenCategories(cat.children, level + 1));
+                if (cat.children && cat.children.length > 0) {
+                    result = result.concat(
+                        flattenCategories(cat.children, level + 1),
+                    );
+                }
             }
         });
 
@@ -49,6 +62,15 @@ export default function Edit({ category, parentCategories }: Props) {
     };
 
     const flatCategories = flattenCategories(parentCategories);
+
+    // Convert flat categories to options for Select component
+    const parentCategoryOptions = [
+        { value: '', label: 'None (Top Level Category)' },
+        ...flatCategories.map((cat) => ({
+            value: cat.id.toString(),
+            label: `${'—'.repeat(cat.level)} ${cat.name}`,
+        })),
+    ];
 
     return (
         <AppLayout>
@@ -80,98 +102,158 @@ export default function Edit({ category, parentCategories }: Props) {
                     })}
                     method="put"
                 >
-                    <Card>
-                        <div className="space-y-6">
-                            <div>
-                                <Label htmlFor="name">
-                                    Category Name <span className="text-error-500">*</span>
-                                </Label>
-                                <Input
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    defaultValue={category.name}
-                                    required
-                                    placeholder="e.g., Electronics, Clothing, Furniture"
-                                />
-                                <InputError message="" />
-                            </div>
+                    {({ errors, processing }) => (
+                        <>
+                            <Card>
+                                <div className="space-y-6">
+                                    <div>
+                                        <Label htmlFor="name">
+                                            Category Name{' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
+                                        </Label>
+                                        <Input
+                                            type="text"
+                                            id="name"
+                                            name="name"
+                                            value={name}
+                                            onChange={(e) =>
+                                                setName(e.target.value)
+                                            }
+                                            error={!!errors.name}
+                                            placeholder="e.g., Electronics, Clothing, Furniture"
+                                            required
+                                        />
+                                        <InputError message={errors.name} />
+                                    </div>
 
-                            <div>
-                                <Label htmlFor="slug">Slug</Label>
-                                <Input
-                                    type="text"
-                                    id="slug"
-                                    value={category.slug}
-                                    disabled
-                                    className="bg-gray-50 dark:bg-gray-800"
-                                />
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    Slug is automatically generated from the category name
-                                </p>
-                            </div>
+                                    <div>
+                                        <Label htmlFor="slug">Slug</Label>
+                                        <Input
+                                            type="text"
+                                            id="slug"
+                                            value={category.slug}
+                                            onChange={() => {}}
+                                            disabled
+                                            className="bg-gray-50 dark:bg-gray-800"
+                                        />
+                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Slug is automatically generated from
+                                            the category name
+                                        </p>
+                                    </div>
 
-                            <div>
-                                <Label htmlFor="description">Description</Label>
-                                <TextArea
-                                    id="description"
-                                    name="description"
-                                    defaultValue={category.description || ''}
-                                    rows={4}
-                                    placeholder="Describe what products belong in this category..."
-                                />
-                                <InputError message="" />
-                            </div>
+                                    <div>
+                                        <Label htmlFor="description">
+                                            Description
+                                        </Label>
+                                        <TextArea
+                                            id="description"
+                                            value={description}
+                                            onChange={(value) =>
+                                                setDescription(value)
+                                            }
+                                            rows={4}
+                                            placeholder="Describe what products belong in this category..."
+                                            error={!!errors.description}
+                                        />
+                                        {/* Hidden input to submit the value */}
+                                        <input
+                                            type="hidden"
+                                            name="description"
+                                            value={description}
+                                        />
+                                        <InputError
+                                            message={errors.description}
+                                        />
+                                    </div>
 
-                            <div>
-                                <Label htmlFor="parent_id">
-                                    Parent Category (Optional)
-                                </Label>
-                                <Select
-                                    name="parent_id"
-                                    id="parent_id"
-                                    defaultValue={category.parent_id || ''}
+                                    <div>
+                                        <Label htmlFor="parent_id">
+                                            Parent Category (Optional)
+                                        </Label>
+                                        <Select
+                                            options={parentCategoryOptions}
+                                            placeholder="None (Top Level Category)"
+                                            onChange={(value) =>
+                                                setParentId(value)
+                                            }
+                                            defaultValue={parentId}
+                                        />
+                                        {/* Hidden input to submit the value */}
+                                        <input
+                                            type="hidden"
+                                            name="parent_id"
+                                            value={parentId}
+                                        />
+                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Cannot create circular references
+                                        </p>
+                                        <InputError
+                                            message={errors.parent_id}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <Label
+                                            htmlFor="is_active"
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Checkbox
+                                                id="is_active"
+                                                name="is_active"
+                                                checked={isActive}
+                                                onChange={(checked) =>
+                                                    setIsActive(checked)
+                                                }
+                                            />
+                                            {/* Hidden input to submit the value */}
+                                            <input
+                                                type="hidden"
+                                                name="is_active"
+                                                value={isActive ? '1' : '0'}
+                                            />
+                                            <span>Active</span>
+                                        </Label>
+                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Inactive categories won't appear in
+                                            product forms
+                                        </p>
+                                    </div>
+                                </div>
+                            </Card>
+
+                            <div className="flex items-center justify-end gap-3">
+                                <Link
+                                    href={ProductCategoryController.show.url({
+                                        category: category.id,
+                                    })}
                                 >
-                                    <option value="">None (Top Level Category)</option>
-                                    {flatCategories.map((cat) => (
-                                        <option key={cat.id} value={cat.id}>
-                                            {'—'.repeat(cat.level)} {cat.name}
-                                        </option>
-                                    ))}
-                                </Select>
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    Cannot create circular references
-                                </p>
-                                <InputError message="" />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        disabled={processing}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </Link>
+                                <Button type="submit" disabled={processing}>
+                                    {processing ? (
+                                        <>
+                                            <Save className="mr-2 h-4 w-4 animate-pulse" />
+                                            Updating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="mr-2 h-4 w-4" />
+                                            Update Category
+                                        </>
+                                    )}
+                                </Button>
                             </div>
-
-                            <div>
-                                <Label htmlFor="is_active" className="flex items-center gap-2">
-                                    <Checkbox
-                                        id="is_active"
-                                        name="is_active"
-                                        defaultChecked={category.is_active}
-                                    />
-                                    <span>Active</span>
-                                </Label>
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    Inactive categories won't appear in product forms
-                                </p>
-                            </div>
-                        </div>
-                    </Card>
-
-                    <div className="flex items-center justify-end gap-3">
-                        <Link href={ProductCategoryController.show.url({ category: category.id })}>
-                            <Button type="button" variant="outline">
-                                Cancel
-                            </Button>
-                        </Link>
-                        <Button type="submit">
-                            <Save className="mr-2 h-4 w-4" />
-                            Update Category
-                        </Button>
-                    </div>
+                        </>
+                    )}
                 </Form>
             </div>
         </AppLayout>

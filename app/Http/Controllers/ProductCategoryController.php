@@ -44,7 +44,7 @@ class ProductCategoryController extends Controller
 
         $tenantId = auth()->user()->tenant_id;
 
-        $parentCategories = ProductCategory::where('tenant_id', $tenantId)
+        $parentCategories = ProductCategory::query()->where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->whereNull('parent_id')
             ->with('children')

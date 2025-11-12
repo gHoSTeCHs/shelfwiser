@@ -10,6 +10,7 @@ use App\Models\InventoryLocation;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Services\StockMovementService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -30,7 +31,7 @@ class StockMovementController extends Controller
         $tenantId = auth()->user()->tenant_id;
 
         return Inertia::render('StockMovements/Index', [
-            'movements' => StockMovement::where('tenant_id', $tenantId)
+            'movements' => StockMovement::query()->where('tenant_id', $tenantId)
                 ->with([
                     'productVariant.product',
                     'fromLocation.locatable',
@@ -62,8 +63,8 @@ class StockMovementController extends Controller
     public function adjustStock(AdjustStockRequest $request): RedirectResponse|JsonResponse
     {
         try {
-            $variant = ProductVariant::findOrFail($request->input('product_variant_id'));
-            $location = InventoryLocation::findOrFail($request->input('inventory_location_id'));
+            $variant = ProductVariant::query()->findOrFail($request->input('product_variant_id'));
+            $location = InventoryLocation::query()->findOrFail($request->input('inventory_location_id'));
             $type = StockMovementType::from($request->input('type'));
 
             $movement = $this->stockMovementService->adjustStock(
@@ -85,7 +86,7 @@ class StockMovementController extends Controller
             }
 
             return Redirect::back()->with('success', 'Stock adjusted successfully.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
@@ -100,9 +101,9 @@ class StockMovementController extends Controller
     public function transferStock(TransferStockRequest $request): RedirectResponse|JsonResponse
     {
         try {
-            $variant = ProductVariant::findOrFail($request->input('product_variant_id'));
-            $fromLocation = InventoryLocation::findOrFail($request->input('from_location_id'));
-            $toLocation = InventoryLocation::findOrFail($request->input('to_location_id'));
+            $variant = ProductVariant::query()->findOrFail($request->input('product_variant_id'));
+            $fromLocation = InventoryLocation::query()->findOrFail($request->input('from_location_id'));
+            $toLocation = InventoryLocation::query()->findOrFail($request->input('to_location_id'));
 
             $movements = $this->stockMovementService->transferStock(
                 variant: $variant,
@@ -126,7 +127,7 @@ class StockMovementController extends Controller
             }
 
             return Redirect::back()->with('success', 'Stock transferred successfully.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
@@ -141,8 +142,8 @@ class StockMovementController extends Controller
     public function stockTake(StockTakeRequest $request): RedirectResponse|JsonResponse
     {
         try {
-            $variant = ProductVariant::findOrFail($request->input('product_variant_id'));
-            $location = InventoryLocation::findOrFail($request->input('inventory_location_id'));
+            $variant = ProductVariant::query()->findOrFail($request->input('product_variant_id'));
+            $location = InventoryLocation::query()->findOrFail($request->input('inventory_location_id'));
 
             $movement = $this->stockMovementService->stockTake(
                 variant: $variant,
@@ -165,7 +166,7 @@ class StockMovementController extends Controller
             }
 
             return Redirect::back()->with('success', $message);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,

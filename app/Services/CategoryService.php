@@ -4,18 +4,23 @@ namespace App\Services;
 
 use App\Models\ProductCategory;
 use App\Models\Tenant;
+use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Throwable;
 
 class CategoryService
 {
+    /**
+     * @throws Throwable
+     */
     public function create(array $data, Tenant $tenant): ProductCategory
     {
         return DB::transaction(function () use ($data, $tenant) {
             $slug = $this->generateUniqueSlug($data['name'], $tenant->id);
 
-            $category = ProductCategory::create([
+            $category = ProductCategory::query()->create([
                 'tenant_id' => $tenant->id,
                 'parent_id' => $data['parent_id'] ?? null,
                 'name' => $data['name'],
@@ -30,15 +35,18 @@ class CategoryService
         });
     }
 
+    /**
+     * @throws Throwable
+     */
     public function update(ProductCategory $category, array $data): ProductCategory
     {
         return DB::transaction(function () use ($category, $data) {
             if (isset($data['parent_id']) && $data['parent_id'] === $category->id) {
-                throw new \Exception('A category cannot be its own parent.');
+                throw new Exception('A category cannot be its own parent.');
             }
 
             if (isset($data['parent_id']) && $this->wouldCreateCircularReference($category, $data['parent_id'])) {
-                throw new \Exception('Cannot set parent: this would create a circular reference.');
+                throw new Exception('Cannot set parent: this would create a circular reference.');
             }
 
             if (isset($data['name']) && $data['name'] !== $category->name) {
@@ -53,15 +61,18 @@ class CategoryService
         });
     }
 
+    /**
+     * @throws Throwable
+     */
     public function delete(ProductCategory $category): bool
     {
         return DB::transaction(function () use ($category) {
             if ($category->products()->exists()) {
-                throw new \Exception('Cannot delete category with associated products. Please reassign or delete the products first.');
+                throw new Exception('Cannot delete category with associated products. Please reassign or delete the products first.');
             }
 
             if ($category->children()->exists()) {
-                throw new \Exception('Cannot delete category with subcategories. Please delete or reassign the subcategories first.');
+                throw new Exception('Cannot delete category with subcategories. Please delete or reassign the subcategories first.');
             }
 
             $tenantId = $category->tenant_id;
@@ -77,11 +88,11 @@ class CategoryService
 
     public function getCategoryTree(int $tenantId, ?int $parentId = null): array
     {
-        $cacheKey = "tenant:{$tenantId}:category_tree:" . ($parentId ?? 'root');
+        $cacheKey = "tenant:$tenantId:category_tree:" . ($parentId ?? 'root');
 
-        return Cache::tags(["tenant:{$tenantId}:categories"])
+        return Cache::tags(["tenant:$tenantId:categories"])
             ->remember($cacheKey, 3600, function () use ($tenantId, $parentId) {
-                $categories = ProductCategory::where('tenant_id', $tenantId)
+                $categories = ProductCategory::query()->where('tenant_id', $tenantId)
                     ->where('parent_id', $parentId)
                     ->where('is_active', true)
                     ->with(['children' => function ($query) {
@@ -137,7 +148,7 @@ class CategoryService
 
     protected function slugExists(string $slug, int $tenantId, ?int $excludeId = null): bool
     {
-        $query = ProductCategory::where('tenant_id', $tenantId)
+        $query = ProductCategory::query()->where('tenant_id', $tenantId)
             ->where('slug', $slug);
 
         if ($excludeId) {
@@ -153,7 +164,7 @@ class CategoryService
             return false;
         }
 
-        $current = ProductCategory::find($newParentId);
+        $current = ProductCategory::query()->find($newParentId);
 
         while ($current) {
             if ($current->id === $category->id) {
@@ -167,6 +178,6 @@ class CategoryService
 
     protected function clearCache(int $tenantId): void
     {
-        Cache::tags(["tenant:{$tenantId}:categories"])->flush();
+        Cache::tags(["tenant:$tenantId:categories"])->flush();
     }
 }

@@ -24,8 +24,8 @@ export default function StockTransferModal({
     variant,
     locations,
 }: Props) {
-    const [fromLocationId, setFromLocationId] = useState<number | ''>('');
-    const [toLocationId, setToLocationId] = useState<number | ''>('');
+    const [fromLocationId, setFromLocationId] = useState<string>('');
+    const [toLocationId, setToLocationId] = useState<string>('');
     const [quantity, setQuantity] = useState<string>('');
     const [reason, setReason] = useState<string>('');
     const [notes, setNotes] = useState<string>('');
@@ -39,18 +39,36 @@ export default function StockTransferModal({
         onClose();
     };
 
-    const getAvailableQuantity = (locationId: number): number => {
-        const location = locations.find((loc) => loc.id === locationId);
+    const getAvailableQuantity = (locationId: string): number => {
+        const location = locations.find(
+            (loc) => loc.id === parseInt(locationId),
+        );
         if (!location) return 0;
         return location.quantity - location.reserved_quantity;
     };
 
-    const selectedFromLocation = locations.find(
-        (loc) => loc.id === fromLocationId
-    );
+    // Filter from locations (exclude selected "to" location)
+    const fromLocationOptions = locations
+        .filter((loc) => loc.id.toString() !== toLocationId)
+        .map((location) => ({
+            value: location.id.toString(),
+            label: `${location.locatable?.name || `Location #${location.id}`} - Available: ${location.quantity - location.reserved_quantity}${location.bin_location ? ` (${location.bin_location})` : ''}`,
+        }));
+
+    // Filter to locations (exclude selected "from" location)
+    const toLocationOptions = locations
+        .filter((loc) => loc.id.toString() !== fromLocationId)
+        .map((location) => ({
+            value: location.id.toString(),
+            label: `${location.locatable?.name || `Location #${location.id}`} - Current: ${location.quantity}${location.bin_location ? ` (${location.bin_location})` : ''}`,
+        }));
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} className="max-w-2xl p-6 sm:p-8">
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            className="max-w-2xl p-6 sm:p-8"
+        >
             <div className="mb-6">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                     Transfer Stock
@@ -67,146 +85,138 @@ export default function StockTransferModal({
             <Form
                 action={StockMovementController.transferStock.url()}
                 method="post"
-                data={{
-                    product_variant_id: variant.id,
-                    from_location_id: fromLocationId,
-                    to_location_id: toLocationId,
-                    quantity: parseInt(quantity) || 0,
-                    reason,
-                    notes,
-                }}
                 onSuccess={handleSuccess}
             >
-                <div className="space-y-5">
-                    <div>
-                        <Label htmlFor="from_location">
-                            From Location <span className="text-error-500">*</span>
-                        </Label>
-                        <Select
-                            id="from_location"
-                            value={fromLocationId}
-                            onChange={(e) =>
-                                setFromLocationId(Number(e.target.value) || '')
-                            }
-                            required
-                        >
-                            <option value="">Select source location</option>
-                            {locations
-                                .filter((loc) => loc.id !== toLocationId)
-                                .map((location) => (
-                                    <option key={location.id} value={location.id}>
-                                        {location.locatable?.name ||
-                                            `Location #${location.id}`}
-                                        {' - '}
-                                        Available:{' '}
-                                        {location.quantity - location.reserved_quantity}
-                                        {location.bin_location &&
-                                            ` (${location.bin_location})`}
-                                    </option>
-                                ))}
-                        </Select>
-                        <InputError message="" />
-                    </div>
+                {({ errors, processing }) => (
+                    <>
+                        <div className="space-y-5">
+                            <div>
+                                <Label htmlFor="from_location">
+                                    From Location{' '}
+                                    <span className="text-error-500">*</span>
+                                </Label>
+                                <Select
+                                    options={fromLocationOptions}
+                                    placeholder="Select source location"
+                                    onChange={(value) =>
+                                        setFromLocationId(value)
+                                    }
+                                    defaultValue={fromLocationId}
+                                />
+                                <InputError message={errors.from_location_id} />
+                            </div>
 
-                    <div className="flex items-center justify-center py-2">
-                        <ArrowRight className="h-5 w-5 text-gray-400" />
-                    </div>
+                            <div className="flex items-center justify-center py-2">
+                                <ArrowRight className="h-5 w-5 text-gray-400" />
+                            </div>
 
-                    <div>
-                        <Label htmlFor="to_location">
-                            To Location <span className="text-error-500">*</span>
-                        </Label>
-                        <Select
-                            id="to_location"
-                            value={toLocationId}
-                            onChange={(e) =>
-                                setToLocationId(Number(e.target.value) || '')
-                            }
-                            required
-                        >
-                            <option value="">Select destination location</option>
-                            {locations
-                                .filter((loc) => loc.id !== fromLocationId)
-                                .map((location) => (
-                                    <option key={location.id} value={location.id}>
-                                        {location.locatable?.name ||
-                                            `Location #${location.id}`}
-                                        {' - '}
-                                        Current: {location.quantity}
-                                        {location.bin_location &&
-                                            ` (${location.bin_location})`}
-                                    </option>
-                                ))}
-                        </Select>
-                        <InputError message="" />
-                    </div>
+                            <div>
+                                <Label htmlFor="to_location">
+                                    To Location{' '}
+                                    <span className="text-error-500">*</span>
+                                </Label>
+                                <Select
+                                    options={toLocationOptions}
+                                    placeholder="Select destination location"
+                                    onChange={(value) => setToLocationId(value)}
+                                    defaultValue={toLocationId}
+                                />
+                                <InputError message={errors.to_location_id} />
+                            </div>
 
-                    <div>
-                        <Label htmlFor="quantity">
-                            Quantity <span className="text-error-500">*</span>
-                        </Label>
-                        <Input
-                            type="number"
-                            id="quantity"
-                            value={quantity}
-                            onChange={(e) => setQuantity(e.target.value)}
-                            min={1}
-                            max={
-                                fromLocationId
-                                    ? getAvailableQuantity(Number(fromLocationId))
-                                    : undefined
-                            }
-                            required
-                            placeholder="Enter quantity to transfer"
-                        />
-                        {fromLocationId && (
-                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Available to transfer:{' '}
-                                {getAvailableQuantity(Number(fromLocationId))} units
-                            </p>
-                        )}
-                        <InputError message="" />
-                    </div>
+                            <div>
+                                <Label htmlFor="quantity">
+                                    Quantity{' '}
+                                    <span className="text-error-500">*</span>
+                                </Label>
+                                <Input
+                                    type="number"
+                                    id="quantity"
+                                    name="quantity"
+                                    value={quantity}
+                                    onChange={(e) =>
+                                        setQuantity(e.target.value)
+                                    }
+                                    min={1}
+                                    max={
+                                        fromLocationId
+                                            ? getAvailableQuantity(
+                                                  fromLocationId,
+                                              )
+                                            : undefined
+                                    }
+                                    error={!!errors.quantity}
+                                    placeholder="Enter quantity to transfer"
+                                    required
+                                />
+                                {fromLocationId && (
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Available to transfer:{' '}
+                                        {getAvailableQuantity(fromLocationId)}{' '}
+                                        units
+                                    </p>
+                                )}
+                                <InputError message={errors.quantity} />
+                            </div>
 
-                    <div>
-                        <Label htmlFor="reason">Reason</Label>
-                        <Input
-                            type="text"
-                            id="reason"
-                            value={reason}
-                            onChange={(e) => setReason(e.target.value)}
-                            placeholder="Brief reason for transfer"
-                        />
-                        <InputError message="" />
-                    </div>
+                            <div>
+                                <Label htmlFor="reason">Reason</Label>
+                                <Input
+                                    type="text"
+                                    id="reason"
+                                    name="reason"
+                                    value={reason}
+                                    onChange={(e) => setReason(e.target.value)}
+                                    error={!!errors.reason}
+                                    placeholder="Brief reason for transfer"
+                                />
+                                <InputError message={errors.reason} />
+                            </div>
 
-                    <div>
-                        <Label htmlFor="notes">Notes</Label>
-                        <TextArea
-                            id="notes"
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Additional notes (optional)"
-                            rows={3}
-                        />
-                        <InputError message="" />
-                    </div>
-                </div>
+                            <div>
+                                <Label htmlFor="notes">Notes</Label>
+                                <TextArea
+                                    id="notes"
+                                    value={notes}
+                                    onChange={(value) => setNotes(value)}
+                                    placeholder="Additional notes (optional)"
+                                    rows={3}
+                                    error={!!errors.notes}
+                                />
+                                <InputError message={errors.notes} />
+                            </div>
+                        </div>
 
-                <div className="mt-8 flex items-center justify-end gap-3">
-                    <Button
-                        type="button"
-                        onClick={onClose}
-                        className="bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                    >
-                        <X className="mr-2 h-4 w-4" />
-                        Cancel
-                    </Button>
-                    <Button type="submit" className="bg-brand-600 hover:bg-brand-700">
-                        <Check className="mr-2 h-4 w-4" />
-                        Transfer Stock
-                    </Button>
-                </div>
+                        <div className="mt-8 flex items-center justify-end gap-3">
+                            <Button
+                                type="button"
+                                onClick={onClose}
+                                disabled={processing}
+                                className="bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                            >
+                                <X className="mr-2 h-4 w-4" />
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={processing}
+                                className="bg-brand-600 hover:bg-brand-700"
+                            >
+                                {processing ? (
+                                    <>
+                                        <Check className="mr-2 h-4 w-4 animate-pulse" />
+                                        Transferring...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check className="mr-2 h-4 w-4" />
+                                        Transfer Stock
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </>
+                )}
             </Form>
         </Modal>
     );

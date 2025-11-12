@@ -7,11 +7,10 @@ interface Props {
     lowStockThreshold?: number;
     outOfStockThreshold?: number;
     showIcon?: boolean;
-    size?: 'sm' | 'md' | 'lg';
+    size?: 'sm' | 'md';
 }
 
 export default function StockLevelBadge({
-    totalStock,
     availableStock,
     lowStockThreshold = 10,
     outOfStockThreshold = 0,
@@ -46,8 +45,6 @@ export default function StockLevelBadge({
         switch (size) {
             case 'sm':
                 return 'h-3 w-3';
-            case 'lg':
-                return 'h-5 w-5';
             default:
                 return 'h-4 w-4';
         }
@@ -56,9 +53,13 @@ export default function StockLevelBadge({
     const status = getStockStatus();
 
     return (
-        <Badge color={status.color} className="inline-flex items-center gap-1.5">
-            {showIcon && status.icon}
-            <span>{status.label}</span>
+        <Badge
+            variant="light"
+            size={size}
+            color={status.color}
+            startIcon={showIcon ? status.icon : undefined}
+        >
+            {status.label}
         </Badge>
     );
 }

@@ -6,13 +6,17 @@ use App\Enums\StockMovementType;
 use App\Models\InventoryLocation;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
-use App\Models\Tenant;
 use App\Models\User;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class StockMovementService
 {
+    /**
+     * @throws Throwable
+     */
     public function adjustStock(
         ProductVariant $variant,
         InventoryLocation $location,
@@ -32,19 +36,19 @@ class StockMovementService
         try {
             return DB::transaction(function () use ($variant, $location, $quantity, $type, $user, $reason, $notes) {
                 $quantityBefore = $location->quantity;
-                
+
                 if ($type->isIncrease()) {
                     $location->quantity += $quantity;
                 } elseif ($type->isDecrease()) {
                     if ($location->quantity < $quantity) {
-                        throw new \Exception('Insufficient stock. Available: ' . $location->quantity);
+                        throw new Exception('Insufficient stock. Available: ' . $location->quantity);
                     }
                     $location->quantity -= $quantity;
                 }
-                
+
                 $location->save();
-                
-                $movement = StockMovement::create([
+
+                $movement = StockMovement::query()->create([
                     'tenant_id' => $user->tenant_id,
                     'product_variant_id' => $variant->id,
                     'to_location_id' => $location->id,
@@ -62,7 +66,7 @@ class StockMovementService
 
                 return $movement;
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::error('Stock adjustment failed.', [
                 'variant_id' => $variant->id,
                 'location_id' => $location->id,
@@ -73,6 +77,9 @@ class StockMovementService
         }
     }
 
+    /**
+     * @throws Throwable
+     */
     public function transferStock(
         ProductVariant $variant,
         InventoryLocation $fromLocation,
@@ -92,7 +99,7 @@ class StockMovementService
         try {
             return DB::transaction(function () use ($variant, $fromLocation, $toLocation, $quantity, $user, $reason, $notes) {
                 if ($fromLocation->quantity < $quantity) {
-                    throw new \Exception('Insufficient stock at source location. Available: ' . $fromLocation->quantity);
+                    throw new Exception('Insufficient stock at source location. Available: ' . $fromLocation->quantity);
                 }
 
                 $fromQuantityBefore = $fromLocation->quantity;
@@ -106,7 +113,7 @@ class StockMovementService
 
                 $referenceNumber = $this->generateReferenceNumber(StockMovementType::TRANSFER_OUT);
 
-                $outMovement = StockMovement::create([
+                $outMovement = StockMovement::query()->create([
                     'tenant_id' => $user->tenant_id,
                     'product_variant_id' => $variant->id,
                     'from_location_id' => $fromLocation->id,
@@ -121,7 +128,7 @@ class StockMovementService
                     'created_by' => $user->id,
                 ]);
 
-                $inMovement = StockMovement::create([
+                $inMovement = StockMovement::query()->create([
                     'tenant_id' => $user->tenant_id,
                     'product_variant_id' => $variant->id,
                     'from_location_id' => $fromLocation->id,
@@ -146,7 +153,7 @@ class StockMovementService
                     'in' => $inMovement,
                 ];
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::error('Stock transfer failed.', [
                 'variant_id' => $variant->id,
                 'from_location_id' => $fromLocation->id,
@@ -158,6 +165,9 @@ class StockMovementService
         }
     }
 
+    /**
+     * @throws Throwable
+     */
     public function stockTake(
         ProductVariant $variant,
         InventoryLocation $location,
@@ -184,10 +194,10 @@ class StockMovementService
                 $location->quantity = $actualQuantity;
                 $location->save();
 
-                $type = $difference > 0 ? StockMovementType::ADJUSTMENT_IN : StockMovementType::ADJUSTMENT_OUT;
+//                $type = $difference > 0 ? StockMovementType::ADJUSTMENT_IN : StockMovementType::ADJUSTMENT_OUT;
                 $quantity = abs($difference);
 
-                $movement = StockMovement::create([
+                $movement = StockMovement::query()->create([
                     'tenant_id' => $user->tenant_id,
                     'product_variant_id' => $variant->id,
                     'to_location_id' => $location->id,
@@ -205,7 +215,7 @@ class StockMovementService
 
                 return $movement;
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::error('Stock take failed.', [
                 'variant_id' => $variant->id,
                 'location_id' => $location->id,

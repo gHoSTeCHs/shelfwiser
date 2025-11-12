@@ -28,7 +28,14 @@ interface Props {
     categories: Category[];
 }
 
-function CategoryTreeItem({ category, level = 0 }: { category: Category; level?: number }) {
+function CategoryTreeItem({
+    category,
+    level = 0,
+}: {
+    category: Category;
+    level?: number;
+}) {
+
     const [isExpanded, setIsExpanded] = useState(level === 0);
     const hasChildren = category.children && category.children.length > 0;
 
@@ -74,7 +81,7 @@ function CategoryTreeItem({ category, level = 0 }: { category: Category; level?:
                             )}
                         </div>
                         {category.description && (
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
+                            <p className="mt-1 line-clamp-1 text-sm text-gray-500 dark:text-gray-400">
                                 {category.description}
                             </p>
                         )}
@@ -99,11 +106,15 @@ function CategoryTreeItem({ category, level = 0 }: { category: Category; level?:
                         as="button"
                         onBefore={() =>
                             confirm(
-                                'Are you sure you want to delete this category? This action cannot be undone.'
+                                'Are you sure you want to delete this category? This action cannot be undone.',
                             )
                         }
                     >
-                        <Button size="sm" variant="outline" className="text-error-600 hover:bg-error-50 dark:text-error-400 dark:hover:bg-error-900/20">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-error-600 hover:bg-error-50 dark:text-error-400 dark:hover:bg-error-900/20"
+                        >
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     </Link>
@@ -126,6 +137,7 @@ function CategoryTreeItem({ category, level = 0 }: { category: Category; level?:
 }
 
 export default function Index({ categories }: Props) {
+
     return (
         <AppLayout>
             <Head title="Product Categories" />
@@ -137,7 +149,8 @@ export default function Index({ categories }: Props) {
                             Product Categories
                         </h1>
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Organize your products into categories and subcategories
+                            Organize your products into categories and
+                            subcategories
                         </p>
                     </div>
                     <Link href={ProductCategoryController.create.url()}>
@@ -166,7 +179,10 @@ export default function Index({ categories }: Props) {
                     <Card>
                         <div className="divide-y divide-gray-200 dark:divide-gray-700">
                             {categories.map((category) => (
-                                <CategoryTreeItem key={category.id} category={category} />
+                                <CategoryTreeItem
+                                    key={category.id}
+                                    category={category}
+                                />
                             ))}
                         </div>
                     </Card>

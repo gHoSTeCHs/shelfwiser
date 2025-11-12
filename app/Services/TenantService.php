@@ -12,6 +12,9 @@ use Illuminate\Support\Str;
 
 class TenantService extends Controller
 {
+    /**
+     * @throws \Throwable
+     */
     public function createTenant(array $tenantData, array $ownerData): array
     {
         return DB::transaction(function () use ($tenantData, $ownerData) {
