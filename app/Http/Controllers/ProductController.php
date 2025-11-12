@@ -29,7 +29,7 @@ class ProductController extends Controller
 
         return Inertia::render('Products/Index', [
             'products' => Product::where('tenant_id', $tenantId)
-                ->with(['type', 'category', 'shop', 'variants'])
+                ->with(['type', 'category', 'shop', 'variants.inventoryLocations'])
                 ->withCount('variants')
                 ->latest()
                 ->paginate(20),
@@ -94,10 +94,19 @@ class ProductController extends Controller
             ->where('is_active', true)
             ->get(['id', 'name']);
 
+        $variantIds = $product->variants->pluck('id');
+
+        $recentMovements = \App\Models\StockMovement::whereIn('product_variant_id', $variantIds)
+            ->with(['productVariant', 'fromLocation.location', 'toLocation.location', 'createdByUser'])
+            ->latest()
+            ->limit(10)
+            ->get();
+
         return Inertia::render('Products/Show', [
             'product' => $product,
             'can_manage' => auth()->user()->can('manage', $product),
             'available_shops' => $availableShops,
+            'recent_movements' => $recentMovements,
         ]);
     }
 

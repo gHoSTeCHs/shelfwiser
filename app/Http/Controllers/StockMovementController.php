@@ -243,4 +243,79 @@ class StockMovementController extends Controller
                 ->with('error', 'Failed to setup inventory locations: ' . $e->getMessage());
         }
     }
+
+    public function export(Request $request)
+    {
+        Gate::authorize('viewAny', StockMovement::class);
+
+        $tenantId = auth()->user()->tenant_id;
+        $variantId = $request->query('variant_id');
+
+        $query = StockMovement::query()
+            ->where('tenant_id', $tenantId)
+            ->with([
+                'productVariant.product',
+                'fromLocation.location',
+                'toLocation.location',
+                'createdBy:id,name',
+            ])
+            ->latest();
+
+        if ($variantId) {
+            $query->where('product_variant_id', $variantId);
+        }
+
+        $movements = $query->get();
+
+        $filename = 'stock-movements-' . now()->format('Y-m-d-His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function () use ($movements) {
+            $file = fopen('php://output', 'w');
+
+            fputcsv($file, [
+                'Date',
+                'Reference',
+                'Product',
+                'SKU',
+                'Variant',
+                'Type',
+                'Quantity',
+                'Before',
+                'After',
+                'From Location',
+                'To Location',
+                'Reason',
+                'Notes',
+                'Created By',
+            ]);
+
+            foreach ($movements as $movement) {
+                fputcsv($file, [
+                    $movement->created_at->format('Y-m-d H:i:s'),
+                    $movement->reference_number ?? 'N/A',
+                    $movement->productVariant->product->name ?? 'N/A',
+                    $movement->productVariant->sku ?? 'N/A',
+                    $movement->productVariant->name ?? 'Default',
+                    $movement->type,
+                    $movement->quantity,
+                    $movement->quantity_before ?? 'N/A',
+                    $movement->quantity_after ?? 'N/A',
+                    $movement->fromLocation?->location?->name ?? 'N/A',
+                    $movement->toLocation?->location?->name ?? 'N/A',
+                    $movement->reason ?? 'N/A',
+                    $movement->notes ?? 'N/A',
+                    $movement->createdBy->name ?? 'N/A',
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

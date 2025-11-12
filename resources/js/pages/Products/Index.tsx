@@ -1,5 +1,6 @@
 import Select from '@/components/form/Select';
 import Input from '@/components/form/input/InputField';
+import StockLevelBadge from '@/components/stock/StockLevelBadge';
 import EmptyState from '@/components/ui/EmptyState';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
@@ -121,6 +122,21 @@ export default function Index({ products }: Props) {
                                       )
                                     : 0;
 
+                            const totalStock = product.variants.reduce(
+                                (sum, variant) => {
+                                    const variantStock =
+                                        variant.inventory_locations?.reduce(
+                                            (vSum, loc) =>
+                                                vSum +
+                                                (loc.quantity -
+                                                    loc.reserved_quantity),
+                                            0,
+                                        ) || 0;
+                                    return sum + variantStock;
+                                },
+                                0,
+                            );
+
                             return (
                                 <Card
                                     key={product.id}
@@ -132,22 +148,27 @@ export default function Index({ products }: Props) {
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
                                                 {product.slug}
                                             </p>
-                                            <Badge
-                                                variant={
-                                                    product.is_active
-                                                        ? 'light'
-                                                        : 'solid'
-                                                }
-                                                color={
-                                                    product.is_active
-                                                        ? 'success'
-                                                        : 'error'
-                                                }
-                                            >
-                                                {product.is_active
-                                                    ? 'Active'
-                                                    : 'Inactive'}
-                                            </Badge>
+                                            <div className="flex items-center gap-2">
+                                                <Badge
+                                                    variant={
+                                                        product.is_active
+                                                            ? 'light'
+                                                            : 'solid'
+                                                    }
+                                                    color={
+                                                        product.is_active
+                                                            ? 'success'
+                                                            : 'error'
+                                                    }
+                                                >
+                                                    {product.is_active
+                                                        ? 'Active'
+                                                        : 'Inactive'}
+                                                </Badge>
+                                                <StockLevelBadge
+                                                    availableQuantity={totalStock}
+                                                />
+                                            </div>
                                         </div>
 
                                         {product.description && (

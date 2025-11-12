@@ -13,6 +13,7 @@ import {
     ArrowRightCircle,
     ArrowUpCircle,
     ClipboardCheck,
+    Download,
     Eye,
     Package,
     Search,
@@ -22,6 +23,7 @@ import {
     Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
+import Button from '@/components/ui/button/Button';
 
 interface PaginatedMovements {
     data: StockMovement[];
@@ -143,13 +145,21 @@ export default function Index({ movements, movementTypes }: Props) {
             <Head title="Stock Movements" />
 
             <div className="space-y-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        Stock Movements
-                    </h1>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Complete audit trail of all inventory changes
-                    </p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                            Stock Movements
+                        </h1>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Complete audit trail of all inventory changes
+                        </p>
+                    </div>
+                    <a href="/stock-movements/export" download>
+                        <Button variant="outline" size="sm">
+                            <Download className="mr-2 h-4 w-4" />
+                            Export All
+                        </Button>
+                    </a>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-3">

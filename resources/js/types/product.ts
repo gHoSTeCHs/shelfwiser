@@ -1,5 +1,6 @@
 import { Shop } from '@/types/shop.ts';
 import { SchemaProperty } from '@/types/index';
+import { ProductVariant } from '@/types/stockMovement';
 
 export interface ProductType {
     id: number;
@@ -36,20 +37,6 @@ export interface Product {
     variants: ProductVariant[];
     variants_count: number;
     created_at: string;
-}
-
-export interface ProductVariant {
-    id?: string;
-    sku: string;
-    name: string;
-    price: string;
-    cost_price: string;
-    is_active?: boolean;
-    barcode: string;
-    attributes: Record<string, string>;
-    batch_number?: string;
-    expiry_date?: string;
-    serial_number?: string;
 }
 
 export interface ProductListResponse {

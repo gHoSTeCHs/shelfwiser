@@ -66,10 +66,15 @@ export default function History({ variant, movements }: Props) {
                         Back to Product
                     </Link>
 
-                    <Button variant="outline" size="sm">
-                        <Download className="mr-2 h-4 w-4" />
-                        Export History
-                    </Button>
+                    <a
+                        href={`/stock-movements/export?variant_id=${variant.id}`}
+                        download
+                    >
+                        <Button variant="outline" size="sm">
+                            <Download className="mr-2 h-4 w-4" />
+                            Export History
+                        </Button>
+                    </a>
                 </div>
 
                 <div>
