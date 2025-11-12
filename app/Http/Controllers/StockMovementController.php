@@ -12,12 +12,15 @@ use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Services\StockMovementService;
 use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class StockMovementController extends Controller
 {
@@ -25,6 +28,9 @@ class StockMovementController extends Controller
     {
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function index(): Response
     {
         Gate::authorize('viewAny', StockMovement::class);
@@ -45,6 +51,9 @@ class StockMovementController extends Controller
         ]);
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function show(StockMovement $stockMovement): Response
     {
         Gate::authorize('view', $stockMovement);
@@ -99,6 +108,9 @@ class StockMovementController extends Controller
         }
     }
 
+    /**
+     * @throws Throwable
+     */
     public function transferStock(TransferStockRequest $request): RedirectResponse|JsonResponse
     {
         try {
@@ -179,6 +191,9 @@ class StockMovementController extends Controller
         }
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function history(ProductVariant $variant): Response|JsonResponse
     {
         Gate::authorize('viewAny', StockMovement::class);
