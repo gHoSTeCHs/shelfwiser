@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ShopController;
@@ -32,6 +33,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('categories', ProductCategoryController::class);
 
     Route::resource('products', ProductController::class);
+
+    Route::resource('orders', OrderController::class);
+
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');
+        Route::post('/{order}/payment', [OrderController::class, 'updatePaymentStatus'])->name('update-payment');
+    });
 
     Route::prefix('stock-movements')->name('stock-movements.')->group(function () {
         Route::get('/', [StockMovementController::class, 'index'])->name('index');
