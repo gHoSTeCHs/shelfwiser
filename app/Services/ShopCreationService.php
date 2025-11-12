@@ -15,6 +15,10 @@ use Throwable;
 
 class ShopCreationService
 {
+    /**
+     * @throws Throwable
+     * @throws TenantLimitExceededException
+     */
     public function create(array $data, Tenant $tenant, User $creator): Shop
     {
         Log::info('Shop creation process started.', [

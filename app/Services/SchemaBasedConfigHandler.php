@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Contracts\ShopConfigHandler;
 use Illuminate\Support\Facades\Log;
 
-class SchemaBasedConfigHandler implements ShopConfigHandler
+readonly class SchemaBasedConfigHandler implements ShopConfigHandler
 {
     public function __construct(
         private array $schema

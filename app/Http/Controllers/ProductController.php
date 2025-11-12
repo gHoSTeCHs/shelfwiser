@@ -65,7 +65,7 @@ class ProductController extends Controller
 
     public function store(CreateProductRequest $request): RedirectResponse
     {
-        $shop = Shop::findOrFail($request->input('shop_id'));
+        $shop = Shop::query()->findOrFail($request->input('shop_id'));
 
         $product = $this->productService->create(
             $request->validated(),
