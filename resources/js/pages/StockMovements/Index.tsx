@@ -4,13 +4,12 @@ import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
-import { Pagination } from '@/components/ui/pagination/Pagination';
+import  Pagination  from '@/components/ui/pagination/Pagination';
 import AppLayout from '@/layouts/AppLayout';
-import { StockMovement, StockMovementType } from '@/types/stockMovement';
+import { StockMovement } from '@/types/stockMovement';
 import { Head, Link } from '@inertiajs/react';
 import {
-    AlertCircle,
-    AlertTriangle,
+
     ArrowDownCircle,
     ArrowRightCircle,
     ArrowUpCircle,
