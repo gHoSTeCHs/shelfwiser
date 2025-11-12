@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\StockMovementType;
 use App\Http\Requests\AdjustStockRequest;
+use App\Http\Requests\SetupInventoryLocationsRequest;
 use App\Http\Requests\StockTakeRequest;
 use App\Http\Requests\TransferStockRequest;
 use App\Models\InventoryLocation;
@@ -11,12 +12,15 @@ use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Services\StockMovementService;
 use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class StockMovementController extends Controller
 {
@@ -24,6 +28,9 @@ class StockMovementController extends Controller
     {
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function index(): Response
     {
         Gate::authorize('viewAny', StockMovement::class);
@@ -44,6 +51,9 @@ class StockMovementController extends Controller
         ]);
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function show(StockMovement $stockMovement): Response
     {
         Gate::authorize('view', $stockMovement);
@@ -98,6 +108,9 @@ class StockMovementController extends Controller
         }
     }
 
+    /**
+     * @throws Throwable
+     */
     public function transferStock(TransferStockRequest $request): RedirectResponse|JsonResponse
     {
         try {
@@ -178,6 +191,9 @@ class StockMovementController extends Controller
         }
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function history(ProductVariant $variant): Response|JsonResponse
     {
         Gate::authorize('viewAny', StockMovement::class);
@@ -203,33 +219,35 @@ class StockMovementController extends Controller
 
     /**
      * Setup initial inventory locations for a product variant
+     * @param Request $request
+     * @param ProductVariant $variant
+     * @return RedirectResponse
      */
-    public function setupLocations(ProductVariant $variant): RedirectResponse
+    public function setupLocations(Request $request, ProductVariant $variant)
     {
-        Gate::authorize('manage', $variant->product);
+//        Gate::authorize('manage', $variant->product);
 
-        try {
-            $locationIds = request()->validate([
-                'shop_ids' => ['required', 'array', 'min:1'],
-                'shop_ids.*' => ['required', 'integer', 'exists:shops,id'],
-            ])['shop_ids'];
+        dd($request->input());
 
-            foreach ($locationIds as $shopId) {
-                InventoryLocation::query()->firstOrCreate([
-                    'product_variant_id' => $variant->id,
-                    'location_type' => 'App\\Models\\Shop',
-                    'location_id' => $shopId,
-                ], [
-                    'quantity' => 0,
-                    'reserved_quantity' => 0,
-                ]);
-            }
-
-            return Redirect::back()
-                ->with('success', 'Inventory locations setup successfully.');
-        } catch (Exception $e) {
-            return Redirect::back()
-                ->with('error', 'Failed to setup inventory locations: ' . $e->getMessage());
-        }
+//        try {
+//            $locationIds = $request->validated()['shop_ids'];
+//
+//            foreach ($locationIds as $shopId) {
+//                InventoryLocation::query()->firstOrCreate([
+//                    'product_variant_id' => $variant->id,
+//                    'location_type' => 'App\\Models\\Shop',
+//                    'location_id' => $shopId,
+//                ], [
+//                    'quantity' => 0,
+//                    'reserved_quantity' => 0,
+//                ]);
+//            }
+//
+//            return Redirect::back()
+//                ->with('success', 'Inventory locations setup successfully.');
+//        } catch (Exception $e) {
+//            return Redirect::back()
+//                ->with('error', 'Failed to setup inventory locations: ' . $e->getMessage());
+//        }
     }
 }

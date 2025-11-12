@@ -1,11 +1,12 @@
 import StockMovementController from '@/actions/App/Http/Controllers/StockMovementController';
+import Checkbox from '@/components/form/input/Checkbox.tsx';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
 import { Modal } from '@/components/ui/modal';
 import { ProductVariant } from '@/types/stockMovement';
 import { Form } from '@inertiajs/react';
-import { Check, Store, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface Shop {
@@ -27,14 +28,6 @@ export default function SetupInventoryModal({
     availableShops,
 }: Props) {
     const [selectedShopIds, setSelectedShopIds] = useState<number[]>([]);
-
-    const handleShopToggle = (shopId: number) => {
-        setSelectedShopIds((prev) =>
-            prev.includes(shopId)
-                ? prev.filter((id) => id !== shopId)
-                : [...prev, shopId]
-        );
-    };
 
     const handleSuccess = () => {
         setSelectedShopIds([]);
@@ -59,7 +52,8 @@ export default function SetupInventoryModal({
                     </span>
                 </p>
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    Select which locations should stock this product variant. Each selected location will start with 0 stock.
+                    Select which locations should stock this product variant.
+                    Each selected location will start with 0 stock.
                 </p>
             </div>
 
@@ -84,31 +78,39 @@ export default function SetupInventoryModal({
                                 <div className="mt-3 space-y-2 rounded-lg border border-gray-300 p-4 dark:border-gray-700">
                                     {availableShops.length === 0 ? (
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            No active shops available. Please create a shop first.
+                                            No active shops available. Please
+                                            create a shop first.
                                         </p>
                                     ) : (
                                         availableShops.map((shop) => (
-                                            <label
+                                            <div
                                                 key={shop.id}
-                                                className="flex cursor-pointer items-center gap-3 rounded-md p-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                                                className="rounded-md p-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
                                             >
-                                                <input
-                                                    type="checkbox"
+                                                <Checkbox
+                                                    id={`shop-${shop.id}`}
                                                     checked={selectedShopIds.includes(
-                                                        shop.id
+                                                        shop.id,
                                                     )}
-                                                    onChange={() =>
-                                                        handleShopToggle(shop.id)
-                                                    }
-                                                    className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900"
+                                                    onChange={(checked) => {
+                                                        if (checked) {
+                                                            setSelectedShopIds([
+                                                                ...selectedShopIds,
+                                                                shop.id,
+                                                            ]);
+                                                        } else {
+                                                            setSelectedShopIds(
+                                                                selectedShopIds.filter(
+                                                                    (id) =>
+                                                                        id !==
+                                                                        shop.id,
+                                                                ),
+                                                            );
+                                                        }
+                                                    }}
+                                                    label={shop.name}
                                                 />
-                                                <div className="flex flex-1 items-center gap-2">
-                                                    <Store className="h-5 w-5 text-gray-400" />
-                                                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {shop.name}
-                                                    </span>
-                                                </div>
-                                            </label>
+                                            </div>
                                         ))
                                     )}
                                 </div>
@@ -133,7 +135,9 @@ export default function SetupInventoryModal({
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={processing || selectedShopIds.length === 0}
+                                disabled={
+                                    processing || selectedShopIds.length === 0
+                                }
                                 className="bg-brand-600 hover:bg-brand-700"
                             >
                                 {processing ? (
