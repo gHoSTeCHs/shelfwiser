@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\StockMovementType;
 use App\Http\Requests\AdjustStockRequest;
+use App\Http\Requests\SetupInventoryLocationsRequest;
 use App\Http\Requests\StockTakeRequest;
 use App\Http\Requests\TransferStockRequest;
 use App\Models\InventoryLocation;
@@ -204,17 +205,12 @@ class StockMovementController extends Controller
     /**
      * Setup initial inventory locations for a product variant
      */
-    public function setupLocations(ProductVariant $variant): RedirectResponse
+    public function setupLocations(SetupInventoryLocationsRequest $request, ProductVariant $variant): RedirectResponse
     {
-        Gate::authorize('manage', $variant->product);
-
         try {
-            $locationIds = request()->validate([
-                'shop_ids' => ['required', 'array', 'min:1'],
-                'shop_ids.*' => ['required', 'integer', 'exists:shops,id'],
-            ])['shop_ids'];
+            $shopIds = $request->validated()['shop_ids'];
 
-            foreach ($locationIds as $shopId) {
+            foreach ($shopIds as $shopId) {
                 InventoryLocation::query()->firstOrCreate([
                     'product_variant_id' => $variant->id,
                     'location_type' => 'App\\Models\\Shop',
