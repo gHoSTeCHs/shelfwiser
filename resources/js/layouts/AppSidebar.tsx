@@ -1,6 +1,6 @@
 import { useSidebar } from '@/context/SidebarContext';
 import { Link, usePage } from '@inertiajs/react';
-import { ArrowRightLeft, FileUser, SquareChartGantt, Store } from 'lucide-react';
+import { ArrowRightLeft, FileUser, ShoppingCart, SquareChartGantt, Store } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDownIcon, GridIcon, HorizontaLDots } from '../icons';
 
@@ -26,6 +26,11 @@ const navItems: NavItem[] = [
         icon: <SquareChartGantt />,
         name: 'Product Management',
         path: '/products',
+    },
+    {
+        icon: <ShoppingCart />,
+        name: 'Orders',
+        path: '/orders',
     },
     {
         icon: <ArrowRightLeft />,
