@@ -81,7 +81,12 @@ class ProductController extends Controller
     {
         Gate::authorize('view', $product);
 
-        $product->load(['type', 'category', 'shop', 'variants.inventoryLocations']);
+        $product->load([
+            'type',
+            'category',
+            'shop',
+            'variants.inventoryLocations.locatable'
+        ]);
 
         return Inertia::render('Products/Show', [
             'product' => $product,

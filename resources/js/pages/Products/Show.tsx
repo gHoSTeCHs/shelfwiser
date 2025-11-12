@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import StockMovementController from '@/actions/App/Http/Controllers/StockMovementController';
 import StockAdjustmentModal from '@/components/stock/StockAdjustmentModal';
 import StockLevelBadge from '@/components/stock/StockLevelBadge';
 import StockTransferModal from '@/components/stock/StockTransferModal';
@@ -10,6 +11,7 @@ import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
 import { ProductCategory, ProductType } from '@/types/product.ts';
 import { Shop } from '@/types/shop.ts';
+import { InventoryLocation, ProductVariant } from '@/types/stockMovement';
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowRightLeft,
@@ -18,41 +20,16 @@ import {
     Building2,
     Calendar,
     ChevronLeft,
+    ClipboardList,
     DollarSign,
     Edit,
     Package,
     Plus,
     Tag,
     TrendingUp,
-    Warehouse
+    Warehouse,
 } from 'lucide-react';
 import { useState } from 'react';
-
-interface InventoryLocation {
-    id: number;
-    location_type: string;
-    location_id: number;
-    quantity: number;
-    reserved_quantity: number;
-}
-
-interface ProductVariant {
-    id: number;
-    sku: string;
-    barcode: string | null;
-    name: string | null;
-    attributes: Record<string, string> | null;
-    price: number;
-    cost_price: number | null;
-    reorder_level: number;
-    image_url: string | null;
-    images: string[] | null;
-    batch_number: string | null;
-    expiry_date: string | null;
-    serial_number: string | null;
-    is_active: boolean;
-    inventory_locations: InventoryLocation[];
-}
 
 interface Product {
     id: number;
@@ -86,17 +63,17 @@ export default function Show({ product, can_manage }: Props) {
     const transferStockModal = useModal();
 
     const getTotalStock = (variant: ProductVariant): number => {
-        return variant.inventory_locations.reduce(
+        return variant.inventory_locations?.reduce(
             (sum, loc) => sum + loc.quantity,
             0,
-        );
+        ) || 0;
     };
 
     const getAvailableStock = (variant: ProductVariant): number => {
-        return variant.inventory_locations.reduce(
+        return variant.inventory_locations?.reduce(
             (sum, loc) => sum + (loc.quantity - loc.reserved_quantity),
             0,
-        );
+        ) || 0;
     };
 
     const handleAdjustStock = (variant: ProductVariant) => {
@@ -446,37 +423,52 @@ export default function Show({ product, can_manage }: Props) {
                                                     </div>
                                                 )}
 
-                                            {can_manage &&
-                                                variant.inventory_locations
-                                                    .length > 0 && (
-                                                    <div
-                                                        className="mt-4 flex gap-2 border-t border-gray-200 pt-4 dark:border-gray-700"
-                                                        onClick={(e) => e.stopPropagation()}
+                                            {variant.inventory_locations && variant.inventory_locations.length > 0 && (
+                                                <div
+                                                    className="mt-4 space-y-2 border-t border-gray-200 pt-4 dark:border-gray-700"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {can_manage && (
+                                                        <div className="flex gap-2">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => handleAdjustStock(variant)}
+                                                                className="flex-1"
+                                                            >
+                                                                <Plus className="mr-2 h-4 w-4" />
+                                                                Adjust Stock
+                                                            </Button>
+                                                            {variant.inventory_locations.length > 1 && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() => handleTransferStock(variant)}
+                                                                    className="flex-1"
+                                                                >
+                                                                    <ArrowRightLeft className="mr-2 h-4 w-4" />
+                                                                    Transfer
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    <Link
+                                                        href={StockMovementController.history.url({
+                                                            variant: variant.id,
+                                                        })}
+                                                        className="block"
                                                     >
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
-                                                            onClick={() => handleAdjustStock(variant)}
-                                                            className="flex-1"
+                                                            className="w-full"
                                                         >
-                                                            <Plus className="mr-2 h-4 w-4" />
-                                                            Adjust Stock
+                                                            <ClipboardList className="mr-2 h-4 w-4" />
+                                                            View Stock History
                                                         </Button>
-                                                        {variant
-                                                            .inventory_locations
-                                                            .length > 1 && (
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => handleTransferStock(variant)}
-                                                                className="flex-1"
-                                                            >
-                                                                <ArrowRightLeft className="mr-2 h-4 w-4" />
-                                                                Transfer
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                )}
+                                                    </Link>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -593,7 +585,7 @@ export default function Show({ product, can_manage }: Props) {
                 </div>
             </div>
 
-            {selectedVariant && (
+            {selectedVariant && selectedVariant.inventory_locations && (
                 <>
                     <StockAdjustmentModal
                         isOpen={adjustStockModal.isOpen}
@@ -607,15 +599,7 @@ export default function Show({ product, can_manage }: Props) {
                                 shop_id: product.shop.id,
                             },
                         }}
-                        locations={selectedVariant.inventory_locations.map(
-                            (loc) => ({
-                                ...loc,
-                                locatable: {
-                                    id: loc.location_id,
-                                    name: product.shop.name,
-                                },
-                            }),
-                        )}
+                        locations={selectedVariant.inventory_locations}
                     />
                     <StockTransferModal
                         isOpen={transferStockModal.isOpen}
@@ -629,15 +613,7 @@ export default function Show({ product, can_manage }: Props) {
                                 shop_id: product.shop.id,
                             },
                         }}
-                        locations={selectedVariant.inventory_locations.map(
-                            (loc) => ({
-                                ...loc,
-                                locatable: {
-                                    id: loc.location_id,
-                                    name: product.shop.name,
-                                },
-                            }),
-                        )}
+                        locations={selectedVariant.inventory_locations}
                     />
                 </>
             )}
