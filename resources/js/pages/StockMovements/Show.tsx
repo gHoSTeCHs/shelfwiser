@@ -210,7 +210,7 @@ export default function Show({ movement }: Props) {
                                                     From
                                                 </p>
                                                 <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                                                    {movement.from_location?.locatable
+                                                    {movement.from_location?.location
                                                         ?.name || 'N/A'}
                                                 </p>
                                             </div>
@@ -219,7 +219,7 @@ export default function Show({ movement }: Props) {
                                                     To
                                                 </p>
                                                 <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                                                    {movement.to_location?.locatable
+                                                    {movement.to_location?.location
                                                         ?.name || 'N/A'}
                                                 </p>
                                             </div>
@@ -234,7 +234,7 @@ export default function Show({ movement }: Props) {
                                             Location
                                         </p>
                                         <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                                            {movement.to_location.locatable?.name ||
+                                            {movement.to_location.location?.name ||
                                                 'N/A'}
                                         </p>
                                     </div>

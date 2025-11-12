@@ -217,16 +217,17 @@ export default function Index({ movements, movementTypes }: Props) {
                     </div>
                     <div className="sm:w-48">
                         <Select
-                            value={selectedType}
-                            onChange={(e) => setSelectedType(e.target.value)}
-                        >
-                            <option value="">All Types</option>
-                            {Object.entries(movementTypes).map(([value, label]) => (
-                                <option key={value} value={value}>
-                                    {label}
-                                </option>
-                            ))}
-                        </Select>
+                            options={[
+                                { value: '', label: 'All Types' },
+                                ...Object.entries(movementTypes).map(([value, label]) => ({
+                                    value,
+                                    label: label as string,
+                                })),
+                            ]}
+                            onChange={(value) => setSelectedType(value)}
+                            defaultValue={selectedType}
+                            placeholder="All Types"
+                        />
                     </div>
                 </div>
 

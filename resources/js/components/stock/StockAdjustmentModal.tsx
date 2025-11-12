@@ -41,7 +41,7 @@ export default function StockAdjustmentModal({
 
     const locationOptions = locations.map((location) => ({
         value: location.id.toString(),
-        label: `${location.locatable?.name || `Location #${location.id}`} - Available: ${location.quantity - location.reserved_quantity}${location.bin_location ? ` (${location.bin_location})` : ''}`,
+        label: `${location.location?.name || `Location #${location.id}`} - Available: ${location.quantity - location.reserved_quantity}${location.bin_location ? ` (${location.bin_location})` : ''}`,
     }));
 
     const handleSuccess = () => {

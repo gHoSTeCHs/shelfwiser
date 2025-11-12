@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import StockMovementController from '@/actions/App/Http/Controllers/StockMovementController';
+import SetupInventoryModal from '@/components/stock/SetupInventoryModal';
 import StockAdjustmentModal from '@/components/stock/StockAdjustmentModal';
 import StockLevelBadge from '@/components/stock/StockLevelBadge';
 import StockTransferModal from '@/components/stock/StockTransferModal';
@@ -50,9 +51,10 @@ interface Product {
 interface Props {
     product: Product;
     can_manage: boolean;
+    available_shops: { id: number; name: string }[];
 }
 
-export default function Show({ product, can_manage }: Props) {
+export default function Show({ product, can_manage, available_shops }: Props) {
     console.log(product);
 
     // Initialize with first variant if available
@@ -61,6 +63,7 @@ export default function Show({ product, can_manage }: Props) {
     );
     const adjustStockModal = useModal();
     const transferStockModal = useModal();
+    const setupInventoryModal = useModal();
 
     const getTotalStock = (variant: ProductVariant): number => {
         return variant.inventory_locations?.reduce(
@@ -84,6 +87,11 @@ export default function Show({ product, can_manage }: Props) {
     const handleTransferStock = (variant: ProductVariant) => {
         setSelectedVariant(variant);
         transferStockModal.openModal();
+    };
+
+    const handleSetupInventory = (variant: ProductVariant) => {
+        setSelectedVariant(variant);
+        setupInventoryModal.openModal();
     };
 
     const handleVariantSelect = (variant: ProductVariant) => {
@@ -423,7 +431,7 @@ export default function Show({ product, can_manage }: Props) {
                                                     </div>
                                                 )}
 
-                                            {variant.inventory_locations && variant.inventory_locations.length > 0 && (
+                                            {variant.inventory_locations && variant.inventory_locations.length > 0 ? (
                                                 <div
                                                     className="mt-4 space-y-2 border-t border-gray-200 pt-4 dark:border-gray-700"
                                                     onClick={(e) => e.stopPropagation()}
@@ -468,6 +476,26 @@ export default function Show({ product, can_manage }: Props) {
                                                         </Button>
                                                     </Link>
                                                 </div>
+                                            ) : (
+                                                can_manage && (
+                                                    <div
+                                                        className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => handleSetupInventory(variant)}
+                                                            className="w-full"
+                                                        >
+                                                            <Warehouse className="mr-2 h-4 w-4" />
+                                                            Setup Stock Locations
+                                                        </Button>
+                                                        <p className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
+                                                            Configure where this variant will be stocked
+                                                        </p>
+                                                    </div>
+                                                )
                                             )}
                                         </div>
                                     );
@@ -616,6 +644,23 @@ export default function Show({ product, can_manage }: Props) {
                         locations={selectedVariant.inventory_locations}
                     />
                 </>
+            )}
+
+            {selectedVariant && (
+                <SetupInventoryModal
+                    isOpen={setupInventoryModal.isOpen}
+                    onClose={setupInventoryModal.closeModal}
+                    variant={{
+                        ...selectedVariant,
+                        product: {
+                            id: product.id,
+                            name: product.name,
+                            slug: product.slug,
+                            shop_id: product.shop.id,
+                        },
+                    }}
+                    availableShops={available_shops}
+                />
             )}
         </AppLayout>
     );

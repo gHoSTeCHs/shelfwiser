@@ -47,8 +47,8 @@ export interface ProductVariant {
 export interface InventoryLocation {
     id: number;
     product_variant_id: number;
-    locatable_type: string;
-    locatable_id: number;
+    location_type: string;
+    location_id: number;
     quantity: number;
     reserved_quantity: number;
     batch_number: string | null;
@@ -57,7 +57,7 @@ export interface InventoryLocation {
     bin_location: string | null;
     created_at: string;
     updated_at: string;
-    locatable?: {
+    location?: {
         id: number;
         name: string;
         type?: string;

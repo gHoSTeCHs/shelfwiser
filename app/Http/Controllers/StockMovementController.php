@@ -34,8 +34,8 @@ class StockMovementController extends Controller
             'movements' => StockMovement::query()->where('tenant_id', $tenantId)
                 ->with([
                     'productVariant.product',
-                    'fromLocation.locatable',
-                    'toLocation.locatable',
+                    'fromLocation.location',
+                    'toLocation.location',
                     'createdBy:id,name',
                 ])
                 ->latest()
@@ -50,8 +50,8 @@ class StockMovementController extends Controller
 
         $stockMovement->load([
             'productVariant.product',
-            'fromLocation.locatable',
-            'toLocation.locatable',
+            'fromLocation.location',
+            'toLocation.location',
             'createdBy',
         ]);
 
@@ -184,8 +184,8 @@ class StockMovementController extends Controller
 
         $movements = StockMovement::forVariant($variant->id)
             ->with([
-                'fromLocation.locatable',
-                'toLocation.locatable',
+                'fromLocation.location',
+                'toLocation.location',
                 'createdBy:id,name',
             ])
             ->latest()
@@ -199,5 +199,37 @@ class StockMovementController extends Controller
             'variant' => $variant->load('product'),
             'movements' => $movements,
         ]);
+    }
+
+    /**
+     * Setup initial inventory locations for a product variant
+     */
+    public function setupLocations(ProductVariant $variant): RedirectResponse
+    {
+        Gate::authorize('manage', $variant->product);
+
+        try {
+            $locationIds = request()->validate([
+                'shop_ids' => ['required', 'array', 'min:1'],
+                'shop_ids.*' => ['required', 'integer', 'exists:shops,id'],
+            ])['shop_ids'];
+
+            foreach ($locationIds as $shopId) {
+                InventoryLocation::query()->firstOrCreate([
+                    'product_variant_id' => $variant->id,
+                    'location_type' => 'App\\Models\\Shop',
+                    'location_id' => $shopId,
+                ], [
+                    'quantity' => 0,
+                    'reserved_quantity' => 0,
+                ]);
+            }
+
+            return Redirect::back()
+                ->with('success', 'Inventory locations setup successfully.');
+        } catch (Exception $e) {
+            return Redirect::back()
+                ->with('error', 'Failed to setup inventory locations: ' . $e->getMessage());
+        }
     }
 }

@@ -85,12 +85,19 @@ class ProductController extends Controller
             'type',
             'category',
             'shop',
-            'variants.inventoryLocations.locatable'
+            'variants.inventoryLocations.location'
         ]);
+
+        $tenantId = auth()->user()->tenant_id;
+
+        $availableShops = \App\Models\Shop::where('tenant_id', $tenantId)
+            ->where('is_active', true)
+            ->get(['id', 'name']);
 
         return Inertia::render('Products/Show', [
             'product' => $product,
             'can_manage' => auth()->user()->can('manage', $product),
+            'available_shops' => $availableShops,
         ]);
     }
 

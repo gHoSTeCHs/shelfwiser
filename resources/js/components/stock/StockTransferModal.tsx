@@ -52,7 +52,7 @@ export default function StockTransferModal({
         .filter((loc) => loc.id.toString() !== toLocationId)
         .map((location) => ({
             value: location.id.toString(),
-            label: `${location.locatable?.name || `Location #${location.id}`} - Available: ${location.quantity - location.reserved_quantity}${location.bin_location ? ` (${location.bin_location})` : ''}`,
+            label: `${location.location?.name || `Location #${location.id}`} - Available: ${location.quantity - location.reserved_quantity}${location.bin_location ? ` (${location.bin_location})` : ''}`,
         }));
 
     // Filter to locations (exclude selected "from" location)
@@ -60,7 +60,7 @@ export default function StockTransferModal({
         .filter((loc) => loc.id.toString() !== fromLocationId)
         .map((location) => ({
             value: location.id.toString(),
-            label: `${location.locatable?.name || `Location #${location.id}`} - Current: ${location.quantity}${location.bin_location ? ` (${location.bin_location})` : ''}`,
+            label: `${location.location?.name || `Location #${location.id}`} - Current: ${location.quantity}${location.bin_location ? ` (${location.bin_location})` : ''}`,
         }));
 
     return (

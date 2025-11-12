@@ -39,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/adjust', [StockMovementController::class, 'adjustStock'])->name('adjust');
         Route::post('/transfer', [StockMovementController::class, 'transferStock'])->name('transfer');
         Route::post('/stock-take', [StockMovementController::class, 'stockTake'])->name('stock-take');
+        Route::post('/variant/{variant}/setup-locations', [StockMovementController::class, 'setupLocations'])->name('setup-locations');
         Route::get('/variant/{variant}/history', [StockMovementController::class, 'history'])->name('history');
     });
 
