@@ -43,7 +43,7 @@ class StockMovementController extends Controller
                     'productVariant.product',
                     'fromLocation.location',
                     'toLocation.location',
-                    'createdBy:id,name',
+                    'createdBy:id,first_name',
                 ])
                 ->latest()
                 ->paginate(50),
