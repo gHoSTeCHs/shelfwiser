@@ -4,12 +4,11 @@ import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
-import  Pagination  from '@/components/ui/pagination/Pagination';
+import Pagination from '@/components/ui/pagination/Pagination';
 import AppLayout from '@/layouts/AppLayout';
 import { StockMovement } from '@/types/stockMovement';
 import { Head, Link } from '@inertiajs/react';
 import {
-
     ArrowDownCircle,
     ArrowRightCircle,
     ArrowUpCircle,
@@ -129,7 +128,7 @@ export default function Index({ movements, movementTypes }: Props) {
         today: movements.data.filter(
             (m) =>
                 new Date(m.created_at).toDateString() ===
-                new Date().toDateString()
+                new Date().toDateString(),
         ).length,
         thisWeek: movements.data.filter((m) => {
             const date = new Date(m.created_at);
@@ -218,10 +217,12 @@ export default function Index({ movements, movementTypes }: Props) {
                         <Select
                             options={[
                                 { value: '', label: 'All Types' },
-                                ...Object.entries(movementTypes).map(([value, label]) => ({
-                                    value,
-                                    label: label as string,
-                                })),
+                                ...Object.entries(movementTypes).map(
+                                    ([value, label]) => ({
+                                        value,
+                                        label: label as string,
+                                    }),
+                                ),
                             ]}
                             onChange={(value) => setSelectedType(value)}
                             defaultValue={selectedType}
@@ -247,25 +248,25 @@ export default function Index({ movements, movementTypes }: Props) {
                                 <table className="w-full">
                                     <thead className="border-b border-gray-200 dark:border-gray-700">
                                         <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Date & Time
                                             </th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Type
                                             </th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Product
                                             </th>
-                                            <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Quantity
                                             </th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Reference
                                             </th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Created By
                                             </th>
-                                            <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Actions
                                             </th>
                                         </tr>
@@ -276,48 +277,67 @@ export default function Index({ movements, movementTypes }: Props) {
                                                 key={movement.id}
                                                 className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
                                             >
-                                                <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-900 dark:text-white">
-                                                    {formatDate(movement.created_at)}
+                                                <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900 dark:text-white">
+                                                    {formatDate(
+                                                        movement.created_at,
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     <div className="flex items-center gap-2">
-                                                        {getMovementIcon(movement.type)}
+                                                        {getMovementIcon(
+                                                            movement.type,
+                                                        )}
                                                         <Badge
                                                             color={getMovementBadgeColor(
-                                                                movement.type
+                                                                movement.type,
                                                             )}
                                                         >
-                                                            {getMovementLabel(movement.type)}
+                                                            {getMovementLabel(
+                                                                movement.type,
+                                                            )}
                                                         </Badge>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
-                                                    {movement.product_variant?.product
-                                                        ?.name || 'N/A'}
-                                                    {movement.product_variant?.name && (
+                                                    {movement.product_variant
+                                                        ?.product?.name ||
+                                                        'N/A'}
+                                                    {movement.product_variant
+                                                        ?.name && (
                                                         <div className="text-xs text-gray-500">
-                                                            {movement.product_variant.name}
+                                                            {
+                                                                movement
+                                                                    .product_variant
+                                                                    .name
+                                                            }
                                                         </div>
                                                     )}
                                                     <div className="text-xs text-gray-500">
                                                         SKU:{' '}
-                                                        {movement.product_variant?.sku || 'N/A'}
+                                                        {movement
+                                                            .product_variant
+                                                            ?.sku || 'N/A'}
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-4 text-center text-sm font-medium text-gray-900 dark:text-white">
                                                     {movement.quantity}
                                                 </td>
-                                                <td className="px-4 py-4 text-sm font-mono text-gray-500 dark:text-gray-400">
-                                                    {movement.reference_number || '-'}
+                                                <td className="font-mono px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                                    {movement.reference_number ||
+                                                        '-'}
                                                 </td>
                                                 <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-400">
-                                                    {movement.created_by_user?.name || 'N/A'}
+                                                    {movement.created_by_user
+                                                        ?.name || 'N/A'}
                                                 </td>
                                                 <td className="px-4 py-4 text-center">
                                                     <Link
-                                                        href={StockMovementController.show.url({
-                                                            stockMovement: movement.id,
-                                                        })}
+                                                        href={StockMovementController.show.url(
+                                                            {
+                                                                stockMovement:
+                                                                    movement.id,
+                                                            },
+                                                        )}
                                                     >
                                                         <button className="inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300">
                                                             <Eye className="h-4 w-4" />
@@ -335,9 +355,8 @@ export default function Index({ movements, movementTypes }: Props) {
                         {movements.last_page > 1 && (
                             <Pagination
                                 currentPage={movements.current_page}
-                                lastPage={movements.last_page}
-                                perPage={movements.per_page}
-                                total={movements.total}
+                                onPageChange={() => {}}
+                                totalPages={movements.last_page}
                             />
                         )}
                     </>

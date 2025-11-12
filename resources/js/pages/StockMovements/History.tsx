@@ -2,7 +2,7 @@ import ProductController from '@/actions/App/Http/Controllers/ProductController'
 import StockMovementHistory from '@/components/stock/StockMovementHistory';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import { Pagination } from '@/components/ui/pagination/Pagination';
+import Pagination from '@/components/ui/pagination/Pagination';
 import AppLayout from '@/layouts/AppLayout';
 import { ProductVariant, StockMovement } from '@/types/stockMovement';
 import { Head, Link } from '@inertiajs/react';
@@ -23,17 +23,21 @@ interface Props {
 
 export default function History({ variant, movements }: Props) {
     const getTotalStock = (): number => {
-        return variant.inventory_locations?.reduce(
-            (sum, loc) => sum + loc.quantity,
-            0,
-        ) || 0;
+        return (
+            variant.inventory_locations?.reduce(
+                (sum, loc) => sum + loc.quantity,
+                0,
+            ) || 0
+        );
     };
 
     const getAvailableStock = (): number => {
-        return variant.inventory_locations?.reduce(
-            (sum, loc) => sum + (loc.quantity - loc.reserved_quantity),
-            0,
-        ) || 0;
+        return (
+            variant.inventory_locations?.reduce(
+                (sum, loc) => sum + (loc.quantity - loc.reserved_quantity),
+                0,
+            ) || 0
+        );
     };
 
     const totalStock = getTotalStock();
@@ -160,9 +164,8 @@ export default function History({ variant, movements }: Props) {
                 {movements.last_page > 1 && (
                     <Pagination
                         currentPage={movements.current_page}
-                        lastPage={movements.last_page}
-                        perPage={movements.per_page}
-                        total={movements.total}
+                        onPageChange={() => {}}
+                        totalPages={movements.last_page}
                     />
                 )}
             </div>

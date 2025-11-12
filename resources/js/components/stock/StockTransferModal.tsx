@@ -47,7 +47,6 @@ export default function StockTransferModal({
         return location.quantity - location.reserved_quantity;
     };
 
-    // Filter from locations (exclude selected "to" location)
     const fromLocationOptions = locations
         .filter((loc) => loc.id.toString() !== toLocationId)
         .map((location) => ({
@@ -55,7 +54,6 @@ export default function StockTransferModal({
             label: `${location.location?.name || `Location #${location.id}`} - Available: ${location.quantity - location.reserved_quantity}${location.bin_location ? ` (${location.bin_location})` : ''}`,
         }));
 
-    // Filter to locations (exclude selected "from" location)
     const toLocationOptions = locations
         .filter((loc) => loc.id.toString() !== fromLocationId)
         .map((location) => ({

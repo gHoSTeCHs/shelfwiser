@@ -36,7 +36,6 @@ export default function SetupInventoryModal({
                 ? prev.filter((id) => id !== shopId)
                 : [...prev, shopId]
         );
-        // Clear errors when user makes changes
         if (errors.shop_ids) {
             setErrors({});
         }
