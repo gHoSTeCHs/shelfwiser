@@ -4,6 +4,7 @@ import StockMovementController from '@/actions/App/Http/Controllers/StockMovemen
 import SetupInventoryModal from '@/components/stock/SetupInventoryModal';
 import StockAdjustmentModal from '@/components/stock/StockAdjustmentModal';
 import StockLevelBadge from '@/components/stock/StockLevelBadge';
+import StockMovementHistory from '@/components/stock/StockMovementHistory';
 import StockTransferModal from '@/components/stock/StockTransferModal';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
@@ -12,7 +13,7 @@ import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
 import { ProductCategory, ProductType } from '@/types/product.ts';
 import { Shop } from '@/types/shop.ts';
-import { ProductVariant } from '@/types/stockMovement';
+import { ProductVariant, StockMovement } from '@/types/stockMovement';
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowRightLeft,
@@ -52,9 +53,10 @@ interface Props {
     product: Product;
     can_manage: boolean;
     available_shops: { id: number; name: string }[];
+    recent_movements: StockMovement[];
 }
 
-export default function Show({ product, can_manage, available_shops }: Props) {
+export default function Show({ product, can_manage, available_shops, recent_movements }: Props) {
     const [selectedVariant, setSelectedVariant] =
         useState<ProductVariant | null>(
             product.variants.length > 0 ? product.variants[0] : null,
@@ -642,6 +644,15 @@ export default function Show({ product, can_manage, available_shops }: Props) {
                                 </div>
                             </div>
                         </Card>
+
+                        {recent_movements && recent_movements.length > 0 && (
+                            <Card title="Recent Stock Movements">
+                                <StockMovementHistory
+                                    movements={recent_movements}
+                                    showVariantInfo={true}
+                                />
+                            </Card>
+                        )}
                     </div>
                 </div>
             </div>

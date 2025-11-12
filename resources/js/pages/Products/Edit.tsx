@@ -12,35 +12,11 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { flattenCategories } from '@/lib/utils.ts';
-import { SchemaProperty } from '@/types';
+import { ProductCategory, ProductType } from '@/types/product';
+import { ProductVariant } from '@/types/stockMovement';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Package, Save, Tag } from 'lucide-react';
 import { useState } from 'react';
-
-interface ProductType {
-    id: number;
-    slug: string;
-    label: string;
-    description: string;
-    config_schema: {
-        type: string;
-        properties: Record<string, SchemaProperty>;
-        required: string[];
-    } | null;
-}
-
-interface ProductCategory {
-    id: number;
-    name: string;
-    slug: string;
-    children?: ProductCategory[];
-}
-
-interface ProductVariant {
-    id: number;
-    sku: string;
-    name: string | null;
-}
 
 interface Product {
     id: number;
