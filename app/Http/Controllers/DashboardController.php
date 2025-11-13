@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Shop;
 use App\Policies\DashboardPolicy;
 use App\Services\DashboardService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -20,6 +21,9 @@ class DashboardController extends Controller
     {
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function index(Request $request): Response
     {
         Gate::authorize('view', DashboardPolicy::class);
@@ -74,6 +78,9 @@ class DashboardController extends Controller
         ]);
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function refresh(Request $request): RedirectResponse
     {
         Gate::authorize('refreshCache', DashboardPolicy::class);

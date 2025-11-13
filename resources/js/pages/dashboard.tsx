@@ -1,13 +1,21 @@
 import AppLayout from '@/layouts/AppLayout';
 import { DashboardProps } from '@/types/dashboard';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import Select from '@/components/form/Select';
 import DatePicker from '@/components/form/date-picker';
-import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Package, AlertTriangle, RefreshCw } from 'lucide-react';
+import {
+    AlertTriangle,
+    DollarSign,
+    Package,
+    RefreshCw,
+    ShoppingCart,
+    TrendingDown,
+    TrendingUp,
+} from 'lucide-react';
+import Button from '@/components/ui/button/Button';
+import Badge from '@/components/ui/badge/Badge.tsx';
 
 export default function Dashboard({
     metrics,
@@ -47,7 +55,9 @@ export default function Dashboard({
     };
 
     const handleDateChange = () => {
-        const fromInput = document.getElementById('from-date') as HTMLInputElement;
+        const fromInput = document.getElementById(
+            'from-date',
+        ) as HTMLInputElement;
         const toInput = document.getElementById('to-date') as HTMLInputElement;
 
         if (fromInput?.value && toInput?.value) {
@@ -62,10 +72,14 @@ export default function Dashboard({
     };
 
     const handleRefresh = () => {
-        router.post('/dashboard/refresh', {}, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.post(
+            '/dashboard/refresh',
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     const formatCurrency = (value: number) => {
@@ -101,7 +115,9 @@ export default function Dashboard({
             <div className="space-y-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                            Dashboard
+                        </h1>
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                             Overview of your business metrics
                         </p>
@@ -111,7 +127,9 @@ export default function Dashboard({
                         <div className="w-40">
                             <Select
                                 options={shopOptions}
-                                defaultValue={selectedShop ? selectedShop.toString() : ''}
+                                defaultValue={
+                                    selectedShop ? selectedShop.toString() : ''
+                                }
                                 onChange={handleShopChange}
                                 placeholder="Select shop"
                             />
@@ -146,7 +164,11 @@ export default function Dashboard({
                             </>
                         )}
 
-                        <Button variant="outline" size="md" onClick={handleRefresh}>
+                        <Button
+                            variant="outline"
+                            size="md"
+                            onClick={handleRefresh}
+                        >
                             <RefreshCw className="mr-2 h-4 w-4" />
                             Refresh
                         </Button>
@@ -160,18 +182,27 @@ export default function Dashboard({
                                 <DollarSign className="h-6 w-6 text-brand-600 dark:text-brand-400" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Total Revenue</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Total Revenue
+                                </p>
                                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                    {formatCurrency(metrics.sales.total_revenue)}
+                                    {formatCurrency(
+                                        metrics.sales.total_revenue,
+                                    )}
                                 </p>
                                 {metrics.sales.trend !== 0 && (
-                                    <p className={`flex items-center gap-1 text-sm ${metrics.sales.trend > 0 ? 'text-success-600' : 'text-error-600'}`}>
+                                    <p
+                                        className={`flex items-center gap-1 text-sm ${metrics.sales.trend > 0 ? 'text-success-600' : 'text-error-600'}`}
+                                    >
                                         {metrics.sales.trend > 0 ? (
                                             <TrendingUp className="h-3 w-3" />
                                         ) : (
                                             <TrendingDown className="h-3 w-3" />
                                         )}
-                                        {Math.abs(metrics.sales.trend).toFixed(1)}%
+                                        {Math.abs(metrics.sales.trend).toFixed(
+                                            1,
+                                        )}
+                                        %
                                     </p>
                                 )}
                             </div>
@@ -184,7 +215,9 @@ export default function Dashboard({
                                 <ShoppingCart className="h-6 w-6 text-blue-light-600 dark:text-blue-light-400" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Total Orders</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Total Orders
+                                </p>
                                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                                     {formatNumber(metrics.orders.total_count)}
                                 </p>
@@ -201,9 +234,13 @@ export default function Dashboard({
                                 <Package className="h-6 w-6 text-success-600 dark:text-success-400" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Avg Order Value</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Avg Order Value
+                                </p>
                                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                    {formatCurrency(metrics.sales.avg_order_value)}
+                                    {formatCurrency(
+                                        metrics.sales.avg_order_value,
+                                    )}
                                 </p>
                             </div>
                         </div>
@@ -215,12 +252,15 @@ export default function Dashboard({
                                 <AlertTriangle className="h-6 w-6 text-warning-600 dark:text-warning-400" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Low Stock Items</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Low Stock Items
+                                </p>
                                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                                     {metrics.low_stock.length}
                                 </p>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    {metrics.orders.pending_count} pending orders
+                                    {metrics.orders.pending_count} pending
+                                    orders
                                 </p>
                             </div>
                         </div>
@@ -232,22 +272,30 @@ export default function Dashboard({
                         <Card title="Profit Overview" className="p-6">
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm text-gray-600 dark:text-gray-300">Total Profit</span>
+                                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                                        Total Profit
+                                    </span>
                                     <span className="text-lg font-bold text-gray-900 dark:text-white">
                                         {formatCurrency(metrics.profit.profit)}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm text-gray-600 dark:text-gray-300">Profit Margin</span>
+                                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                                        Profit Margin
+                                    </span>
                                     <span className="text-sm font-medium text-gray-900 dark:text-white">
                                         {metrics.profit.margin.toFixed(2)}%
                                     </span>
                                 </div>
                                 {metrics.profit.cogs !== undefined && (
                                     <div className="flex items-center justify-between">
-                                        <span className="text-sm text-gray-600 dark:text-gray-300">Cost of Goods</span>
+                                        <span className="text-sm text-gray-600 dark:text-gray-300">
+                                            Cost of Goods
+                                        </span>
                                         <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                            {formatCurrency(metrics.profit.cogs)}
+                                            {formatCurrency(
+                                                metrics.profit.cogs,
+                                            )}
                                         </span>
                                     </div>
                                 )}
@@ -257,9 +305,13 @@ export default function Dashboard({
                         {metrics.inventory_valuation !== undefined && (
                             <Card title="Inventory Valuation" className="p-6">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm text-gray-600 dark:text-gray-300">Total Value</span>
+                                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                                        Total Value
+                                    </span>
                                     <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                                        {formatCurrency(metrics.inventory_valuation)}
+                                        {formatCurrency(
+                                            metrics.inventory_valuation,
+                                        )}
                                     </span>
                                 </div>
                             </Card>
@@ -271,10 +323,17 @@ export default function Dashboard({
                     <Card title="Sales Trend (Last 7 Days)" className="p-6">
                         <div className="space-y-2">
                             {metrics.chart_data.labels.map((label, index) => (
-                                <div key={label} className="flex items-center justify-between">
-                                    <span className="text-sm text-gray-600 dark:text-gray-300">{label}</span>
+                                <div
+                                    key={label}
+                                    className="flex items-center justify-between"
+                                >
+                                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                                        {label}
+                                    </span>
                                     <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                        {formatCurrency(metrics.chart_data.data[index])}
+                                        {formatCurrency(
+                                            metrics.chart_data.data[index],
+                                        )}
                                     </span>
                                 </div>
                             ))}
@@ -285,7 +344,9 @@ export default function Dashboard({
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Badge variant="light" color="warning">Pending</Badge>
+                                    <Badge variant="light" color="warning">
+                                        Pending
+                                    </Badge>
                                 </div>
                                 <span className="text-sm font-medium text-gray-900 dark:text-white">
                                     {metrics.orders.pending_count}
@@ -293,7 +354,9 @@ export default function Dashboard({
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Badge variant="light" color="info">Confirmed</Badge>
+                                    <Badge variant="light" color="info">
+                                        Confirmed
+                                    </Badge>
                                 </div>
                                 <span className="text-sm font-medium text-gray-900 dark:text-white">
                                     {metrics.orders.confirmed_count}
@@ -301,7 +364,9 @@ export default function Dashboard({
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Badge variant="light" color="primary">Processing</Badge>
+                                    <Badge variant="light" color="primary">
+                                        Processing
+                                    </Badge>
                                 </div>
                                 <span className="text-sm font-medium text-gray-900 dark:text-white">
                                     {metrics.orders.processing_count}
@@ -309,7 +374,9 @@ export default function Dashboard({
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Badge variant="light" color="success">Delivered</Badge>
+                                    <Badge variant="light" color="success">
+                                        Delivered
+                                    </Badge>
                                 </div>
                                 <span className="text-sm font-medium text-gray-900 dark:text-white">
                                     {metrics.orders.delivered_count}
@@ -317,7 +384,9 @@ export default function Dashboard({
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Badge variant="light" color="dark">Cancelled</Badge>
+                                    <Badge variant="light" color="dark">
+                                        Cancelled
+                                    </Badge>
                                 </div>
                                 <span className="text-sm font-medium text-gray-900 dark:text-white">
                                     {metrics.orders.cancelled_count}
@@ -333,23 +402,26 @@ export default function Dashboard({
                             <table className="w-full">
                                 <thead className="border-b border-gray-200 dark:border-gray-700">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Product
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             SKU
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Quantity
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Revenue
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                     {metrics.top_products.map((product) => (
-                                        <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                        <tr
+                                            key={product.id}
+                                            className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                                        >
                                             <td className="px-4 py-4">
                                                 <div className="text-sm font-medium text-gray-900 dark:text-white">
                                                     {product.name}
@@ -364,10 +436,14 @@ export default function Dashboard({
                                                 {product.sku}
                                             </td>
                                             <td className="px-4 py-4 text-right text-sm font-medium text-gray-900 dark:text-white">
-                                                {formatNumber(product.total_quantity)}
+                                                {formatNumber(
+                                                    product.total_quantity,
+                                                )}
                                             </td>
                                             <td className="px-4 py-4 text-right text-sm font-medium text-gray-900 dark:text-white">
-                                                {formatCurrency(product.total_revenue)}
+                                                {formatCurrency(
+                                                    product.total_revenue,
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
@@ -391,26 +467,29 @@ export default function Dashboard({
                             <table className="w-full">
                                 <thead className="border-b border-gray-200 dark:border-gray-700">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Product
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             SKU
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Current
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Reorder
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Deficit
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                     {metrics.low_stock.map((item) => (
-                                        <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                        <tr
+                                            key={item.id}
+                                            className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                                        >
                                             <td className="px-4 py-4">
                                                 <div className="text-sm font-medium text-gray-900 dark:text-white">
                                                     {item.product_name}
@@ -425,10 +504,14 @@ export default function Dashboard({
                                                 {item.sku}
                                             </td>
                                             <td className="px-4 py-4 text-right text-sm font-medium text-error-600">
-                                                {formatNumber(item.current_stock)}
+                                                {formatNumber(
+                                                    item.current_stock,
+                                                )}
                                             </td>
                                             <td className="px-4 py-4 text-right text-sm text-gray-900 dark:text-white">
-                                                {formatNumber(item.reorder_level)}
+                                                {formatNumber(
+                                                    item.reorder_level,
+                                                )}
                                             </td>
                                             <td className="px-4 py-4 text-right text-sm font-medium text-error-600">
                                                 -{formatNumber(item.deficit)}
@@ -447,26 +530,29 @@ export default function Dashboard({
                             <table className="w-full">
                                 <thead className="border-b border-gray-200 dark:border-gray-700">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Order #
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Customer
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Shop
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Amount
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Status
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                     {metrics.recent_orders.map((order) => (
-                                        <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                        <tr
+                                            key={order.id}
+                                            className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                                        >
                                             <td className="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">
                                                 {order.order_number}
                                             </td>
@@ -477,16 +563,24 @@ export default function Dashboard({
                                                 {order.shop_name}
                                             </td>
                                             <td className="px-4 py-4 text-right text-sm font-medium text-gray-900 dark:text-white">
-                                                {formatCurrency(order.total_amount)}
+                                                {formatCurrency(
+                                                    order.total_amount,
+                                                )}
                                             </td>
                                             <td className="px-4 py-4">
                                                 <Badge
                                                     variant="light"
                                                     color={
-                                                        order.status === 'delivered' ? 'success' :
-                                                        order.status === 'pending' ? 'warning' :
-                                                        order.status === 'cancelled' ? 'error' :
-                                                        'info'
+                                                        order.status ===
+                                                        'delivered'
+                                                            ? 'success'
+                                                            : order.status ===
+                                                                'pending'
+                                                              ? 'warning'
+                                                              : order.status ===
+                                                                  'cancelled'
+                                                                ? 'error'
+                                                                : 'info'
                                                     }
                                                 >
                                                     {order.status}

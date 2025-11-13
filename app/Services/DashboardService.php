@@ -132,26 +132,26 @@ class DashboardService
     public function getOrderMetrics(Collection $shopIds, Carbon $start, Carbon $end): array
     {
         $cacheKey = "dashboard:orders:{$shopIds->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
-        $pending = OrderStatus::PENDING->value;
-        $confirmed = OrderStatus::CONFIRMED->value;
-        $processing = OrderStatus::PROCESSING->value;
-        $delivered = OrderStatus::DELIVERED->value;
-        $cancelled = OrderStatus::CANCELLED->value;
-        $paid = PaymentStatus::PAID->value;
-        $unpaid = PaymentStatus::UNPAID->value;
 
-        return Cache::tags(['dashboard'])->remember($cacheKey, now()->addMinutes(5), function () use ($shopIds, $start, $end, $pending, $confirmed, $processing, $delivered, $cancelled, $paid, $unpaid) {
+        return Cache::tags(['dashboard'])->remember($cacheKey, now()->addMinutes(5), function () use ($shopIds, $start, $end) {
+            $unpaid = PaymentStatus::UNPAID->value;
+            $paid = PaymentStatus::PAID->value;
+            $cancelled = OrderStatus::CANCELLED->value;
+            $delivered = OrderStatus::DELIVERED->value;
+            $processing = OrderStatus::PROCESSING->value;
+            $confirmed = OrderStatus::CONFIRMED->value;
+            $pending = OrderStatus::PENDING->value;
             $orders = Order::query()->whereIn('shop_id', $shopIds)
                 ->whereBetween('created_at', [$start, $end])
                 ->selectRaw("
                     COUNT(*) as total_count,
-                    SUM(CASE WHEN status = '{$pending}' THEN 1 ELSE 0 END) as pending_count,
-                    SUM(CASE WHEN status = '{$confirmed}' THEN 1 ELSE 0 END) as confirmed_count,
-                    SUM(CASE WHEN status = '{$processing}' THEN 1 ELSE 0 END) as processing_count,
-                    SUM(CASE WHEN status = '{$delivered}' THEN 1 ELSE 0 END) as delivered_count,
-                    SUM(CASE WHEN status = '{$cancelled}' THEN 1 ELSE 0 END) as cancelled_count,
-                    SUM(CASE WHEN payment_status = '{$paid}' THEN 1 ELSE 0 END) as paid_count,
-                    SUM(CASE WHEN payment_status = '{$unpaid}' THEN 1 ELSE 0 END) as unpaid_count
+                    SUM(CASE WHEN status = '$pending' THEN 1 ELSE 0 END) as pending_count,
+                    SUM(CASE WHEN status = '$confirmed' THEN 1 ELSE 0 END) as confirmed_count,
+                    SUM(CASE WHEN status = '$processing' THEN 1 ELSE 0 END) as processing_count,
+                    SUM(CASE WHEN status = '$delivered' THEN 1 ELSE 0 END) as delivered_count,
+                    SUM(CASE WHEN status = '$cancelled' THEN 1 ELSE 0 END) as cancelled_count,
+                    SUM(CASE WHEN payment_status = '$paid' THEN 1 ELSE 0 END) as paid_count,
+                    SUM(CASE WHEN payment_status = '$unpaid' THEN 1 ELSE 0 END) as unpaid_count
                 ")
                 ->first();
 
