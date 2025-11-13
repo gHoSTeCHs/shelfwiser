@@ -54,6 +54,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'is_tenant_owner' => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 

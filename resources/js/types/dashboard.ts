@@ -29,8 +29,6 @@ export interface TopProduct {
     total_quantity: number;
     total_revenue: number;
     order_count: number;
-    profit?: number;
-    margin_percentage?: number;
 }
 
 export interface RecentOrder {
@@ -63,7 +61,7 @@ export interface ProfitMetrics {
     profit: number;
     margin: number;
     revenue: number;
-    cogs: number;
+    cogs?: number;
 }
 
 export interface DashboardMetrics {
@@ -77,12 +75,6 @@ export interface DashboardMetrics {
     profit?: ProfitMetrics;
 }
 
-export interface DashboardPermissions {
-    canViewProfits: boolean;
-    canViewCosts: boolean;
-    canViewFinancials: boolean;
-}
-
 export interface DashboardProps {
     metrics: DashboardMetrics;
     shops: Shop[];
@@ -90,12 +82,5 @@ export interface DashboardProps {
     period: 'today' | 'week' | 'month' | 'custom';
     startDate: string | null;
     endDate: string | null;
-    permissions: DashboardPermissions;
-}
-
-export interface DashboardFilters {
-    shop: number | null;
-    period: 'today' | 'week' | 'month' | 'custom';
-    from?: string;
-    to?: string;
+    can_view_financials: boolean;
 }

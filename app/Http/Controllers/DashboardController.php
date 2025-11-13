@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Shop;
+use App\Policies\DashboardPolicy;
 use App\Services\DashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,11 +20,10 @@ class DashboardController extends Controller
     {
     }
 
-    /**
-     * Display the dashboard
-     */
     public function index(Request $request): Response
     {
+        Gate::authorize('view', DashboardPolicy::class);
+
         $user = $request->user();
 
         $validated = $request->validate([
@@ -49,7 +50,7 @@ class DashboardController extends Controller
 
         $shopIds = $this->getShopIdsForMetrics($user, $shopId);
 
-        if ($user->role->hasPermission('view_financials')) {
+        if ($user->can('viewFinancials', DashboardPolicy::class)) {
             $dateRange = $this->dashboardService->getDateRange($period, $startDate, $endDate);
 
             $metrics['inventory_valuation'] = $this->dashboardService->getInventoryValuation($shopIds);
@@ -64,24 +65,19 @@ class DashboardController extends Controller
 
         return Inertia::render('dashboard', [
             'metrics' => $filteredMetrics,
-            'shops' => $accessibleShops,
+            'shops' => $accessibleShops->toArray(),
             'selectedShop' => $shopId,
             'period' => $period,
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'permissions' => [
-                'canViewProfits' => $user->role->hasPermission('view_profits'),
-                'canViewCosts' => $user->role->hasPermission('view_costs'),
-                'canViewFinancials' => $user->role->hasPermission('view_financials'),
-            ],
+            'can_view_financials' => $user->can('viewFinancials', DashboardPolicy::class),
         ]);
     }
 
-    /**
-     * Refresh dashboard cache
-     */
     public function refresh(Request $request): RedirectResponse
     {
+        Gate::authorize('refreshCache', DashboardPolicy::class);
+
         $user = $request->user();
         $shopId = $request->query('shop');
 
@@ -94,9 +90,6 @@ class DashboardController extends Controller
             ->with('success', 'Dashboard data refreshed successfully');
     }
 
-    /**
-     * Get accessible shops for the user
-     */
     protected function getAccessibleShops($user): Collection
     {
         if ($user->is_tenant_owner) {
@@ -114,9 +107,6 @@ class DashboardController extends Controller
             ->get();
     }
 
-    /**
-     * Get shop IDs for metrics queries
-     */
     protected function getShopIdsForMetrics($user, ?int $shopId): Collection
     {
         if ($user->is_tenant_owner) {
@@ -141,29 +131,23 @@ class DashboardController extends Controller
         return $assignedShopIds;
     }
 
-    /**
-     * Filter metrics based on user permissions
-     */
     protected function filterMetricsByPermissions(array $metrics, $user): array
     {
         $filtered = $metrics;
 
         if (!$user->role->hasPermission('view_profits')) {
             if (isset($filtered['top_products'])) {
-                $filtered['top_products'] = $filtered['top_products']->map(function ($product) {
-                    unset($product['profit']);
-                    unset($product['margin_percentage']);
+                $filtered['top_products'] = array_map(function ($product) {
+                    unset($product['profit'], $product['margin_percentage']);
                     return $product;
-                });
+                }, $filtered['top_products']);
             }
 
             unset($filtered['profit']);
         }
 
-        if (!$user->role->hasPermission('view_costs')) {
-            if (isset($filtered['profit'])) {
-                unset($filtered['profit']['cogs']);
-            }
+        if (!$user->role->hasPermission('view_costs') && isset($filtered['profit'])) {
+            unset($filtered['profit']['cogs']);
         }
 
         if (!$user->role->hasPermission('view_financials')) {
