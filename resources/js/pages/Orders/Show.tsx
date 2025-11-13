@@ -98,7 +98,6 @@ export default function Show({
             case 'refunded':
                 return 'info';
             case 'failed':
-            case 'cancelled':
                 return 'error';
             default:
                 return 'light';
