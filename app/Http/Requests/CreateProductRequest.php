@@ -43,7 +43,7 @@ class CreateProductRequest extends FormRequest
             $rules['variants.*.cost_price'] = ['nullable', 'numeric', 'min:0'];
             $rules['variants.*.barcode'] = ['nullable', 'string', 'unique:product_variants,barcode'];
             $rules['variants.*.attributes'] = ['nullable', 'array'];
-            $rules['variants.*.base_unit_name'] = ['nullable', 'string', 'max:50'];
+            $rules['variants.*.base_unit_name'] = ['required', 'string', 'max:50'];
             $rules['variants.*.packaging_types'] = ['nullable', 'array'];
             $rules['variants.*.packaging_types.*.name'] = ['required', 'string', 'max:100'];
             $rules['variants.*.packaging_types.*.display_name'] = ['nullable', 'string', 'max:100'];
@@ -60,7 +60,7 @@ class CreateProductRequest extends FormRequest
             $rules['price'] = ['required', 'numeric', 'min:0'];
             $rules['cost_price'] = ['nullable', 'numeric', 'min:0'];
             $rules['barcode'] = ['nullable', 'string', 'unique:product_variants,barcode'];
-            $rules['base_unit_name'] = ['nullable', 'string', 'max:50'];
+            $rules['base_unit_name'] = ['required', 'string', 'max:50'];
             $rules['packaging_types'] = ['nullable', 'array'];
             $rules['packaging_types.*.name'] = ['required', 'string', 'max:100'];
             $rules['packaging_types.*.display_name'] = ['nullable', 'string', 'max:100'];

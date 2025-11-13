@@ -59,13 +59,18 @@ export interface ProductVariant {
     name: string | null;
     price: number;
     cost_price: number | null;
+    reorder_level: number | null;
     barcode: string | null;
     attributes: Record<string, any> | null;
     base_unit_name: string;
+    image_url: string | null;
+    images: string[] | null;
     batch_number?: string;
     expiry_date?: string;
     serial_number?: string;
     is_active: boolean;
+    total_stock?: number;
+    available_stock?: number;
     created_at: string;
     updated_at: string;
     product?: {

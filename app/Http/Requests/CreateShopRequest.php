@@ -37,6 +37,7 @@ class CreateShopRequest extends FormRequest
                     $fail('Configuration validation failed for shop type: ' . $shopType->label);
                 }
             }],
+            'is_active' => ['sometimes', 'boolean'],
         ];
     }
 

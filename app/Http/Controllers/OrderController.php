@@ -242,6 +242,17 @@ class OrderController extends Controller
                     throw new Exception("Cannot change status from {$order->status->value} to $newStatus->value");
                 }
                 $order->status = $newStatus;
+
+                // Set shipped_at timestamp when status changes to SHIPPED
+                if ($newStatus === OrderStatus::SHIPPED && !$order->shipped_at) {
+                    $order->shipped_at = now();
+                }
+
+                // Set delivered_at timestamp when status changes to DELIVERED
+                if ($newStatus === OrderStatus::DELIVERED && !$order->delivered_at) {
+                    $order->delivered_at = now();
+                }
+
                 $order->save();
             }
 

@@ -56,5 +56,12 @@ export interface CreateShopRequest {
     name: string;
     shop_type_slug: string;
     inventory_model: InventoryModelType;
+    address?: string;
+    city: string;
+    state: string;
+    country: string;
+    phone?: string;
+    email?: string;
     config: Record<string, any>;
+    is_active?: boolean;
 }

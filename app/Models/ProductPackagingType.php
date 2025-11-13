@@ -38,6 +38,12 @@ class ProductPackagingType extends Model
         'is_active' => 'boolean',
     ];
 
+    protected $appends = [
+        'price_per_unit',
+        'has_discount',
+        'discount_percentage',
+    ];
+
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);

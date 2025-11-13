@@ -17,8 +17,7 @@ export type PaymentStatus =
     | 'partial'
     | 'paid'
     | 'refunded'
-    | 'failed'
-    | 'cancelled';
+    | 'failed';
 
 export interface OrderItem {
     id: number;
