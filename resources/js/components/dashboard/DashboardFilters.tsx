@@ -1,8 +1,8 @@
-import { router } from '@inertiajs/react';
 import { Shop } from '@/types/shop';
-import React, { useState } from 'react';
-import Select from '../form/Select';
+import { router } from '@inertiajs/react';
+import { useState } from 'react';
 import Label from '../form/Label';
+import Select from '../form/Select';
 import DatePicker from '../form/date-picker';
 
 interface DashboardFiltersProps {
@@ -64,7 +64,9 @@ export default function DashboardFilters({
     };
 
     const handleDateRangeChange = () => {
-        const fromInput = document.getElementById('from-date') as HTMLInputElement;
+        const fromInput = document.getElementById(
+            'from-date',
+        ) as HTMLInputElement;
         const toInput = document.getElementById('to-date') as HTMLInputElement;
 
         if (fromInput?.value && toInput?.value) {
@@ -95,7 +97,7 @@ export default function DashboardFilters({
                 onSuccess: () => {
                     // Optional: show success message
                 },
-            }
+            },
         );
     };
 
@@ -116,13 +118,15 @@ export default function DashboardFilters({
 
     return (
         <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {/* Shop Selector */}
                 <div>
                     <Label htmlFor="shop-select">Shop</Label>
                     <Select
                         options={shopOptions}
-                        defaultValue={selectedShop ? selectedShop.toString() : ''}
+                        defaultValue={
+                            selectedShop ? selectedShop.toString() : ''
+                        }
                         onChange={handleShopChange}
                         placeholder="Select a shop"
                     />
@@ -171,7 +175,7 @@ export default function DashboardFilters({
                     <button
                         type="button"
                         onClick={handleRefresh}
-                        className="h-11 px-4 rounded-lg bg-brand-600 text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 transition-colors duration-200 flex items-center gap-2"
+                        className="flex h-11 items-center gap-2 rounded-lg bg-brand-600 px-4 text-white transition-colors duration-200 hover:bg-brand-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"

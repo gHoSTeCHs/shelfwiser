@@ -86,7 +86,7 @@ export default function SignInForm() {
                             </div>
                         </div>
                         <Form
-                            {...AuthenticatedSessionController.store.form()}
+                            {...AuthenticatedSessionController.store.post()}
                             resetOnSuccess={['password']}
                             className="space-y-6"
                         >

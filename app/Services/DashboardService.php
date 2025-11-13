@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\OrderStatus;
-use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductVariant;
@@ -12,7 +11,6 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
@@ -20,12 +18,13 @@ class DashboardService
      * Get complete dashboard metrics for a user
      */
     public function getDashboardMetrics(
-        User $user,
-        ?int $shopId = null,
-        string $period = 'today',
+        User    $user,
+        ?int    $shopId = null,
+        string  $period = 'today',
         ?string $startDate = null,
         ?string $endDate = null
-    ): array {
+    ): array
+    {
         $shopIds = $this->getAccessibleShopIds($user, $shopId);
         $dateRange = $this->getDateRange($period, $startDate, $endDate);
 
@@ -44,9 +43,8 @@ class DashboardService
      */
     protected function getAccessibleShopIds(User $user, ?int $shopId = null): Collection
     {
-        // Tenant owners can access all shops
         if ($user->is_tenant_owner) {
-            $query = Shop::where('tenant_id', $user->tenant_id);
+            $query = Shop::query()->where('tenant_id', $user->tenant_id);
 
             if ($shopId) {
                 $query->where('id', $shopId);
@@ -55,11 +53,9 @@ class DashboardService
             return $query->pluck('id');
         }
 
-        // Other users: get their assigned shops
         $assignedShopIds = $user->shops()->pluck('shops.id');
 
         if ($shopId) {
-            // Verify user has access to requested shop
             if (!$assignedShopIds->contains($shopId)) {
                 abort(403, 'You do not have access to this shop');
             }
@@ -82,10 +78,6 @@ class DashboardService
         }
 
         return match ($period) {
-            'today' => [
-                'start' => now()->startOfDay(),
-                'end' => now()->endOfDay(),
-            ],
             'week' => [
                 'start' => now()->startOfWeek(),
                 'end' => now()->endOfWeek(),
@@ -109,7 +101,7 @@ class DashboardService
         $cacheKey = "dashboard:sales:{$shopIds->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
 
         return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($shopIds, $start, $end) {
-            $metrics = Order::whereIn('shop_id', $shopIds)
+            $metrics = Order::query()->whereIn('shop_id', $shopIds)
                 ->whereBetween('created_at', [$start, $end])
                 ->whereNotIn('status', [OrderStatus::CANCELLED])
                 ->selectRaw('
@@ -122,12 +114,11 @@ class DashboardService
                 ')
                 ->first();
 
-            // Get previous period for comparison
             $periodDays = $start->diffInDays($end) + 1;
             $previousStart = $start->copy()->subDays($periodDays);
             $previousEnd = $end->copy()->subDays($periodDays);
 
-            $previousMetrics = Order::whereIn('shop_id', $shopIds)
+            $previousMetrics = Order::query()->whereIn('shop_id', $shopIds)
                 ->whereBetween('created_at', [$previousStart, $previousEnd])
                 ->whereNotIn('status', [OrderStatus::CANCELLED])
                 ->sum('total_amount');
@@ -138,12 +129,12 @@ class DashboardService
             }
 
             return [
-                'total_revenue' => (float) ($metrics->total_revenue ?? 0),
-                'subtotal' => (float) ($metrics->subtotal ?? 0),
-                'tax_amount' => (float) ($metrics->tax_amount ?? 0),
-                'discount_amount' => (float) ($metrics->discount_amount ?? 0),
-                'shipping_cost' => (float) ($metrics->shipping_cost ?? 0),
-                'avg_order_value' => (float) ($metrics->avg_order_value ?? 0),
+                'total_revenue' => (float)($metrics->total_revenue ?? 0),
+                'subtotal' => (float)($metrics->subtotal ?? 0),
+                'tax_amount' => (float)($metrics->tax_amount ?? 0),
+                'discount_amount' => (float)($metrics->discount_amount ?? 0),
+                'shipping_cost' => (float)($metrics->shipping_cost ?? 0),
+                'avg_order_value' => (float)($metrics->avg_order_value ?? 0),
                 'trend' => round($trend, 2),
             ];
         });
@@ -157,7 +148,7 @@ class DashboardService
         $cacheKey = "dashboard:orders:{$shopIds->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
 
         return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($shopIds, $start, $end) {
-            $orders = Order::whereIn('shop_id', $shopIds)
+            $orders = Order::query()->whereIn('shop_id', $shopIds)
                 ->whereBetween('created_at', [$start, $end])
                 ->selectRaw('
                     COUNT(*) as total_count,
@@ -172,31 +163,31 @@ class DashboardService
                 ->first();
 
             return [
-                'total_count' => (int) ($orders->total_count ?? 0),
-                'pending_count' => (int) ($orders->pending_count ?? 0),
-                'confirmed_count' => (int) ($orders->confirmed_count ?? 0),
-                'processing_count' => (int) ($orders->processing_count ?? 0),
-                'delivered_count' => (int) ($orders->delivered_count ?? 0),
-                'cancelled_count' => (int) ($orders->cancelled_count ?? 0),
-                'paid_count' => (int) ($orders->paid_count ?? 0),
-                'unpaid_count' => (int) ($orders->unpaid_count ?? 0),
+                'total_count' => (int)($orders->total_count ?? 0),
+                'pending_count' => (int)($orders->pending_count ?? 0),
+                'confirmed_count' => (int)($orders->confirmed_count ?? 0),
+                'processing_count' => (int)($orders->processing_count ?? 0),
+                'delivered_count' => (int)($orders->delivered_count ?? 0),
+                'cancelled_count' => (int)($orders->cancelled_count ?? 0),
+                'paid_count' => (int)($orders->paid_count ?? 0),
+                'unpaid_count' => (int)($orders->unpaid_count ?? 0),
             ];
         });
     }
 
     /**
-     * Get top selling products
+     * Get top-selling products
      */
     public function getTopProducts(Collection $shopIds, Carbon $start, Carbon $end, int $limit = 5): Collection
     {
         $cacheKey = "dashboard:top-products:{$shopIds->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
 
         return Cache::remember($cacheKey, now()->addMinutes(15), function () use ($shopIds, $start, $end, $limit) {
-            return OrderItem::whereHas('order', function ($query) use ($shopIds, $start, $end) {
-                    $query->whereIn('shop_id', $shopIds)
-                        ->whereBetween('created_at', [$start, $end])
-                        ->whereNotIn('status', [OrderStatus::CANCELLED]);
-                })
+            return OrderItem::query()->whereHas('order', function ($query) use ($shopIds, $start, $end) {
+                $query->whereIn('shop_id', $shopIds)
+                    ->whereBetween('created_at', [$start, $end])
+                    ->whereNotIn('status', [OrderStatus::CANCELLED]);
+            })
                 ->selectRaw('
                     product_variant_id,
                     SUM(quantity) as total_quantity,
@@ -214,9 +205,9 @@ class DashboardService
                         'name' => $item->productVariant->product->name ?? 'Unknown',
                         'variant_name' => $item->productVariant->name,
                         'sku' => $item->productVariant->sku,
-                        'total_quantity' => (int) $item->total_quantity,
-                        'total_revenue' => (float) $item->total_revenue,
-                        'order_count' => (int) $item->order_count,
+                        'total_quantity' => (int)$item->total_quantity,
+                        'total_revenue' => (float)$item->total_revenue,
+                        'order_count' => (int)$item->order_count,
                     ];
                 });
         });
@@ -227,7 +218,7 @@ class DashboardService
      */
     public function getRecentOrders(Collection $shopIds, int $limit = 10): Collection
     {
-        return Order::whereIn('shop_id', $shopIds)
+        return Order::query()->whereIn('shop_id', $shopIds)
             ->with(['customer:id,first_name,last_name', 'shop:id,name'])
             ->latest()
             ->limit($limit)
@@ -240,7 +231,7 @@ class DashboardService
                         ? "{$order->customer->first_name} {$order->customer->last_name}"
                         : 'Walk-in',
                     'shop_name' => $order->shop->name,
-                    'total_amount' => (float) $order->total_amount,
+                    'total_amount' => (float)$order->total_amount,
                     'status' => $order->status->value,
                     'payment_status' => $order->payment_status->value,
                     'created_at' => $order->created_at->toIso8601String(),
@@ -256,9 +247,9 @@ class DashboardService
         $cacheKey = "dashboard:low-stock:{$shopIds->implode(',')}";
 
         return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($shopIds) {
-            return ProductVariant::whereHas('product', function ($query) use ($shopIds) {
-                    $query->whereIn('shop_id', $shopIds);
-                })
+            return ProductVariant::query()->whereHas('product', function ($query) use ($shopIds) {
+                $query->whereIn('shop_id', $shopIds);
+            })
                 ->whereNotNull('reorder_level')
                 ->with(['product:id,name,shop_id', 'inventoryLocations' => function ($query) use ($shopIds) {
                     $query->whereIn('location_id', $shopIds)
@@ -298,13 +289,13 @@ class DashboardService
             $dayStart = $date->copy()->startOfDay();
             $dayEnd = $date->copy()->endOfDay();
 
-            $revenue = Order::whereIn('shop_id', $shopIds)
+            $revenue = Order::query()->whereIn('shop_id', $shopIds)
                 ->whereBetween('created_at', [$dayStart, $dayEnd])
                 ->whereNotIn('status', [OrderStatus::CANCELLED])
                 ->sum('total_amount');
 
             $days[] = $date->format('M d');
-            $revenues[] = (float) $revenue;
+            $revenues[] = (float)$revenue;
         }
 
         return [
@@ -321,9 +312,9 @@ class DashboardService
         $cacheKey = "dashboard:inventory-valuation:{$shopIds->implode(',')}";
 
         return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($shopIds) {
-            $valuation = ProductVariant::whereHas('product', function ($query) use ($shopIds) {
-                    $query->whereIn('shop_id', $shopIds);
-                })
+            $valuation = ProductVariant::query()->whereHas('product', function ($query) use ($shopIds) {
+                $query->whereIn('shop_id', $shopIds);
+            })
                 ->whereNotNull('cost_price')
                 ->with(['inventoryLocations' => function ($query) use ($shopIds) {
                     $query->whereIn('location_id', $shopIds)
@@ -335,7 +326,7 @@ class DashboardService
                     return $totalStock * ($variant->cost_price ?? 0);
                 });
 
-            return (float) $valuation;
+            return (float)$valuation;
         });
     }
 
@@ -347,11 +338,11 @@ class DashboardService
         $cacheKey = "dashboard:profit:{$shopIds->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
 
         return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($shopIds, $start, $end) {
-            $orderItems = OrderItem::whereHas('order', function ($query) use ($shopIds, $start, $end) {
-                    $query->whereIn('shop_id', $shopIds)
-                        ->whereBetween('created_at', [$start, $end])
-                        ->whereNotIn('status', [OrderStatus::CANCELLED]);
-                })
+            $orderItems = OrderItem::query()->whereHas('order', function ($query) use ($shopIds, $start, $end) {
+                $query->whereIn('shop_id', $shopIds)
+                    ->whereBetween('created_at', [$start, $end])
+                    ->whereNotIn('status', [OrderStatus::CANCELLED]);
+            })
                 ->with('productVariant:id,cost_price')
                 ->get();
 
@@ -364,10 +355,10 @@ class DashboardService
             $margin = $totalRevenue > 0 ? ($profit / $totalRevenue) * 100 : 0;
 
             return [
-                'profit' => (float) $profit,
+                'profit' => (float)$profit,
                 'margin' => round($margin, 2),
-                'revenue' => (float) $totalRevenue,
-                'cogs' => (float) $totalCost,
+                'revenue' => (float)$totalRevenue,
+                'cogs' => (float)$totalCost,
             ];
         });
     }
@@ -379,12 +370,12 @@ class DashboardService
     {
         $shopKey = $shopIds->implode(',');
         $patterns = [
-            "dashboard:sales:{$shopKey}:*",
-            "dashboard:orders:{$shopKey}:*",
-            "dashboard:top-products:{$shopKey}:*",
-            "dashboard:low-stock:{$shopKey}",
-            "dashboard:inventory-valuation:{$shopKey}",
-            "dashboard:profit:{$shopKey}:*",
+            "dashboard:sales:$shopKey:*",
+            "dashboard:orders:$shopKey:*",
+            "dashboard:top-products:$shopKey:*",
+            "dashboard:low-stock:$shopKey",
+            "dashboard:inventory-valuation:$shopKey",
+            "dashboard:profit:$shopKey:*",
         ];
 
         foreach ($patterns as $pattern) {

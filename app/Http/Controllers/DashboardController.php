@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Shop;
 use App\Services\DashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,9 @@ class DashboardController extends Controller
 {
     public function __construct(
         protected DashboardService $dashboardService
-    ) {}
+    )
+    {
+    }
 
     /**
      * Display the dashboard
@@ -22,7 +25,6 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        // Validate and parse query parameters
         $validated = $request->validate([
             'shop' => ['nullable', 'integer', 'exists:shops,id'],
             'period' => ['nullable', 'in:today,week,month,custom'],
@@ -35,10 +37,8 @@ class DashboardController extends Controller
         $startDate = $validated['from'] ?? null;
         $endDate = $validated['to'] ?? null;
 
-        // Get accessible shops for the user
         $accessibleShops = $this->getAccessibleShops($user);
 
-        // Get base metrics from service
         $metrics = $this->dashboardService->getDashboardMetrics(
             $user,
             $shopId,
@@ -47,10 +47,8 @@ class DashboardController extends Controller
             $endDate
         );
 
-        // Get shop IDs for additional queries
         $shopIds = $this->getShopIdsForMetrics($user, $shopId);
 
-        // Add role-specific metrics for authorized users
         if ($user->role->hasPermission('view_financials')) {
             $dateRange = $this->dashboardService->getDateRange($period, $startDate, $endDate);
 
@@ -62,10 +60,9 @@ class DashboardController extends Controller
             );
         }
 
-        // Filter metrics based on user permissions
         $filteredMetrics = $this->filterMetricsByPermissions($metrics, $user);
 
-        return Inertia::render('Dashboard', [
+        return Inertia::render('dashboard', [
             'metrics' => $filteredMetrics,
             'shops' => $accessibleShops,
             'selectedShop' => $shopId,
@@ -88,10 +85,8 @@ class DashboardController extends Controller
         $user = $request->user();
         $shopId = $request->query('shop');
 
-        // Get shop IDs to clear cache for
         $shopIds = $this->getShopIdsForMetrics($user, $shopId);
 
-        // Clear dashboard cache
         $this->dashboardService->clearCache($shopIds);
 
         return redirect()
@@ -104,16 +99,14 @@ class DashboardController extends Controller
      */
     protected function getAccessibleShops($user): Collection
     {
-        // Tenant owners can access all shops
         if ($user->is_tenant_owner) {
-            return \App\Models\Shop::where('tenant_id', $user->tenant_id)
+            return Shop::query()->where('tenant_id', $user->tenant_id)
                 ->where('is_active', true)
                 ->select('id', 'name')
                 ->orderBy('name')
                 ->get();
         }
 
-        // Other users: get their assigned shops
         return $user->shops()
             ->where('is_active', true)
             ->select('shops.id', 'shops.name')
@@ -126,9 +119,8 @@ class DashboardController extends Controller
      */
     protected function getShopIdsForMetrics($user, ?int $shopId): Collection
     {
-        // Tenant owners can access all shops
         if ($user->is_tenant_owner) {
-            $query = \App\Models\Shop::where('tenant_id', $user->tenant_id);
+            $query = Shop::query()->where('tenant_id', $user->tenant_id);
 
             if ($shopId) {
                 $query->where('id', $shopId);
@@ -137,11 +129,9 @@ class DashboardController extends Controller
             return $query->pluck('id');
         }
 
-        // Other users: get their assigned shops
         $assignedShopIds = $user->shops()->pluck('shops.id');
 
         if ($shopId) {
-            // Verify user has access to requested shop
             if (!$assignedShopIds->contains($shopId)) {
                 abort(403, 'You do not have access to this shop');
             }
@@ -158,9 +148,7 @@ class DashboardController extends Controller
     {
         $filtered = $metrics;
 
-        // Remove sensitive financial data for users without proper permissions
         if (!$user->role->hasPermission('view_profits')) {
-            // Remove profit information from top products
             if (isset($filtered['top_products'])) {
                 $filtered['top_products'] = $filtered['top_products']->map(function ($product) {
                     unset($product['profit']);
@@ -169,19 +157,16 @@ class DashboardController extends Controller
                 });
             }
 
-            // Remove profit metrics
             unset($filtered['profit']);
         }
 
         if (!$user->role->hasPermission('view_costs')) {
-            // Remove cost information
             if (isset($filtered['profit'])) {
                 unset($filtered['profit']['cogs']);
             }
         }
 
         if (!$user->role->hasPermission('view_financials')) {
-            // Remove inventory valuation
             unset($filtered['inventory_valuation']);
         }
 
