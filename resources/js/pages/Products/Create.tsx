@@ -14,6 +14,7 @@ import AppLayout from '@/layouts/AppLayout';
 import { SchemaProperty } from '@/types';
 import { ProductCategory, ProductType, ProductVariant } from '@/types/product.ts';
 import { Shop } from '@/types/shop.ts';
+import { ProductPackagingType } from '@/types/stockMovement';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Box, Minus, Package, Plus, Save, Tag } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -43,6 +44,9 @@ export default function Create({ shops, productTypes, categories }: Props) {
     const [simpleCostPrice, setSimpleCostPrice] = useState<string>('');
     const [simpleBarcode, setSimpleBarcode] = useState<string>('');
     const [simpleBaseUnit, setSimpleBaseUnit] = useState<string>('Unit');
+    const [simplePackagingTypes, setSimplePackagingTypes] = useState<
+        Partial<ProductPackagingType>[]
+    >([]);
 
     const [variants, setVariants] = useState<ProductVariant[]>([
         {
@@ -54,12 +58,17 @@ export default function Create({ shops, productTypes, categories }: Props) {
             barcode: '',
             base_unit_name: 'Unit',
             attributes: {},
+            packaging_types: [],
         },
     ]);
 
     const selectedType = productTypes.find(
         (type) => type.slug === selectedTypeSlug,
     );
+
+    const selectedShop = shops.find((shop) => shop.id === shopId);
+    const showPackagingTypes =
+        selectedShop && ['wholesale_only', 'hybrid'].includes(selectedShop.inventory_model);
 
     useEffect(() => {
         if (selectedType?.config_schema?.properties) {
@@ -96,8 +105,109 @@ export default function Create({ shops, productTypes, categories }: Props) {
                 barcode: '',
                 base_unit_name: 'Unit',
                 attributes: {},
+                packaging_types: [],
             },
         ]);
+    };
+
+    const addSimplePackagingType = () => {
+        setSimplePackagingTypes([
+            ...simplePackagingTypes,
+            {
+                id: crypto.randomUUID() as any,
+                name: '',
+                display_name: '',
+                units_per_package: 1,
+                is_sealed_package: false,
+                price: 0,
+                cost_price: null,
+                is_base_unit: false,
+                can_break_down: false,
+                min_order_quantity: 1,
+                display_order: simplePackagingTypes.length,
+                is_active: true,
+            },
+        ]);
+    };
+
+    const removeSimplePackagingType = (id: any) => {
+        setSimplePackagingTypes(simplePackagingTypes.filter((pt) => pt.id !== id));
+    };
+
+    const updateSimplePackagingType = (
+        id: any,
+        field: keyof ProductPackagingType,
+        value: any,
+    ) => {
+        setSimplePackagingTypes(
+            simplePackagingTypes.map((pt) =>
+                pt.id === id ? { ...pt, [field]: value } : pt,
+            ),
+        );
+    };
+
+    const addVariantPackagingType = (variantId: string) => {
+        setVariants(
+            variants.map((v) =>
+                v.id === variantId
+                    ? {
+                          ...v,
+                          packaging_types: [
+                              ...(v.packaging_types || []),
+                              {
+                                  id: crypto.randomUUID() as any,
+                                  name: '',
+                                  display_name: '',
+                                  units_per_package: 1,
+                                  is_sealed_package: false,
+                                  price: 0,
+                                  cost_price: null,
+                                  is_base_unit: false,
+                                  can_break_down: false,
+                                  min_order_quantity: 1,
+                                  display_order: (v.packaging_types || []).length,
+                                  is_active: true,
+                              },
+                          ],
+                      }
+                    : v,
+            ),
+        );
+    };
+
+    const removeVariantPackagingType = (variantId: string, packagingTypeId: any) => {
+        setVariants(
+            variants.map((v) =>
+                v.id === variantId
+                    ? {
+                          ...v,
+                          packaging_types: (v.packaging_types || []).filter(
+                              (pt) => pt.id !== packagingTypeId,
+                          ),
+                      }
+                    : v,
+            ),
+        );
+    };
+
+    const updateVariantPackagingType = (
+        variantId: string,
+        packagingTypeId: any,
+        field: keyof ProductPackagingType,
+        value: any,
+    ) => {
+        setVariants(
+            variants.map((v) =>
+                v.id === variantId
+                    ? {
+                          ...v,
+                          packaging_types: (v.packaging_types || []).map((pt) =>
+                              pt.id === packagingTypeId ? { ...pt, [field]: value } : pt,
+                          ),
+                      }
+                    : v,
+            ),
+        );
     };
 
     const removeVariant = (id: string) => {
@@ -565,6 +675,158 @@ export default function Create({ shops, productTypes, categories }: Props) {
                                                 />
                                             </div>
 
+                                            {showPackagingTypes && (
+                                                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                                                    <div className="mb-3 flex items-center justify-between">
+                                                        <div>
+                                                            <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                                                                Packaging Types
+                                                            </h4>
+                                                            <p className="text-xs text-blue-700 dark:text-blue-300">
+                                                                Define how this product can be sold (packs, cartons, etc.)
+                                                            </p>
+                                                        </div>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={addSimplePackagingType}
+                                                        >
+                                                            <Plus className="h-4 w-4 mr-1" />
+                                                            Add Package
+                                                        </Button>
+                                                    </div>
+
+                                                    {simplePackagingTypes.length === 0 && (
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                            No packaging types defined. A default loose unit will be created automatically.
+                                                        </p>
+                                                    )}
+
+                                                    {simplePackagingTypes.map((packagingType, ptIndex) => (
+                                                        <div
+                                                            key={packagingType.id}
+                                                            className="mb-3 rounded border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+                                                        >
+                                                            <div className="mb-2 flex items-center justify-between">
+                                                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                                                    Package #{ptIndex + 1}
+                                                                </span>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        removeSimplePackagingType(
+                                                                            packagingType.id,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Minus className="h-3 w-3" />
+                                                                </Button>
+                                                            </div>
+                                                            <div className="grid gap-2 sm:grid-cols-2">
+                                                                <div>
+                                                                    <Label htmlFor={`pt_name_${packagingType.id}`}>
+                                                                        <span className="text-xs">Package Name *</span>
+                                                                    </Label>
+                                                                    <Input
+                                                                        type="text"
+                                                                        value={packagingType.name || ''}
+                                                                        onChange={(e) =>
+                                                                            updateSimplePackagingType(
+                                                                                packagingType.id,
+                                                                                'name',
+                                                                                e.target.value,
+                                                                            )
+                                                                        }
+                                                                        placeholder="e.g., Pack, Carton"
+                                                                        className="text-sm"
+                                                                    />
+                                                                    <input
+                                                                        type="hidden"
+                                                                        name={`packaging_types[${ptIndex}][name]`}
+                                                                        value={packagingType.name || ''}
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <Label htmlFor={`pt_units_${packagingType.id}`}>
+                                                                        <span className="text-xs">Units per Package *</span>
+                                                                    </Label>
+                                                                    <Input
+                                                                        type="number"
+                                                                        value={packagingType.units_per_package || 1}
+                                                                        onChange={(e) =>
+                                                                            updateSimplePackagingType(
+                                                                                packagingType.id,
+                                                                                'units_per_package',
+                                                                                parseInt(e.target.value) || 1,
+                                                                            )
+                                                                        }
+                                                                        min="1"
+                                                                        className="text-sm"
+                                                                    />
+                                                                    <input
+                                                                        type="hidden"
+                                                                        name={`packaging_types[${ptIndex}][units_per_package]`}
+                                                                        value={packagingType.units_per_package || 1}
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <Label htmlFor={`pt_price_${packagingType.id}`}>
+                                                                        <span className="text-xs">Price (₦) *</span>
+                                                                    </Label>
+                                                                    <Input
+                                                                        type="number"
+                                                                        value={packagingType.price || 0}
+                                                                        onChange={(e) =>
+                                                                            updateSimplePackagingType(
+                                                                                packagingType.id,
+                                                                                'price',
+                                                                                parseFloat(e.target.value) || 0,
+                                                                            )
+                                                                        }
+                                                                        step="0.01"
+                                                                        min="0"
+                                                                        className="text-sm"
+                                                                    />
+                                                                    <input
+                                                                        type="hidden"
+                                                                        name={`packaging_types[${ptIndex}][price]`}
+                                                                        value={packagingType.price || 0}
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <Label>
+                                                                        <Checkbox
+                                                                            checked={packagingType.is_base_unit || false}
+                                                                            onChange={(checked) =>
+                                                                                updateSimplePackagingType(
+                                                                                    packagingType.id,
+                                                                                    'is_base_unit',
+                                                                                    checked,
+                                                                                )
+                                                                            }
+                                                                        />
+                                                                        <span className="ml-2 text-xs">Base Unit</span>
+                                                                    </Label>
+                                                                    <input
+                                                                        type="hidden"
+                                                                        name={`packaging_types[${ptIndex}][is_base_unit]`}
+                                                                        value={packagingType.is_base_unit ? '1' : '0'}
+                                                                    />
+                                                                    <input
+                                                                        type="hidden"
+                                                                        name={`packaging_types[${ptIndex}][display_order]`}
+                                                                        value={ptIndex}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
                                             <div className="grid gap-5 sm:grid-cols-2">
                                                 <div>
                                                     <Label htmlFor="price">
@@ -852,6 +1114,221 @@ export default function Create({ shops, productTypes, categories }: Props) {
                                                                 />
                                                             </div>
                                                         </div>
+
+                                                        {showPackagingTypes && (
+                                                            <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
+                                                                <div className="mb-2 flex items-center justify-between">
+                                                                    <div>
+                                                                        <h5 className="text-xs font-semibold text-blue-900 dark:text-blue-100">
+                                                                            Packaging Types
+                                                                        </h5>
+                                                                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                                                                            Define package options for this variant
+                                                                        </p>
+                                                                    </div>
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        onClick={() =>
+                                                                            addVariantPackagingType(
+                                                                                variant.id!,
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <Plus className="h-3 w-3 mr-1" />
+                                                                        Add
+                                                                    </Button>
+                                                                </div>
+
+                                                                {(!variant.packaging_types ||
+                                                                    variant.packaging_types
+                                                                        .length === 0) && (
+                                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                        No packaging types. Default loose unit will be created.
+                                                                    </p>
+                                                                )}
+
+                                                                {variant.packaging_types?.map(
+                                                                    (
+                                                                        packagingType,
+                                                                        ptIndex,
+                                                                    ) => (
+                                                                        <div
+                                                                            key={
+                                                                                packagingType.id
+                                                                            }
+                                                                            className="mb-2 rounded border border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800"
+                                                                        >
+                                                                            <div className="mb-2 flex items-center justify-between">
+                                                                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                                                                    Package #
+                                                                                    {ptIndex +
+                                                                                        1}
+                                                                                </span>
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    variant="ghost"
+                                                                                    size="sm"
+                                                                                    onClick={() =>
+                                                                                        removeVariantPackagingType(
+                                                                                            variant.id!,
+                                                                                            packagingType.id,
+                                                                                        )
+                                                                                    }
+                                                                                >
+                                                                                    <Minus className="h-3 w-3" />
+                                                                                </Button>
+                                                                            </div>
+                                                                            <div className="grid gap-2 sm:grid-cols-2">
+                                                                                <div>
+                                                                                    <Input
+                                                                                        type="text"
+                                                                                        value={
+                                                                                            packagingType.name ||
+                                                                                            ''
+                                                                                        }
+                                                                                        onChange={(
+                                                                                            e,
+                                                                                        ) =>
+                                                                                            updateVariantPackagingType(
+                                                                                                variant.id!,
+                                                                                                packagingType.id,
+                                                                                                'name',
+                                                                                                e
+                                                                                                    .target
+                                                                                                    .value,
+                                                                                            )
+                                                                                        }
+                                                                                        placeholder="Package Name"
+                                                                                        className="text-sm"
+                                                                                    />
+                                                                                    <input
+                                                                                        type="hidden"
+                                                                                        name={`variants[${index}][packaging_types][${ptIndex}][name]`}
+                                                                                        value={
+                                                                                            packagingType.name ||
+                                                                                            ''
+                                                                                        }
+                                                                                    />
+                                                                                </div>
+                                                                                <div>
+                                                                                    <Input
+                                                                                        type="number"
+                                                                                        value={
+                                                                                            packagingType.units_per_package ||
+                                                                                            1
+                                                                                        }
+                                                                                        onChange={(
+                                                                                            e,
+                                                                                        ) =>
+                                                                                            updateVariantPackagingType(
+                                                                                                variant.id!,
+                                                                                                packagingType.id,
+                                                                                                'units_per_package',
+                                                                                                parseInt(
+                                                                                                    e
+                                                                                                        .target
+                                                                                                        .value,
+                                                                                                ) ||
+                                                                                                    1,
+                                                                                            )
+                                                                                        }
+                                                                                        placeholder="Units"
+                                                                                        min="1"
+                                                                                        className="text-sm"
+                                                                                    />
+                                                                                    <input
+                                                                                        type="hidden"
+                                                                                        name={`variants[${index}][packaging_types][${ptIndex}][units_per_package]`}
+                                                                                        value={
+                                                                                            packagingType.units_per_package ||
+                                                                                            1
+                                                                                        }
+                                                                                    />
+                                                                                </div>
+                                                                                <div>
+                                                                                    <Input
+                                                                                        type="number"
+                                                                                        value={
+                                                                                            packagingType.price ||
+                                                                                            0
+                                                                                        }
+                                                                                        onChange={(
+                                                                                            e,
+                                                                                        ) =>
+                                                                                            updateVariantPackagingType(
+                                                                                                variant.id!,
+                                                                                                packagingType.id,
+                                                                                                'price',
+                                                                                                parseFloat(
+                                                                                                    e
+                                                                                                        .target
+                                                                                                        .value,
+                                                                                                ) ||
+                                                                                                    0,
+                                                                                            )
+                                                                                        }
+                                                                                        placeholder="Price"
+                                                                                        step="0.01"
+                                                                                        min="0"
+                                                                                        className="text-sm"
+                                                                                    />
+                                                                                    <input
+                                                                                        type="hidden"
+                                                                                        name={`variants[${index}][packaging_types][${ptIndex}][price]`}
+                                                                                        value={
+                                                                                            packagingType.price ||
+                                                                                            0
+                                                                                        }
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="flex items-center">
+                                                                                    <Label>
+                                                                                        <Checkbox
+                                                                                            checked={
+                                                                                                packagingType.is_base_unit ||
+                                                                                                false
+                                                                                            }
+                                                                                            onChange={(
+                                                                                                checked,
+                                                                                            ) =>
+                                                                                                updateVariantPackagingType(
+                                                                                                    variant.id!,
+                                                                                                    packagingType.id,
+                                                                                                    'is_base_unit',
+                                                                                                    checked,
+                                                                                                )
+                                                                                            }
+                                                                                        />
+                                                                                        <span className="ml-2 text-xs">
+                                                                                            Base
+                                                                                            Unit
+                                                                                        </span>
+                                                                                    </Label>
+                                                                                    <input
+                                                                                        type="hidden"
+                                                                                        name={`variants[${index}][packaging_types][${ptIndex}][is_base_unit]`}
+                                                                                        value={
+                                                                                            packagingType.is_base_unit
+                                                                                                ? '1'
+                                                                                                : '0'
+                                                                                        }
+                                                                                    />
+                                                                                    <input
+                                                                                        type="hidden"
+                                                                                        name={`variants[${index}][packaging_types][${ptIndex}][display_order]`}
+                                                                                        value={
+                                                                                            ptIndex
+                                                                                        }
+                                                                                    />
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ),
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}

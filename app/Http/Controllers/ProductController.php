@@ -29,7 +29,7 @@ class ProductController extends Controller
 
         return Inertia::render('Products/Index', [
             'products' => Product::where('tenant_id', $tenantId)
-                ->with(['type', 'category', 'shop', 'variants.inventoryLocations'])
+                ->with(['type', 'category', 'shop', 'variants.inventoryLocations', 'variants.packagingTypes'])
                 ->withCount('variants')
                 ->latest()
                 ->paginate(20),
@@ -44,7 +44,7 @@ class ProductController extends Controller
 
         $shops = Shop::where('tenant_id', $tenantId)
             ->where('is_active', true)
-            ->get(['id', 'name', 'slug']);
+            ->get(['id', 'name', 'slug', 'inventory_model']);
 
         $productTypes = ProductType::accessibleTo($tenantId)
             ->where('is_active', true)
@@ -85,7 +85,8 @@ class ProductController extends Controller
             'type',
             'category',
             'shop',
-            'variants.inventoryLocations.location'
+            'variants.inventoryLocations.location',
+            'variants.packagingTypes'
         ]);
 
         $tenantId = auth()->user()->tenant_id;
@@ -114,7 +115,7 @@ class ProductController extends Controller
     {
         Gate::authorize('manage', $product);
 
-        $product->load(['type', 'category', 'variants']);
+        $product->load(['type', 'category', 'variants.packagingTypes']);
 
         $tenantId = auth()->user()->tenant_id;
 

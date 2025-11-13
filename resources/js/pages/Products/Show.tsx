@@ -410,6 +410,77 @@ export default function Show({ product, can_manage, available_shops, recent_move
                                                 )}
                                             </div>
 
+                                            {variant.packaging_types &&
+                                                variant.packaging_types.length >
+                                                    0 && (
+                                                    <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                                                        <p className="mb-3 flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                            <Package className="mr-2 h-4 w-4" />
+                                                            Packaging Types
+                                                        </p>
+                                                        <div className="space-y-2">
+                                                            {variant.packaging_types.map(
+                                                                (
+                                                                    packagingType,
+                                                                ) => (
+                                                                    <div
+                                                                        key={
+                                                                            packagingType.id
+                                                                        }
+                                                                        className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
+                                                                    >
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div>
+                                                                                <p className="font-medium text-gray-900 dark:text-white">
+                                                                                    {packagingType.display_name ||
+                                                                                        packagingType.name}
+                                                                                </p>
+                                                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                                    {packagingType.units_per_package}{' '}
+                                                                                    {variant.base_unit_name}
+                                                                                    {packagingType.units_per_package >
+                                                                                    1
+                                                                                        ? 's'
+                                                                                        : ''}
+                                                                                    {packagingType.is_base_unit && (
+                                                                                        <Badge
+                                                                                            variant="light"
+                                                                                            color="brand"
+                                                                                            className="ml-2"
+                                                                                        >
+                                                                                            Base
+                                                                                            Unit
+                                                                                        </Badge>
+                                                                                    )}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="text-right">
+                                                                            <p className="font-semibold text-gray-900 dark:text-white">
+                                                                                {formatPrice(
+                                                                                    packagingType.price,
+                                                                                )}
+                                                                            </p>
+                                                                            {!packagingType.is_base_unit &&
+                                                                                packagingType.price_per_unit && (
+                                                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                                        {formatPrice(
+                                                                                            packagingType.price_per_unit,
+                                                                                        )}
+                                                                                        /
+                                                                                        {
+                                                                                            variant.base_unit_name
+                                                                                        }
+                                                                                    </p>
+                                                                                )}
+                                                                        </div>
+                                                                    </div>
+                                                                ),
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                             {variant.attributes &&
                                                 Object.keys(variant.attributes)
                                                     .length > 0 && (

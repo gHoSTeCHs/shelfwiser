@@ -23,6 +23,28 @@ export interface StockMovement {
     };
 }
 
+export interface ProductPackagingType {
+    id: number;
+    product_variant_id: number;
+    name: string;
+    display_name: string | null;
+    units_per_package: number;
+    is_sealed_package: boolean;
+    price: number;
+    cost_price: number | null;
+    is_base_unit: boolean;
+    can_break_down: boolean;
+    breaks_into_packaging_type_id: number | null;
+    min_order_quantity: number;
+    display_order: number;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    price_per_unit?: number;
+    has_discount?: boolean;
+    discount_percentage?: number;
+}
+
 export interface ProductVariant {
     id: number;
     product_id: number;
@@ -46,6 +68,7 @@ export interface ProductVariant {
         shop_id: number;
     };
     inventory_locations?: InventoryLocation[];
+    packaging_types?: ProductPackagingType[];
 }
 
 export interface InventoryLocation {

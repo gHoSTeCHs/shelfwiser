@@ -48,6 +48,12 @@ class ProductVariant extends Model
         return $this->hasMany(InventoryLocation::class);
     }
 
+    public function packagingTypes(): HasMany
+    {
+        return $this->hasMany(ProductPackagingType::class)
+            ->orderBy('display_order');
+    }
+
     public function getTotalStockAttribute(): int
     {
         return $this->inventoryLocations()->sum('quantity');
