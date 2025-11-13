@@ -18,6 +18,8 @@ class CreateOrderRequest extends FormRequest
             'customer_id' => ['nullable', 'exists:users,id'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_variant_id' => ['required', 'exists:product_variants,id'],
+            'items.*.product_packaging_type_id' => ['nullable', 'exists:product_packaging_types,id'],
+            'items.*.package_quantity' => ['nullable', 'integer', 'min:1'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],

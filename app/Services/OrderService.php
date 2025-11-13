@@ -7,6 +7,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\StockMovementType;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\ProductPackagingType;
 use App\Models\ProductVariant;
 use App\Models\Shop;
 use App\Models\Tenant;
@@ -73,11 +74,31 @@ class OrderService
                 foreach ($items as $item) {
                     $variant = ProductVariant::findOrFail($item['product_variant_id']);
 
+                    $packagingType = null;
+                    $packagingDescription = null;
+                    $quantity = $item['quantity'];
+                    $unitPrice = $item['unit_price'] ?? $variant->price;
+
+                    if (isset($item['product_packaging_type_id'])) {
+                        $packagingType = ProductPackagingType::find($item['product_packaging_type_id']);
+
+                        if ($packagingType) {
+                            if (isset($item['package_quantity'])) {
+                                $quantity = $item['package_quantity'] * $packagingType->units_per_package;
+                            }
+
+                            $unitPrice = $packagingType->price / $packagingType->units_per_package;
+                            $packagingDescription = $packagingType->display_name ?? $packagingType->name;
+                        }
+                    }
+
                     OrderItem::create([
                         'order_id' => $order->id,
                         'product_variant_id' => $variant->id,
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $item['unit_price'] ?? $variant->price,
+                        'product_packaging_type_id' => $packagingType?->id,
+                        'packaging_description' => $packagingDescription,
+                        'quantity' => $quantity,
+                        'unit_price' => $unitPrice,
                         'discount_amount' => $item['discount_amount'] ?? 0,
                         'tax_amount' => $item['tax_amount'] ?? 0,
                     ]);
@@ -121,11 +142,31 @@ class OrderService
                     foreach ($data['items'] as $item) {
                         $variant = ProductVariant::findOrFail($item['product_variant_id']);
 
+                        $packagingType = null;
+                        $packagingDescription = null;
+                        $quantity = $item['quantity'];
+                        $unitPrice = $item['unit_price'] ?? $variant->price;
+
+                        if (isset($item['product_packaging_type_id'])) {
+                            $packagingType = ProductPackagingType::find($item['product_packaging_type_id']);
+
+                            if ($packagingType) {
+                                if (isset($item['package_quantity'])) {
+                                    $quantity = $item['package_quantity'] * $packagingType->units_per_package;
+                                }
+
+                                $unitPrice = $packagingType->price / $packagingType->units_per_package;
+                                $packagingDescription = $packagingType->display_name ?? $packagingType->name;
+                            }
+                        }
+
                         OrderItem::create([
                             'order_id' => $order->id,
                             'product_variant_id' => $variant->id,
-                            'quantity' => $item['quantity'],
-                            'unit_price' => $item['unit_price'] ?? $variant->price,
+                            'product_packaging_type_id' => $packagingType?->id,
+                            'packaging_description' => $packagingDescription,
+                            'quantity' => $quantity,
+                            'unit_price' => $unitPrice,
                             'discount_amount' => $item['discount_amount'] ?? 0,
                             'tax_amount' => $item['tax_amount'] ?? 0,
                         ]);

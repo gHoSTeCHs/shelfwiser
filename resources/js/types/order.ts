@@ -1,4 +1,4 @@
-import { ProductVariant } from './stockMovement';
+import { ProductVariant, ProductPackagingType } from './stockMovement';
 import { Shop } from './shop';
 import { User } from '@/types/index';
 
@@ -24,12 +24,18 @@ export interface OrderItem {
     id: number;
     order_id: number;
     product_variant_id: number;
+    product_packaging_type_id: number | null;
+    packaging_description: string | null;
     quantity: number;
     unit_price: number;
     discount_amount: number;
     tax_amount: number;
     total_amount: number;
     product_variant?: ProductVariant;
+    packaging_type?: ProductPackagingType;
+    package_quantity?: number;
+    profit?: number;
+    margin_percentage?: number;
     created_at: string;
     updated_at: string;
 }

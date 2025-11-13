@@ -2,10 +2,14 @@ export interface StockMovement {
     id: number;
     tenant_id: number;
     product_variant_id: number;
+    product_packaging_type_id: number | null;
     from_location_id: number | null;
     to_location_id: number | null;
     type: StockMovementType;
     quantity: number;
+    package_quantity: number | null;
+    cost_per_package: number | null;
+    cost_per_base_unit: number | null;
     quantity_before: number | null;
     quantity_after: number | null;
     reference_number: string | null;
@@ -15,12 +19,15 @@ export interface StockMovement {
     created_at: string;
     updated_at: string;
     product_variant?: ProductVariant;
+    packaging_type?: ProductPackagingType;
     from_location?: InventoryLocation;
     to_location?: InventoryLocation;
     created_by_user?: {
         id: number;
         name: string;
     };
+    package_description?: string;
+    total_cost?: number;
 }
 
 export interface ProductPackagingType {
