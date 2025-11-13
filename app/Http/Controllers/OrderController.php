@@ -78,7 +78,9 @@ class OrderController extends Controller
                 $query->where('tenant_id', $tenantId)
                     ->where('is_active', true);
             })
-            ->with(['product.shop', 'inventoryLocations'])
+            ->with(['product.shop', 'inventoryLocations', 'packagingTypes' => function ($query) {
+                $query->where('is_active', true)->orderBy('display_order');
+            }])
             ->get();
 
         return Inertia::render('Orders/Create', [
@@ -132,6 +134,7 @@ class OrderController extends Controller
             'customer',
             'items.productVariant.product',
             'items.productVariant.inventoryLocations.location',
+            'items.packagingType',
             'createdBy'
         ]);
 
@@ -168,7 +171,9 @@ class OrderController extends Controller
                 $query->where('tenant_id', $tenantId)
                     ->where('is_active', true);
             })
-            ->with(['product.shop', 'inventoryLocations'])
+            ->with(['product.shop', 'inventoryLocations', 'packagingTypes' => function ($query) {
+                $query->where('is_active', true)->orderBy('display_order');
+            }])
             ->get();
 
         return Inertia::render('Orders/Edit', [

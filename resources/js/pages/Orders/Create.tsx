@@ -6,6 +6,7 @@ import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import PackagingSelector from '@/components/inventory/PackagingSelector';
 import AppLayout from '@/layouts/AppLayout';
 import { Shop } from '@/types/shop';
 import { ProductVariant } from '@/types/stockMovement';
@@ -16,6 +17,8 @@ import { useState } from 'react';
 interface OrderItemForm {
     id: string;
     product_variant_id: number | '';
+    product_packaging_type_id: number | null;
+    package_quantity: number;
     quantity: number;
     unit_price: number;
 }
@@ -37,6 +40,8 @@ export default function Create({ shops, products }: Props) {
         {
             id: crypto.randomUUID(),
             product_variant_id: '',
+            product_packaging_type_id: null,
+            package_quantity: 1,
             quantity: 1,
             unit_price: 0,
         },
@@ -48,6 +53,8 @@ export default function Create({ shops, products }: Props) {
             {
                 id: crypto.randomUUID(),
                 product_variant_id: '',
+                product_packaging_type_id: null,
+                package_quantity: 1,
                 quantity: 1,
                 unit_price: 0,
             },
@@ -70,8 +77,47 @@ export default function Create({ shops, products }: Props) {
                         const variant = products.find(
                             (p) => p.id === parseInt(value),
                         );
-                        if (variant && updated.unit_price === 0) {
-                            updated.unit_price = variant.price;
+                        if (variant) {
+                            // Reset packaging selection when product changes
+                            updated.product_packaging_type_id = null;
+                            updated.package_quantity = 1;
+                            updated.quantity = 1;
+                            if (updated.unit_price === 0) {
+                                updated.unit_price = variant.price;
+                            }
+                        }
+                    }
+
+                    // When packaging type changes, update pricing
+                    if (field === 'product_packaging_type_id' && value) {
+                        const variant = products.find(
+                            (p) => p.id === item.product_variant_id,
+                        );
+                        if (variant) {
+                            const packagingType = variant.packaging_types?.find(
+                                (pt) => pt.id === value,
+                            );
+                            if (packagingType) {
+                                // Calculate unit price from packaging price
+                                updated.unit_price = packagingType.price / packagingType.units_per_package;
+                                // Calculate total quantity from package quantity
+                                updated.quantity = updated.package_quantity * packagingType.units_per_package;
+                            }
+                        }
+                    }
+
+                    // When package quantity changes, update total quantity
+                    if (field === 'package_quantity' && item.product_packaging_type_id) {
+                        const variant = products.find(
+                            (p) => p.id === item.product_variant_id,
+                        );
+                        if (variant) {
+                            const packagingType = variant.packaging_types?.find(
+                                (pt) => pt.id === item.product_packaging_type_id,
+                            );
+                            if (packagingType) {
+                                updated.quantity = value * packagingType.units_per_package;
+                            }
                         }
                     }
 
@@ -154,6 +200,8 @@ export default function Create({ shops, products }: Props) {
                         ...data,
                         items: items.map((item) => ({
                             product_variant_id: item.product_variant_id,
+                            product_packaging_type_id: item.product_packaging_type_id,
+                            package_quantity: item.package_quantity,
                             quantity: item.quantity,
                             unit_price: item.unit_price,
                         })),
@@ -231,8 +279,8 @@ export default function Create({ shops, products }: Props) {
                                                     )}
                                                 </div>
 
-                                                <div className="grid gap-4 md:grid-cols-3">
-                                                    <div className="md:col-span-2">
+                                                <div className="space-y-4">
+                                                    <div>
                                                         <Label>
                                                             Product{' '}
                                                             <span className="text-error-500">
@@ -260,79 +308,108 @@ export default function Create({ shops, products }: Props) {
                                                             }
                                                             defaultValue=""
                                                         />
-                                                        {selectedVariant && (
+                                                        {selectedVariant && !item.product_packaging_type_id && (
                                                             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                                                 Available:{' '}
                                                                 {availableStock}{' '}
-                                                                units
+                                                                {selectedVariant.base_unit_name}
+                                                                {availableStock > 1 ? 's' : ''}
                                                             </p>
                                                         )}
                                                     </div>
 
-                                                    <div>
-                                                        <Label>
-                                                            Quantity{' '}
-                                                            <span className="text-error-500">
-                                                                *
-                                                            </span>
-                                                        </Label>
-                                                        <Input
-                                                            type="number"
-                                                            min="1"
-                                                            value={
-                                                                item.quantity
-                                                            }
-                                                            onChange={(e) =>
+                                                    {selectedVariant && selectedVariant.packaging_types && selectedVariant.packaging_types.length > 0 && (
+                                                        <PackagingSelector
+                                                            variant={selectedVariant}
+                                                            selectedPackagingTypeId={item.product_packaging_type_id}
+                                                            packageQuantity={item.package_quantity}
+                                                            onPackagingTypeChange={(packagingTypeId) =>
                                                                 updateItem(
                                                                     item.id,
-                                                                    'quantity',
-                                                                    parseInt(
-                                                                        e.target
-                                                                            .value,
-                                                                    ) || 1,
+                                                                    'product_packaging_type_id',
+                                                                    packagingTypeId,
                                                                 )
                                                             }
-                                                        />
-                                                    </div>
-
-                                                    <div>
-                                                        <Label>
-                                                            Unit Price{' '}
-                                                            <span className="text-error-500">
-                                                                *
-                                                            </span>
-                                                        </Label>
-                                                        <Input
-                                                            type="number"
-                                                            min="0"
-                                                            step="0.01"
-                                                            value={
-                                                                item.unit_price
-                                                            }
-                                                            onChange={(e) =>
+                                                            onPackageQuantityChange={(quantity) =>
                                                                 updateItem(
                                                                     item.id,
-                                                                    'unit_price',
-                                                                    parseFloat(
-                                                                        e.target
-                                                                            .value,
-                                                                    ) || 0,
+                                                                    'package_quantity',
+                                                                    quantity,
                                                                 )
                                                             }
+                                                            showLabel={true}
+                                                            required={false}
                                                         />
-                                                    </div>
+                                                    )}
 
-                                                    <div className="md:col-span-2">
-                                                        <Label>
-                                                            Item Total
-                                                        </Label>
-                                                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                                                            {formatCurrency(
-                                                                item.quantity *
-                                                                    item.unit_price,
-                                                            )}
-                                                        </p>
-                                                    </div>
+                                                    {!item.product_packaging_type_id && selectedVariant && (
+                                                        <div className="grid gap-4 md:grid-cols-2">
+                                                            <div>
+                                                                <Label>
+                                                                    Quantity{' '}
+                                                                    <span className="text-error-500">
+                                                                        *
+                                                                    </span>
+                                                                </Label>
+                                                                <Input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    value={
+                                                                        item.quantity
+                                                                    }
+                                                                    onChange={(e) =>
+                                                                        updateItem(
+                                                                            item.id,
+                                                                            'quantity',
+                                                                            parseInt(
+                                                                                e.target
+                                                                                    .value,
+                                                                            ) || 1,
+                                                                        )
+                                                                    }
+                                                                />
+                                                            </div>
+
+                                                            <div>
+                                                                <Label>
+                                                                    Unit Price{' '}
+                                                                    <span className="text-error-500">
+                                                                        *
+                                                                    </span>
+                                                                </Label>
+                                                                <Input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    step="0.01"
+                                                                    value={
+                                                                        item.unit_price
+                                                                    }
+                                                                    onChange={(e) =>
+                                                                        updateItem(
+                                                                            item.id,
+                                                                            'unit_price',
+                                                                            parseFloat(
+                                                                                e.target
+                                                                                    .value,
+                                                                            ) || 0,
+                                                                        )
+                                                                    }
+                                                                />
+                                                            </div>
+
+                                                            <div className="md:col-span-2">
+                                                                <Label>
+                                                                    Item Total
+                                                                </Label>
+                                                                <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                                    {formatCurrency(
+                                                                        item.quantity *
+                                                                            item.unit_price,
+                                                                    )}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );

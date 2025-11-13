@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Enums\StockMovementType;
 use App\Http\Requests\AdjustStockRequest;
+use App\Http\Requests\RecordPurchaseRequest;
 use App\Http\Requests\SetupInventoryLocationsRequest;
 use App\Http\Requests\StockTakeRequest;
 use App\Http\Requests\TransferStockRequest;
 use App\Models\InventoryLocation;
+use App\Models\ProductPackagingType;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Services\StockMovementService;
@@ -41,6 +43,7 @@ class StockMovementController extends Controller
             'movements' => StockMovement::query()->where('tenant_id', $tenantId)
                 ->with([
                     'productVariant.product',
+                    'packagingType',
                     'fromLocation.location',
                     'toLocation.location',
                     'createdBy:id,first_name',
@@ -60,6 +63,7 @@ class StockMovementController extends Controller
 
         $stockMovement->load([
             'productVariant.product',
+            'packagingType',
             'fromLocation.location',
             'toLocation.location',
             'createdBy',
@@ -215,6 +219,49 @@ class StockMovementController extends Controller
             'variant' => $variant->load('product'),
             'movements' => $movements,
         ]);
+    }
+
+    /**
+     * Record a purchase with packaging
+     *
+     * @throws Throwable
+     */
+    public function recordPurchase(RecordPurchaseRequest $request): RedirectResponse|JsonResponse
+    {
+        try {
+            $variant = ProductVariant::query()->findOrFail($request->input('product_variant_id'));
+            $location = InventoryLocation::query()->findOrFail($request->input('location_id'));
+            $packagingType = ProductPackagingType::query()->findOrFail($request->input('product_packaging_type_id'));
+
+            $movement = $this->stockMovementService->recordPurchase(
+                variant: $variant,
+                location: $location,
+                packageQuantity: $request->input('package_quantity'),
+                packagingType: $packagingType,
+                costPerPackage: $request->input('cost_per_package'),
+                user: $request->user(),
+                notes: $request->input('notes')
+            );
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Purchase recorded successfully.',
+                    'movement' => $movement->load(['productVariant', 'packagingType', 'toLocation']),
+                ]);
+            }
+
+            return Redirect::back()->with('success', 'Purchase recorded successfully.');
+        } catch (Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
+            return Redirect::back()->with('error', $e->getMessage());
+        }
     }
 
     /**

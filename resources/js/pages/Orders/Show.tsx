@@ -207,6 +207,9 @@ export default function Show({
                                             <th className="pb-3 font-medium">
                                                 SKU
                                             </th>
+                                            <th className="pb-3 font-medium">
+                                                Packaging
+                                            </th>
                                             <th className="pb-3 text-right font-medium">
                                                 Quantity
                                             </th>
@@ -245,6 +248,26 @@ export default function Show({
                                                 </td>
                                                 <td className="py-3 text-sm text-gray-600 dark:text-gray-300">
                                                     {item.product_variant?.sku}
+                                                </td>
+                                                <td className="py-3">
+                                                    {item.packaging_type ? (
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                {item.package_quantity}{' '}
+                                                                {item.packaging_description || item.packaging_type.display_name || item.packaging_type.name}
+                                                                {item.package_quantity && item.package_quantity > 1 ? 's' : ''}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                ({item.packaging_type.units_per_package}{' '}
+                                                                {item.product_variant?.base_unit_name}
+                                                                {item.packaging_type.units_per_package > 1 ? 's' : ''} each)
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                            Loose
+                                                        </p>
+                                                    )}
                                                 </td>
                                                 <td className="py-3 text-right text-gray-900 dark:text-white">
                                                     {item.quantity}
