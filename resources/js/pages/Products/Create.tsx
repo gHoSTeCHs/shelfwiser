@@ -42,6 +42,7 @@ export default function Create({ shops, productTypes, categories }: Props) {
     const [simplePrice, setSimplePrice] = useState<string>('');
     const [simpleCostPrice, setSimpleCostPrice] = useState<string>('');
     const [simpleBarcode, setSimpleBarcode] = useState<string>('');
+    const [simpleBaseUnit, setSimpleBaseUnit] = useState<string>('Unit');
 
     const [variants, setVariants] = useState<ProductVariant[]>([
         {
@@ -51,6 +52,7 @@ export default function Create({ shops, productTypes, categories }: Props) {
             price: '',
             cost_price: '',
             barcode: '',
+            base_unit_name: 'Unit',
             attributes: {},
         },
     ]);
@@ -92,6 +94,7 @@ export default function Create({ shops, productTypes, categories }: Props) {
                 price: '',
                 cost_price: '',
                 barcode: '',
+                base_unit_name: 'Unit',
                 attributes: {},
             },
         ]);
@@ -532,6 +535,36 @@ export default function Create({ shops, productTypes, categories }: Props) {
                                                 </div>
                                             </div>
 
+                                            <div>
+                                                <Label htmlFor="base_unit_name">
+                                                    Base Unit
+                                                    <span className="text-error-500">
+                                                        {' '}
+                                                        *
+                                                    </span>
+                                                </Label>
+                                                <Input
+                                                    type="text"
+                                                    id="base_unit_name"
+                                                    name="base_unit_name"
+                                                    value={simpleBaseUnit}
+                                                    onChange={(e) =>
+                                                        setSimpleBaseUnit(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="e.g., Piece, Bottle, Kilogram"
+                                                    error={!!errors.base_unit_name}
+                                                    required
+                                                />
+                                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                    What unit does your inventory quantity represent?
+                                                </p>
+                                                <InputError
+                                                    message={errors.base_unit_name}
+                                                />
+                                            </div>
+
                                             <div className="grid gap-5 sm:grid-cols-2">
                                                 <div>
                                                     <Label htmlFor="price">
@@ -754,34 +787,70 @@ export default function Create({ shops, productTypes, categories }: Props) {
                                                             </div>
                                                         </div>
 
-                                                        <div>
-                                                            <Label
-                                                                htmlFor={`variant_barcode_${variant.id}`}
-                                                            >
-                                                                Barcode
-                                                            </Label>
-                                                            <Input
-                                                                type="text"
-                                                                value={
-                                                                    variant.barcode
-                                                                }
-                                                                onChange={(e) =>
-                                                                    updateVariant(
-                                                                        variant.id!,
-                                                                        'barcode',
-                                                                        e.target
-                                                                            .value,
-                                                                    )
-                                                                }
-                                                                placeholder="123456789"
-                                                            />
-                                                            <input
-                                                                type="hidden"
+                                                        <div className="grid gap-4 sm:grid-cols-2">
+                                                            <div>
+                                                                <Label
+                                                                    htmlFor={`variant_barcode_${variant.id}`}
+                                                                >
+                                                                    Barcode
+                                                                </Label>
+                                                                <Input
+                                                                    type="text"
+                                                                    value={
+                                                                        variant.barcode
+                                                                    }
+                                                                    onChange={(e) =>
+                                                                        updateVariant(
+                                                                            variant.id!,
+                                                                            'barcode',
+                                                                            e.target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    placeholder="123456789"
+                                                                />
+                                                                <input
+                                                                    type="hidden"
                                                                 name={`variants[${index}][barcode]`}
                                                                 value={
                                                                     variant.barcode
                                                                 }
                                                             />
+                                                            </div>
+
+                                                            <div>
+                                                                <Label
+                                                                    htmlFor={`variant_base_unit_${variant.id}`}
+                                                                >
+                                                                    Base Unit *
+                                                                </Label>
+                                                                <Input
+                                                                    type="text"
+                                                                    value={
+                                                                        variant.base_unit_name
+                                                                    }
+                                                                    onChange={(e) =>
+                                                                        updateVariant(
+                                                                            variant.id!,
+                                                                            'base_unit_name',
+                                                                            e.target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    placeholder="e.g., Piece, Bottle, Kg"
+                                                                    required
+                                                                />
+                                                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                                    What unit does the stock quantity represent?
+                                                                </p>
+                                                                <input
+                                                                    type="hidden"
+                                                                    name={`variants[${index}][base_unit_name]`}
+                                                                    value={
+                                                                        variant.base_unit_name
+                                                                    }
+                                                                />
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
