@@ -2,6 +2,7 @@ import StockMovementController from '@/actions/App/Http/Controllers/StockMovemen
 import Input from '@/components/form/input/InputField';
 import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import Pagination from '@/components/ui/pagination/Pagination';
@@ -23,7 +24,6 @@ import {
     Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
-import Button from '@/components/ui/button/Button';
 
 interface PaginatedMovements {
     data: StockMovement[];

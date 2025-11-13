@@ -11,8 +11,10 @@ use App\Http\Requests\UpdatePaymentStatusRequest;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\Shop;
+use App\Models\User;
 use App\Services\OrderService;
 use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
@@ -26,6 +28,9 @@ class OrderController extends Controller
     {
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function index(): Response
     {
         Gate::authorize('viewAny', Order::class);
@@ -33,20 +38,20 @@ class OrderController extends Controller
         $tenantId = auth()->user()->tenant_id;
 
         return Inertia::render('Orders/Index', [
-            'orders' => Order::where('tenant_id', $tenantId)
+            'orders' => Order::query()->where('tenant_id', $tenantId)
                 ->with(['shop', 'customer', 'items', 'createdBy'])
                 ->withCount('items')
                 ->latest()
                 ->paginate(20),
             'stats' => [
-                'total' => Order::where('tenant_id', $tenantId)->count(),
-                'pending' => Order::where('tenant_id', $tenantId)
+                'total' => Order::query()->where('tenant_id', $tenantId)->count(),
+                'pending' => Order::query()->where('tenant_id', $tenantId)
                     ->where('status', OrderStatus::PENDING)
                     ->count(),
-                'confirmed' => Order::where('tenant_id', $tenantId)
+                'confirmed' => Order::query()->where('tenant_id', $tenantId)
                     ->where('status', OrderStatus::CONFIRMED)
                     ->count(),
-                'delivered' => Order::where('tenant_id', $tenantId)
+                'delivered' => Order::query()->where('tenant_id', $tenantId)
                     ->where('status', OrderStatus::DELIVERED)
                     ->count(),
             ],
@@ -55,13 +60,16 @@ class OrderController extends Controller
         ]);
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function create(): Response
     {
         Gate::authorize('create', Order::class);
 
         $tenantId = auth()->user()->tenant_id;
 
-        $shops = Shop::where('tenant_id', $tenantId)
+        $shops = Shop::query()->where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->get(['id', 'name', 'slug']);
 
@@ -85,9 +93,9 @@ class OrderController extends Controller
     public function store(CreateOrderRequest $request): RedirectResponse
     {
         try {
-            $shop = Shop::findOrFail($request->input('shop_id'));
+            $shop = Shop::query()->findOrFail($request->input('shop_id'));
             $customer = $request->input('customer_id')
-                ? \App\Models\User::findOrFail($request->input('customer_id'))
+                ? User::query()->findOrFail($request->input('customer_id'))
                 : null;
 
             $order = $this->orderService->createOrder(
@@ -104,7 +112,7 @@ class OrderController extends Controller
             );
 
             return Redirect::route('orders.show', $order)
-                ->with('success', "Order #{$order->order_number} created successfully.");
+                ->with('success', "Order #$order->order_number created successfully.");
         } catch (Exception $e) {
             return Redirect::back()
                 ->withInput()
@@ -112,6 +120,9 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function show(Order $order): Response
     {
         Gate::authorize('view', $order);
@@ -132,7 +143,10 @@ class OrderController extends Controller
         ]);
     }
 
-    public function edit(Order $order): Response
+    /**
+     * @throws AuthorizationException
+     */
+    public function edit(Order $order): Response|RedirectResponse
     {
         Gate::authorize('manage', $order);
 
@@ -145,7 +159,7 @@ class OrderController extends Controller
 
         $tenantId = auth()->user()->tenant_id;
 
-        $shops = Shop::where('tenant_id', $tenantId)
+        $shops = Shop::query()->where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->get(['id', 'name', 'slug']);
 
@@ -173,7 +187,7 @@ class OrderController extends Controller
             $this->orderService->updateOrder($order, $request->validated());
 
             return Redirect::route('orders.show', $order)
-                ->with('success', "Order #{$order->order_number} updated successfully.");
+                ->with('success', "Order #$order->order_number updated successfully.");
         } catch (Exception $e) {
             return Redirect::back()
                 ->withInput()
@@ -181,6 +195,9 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function destroy(Order $order): RedirectResponse
     {
         Gate::authorize('delete', $order);
@@ -194,7 +211,7 @@ class OrderController extends Controller
         $order->delete();
 
         return Redirect::route('orders.index')
-            ->with('success', "Order #{$orderNumber} deleted successfully.");
+            ->with('success', "Order #$orderNumber deleted successfully.");
     }
 
     /**
@@ -217,7 +234,7 @@ class OrderController extends Controller
                 );
             } else {
                 if (!$order->status->canTransitionTo($newStatus)) {
-                    throw new Exception("Cannot change status from {$order->status->value} to {$newStatus->value}");
+                    throw new Exception("Cannot change status from {$order->status->value} to $newStatus->value");
                 }
                 $order->status = $newStatus;
                 $order->save();

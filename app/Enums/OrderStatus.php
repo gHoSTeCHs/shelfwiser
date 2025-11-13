@@ -62,10 +62,9 @@ enum OrderStatus: string
             self::CONFIRMED => in_array($newStatus, [self::PROCESSING, self::CANCELLED]),
             self::PROCESSING => in_array($newStatus, [self::PACKED, self::CANCELLED]),
             self::PACKED => in_array($newStatus, [self::SHIPPED, self::CANCELLED]),
-            self::SHIPPED => in_array($newStatus, [self::DELIVERED]),
-            self::DELIVERED => in_array($newStatus, [self::REFUNDED]),
-            self::CANCELLED => false,
-            self::REFUNDED => false,
+            self::SHIPPED => $newStatus == self::DELIVERED,
+            self::DELIVERED => $newStatus == self::REFUNDED,
+            self::CANCELLED, self::REFUNDED => false,
         };
     }
 

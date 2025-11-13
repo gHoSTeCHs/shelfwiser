@@ -5,12 +5,11 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
-import { Order, OrderListResponse, OrderStats } from '@/types/order';
+import { OrderListResponse, OrderStats } from '@/types/order';
 import { Head, Link } from '@inertiajs/react';
 import {
     CheckCircle,
     Clock,
-    DollarSign,
     Eye,
     Package,
     Plus,
@@ -46,7 +45,8 @@ export default function Index({
                 ?.toLowerCase()
                 .includes(searchTerm.toLowerCase()) ||
             order.shop?.name?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = !selectedStatus || order.status === selectedStatus;
+        const matchesStatus =
+            !selectedStatus || order.status === selectedStatus;
         const matchesPaymentStatus =
             !selectedPaymentStatus ||
             order.payment_status === selectedPaymentStatus;
@@ -221,7 +221,9 @@ export default function Index({
                                 ),
                             ]}
                             placeholder="All Payment Status"
-                            onChange={(value) => setSelectedPaymentStatus(value)}
+                            onChange={(value) =>
+                                setSelectedPaymentStatus(value)
+                            }
                             defaultValue=""
                         />
                     </div>
@@ -232,12 +234,16 @@ export default function Index({
                         icon={<Package className="h-12 w-12" />}
                         title="No orders found"
                         description={
-                            searchTerm || selectedStatus || selectedPaymentStatus
+                            searchTerm ||
+                            selectedStatus ||
+                            selectedPaymentStatus
                                 ? 'Try adjusting your search criteria'
                                 : 'Get started by creating your first order'
                         }
                         action={
-                            !searchTerm && !selectedStatus && !selectedPaymentStatus ? (
+                            !searchTerm &&
+                            !selectedStatus &&
+                            !selectedPaymentStatus ? (
                                 <Link href={'/orders/create'}>
                                     <Button>
                                         <Plus className="mr-2 h-4 w-4" />
@@ -259,7 +265,9 @@ export default function Index({
                                             </h3>
                                             <Badge
                                                 variant="light"
-                                                color={getStatusColor(order.status)}
+                                                color={getStatusColor(
+                                                    order.status,
+                                                )}
                                             >
                                                 {order_statuses[order.status]}
                                             </Badge>
@@ -269,7 +277,11 @@ export default function Index({
                                                     order.payment_status,
                                                 )}
                                             >
-                                                {payment_statuses[order.payment_status]}
+                                                {
+                                                    payment_statuses[
+                                                        order.payment_status
+                                                    ]
+                                                }
                                             </Badge>
                                         </div>
 
@@ -279,7 +291,9 @@ export default function Index({
                                                     <span className="text-gray-500 dark:text-gray-400">
                                                         Customer:
                                                     </span>
-                                                    <span>{order.customer.name}</span>
+                                                    <span>
+                                                        {order.customer.name}
+                                                    </span>
                                                 </div>
                                             )}
                                             <div className="flex items-center gap-1">
@@ -298,7 +312,11 @@ export default function Index({
                                                 <span className="text-gray-500 dark:text-gray-400">
                                                     Date:
                                                 </span>
-                                                <span>{formatDate(order.created_at)}</span>
+                                                <span>
+                                                    {formatDate(
+                                                        order.created_at,
+                                                    )}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -309,7 +327,9 @@ export default function Index({
                                                 Total Amount
                                             </p>
                                             <p className="text-xl font-bold text-gray-900 dark:text-white">
-                                                {formatCurrency(order.total_amount)}
+                                                {formatCurrency(
+                                                    order.total_amount,
+                                                )}
                                             </p>
                                         </div>
                                         <Link href={`/orders/${order.id}`}>

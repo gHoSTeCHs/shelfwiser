@@ -7,10 +7,10 @@ import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
-import { ProductVariant } from '@/types/stockMovement';
 import { Shop } from '@/types/shop';
+import { ProductVariant } from '@/types/stockMovement';
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Minus, Plus, Save, ShoppingCart, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Save, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 interface OrderItemForm {
@@ -67,7 +67,9 @@ export default function Create({ shops, products }: Props) {
                     const updated = { ...item, [field]: value };
 
                     if (field === 'product_variant_id' && value) {
-                        const variant = products.find((p) => p.id === parseInt(value));
+                        const variant = products.find(
+                            (p) => p.id === parseInt(value),
+                        );
                         if (variant && updated.unit_price === 0) {
                             updated.unit_price = variant.price;
                         }
@@ -158,12 +160,15 @@ export default function Create({ shops, products }: Props) {
                     })}
                 >
                     <div className="grid gap-6 lg:grid-cols-3">
-                        <div className="lg:col-span-2 space-y-6">
+                        <div className="space-y-6 lg:col-span-2">
                             <Card title="Order Details">
                                 <div className="space-y-4">
                                     <div>
                                         <Label htmlFor="shop_id">
-                                            Shop <span className="text-error-500">*</span>
+                                            Shop{' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Select
                                             options={shops.map((shop) => ({
@@ -171,7 +176,9 @@ export default function Create({ shops, products }: Props) {
                                                 label: shop.name,
                                             }))}
                                             placeholder="Select shop"
-                                            onChange={(value) => setShopId(parseInt(value))}
+                                            onChange={(value) =>
+                                                setShopId(parseInt(value))
+                                            }
                                             defaultValue=""
                                         />
                                         <InputError message={undefined} />
@@ -187,9 +194,12 @@ export default function Create({ shops, products }: Props) {
                             <Card title="Order Items">
                                 <div className="space-y-4">
                                     {items.map((item, index) => {
-                                        const availableProducts = getFilteredProducts(item.id);
+                                        const availableProducts =
+                                            getFilteredProducts(item.id);
                                         const selectedVariant = products.find(
-                                            (p) => p.id === item.product_variant_id,
+                                            (p) =>
+                                                p.id ===
+                                                item.product_variant_id,
                                         );
                                         const availableStock = selectedVariant
                                             ? getAvailableStock(selectedVariant)
@@ -209,7 +219,11 @@ export default function Create({ shops, products }: Props) {
                                                             type="button"
                                                             variant="outline"
                                                             size="sm"
-                                                            onClick={() => removeItem(item.id)}
+                                                            onClick={() =>
+                                                                removeItem(
+                                                                    item.id,
+                                                                )
+                                                            }
                                                             className="text-error-600 hover:text-error-700"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
@@ -221,26 +235,36 @@ export default function Create({ shops, products }: Props) {
                                                     <div className="md:col-span-2">
                                                         <Label>
                                                             Product{' '}
-                                                            <span className="text-error-500">*</span>
+                                                            <span className="text-error-500">
+                                                                *
+                                                            </span>
                                                         </Label>
                                                         <Select
-                                                            options={availableProducts.map((p) => ({
-                                                                value: p.id.toString(),
-                                                                label: getProductLabel(p),
-                                                            }))}
+                                                            options={availableProducts.map(
+                                                                (p) => ({
+                                                                    value: p.id.toString(),
+                                                                    label: getProductLabel(
+                                                                        p,
+                                                                    ),
+                                                                }),
+                                                            )}
                                                             placeholder="Select product"
                                                             onChange={(value) =>
                                                                 updateItem(
                                                                     item.id,
                                                                     'product_variant_id',
-                                                                    parseInt(value),
+                                                                    parseInt(
+                                                                        value,
+                                                                    ),
                                                                 )
                                                             }
                                                             defaultValue=""
                                                         />
                                                         {selectedVariant && (
                                                             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                                                Available: {availableStock} units
+                                                                Available:{' '}
+                                                                {availableStock}{' '}
+                                                                units
                                                             </p>
                                                         )}
                                                     </div>
@@ -248,17 +272,24 @@ export default function Create({ shops, products }: Props) {
                                                     <div>
                                                         <Label>
                                                             Quantity{' '}
-                                                            <span className="text-error-500">*</span>
+                                                            <span className="text-error-500">
+                                                                *
+                                                            </span>
                                                         </Label>
                                                         <Input
                                                             type="number"
                                                             min="1"
-                                                            value={item.quantity}
+                                                            value={
+                                                                item.quantity
+                                                            }
                                                             onChange={(e) =>
                                                                 updateItem(
                                                                     item.id,
                                                                     'quantity',
-                                                                    parseInt(e.target.value) || 1,
+                                                                    parseInt(
+                                                                        e.target
+                                                                            .value,
+                                                                    ) || 1,
                                                                 )
                                                             }
                                                         />
@@ -267,28 +298,38 @@ export default function Create({ shops, products }: Props) {
                                                     <div>
                                                         <Label>
                                                             Unit Price{' '}
-                                                            <span className="text-error-500">*</span>
+                                                            <span className="text-error-500">
+                                                                *
+                                                            </span>
                                                         </Label>
                                                         <Input
                                                             type="number"
                                                             min="0"
                                                             step="0.01"
-                                                            value={item.unit_price}
+                                                            value={
+                                                                item.unit_price
+                                                            }
                                                             onChange={(e) =>
                                                                 updateItem(
                                                                     item.id,
                                                                     'unit_price',
-                                                                    parseFloat(e.target.value) || 0,
+                                                                    parseFloat(
+                                                                        e.target
+                                                                            .value,
+                                                                    ) || 0,
                                                                 )
                                                             }
                                                         />
                                                     </div>
 
                                                     <div className="md:col-span-2">
-                                                        <Label>Item Total</Label>
+                                                        <Label>
+                                                            Item Total
+                                                        </Label>
                                                         <p className="text-lg font-semibold text-gray-900 dark:text-white">
                                                             {formatCurrency(
-                                                                item.quantity * item.unit_price,
+                                                                item.quantity *
+                                                                    item.unit_price,
                                                             )}
                                                         </p>
                                                     </div>
@@ -312,48 +353,60 @@ export default function Create({ shops, products }: Props) {
                             <Card title="Additional Information">
                                 <div className="space-y-4">
                                     <div>
-                                        <Label htmlFor="customer_notes">Customer Notes</Label>
+                                        <Label htmlFor="customer_notes">
+                                            Customer Notes
+                                        </Label>
                                         <TextArea
                                             id="customer_notes"
-                                            name="customer_notes"
                                             value={customerNotes}
-                                            onChange={(value) => setCustomerNotes(value)}
+                                            onChange={(value) =>
+                                                setCustomerNotes(value)
+                                            }
                                             placeholder="Notes visible to customer"
                                             rows={3}
                                         />
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="internal_notes">Internal Notes</Label>
+                                        <Label htmlFor="internal_notes">
+                                            Internal Notes
+                                        </Label>
                                         <TextArea
                                             id="internal_notes"
-                                            name="internal_notes"
                                             value={internalNotes}
-                                            onChange={(value) => setInternalNotes(value)}
+                                            onChange={(value) =>
+                                                setInternalNotes(value)
+                                            }
                                             placeholder="Internal notes (not visible to customer)"
                                             rows={3}
                                         />
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="shipping_address">Shipping Address</Label>
+                                        <Label htmlFor="shipping_address">
+                                            Shipping Address
+                                        </Label>
                                         <TextArea
                                             id="shipping_address"
-                                            name="shipping_address"
                                             value={shippingAddress}
-                                            onChange={(value) => setShippingAddress(value)}
+                                            onChange={(value) =>
+                                                setShippingAddress(value)
+                                            }
                                             placeholder="Enter shipping address"
                                             rows={2}
                                         />
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="billing_address">Billing Address</Label>
+                                        <Label htmlFor="billing_address">
+                                            Billing Address
+                                        </Label>
                                         <TextArea
                                             id="billing_address"
-                                            name="billing_address"
                                             value={billingAddress}
-                                            onChange={(value) => setBillingAddress(value)}
+                                            onChange={(value) =>
+                                                setBillingAddress(value)
+                                            }
                                             placeholder="Enter billing address"
                                             rows={2}
                                         />
@@ -370,12 +423,16 @@ export default function Create({ shops, products }: Props) {
                                             Subtotal
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatCurrency(calculateSubtotal())}
+                                            {formatCurrency(
+                                                calculateSubtotal(),
+                                            )}
                                         </span>
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="shipping_cost">Shipping Cost</Label>
+                                        <Label htmlFor="shipping_cost">
+                                            Shipping Cost
+                                        </Label>
                                         <Input
                                             type="number"
                                             id="shipping_cost"
@@ -384,7 +441,11 @@ export default function Create({ shops, products }: Props) {
                                             step="0.01"
                                             value={shippingCost}
                                             onChange={(e) =>
-                                                setShippingCost(parseFloat(e.target.value) || 0)
+                                                setShippingCost(
+                                                    parseFloat(
+                                                        e.target.value,
+                                                    ) || 0,
+                                                )
                                             }
                                         />
                                     </div>
@@ -395,7 +456,9 @@ export default function Create({ shops, products }: Props) {
                                                 Total
                                             </span>
                                             <span className="text-xl font-bold text-gray-900 dark:text-white">
-                                                {formatCurrency(calculateTotal())}
+                                                {formatCurrency(
+                                                    calculateTotal(),
+                                                )}
                                             </span>
                                         </div>
                                     </div>

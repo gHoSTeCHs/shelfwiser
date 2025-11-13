@@ -1,6 +1,6 @@
 import { ProductVariant } from './stockMovement';
 import { Shop } from './shop';
-import { User } from './user';
+import { User } from '@/types/index';
 
 export type OrderStatus =
     | 'pending'
@@ -17,7 +17,8 @@ export type PaymentStatus =
     | 'partial'
     | 'paid'
     | 'refunded'
-    | 'failed';
+    | 'failed'
+    | 'cancelled';
 
 export interface OrderItem {
     id: number;

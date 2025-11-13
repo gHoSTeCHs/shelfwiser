@@ -9,22 +9,29 @@ import Card from '@/components/ui/card/Card';
 import { Modal } from '@/components/ui/modal';
 import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
-import { Order } from '@/types/order';
-import { Form, Head, Link } from '@inertiajs/react';
+import { Order, OrderStatus, PaymentStatus } from '@/types/order';
+import { Head, Link, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
     Building2,
     Calendar,
     CheckCircle,
     CreditCard,
-    Edit,
     Package,
-    ShoppingCart,
     Truck,
     User,
     XCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { FormEvent } from 'react';
+
+type BadgeColor =
+    | 'primary'
+    | 'success'
+    | 'error'
+    | 'warning'
+    | 'info'
+    | 'light'
+    | 'dark';
 
 interface Props {
     order: Order;
@@ -43,36 +50,59 @@ export default function Show({
     const paymentModal = useModal();
     const cancelModal = useModal();
 
-    const [selectedStatus, setSelectedStatus] = useState(order.status);
-    const [selectedPaymentStatus, setSelectedPaymentStatus] = useState(
-        order.payment_status,
-    );
-    const [paymentMethod, setPaymentMethod] = useState(order.payment_method || '');
-    const [cancellationReason, setCancellationReason] = useState('');
+    // Status update form
+    const statusForm = useForm({
+        status: order.status as OrderStatus,
+    });
 
-    const getStatusColor = (status: string): string => {
-        const colors: Record<string, string> = {
-            pending: 'warning',
-            confirmed: 'info',
-            processing: 'brand',
-            packed: 'blue',
-            shipped: 'purple',
-            delivered: 'success',
-            cancelled: 'error',
-            refunded: 'gray',
-        };
-        return colors[status] || 'gray';
+    // Payment update form
+    const paymentForm = useForm({
+        payment_status: order.payment_status as PaymentStatus,
+        payment_method: order.payment_method || '',
+    });
+
+    // Cancel order form
+    const cancelForm = useForm({
+        status: 'cancelled' as OrderStatus,
+        reason: '',
+    });
+
+    const getStatusColor = (status: OrderStatus): BadgeColor => {
+        switch (status) {
+            case 'pending':
+                return 'warning';
+            case 'confirmed':
+            case 'processing':
+                return 'info';
+            case 'packed':
+            case 'shipped':
+                return 'primary';
+            case 'delivered':
+                return 'success';
+            case 'cancelled':
+            case 'refunded':
+                return 'error';
+            default:
+                return 'light';
+        }
     };
 
-    const getPaymentStatusColor = (status: string): string => {
-        const colors: Record<string, string> = {
-            unpaid: 'error',
-            partial: 'warning',
-            paid: 'success',
-            refunded: 'gray',
-            failed: 'error',
-        };
-        return colors[status] || 'gray';
+    const getPaymentStatusColor = (status: PaymentStatus): BadgeColor => {
+        switch (status) {
+            case 'paid':
+                return 'success';
+            case 'partial':
+                return 'warning';
+            case 'unpaid':
+                return 'error';
+            case 'refunded':
+                return 'info';
+            case 'failed':
+            case 'cancelled':
+                return 'error';
+            default:
+                return 'light';
+        }
     };
 
     const formatDate = (dateString: string | null): string => {
@@ -119,7 +149,9 @@ export default function Show({
                             </Badge>
                             <Badge
                                 variant="light"
-                                color={getPaymentStatusColor(order.payment_status)}
+                                color={getPaymentStatusColor(
+                                    order.payment_status,
+                                )}
                             >
                                 {payment_statuses[order.payment_status]}
                             </Badge>
@@ -128,25 +160,25 @@ export default function Show({
 
                     {can_manage && (
                         <div className="flex gap-2">
-                            {order.status !== 'cancelled' && order.status !== 'delivered' && (
-                                <>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={statusModal.openModal}
-                                    >
-                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                        Update Status
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={paymentModal.openModal}
-                                    >
-                                        <CreditCard className="mr-2 h-4 w-4" />
-                                        Update Payment
-                                    </Button>
-                                    {order.status !== 'cancelled' && (
+                            {order.status !== 'cancelled' &&
+                                order.status !== 'delivered' && (
+                                    <>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={statusModal.openModal}
+                                        >
+                                            <CheckCircle className="mr-2 h-4 w-4" />
+                                            Update Status
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={paymentModal.openModal}
+                                        >
+                                            <CreditCard className="mr-2 h-4 w-4" />
+                                            Update Payment
+                                        </Button>
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -156,29 +188,32 @@ export default function Show({
                                             <XCircle className="mr-2 h-4 w-4" />
                                             Cancel Order
                                         </Button>
-                                    )}
-                                </>
-                            )}
+                                    </>
+                                )}
                         </div>
                     )}
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-3">
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="space-y-6 lg:col-span-2">
                         <Card title="Order Items">
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead className="border-b border-gray-200 dark:border-gray-700">
                                         <tr className="text-left text-sm text-gray-500 dark:text-gray-400">
-                                            <th className="pb-3 font-medium">Product</th>
-                                            <th className="pb-3 font-medium">SKU</th>
-                                            <th className="pb-3 font-medium text-right">
+                                            <th className="pb-3 font-medium">
+                                                Product
+                                            </th>
+                                            <th className="pb-3 font-medium">
+                                                SKU
+                                            </th>
+                                            <th className="pb-3 text-right font-medium">
                                                 Quantity
                                             </th>
-                                            <th className="pb-3 font-medium text-right">
+                                            <th className="pb-3 text-right font-medium">
                                                 Unit Price
                                             </th>
-                                            <th className="pb-3 font-medium text-right">
+                                            <th className="pb-3 text-right font-medium">
                                                 Total
                                             </th>
                                         </tr>
@@ -189,11 +224,21 @@ export default function Show({
                                                 <td className="py-3">
                                                     <div>
                                                         <p className="font-medium text-gray-900 dark:text-white">
-                                                            {item.product_variant?.product?.name}
+                                                            {
+                                                                item
+                                                                    .product_variant
+                                                                    ?.product
+                                                                    ?.name
+                                                            }
                                                         </p>
-                                                        {item.product_variant?.name && (
+                                                        {item.product_variant
+                                                            ?.name && (
                                                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                                {item.product_variant.name}
+                                                                {
+                                                                    item
+                                                                        .product_variant
+                                                                        .name
+                                                                }
                                                             </p>
                                                         )}
                                                     </div>
@@ -205,10 +250,14 @@ export default function Show({
                                                     {item.quantity}
                                                 </td>
                                                 <td className="py-3 text-right text-gray-900 dark:text-white">
-                                                    {formatCurrency(item.unit_price)}
+                                                    {formatCurrency(
+                                                        item.unit_price,
+                                                    )}
                                                 </td>
                                                 <td className="py-3 text-right font-medium text-gray-900 dark:text-white">
-                                                    {formatCurrency(item.total_amount)}
+                                                    {formatCurrency(
+                                                        item.total_amount,
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -231,7 +280,9 @@ export default function Show({
                                             Shipping
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatCurrency(order.shipping_cost)}
+                                            {formatCurrency(
+                                                order.shipping_cost,
+                                            )}
                                         </span>
                                     </div>
                                 )}
@@ -241,7 +292,10 @@ export default function Show({
                                             Discount
                                         </span>
                                         <span className="font-medium text-success-600 dark:text-success-400">
-                                            -{formatCurrency(order.discount_amount)}
+                                            -
+                                            {formatCurrency(
+                                                order.discount_amount,
+                                            )}
                                         </span>
                                     </div>
                                 )}
@@ -292,7 +346,7 @@ export default function Show({
                                                 <Truck className="mr-2 h-4 w-4" />
                                                 Shipping Address
                                             </h4>
-                                            <p className="whitespace-pre-line text-sm text-gray-600 dark:text-gray-300">
+                                            <p className="text-sm whitespace-pre-line text-gray-600 dark:text-gray-300">
                                                 {order.shipping_address}
                                             </p>
                                         </div>
@@ -303,7 +357,7 @@ export default function Show({
                                                 <CreditCard className="mr-2 h-4 w-4" />
                                                 Billing Address
                                             </h4>
-                                            <p className="whitespace-pre-line text-sm text-gray-600 dark:text-gray-300">
+                                            <p className="text-sm whitespace-pre-line text-gray-600 dark:text-gray-300">
                                                 {order.billing_address}
                                             </p>
                                         </div>
@@ -408,6 +462,7 @@ export default function Show({
                 </div>
             </div>
 
+            {/* Update Order Status Modal */}
             <Modal
                 isOpen={statusModal.isOpen}
                 onClose={statusModal.closeModal}
@@ -416,10 +471,20 @@ export default function Show({
                 <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
                     Update Order Status
                 </h3>
-                <Form
-                    action={OrderController.updateStatus.url({ order: order.id })}
-                    method="post"
-                    onSuccess={statusModal.closeModal}
+                <form
+                    onSubmit={(e: FormEvent) => {
+                        e.preventDefault();
+                        statusForm.post(
+                            OrderController.updateStatus.url({
+                                order: order.id,
+                            }),
+                            {
+                                onSuccess: () => {
+                                    statusModal.closeModal();
+                                },
+                            },
+                        );
+                    }}
                 >
                     <div className="space-y-4">
                         <div>
@@ -432,11 +497,15 @@ export default function Show({
                                     }),
                                 )}
                                 placeholder="Select status"
-                                onChange={(value) => setSelectedStatus(value)}
+                                onChange={(value) =>
+                                    statusForm.setData(
+                                        'status',
+                                        value as OrderStatus,
+                                    )
+                                }
                                 defaultValue={order.status}
                             />
-                            <InputError message={undefined} />
-                            <input type="hidden" name="status" value={selectedStatus} />
+                            <InputError message={statusForm.errors.status} />
                         </div>
 
                         <div className="flex gap-2">
@@ -444,18 +513,26 @@ export default function Show({
                                 type="button"
                                 variant="outline"
                                 onClick={statusModal.closeModal}
+                                disabled={statusForm.processing}
                                 className="flex-1"
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit" className="flex-1">
-                                Update Status
+                            <Button
+                                type="submit"
+                                disabled={statusForm.processing}
+                                className="flex-1"
+                            >
+                                {statusForm.processing
+                                    ? 'Updating...'
+                                    : 'Update Status'}
                             </Button>
                         </div>
                     </div>
-                </Form>
+                </form>
             </Modal>
 
+            {/* Update Payment Status Modal */}
             <Modal
                 isOpen={paymentModal.isOpen}
                 onClose={paymentModal.closeModal}
@@ -464,14 +541,26 @@ export default function Show({
                 <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
                     Update Payment Status
                 </h3>
-                <Form
-                    action={OrderController.updatePayment.url({ order: order.id })}
-                    method="post"
-                    onSuccess={paymentModal.closeModal}
+                <form
+                    onSubmit={(e: FormEvent) => {
+                        e.preventDefault();
+                        paymentForm.post(
+                            OrderController.updatePaymentStatus.url({
+                                order: order.id,
+                            }),
+                            {
+                                onSuccess: () => {
+                                    paymentModal.closeModal();
+                                },
+                            },
+                        );
+                    }}
                 >
                     <div className="space-y-4">
                         <div>
-                            <Label htmlFor="payment_status">Payment Status</Label>
+                            <Label htmlFor="payment_status">
+                                Payment Status
+                            </Label>
                             <Select
                                 options={Object.entries(payment_statuses).map(
                                     ([value, label]) => ({
@@ -480,34 +569,44 @@ export default function Show({
                                     }),
                                 )}
                                 placeholder="Select payment status"
-                                onChange={(value) => setSelectedPaymentStatus(value)}
+                                onChange={(value) =>
+                                    paymentForm.setData(
+                                        'payment_status',
+                                        value as PaymentStatus,
+                                    )
+                                }
                                 defaultValue={order.payment_status}
                             />
-                            <InputError message={undefined} />
-                            <input
-                                type="hidden"
-                                name="payment_status"
-                                value={selectedPaymentStatus}
+                            <InputError
+                                message={paymentForm.errors.payment_status}
                             />
                         </div>
 
                         <div>
-                            <Label htmlFor="payment_method">Payment Method</Label>
+                            <Label htmlFor="payment_method">
+                                Payment Method
+                            </Label>
                             <Select
                                 options={[
                                     { value: 'cash', label: 'Cash' },
                                     { value: 'card', label: 'Card' },
-                                    { value: 'bank_transfer', label: 'Bank Transfer' },
-                                    { value: 'mobile_money', label: 'Mobile Money' },
+                                    {
+                                        value: 'bank_transfer',
+                                        label: 'Bank Transfer',
+                                    },
+                                    {
+                                        value: 'mobile_money',
+                                        label: 'Mobile Money',
+                                    },
                                 ]}
                                 placeholder="Select payment method"
-                                onChange={(value) => setPaymentMethod(value)}
+                                onChange={(value) =>
+                                    paymentForm.setData('payment_method', value)
+                                }
                                 defaultValue={order.payment_method || ''}
                             />
-                            <input
-                                type="hidden"
-                                name="payment_method"
-                                value={paymentMethod}
+                            <InputError
+                                message={paymentForm.errors.payment_method}
                             />
                         </div>
 
@@ -516,18 +615,26 @@ export default function Show({
                                 type="button"
                                 variant="outline"
                                 onClick={paymentModal.closeModal}
+                                disabled={paymentForm.processing}
                                 className="flex-1"
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit" className="flex-1">
-                                Update Payment
+                            <Button
+                                type="submit"
+                                disabled={paymentForm.processing}
+                                className="flex-1"
+                            >
+                                {paymentForm.processing
+                                    ? 'Updating...'
+                                    : 'Update Payment'}
                             </Button>
                         </div>
                     </div>
-                </Form>
+                </form>
             </Modal>
 
+            {/* Cancel Order Modal */}
             <Modal
                 isOpen={cancelModal.isOpen}
                 onClose={cancelModal.closeModal}
@@ -536,50 +643,66 @@ export default function Show({
                 <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
                     Cancel Order
                 </h3>
-                <Form
-                    action={OrderController.updateStatus.url({ order: order.id })}
-                    method="post"
-                    onSuccess={cancelModal.closeModal}
+                <form
+                    onSubmit={(e: FormEvent) => {
+                        e.preventDefault();
+                        cancelForm.post(
+                            OrderController.updateStatus.url({
+                                order: order.id,
+                            }),
+                            {
+                                onSuccess: () => {
+                                    cancelModal.closeModal();
+                                    cancelForm.reset();
+                                },
+                            },
+                        );
+                    }}
                 >
                     <div className="space-y-4">
                         <p className="text-sm text-gray-600 dark:text-gray-300">
-                            Are you sure you want to cancel this order? This action will
-                            release any reserved stock.
+                            Are you sure you want to cancel this order? This
+                            action will release any reserved stock.
                         </p>
 
                         <div>
-                            <Label htmlFor="reason">Reason for Cancellation</Label>
+                            <Label htmlFor="reason">
+                                Reason for Cancellation
+                            </Label>
                             <TextArea
                                 id="reason"
-                                name="reason"
-                                value={cancellationReason}
-                                onChange={(value) => setCancellationReason(value)}
+                                value={cancelForm.data.reason}
+                                onChange={(value) =>
+                                    cancelForm.setData('reason', value)
+                                }
                                 placeholder="Enter reason for cancellation"
                                 rows={3}
                             />
-                            <InputError message={undefined} />
+                            <InputError message={cancelForm.errors.reason} />
                         </div>
-
-                        <input type="hidden" name="status" value="cancelled" />
 
                         <div className="flex gap-2">
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={cancelModal.closeModal}
+                                disabled={cancelForm.processing}
                                 className="flex-1"
                             >
                                 Keep Order
                             </Button>
                             <Button
                                 type="submit"
+                                disabled={cancelForm.processing}
                                 className="flex-1 bg-error-600 hover:bg-error-700"
                             >
-                                Cancel Order
+                                {cancelForm.processing
+                                    ? 'Cancelling...'
+                                    : 'Cancel Order'}
                             </Button>
                         </div>
                     </div>
-                </Form>
+                </form>
             </Modal>
         </AppLayout>
     );
