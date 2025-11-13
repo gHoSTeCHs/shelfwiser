@@ -20,6 +20,7 @@ class ProductVariant extends Model
         'price',
         'cost_price',
         'reorder_level',
+        'base_unit_name',
         'image_url',
         'images',
         'batch_number',

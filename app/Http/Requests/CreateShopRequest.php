@@ -2,11 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\InventoryModel;
 use App\Models\Shop;
 use App\Models\ShopType;
 use App\Services\ShopConfigHandlerFactory;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\Rule;
 
 class CreateShopRequest extends FormRequest
 {
@@ -22,6 +24,7 @@ class CreateShopRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'shop_type_slug' => ['required', 'exists:shop_types,slug'],
+            'inventory_model' => ['required', Rule::enum(InventoryModel::class)],
             'address' => ['nullable', 'string'],
             'city' => ['required', 'string', 'max:255'],
             'state' => ['required', 'string', 'max:255'],

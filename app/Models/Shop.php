@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\InventoryModel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,12 +14,13 @@ class Shop extends Model
     use HasFactory;
 
     protected $fillable = [
-        'tenant_id', 'shop_type_id', 'name', 'slug', 'config',
-        'address', 'city', 'state', 'country', 'phone', 'email'
+        'tenant_id', 'shop_type_id', 'name', 'slug', 'config', 'inventory_model',
+        'address', 'city', 'state', 'country', 'phone', 'email', 'is_active'
     ];
 
     protected $casts = [
         'config' => 'array',
+        'inventory_model' => InventoryModel::class,
         'is_active' => 'boolean',
     ];
 

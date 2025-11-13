@@ -1,5 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+export type InventoryModelType = 'simple_retail' | 'wholesale_only' | 'hybrid';
+
+export interface InventoryModelOption {
+    value: InventoryModelType;
+    label: string;
+    description: string;
+    complexity: string;
+    suitable_for: string;
+    features: string[];
+}
 
 export interface ShopType {
     slug: string;
@@ -25,6 +35,7 @@ export interface Shop {
     id: number;
     name: string;
     slug: string;
+    inventory_model: InventoryModelType;
     address?: string;
     city?: string;
     state?: string;
@@ -44,5 +55,6 @@ export interface Shop {
 export interface CreateShopRequest {
     name: string;
     shop_type_slug: string;
+    inventory_model: InventoryModelType;
     config: Record<string, any>;
 }

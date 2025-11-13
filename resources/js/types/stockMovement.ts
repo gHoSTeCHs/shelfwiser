@@ -32,6 +32,7 @@ export interface ProductVariant {
     cost_price: number | null;
     barcode: string | null;
     attributes: Record<string, any> | null;
+    base_unit_name: string;
     batch_number?: string;
     expiry_date?: string;
     serial_number?: string;
