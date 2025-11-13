@@ -13,6 +13,8 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_variant_id',
+        'product_packaging_type_id',
+        'packaging_description',
         'quantity',
         'unit_price',
         'discount_amount',
@@ -47,10 +49,53 @@ class OrderItem extends Model
         return $this->belongsTo(ProductVariant::class);
     }
 
+    public function packagingType(): BelongsTo
+    {
+        return $this->belongsTo(ProductPackagingType::class, 'product_packaging_type_id');
+    }
+
     public function calculateTotal(): void
     {
         $subtotal = $this->unit_price * $this->quantity;
         $this->total_amount = $subtotal + $this->tax_amount - $this->discount_amount;
+    }
+
+    /**
+     * Get the number of packages sold
+     */
+    public function getPackageQuantityAttribute(): ?int
+    {
+        if (!$this->product_packaging_type_id) {
+            return null;
+        }
+
+        $packagingType = $this->packagingType;
+        if (!$packagingType) {
+            return null;
+        }
+
+        return (int) ($this->quantity / $packagingType->units_per_package);
+    }
+
+    /**
+     * Get profit for this line item
+     */
+    public function getProfitAttribute(): float
+    {
+        $cost = $this->quantity * ($this->productVariant->cost_price ?? 0);
+        return $this->total_amount - $cost;
+    }
+
+    /**
+     * Get profit margin percentage
+     */
+    public function getMarginPercentageAttribute(): float
+    {
+        if ($this->total_amount <= 0) {
+            return 0;
+        }
+
+        return ($this->profit / $this->total_amount) * 100;
     }
 
     public function getProductNameAttribute(): string

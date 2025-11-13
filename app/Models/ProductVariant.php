@@ -63,4 +63,30 @@ class ProductVariant extends Model
     {
         return $this->inventoryLocations()->sum(\DB::raw('quantity - reserved_quantity'));
     }
+
+    /**
+     * Update cost price using weighted average method
+     */
+    public function updateWeightedAverageCost(int $newQuantity, float $newCostPerUnit): void
+    {
+        $currentQty = $this->total_stock;
+        $currentCost = (float) $this->cost_price;
+
+        if ($currentQty + $newQuantity <= 0) {
+            return;
+        }
+
+        $newAvg = (($currentQty * $currentCost) + ($newQuantity * $newCostPerUnit))
+                  / ($currentQty + $newQuantity);
+
+        $this->update(['cost_price' => round($newAvg, 2)]);
+    }
+
+    /**
+     * Get cost for a specific packaging type
+     */
+    public function getCostForPackage(ProductPackagingType $package): float
+    {
+        return ((float) $this->cost_price) * $package->units_per_package;
+    }
 }
