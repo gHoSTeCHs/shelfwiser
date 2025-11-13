@@ -151,28 +151,27 @@ export default function Index({ shops, shopTypes }: Props) {
                                             {shop.type.label}
                                         </div>
 
-                                        {/* Optional: Show address from config if available */}
-                                        {shop.config.address && (
+                                        {/* Show address if available */}
+                                        {(shop.city || shop.state) && (
                                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                                                 <MapPin className="mr-2 h-4 w-4" />
-                                                {shop.config.address.city}
-                                                {shop.config.address.state &&
-                                                    `, ${shop.config.address.state}`}
+                                                {shop.city}
+                                                {shop.state && `, ${shop.state}`}
                                             </div>
                                         )}
 
-                                        {/* Show contact info from config */}
-                                        {shop.config.phone && (
+                                        {/* Show contact info */}
+                                        {shop.phone && (
                                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                                                 <Phone className="mr-2 h-4 w-4" />
-                                                {shop.config.phone}
+                                                {shop.phone}
                                             </div>
                                         )}
 
-                                        {shop.config.email && (
+                                        {shop.email && (
                                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                                                 <Mail className="mr-2 h-4 w-4" />
-                                                {shop.config.email}
+                                                {shop.email}
                                             </div>
                                         )}
                                     </div>
@@ -203,7 +202,7 @@ export default function Index({ shops, shopTypes }: Props) {
                                             </Button>
                                         </Link>
                                         <Link
-                                            href={`/shops/${shop.slug}/edit`}
+                                            href={`/shops/${shop.id}/edit`}
                                             className="flex-1"
                                             onClick={(e) => e.stopPropagation()}
                                         >

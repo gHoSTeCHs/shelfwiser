@@ -1,0 +1,115 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class OrderItem extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'order_id',
+        'product_variant_id',
+        'product_packaging_type_id',
+        'packaging_description',
+        'quantity',
+        'unit_price',
+        'discount_amount',
+        'tax_amount',
+        'total_amount',
+    ];
+
+    protected $casts = [
+        'quantity' => 'integer',
+        'unit_price' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+    ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($item) {
+            $item->calculateTotal();
+        });
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function productVariant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function packagingType(): BelongsTo
+    {
+        return $this->belongsTo(ProductPackagingType::class, 'product_packaging_type_id');
+    }
+
+    public function calculateTotal(): void
+    {
+        $subtotal = $this->unit_price * $this->quantity;
+        $this->total_amount = $subtotal + $this->tax_amount - $this->discount_amount;
+    }
+
+    /**
+     * Get the number of packages sold
+     */
+    public function getPackageQuantityAttribute(): ?int
+    {
+        if (!$this->product_packaging_type_id) {
+            return null;
+        }
+
+        $packagingType = $this->packagingType;
+        if (!$packagingType) {
+            return null;
+        }
+
+        return (int) ($this->quantity / $packagingType->units_per_package);
+    }
+
+    /**
+     * Get profit for this line item
+     */
+    public function getProfitAttribute(): float
+    {
+        $cost = $this->quantity * ($this->productVariant->cost_price ?? 0);
+        return $this->total_amount - $cost;
+    }
+
+    /**
+     * Get profit margin percentage
+     */
+    public function getMarginPercentageAttribute(): float
+    {
+        if ($this->total_amount <= 0) {
+            return 0;
+        }
+
+        return ($this->profit / $this->total_amount) * 100;
+    }
+
+    public function getProductNameAttribute(): string
+    {
+        return $this->productVariant->product->name ?? 'Unknown Product';
+    }
+
+    public function getVariantNameAttribute(): string
+    {
+        return $this->productVariant->name ?? 'Default Variant';
+    }
+
+    public function getSkuAttribute(): string
+    {
+        return $this->productVariant->sku ?? '';
+    }
+}

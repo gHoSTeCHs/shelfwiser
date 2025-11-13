@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\ProductType;
 use App\Models\ProductVariant;
+use App\Models\ProductPackagingType;
 use App\Models\Tenant;
 use App\Models\Shop;
 use Illuminate\Support\Facades\Cache;
@@ -56,17 +57,31 @@ class ProductService
 
                 if ($hasVariants && isset($data['variants'])) {
                     foreach ($data['variants'] as $variantData) {
-                        $this->createVariant($product, $variantData);
+                        $variant = $this->createVariant($product, $variantData);
+
+                        // Create packaging types for this variant
+                        if (isset($variantData['packaging_types'])) {
+                            $this->createPackagingTypes($variant, $variantData['packaging_types']);
+                        } else {
+                            $this->createDefaultPackagingType($variant, $shop);
+                        }
                     }
                 } else {
-                    $this->createDefaultVariant($product, $data);
+                    $variant = $this->createDefaultVariant($product, $data);
+
+                    // Create packaging types for simple products
+                    if (isset($data['packaging_types'])) {
+                        $this->createPackagingTypes($variant, $data['packaging_types']);
+                    } else {
+                        $this->createDefaultPackagingType($variant, $shop);
+                    }
                 }
 
                 Cache::tags(["tenant:$tenant->id:products"])->flush();
 
                 Log::info('Product created successfully.', ['product_id' => $product->id]);
 
-                return $product->load('type', 'category', 'variants');
+                return $product->load('type', 'category', 'variants.packagingTypes');
             });
         } catch (Throwable $e) {
             Log::error('Product creation failed.', [
@@ -110,7 +125,7 @@ class ProductService
 
                 Log::info('Product updated successfully.', ['product_id' => $product->id]);
 
-                return $product->fresh(['type', 'category', 'variants']);
+                return $product->fresh(['type', 'category', 'variants.packagingTypes']);
             });
         } catch (Throwable $e) {
             Log::error('Product update failed.', [
@@ -133,6 +148,7 @@ class ProductService
             'attributes' => $data['attributes'] ?? null,
             'price' => $data['price'],
             'cost_price' => $data['cost_price'] ?? null,
+            'base_unit_name' => $data['base_unit_name'] ?? 'Unit',
             'reorder_level' => $data['reorder_level'] ?? 0,
             'image_url' => $data['image_url'] ?? null,
             'images' => $data['images'] ?? null,
@@ -153,6 +169,7 @@ class ProductService
             'attributes' => null,
             'price' => $data['price'],
             'cost_price' => $data['cost_price'] ?? null,
+            'base_unit_name' => $data['base_unit_name'] ?? 'Unit',
             'reorder_level' => $data['reorder_level'] ?? 0,
             'is_active' => true,
         ]);
@@ -180,5 +197,47 @@ class ProductService
         }
 
         return $slug;
+    }
+
+    private function createDefaultPackagingType(ProductVariant $variant, Shop $shop): ProductPackagingType
+    {
+        // For simple_retail mode, create a simple base unit packaging type
+        // For wholesale_only and hybrid, this will be extended with more packaging types
+        return ProductPackagingType::query()->create([
+            'product_variant_id' => $variant->id,
+            'name' => 'Loose',
+            'display_name' => $variant->base_unit_name,
+            'units_per_package' => 1,
+            'is_sealed_package' => false,
+            'price' => $variant->price,
+            'cost_price' => $variant->cost_price,
+            'is_base_unit' => true,
+            'can_break_down' => false,
+            'breaks_into_packaging_type_id' => null,
+            'min_order_quantity' => 1,
+            'display_order' => 0,
+            'is_active' => true,
+        ]);
+    }
+
+    private function createPackagingTypes(ProductVariant $variant, array $packagingTypesData): void
+    {
+        foreach ($packagingTypesData as $index => $packagingData) {
+            ProductPackagingType::query()->create([
+                'product_variant_id' => $variant->id,
+                'name' => $packagingData['name'],
+                'display_name' => $packagingData['display_name'] ?? $packagingData['name'],
+                'units_per_package' => $packagingData['units_per_package'] ?? 1,
+                'is_sealed_package' => $packagingData['is_sealed_package'] ?? false,
+                'price' => $packagingData['price'],
+                'cost_price' => $packagingData['cost_price'] ?? null,
+                'is_base_unit' => $packagingData['is_base_unit'] ?? false,
+                'can_break_down' => $packagingData['can_break_down'] ?? false,
+                'breaks_into_packaging_type_id' => $packagingData['breaks_into_packaging_type_id'] ?? null,
+                'min_order_quantity' => $packagingData['min_order_quantity'] ?? 1,
+                'display_order' => $packagingData['display_order'] ?? $index,
+                'is_active' => $packagingData['is_active'] ?? true,
+            ]);
+        }
     }
 }

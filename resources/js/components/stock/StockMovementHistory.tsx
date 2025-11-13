@@ -191,20 +191,20 @@ export default function StockMovementHistory({
                                         <div className="space-y-1">
                                             <div>
                                                 From:{' '}
-                                                {movement.from_location?.locatable
+                                                {movement.from_location?.location
                                                     ?.name || 'N/A'}
                                             </div>
                                             <div>
                                                 To:{' '}
-                                                {movement.to_location?.locatable
+                                                {movement.to_location?.location
                                                     ?.name || 'N/A'}
                                             </div>
                                         </div>
                                     ) : (
                                         <div>
-                                            {movement.to_location?.locatable
+                                            {movement.to_location?.location
                                                     ?.name ||
-                                                movement.from_location?.locatable
+                                                movement.from_location?.location
                                                     ?.name ||
                                                 'N/A'}
                                         </div>

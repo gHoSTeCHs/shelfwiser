@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ShopController;
@@ -13,9 +15,8 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('dashboard/refresh', [DashboardController::class, 'refresh'])->name('dashboard.refresh');
 
     Route::prefix('staff')->name('users.')->group(function () {
         Route::get('/', [StaffManagementController::class, 'index'])->name('index');
@@ -33,12 +34,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('products', ProductController::class);
 
+    Route::resource('orders', OrderController::class);
+
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');
+        Route::post('/{order}/payment', [OrderController::class, 'updatePaymentStatus'])->name('update-payment');
+    });
+
     Route::prefix('stock-movements')->name('stock-movements.')->group(function () {
         Route::get('/', [StockMovementController::class, 'index'])->name('index');
+        Route::get('/export', [StockMovementController::class, 'export'])->name('export');
         Route::get('/{stockMovement}', [StockMovementController::class, 'show'])->name('show');
         Route::post('/adjust', [StockMovementController::class, 'adjustStock'])->name('adjust');
         Route::post('/transfer', [StockMovementController::class, 'transferStock'])->name('transfer');
         Route::post('/stock-take', [StockMovementController::class, 'stockTake'])->name('stock-take');
+        Route::post('/variant/{variant}/setup-locations', [StockMovementController::class, 'setupLocations'])->name('setup-locations');
         Route::get('/variant/{variant}/history', [StockMovementController::class, 'history'])->name('history');
     });
 

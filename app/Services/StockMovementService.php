@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\StockMovementType;
 use App\Models\InventoryLocation;
+use App\Models\ProductPackagingType;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Models\User;
@@ -158,6 +159,157 @@ class StockMovementService
                 'variant_id' => $variant->id,
                 'from_location_id' => $fromLocation->id,
                 'to_location_id' => $toLocation->id,
+                'exception' => $e,
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Record a purchase with packaging context and update weighted average cost
+     *
+     * @throws Throwable
+     */
+    public function recordPurchase(
+        ProductVariant $variant,
+        InventoryLocation $location,
+        int $packageQuantity,
+        ProductPackagingType $packagingType,
+        float $costPerPackage,
+        User $user,
+        ?string $notes = null
+    ): StockMovement {
+        Log::info('Purchase recording process started.', [
+            'variant_id' => $variant->id,
+            'location_id' => $location->id,
+            'package_quantity' => $packageQuantity,
+            'packaging_type_id' => $packagingType->id,
+        ]);
+
+        try {
+            return DB::transaction(function () use (
+                $variant,
+                $location,
+                $packageQuantity,
+                $packagingType,
+                $costPerPackage,
+                $user,
+                $notes
+            ) {
+                $baseUnits = $packageQuantity * $packagingType->units_per_package;
+                $costPerBaseUnit = $costPerPackage / $packagingType->units_per_package;
+
+                $quantityBefore = $location->quantity;
+
+                $variant->updateWeightedAverageCost($baseUnits, $costPerBaseUnit);
+
+                $location->quantity += $baseUnits;
+                $location->save();
+
+                $movement = StockMovement::query()->create([
+                    'tenant_id' => $user->tenant_id,
+                    'product_variant_id' => $variant->id,
+                    'product_packaging_type_id' => $packagingType->id,
+                    'to_location_id' => $location->id,
+                    'type' => StockMovementType::PURCHASE,
+                    'quantity' => $baseUnits,
+                    'package_quantity' => $packageQuantity,
+                    'cost_per_package' => $costPerPackage,
+                    'cost_per_base_unit' => $costPerBaseUnit,
+                    'quantity_before' => $quantityBefore,
+                    'quantity_after' => $location->quantity,
+                    'reference_number' => $this->generateReferenceNumber(StockMovementType::PURCHASE),
+                    'notes' => $notes,
+                    'created_by' => $user->id,
+                ]);
+
+                Log::info('Purchase recorded successfully.', [
+                    'movement_id' => $movement->id,
+                    'base_units' => $baseUnits,
+                    'new_avg_cost' => $variant->fresh()->cost_price,
+                ]);
+
+                return $movement;
+            });
+        } catch (Throwable $e) {
+            Log::error('Purchase recording failed.', [
+                'variant_id' => $variant->id,
+                'location_id' => $location->id,
+                'exception' => $e,
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Record a sale with packaging context
+     *
+     * @throws Throwable
+     */
+    public function recordSale(
+        ProductVariant $variant,
+        InventoryLocation $location,
+        int $quantity,
+        ?ProductPackagingType $packagingType,
+        User $user,
+        ?string $referenceNumber = null,
+        ?string $notes = null
+    ): StockMovement {
+        Log::info('Sale recording process started.', [
+            'variant_id' => $variant->id,
+            'location_id' => $location->id,
+            'quantity' => $quantity,
+        ]);
+
+        try {
+            return DB::transaction(function () use (
+                $variant,
+                $location,
+                $quantity,
+                $packagingType,
+                $user,
+                $referenceNumber,
+                $notes
+            ) {
+                $quantityBefore = $location->quantity;
+
+                if ($location->quantity < $quantity) {
+                    throw new Exception('Insufficient stock. Available: ' . $location->quantity);
+                }
+
+                $location->quantity -= $quantity;
+                $location->save();
+
+                $packageQuantity = null;
+                if ($packagingType) {
+                    $packageQuantity = (int) ($quantity / $packagingType->units_per_package);
+                }
+
+                $movement = StockMovement::query()->create([
+                    'tenant_id' => $user->tenant_id,
+                    'product_variant_id' => $variant->id,
+                    'product_packaging_type_id' => $packagingType?->id,
+                    'from_location_id' => $location->id,
+                    'type' => StockMovementType::SALE,
+                    'quantity' => -$quantity,
+                    'package_quantity' => $packageQuantity ? -$packageQuantity : null,
+                    'quantity_before' => $quantityBefore,
+                    'quantity_after' => $location->quantity,
+                    'reference_number' => $referenceNumber ?? $this->generateReferenceNumber(StockMovementType::SALE),
+                    'notes' => $notes,
+                    'created_by' => $user->id,
+                ]);
+
+                Log::info('Sale recorded successfully.', ['movement_id' => $movement->id]);
+
+                return $movement;
+            });
+        } catch (Throwable $e) {
+            Log::error('Sale recording failed.', [
+                'variant_id' => $variant->id,
+                'location_id' => $location->id,
                 'exception' => $e,
             ]);
 

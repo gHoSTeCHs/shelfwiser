@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\InventoryModel;
 use App\Http\Requests\CreateShopRequest;
 use App\Http\Requests\UpdateShopRequest;
 use App\Http\Resources\ShopResource;
@@ -56,6 +57,7 @@ class ShopController extends Controller
 
         return Inertia::render('Shops/Create', [
             'shopTypes' => $shopTypes,
+            'inventoryModels' => InventoryModel::forSelectWithDescriptions(),
             'countries' => config('countries'),
         ]);
     }
@@ -106,6 +108,7 @@ class ShopController extends Controller
         return Inertia::render('Shops/Edit', [
             'shop' => $shop,
             'shopTypes' => $shopTypes,
+            'inventoryModels' => InventoryModel::forSelectWithDescriptions(),
             'countries' => config('countries'),
         ]);
     }

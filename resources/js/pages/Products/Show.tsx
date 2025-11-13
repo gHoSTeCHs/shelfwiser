@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import StockMovementController from '@/actions/App/Http/Controllers/StockMovementController';
+import SetupInventoryModal from '@/components/stock/SetupInventoryModal';
 import StockAdjustmentModal from '@/components/stock/StockAdjustmentModal';
 import StockLevelBadge from '@/components/stock/StockLevelBadge';
+import StockMovementHistory from '@/components/stock/StockMovementHistory';
 import StockTransferModal from '@/components/stock/StockTransferModal';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
@@ -10,6 +13,7 @@ import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
 import { ProductCategory, ProductType } from '@/types/product.ts';
 import { Shop } from '@/types/shop.ts';
+import { ProductVariant, StockMovement } from '@/types/stockMovement';
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowRightLeft,
@@ -18,6 +22,7 @@ import {
     Building2,
     Calendar,
     ChevronLeft,
+    ClipboardList,
     DollarSign,
     Edit,
     Package,
@@ -27,32 +32,6 @@ import {
     Warehouse
 } from 'lucide-react';
 import { useState } from 'react';
-
-interface InventoryLocation {
-    id: number;
-    location_type: string;
-    location_id: number;
-    quantity: number;
-    reserved_quantity: number;
-}
-
-interface ProductVariant {
-    id: number;
-    sku: string;
-    barcode: string | null;
-    name: string | null;
-    attributes: Record<string, string> | null;
-    price: number;
-    cost_price: number | null;
-    reorder_level: number;
-    image_url: string | null;
-    images: string[] | null;
-    batch_number: string | null;
-    expiry_date: string | null;
-    serial_number: string | null;
-    is_active: boolean;
-    inventory_locations: InventoryLocation[];
-}
 
 interface Product {
     id: number;
@@ -73,29 +52,34 @@ interface Product {
 interface Props {
     product: Product;
     can_manage: boolean;
+    available_shops: { id: number; name: string }[];
+    recent_movements: StockMovement[];
 }
 
-export default function Show({ product, can_manage }: Props) {
-    console.log(product);
-
-    // Initialize with first variant if available
-    const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-        product.variants.length > 0 ? product.variants[0] : null
-    );
+export default function Show({ product, can_manage, available_shops, recent_movements }: Props) {
+    const [selectedVariant, setSelectedVariant] =
+        useState<ProductVariant | null>(
+            product.variants.length > 0 ? product.variants[0] : null,
+        );
     const adjustStockModal = useModal();
     const transferStockModal = useModal();
+    const setupInventoryModal = useModal();
 
     const getTotalStock = (variant: ProductVariant): number => {
-        return variant.inventory_locations.reduce(
-            (sum, loc) => sum + loc.quantity,
-            0,
+        return (
+            variant.inventory_locations?.reduce(
+                (sum, loc) => sum + loc.quantity,
+                0,
+            ) || 0
         );
     };
 
     const getAvailableStock = (variant: ProductVariant): number => {
-        return variant.inventory_locations.reduce(
-            (sum, loc) => sum + (loc.quantity - loc.reserved_quantity),
-            0,
+        return (
+            variant.inventory_locations?.reduce(
+                (sum, loc) => sum + (loc.quantity - loc.reserved_quantity),
+                0,
+            ) || 0
         );
     };
 
@@ -107,6 +91,11 @@ export default function Show({ product, can_manage }: Props) {
     const handleTransferStock = (variant: ProductVariant) => {
         setSelectedVariant(variant);
         transferStockModal.openModal();
+    };
+
+    const handleSetupInventory = (variant: ProductVariant) => {
+        setSelectedVariant(variant);
+        setupInventoryModal.openModal();
     };
 
     const handleVariantSelect = (variant: ProductVariant) => {
@@ -239,7 +228,7 @@ export default function Show({ product, can_manage }: Props) {
 
                         {product.custom_attributes &&
                             Object.keys(product.custom_attributes).length >
-                            0 && (
+                                0 && (
                                 <Card title="Product Attributes">
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         {Object.entries(
@@ -255,13 +244,13 @@ export default function Show({ product, can_manage }: Props) {
                                                             ? 'Yes'
                                                             : 'No'
                                                         : Array.isArray(value)
-                                                            ? value.join(', ')
-                                                            : typeof value ===
-                                                            'object'
-                                                                ? JSON.stringify(
-                                                                    value,
-                                                                )
-                                                                : value}
+                                                          ? value.join(', ')
+                                                          : typeof value ===
+                                                              'object'
+                                                            ? JSON.stringify(
+                                                                  value,
+                                                              )
+                                                            : value}
                                                 </p>
                                             </div>
                                         ))}
@@ -275,19 +264,20 @@ export default function Show({ product, can_manage }: Props) {
                                     const totalStock = getTotalStock(variant);
                                     const availableStock =
                                         getAvailableStock(variant);
-                                    const isSelected = selectedVariant?.id === variant.id;
+                                    const isSelected =
+                                        selectedVariant?.id === variant.id;
 
                                     return (
                                         <div
                                             key={variant.id}
-                                            className={`
-                                                cursor-pointer rounded-lg border p-4 transition-all
-                                                ${isSelected
-                                                ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500 dark:border-brand-400 dark:bg-brand-950/50 dark:ring-brand-400'
-                                                : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                                            className={`cursor-pointer rounded-lg border p-4 transition-all ${
+                                                isSelected
+                                                    ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500 dark:border-brand-400 dark:bg-brand-950/50 dark:ring-brand-400'
+                                                    : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                                            } `}
+                                            onClick={() =>
+                                                handleVariantSelect(variant)
                                             }
-                                            `}
-                                            onClick={() => handleVariantSelect(variant)}
                                         >
                                             <div className="mb-3 flex items-start justify-between">
                                                 <div className="flex-1">
@@ -297,7 +287,11 @@ export default function Show({ product, can_manage }: Props) {
                                                                 'Default Variant'}
                                                         </h3>
                                                         {isSelected && (
-                                                            <Badge variant="solid" color="primary" size="sm">
+                                                            <Badge
+                                                                variant="solid"
+                                                                color="primary"
+                                                                size="sm"
+                                                            >
                                                                 Selected
                                                             </Badge>
                                                         )}
@@ -416,6 +410,77 @@ export default function Show({ product, can_manage }: Props) {
                                                 )}
                                             </div>
 
+                                            {variant.packaging_types &&
+                                                variant.packaging_types.length >
+                                                    0 && (
+                                                    <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                                                        <p className="mb-3 flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                            <Package className="mr-2 h-4 w-4" />
+                                                            Packaging Types
+                                                        </p>
+                                                        <div className="space-y-2">
+                                                            {variant.packaging_types.map(
+                                                                (
+                                                                    packagingType,
+                                                                ) => (
+                                                                    <div
+                                                                        key={
+                                                                            packagingType.id
+                                                                        }
+                                                                        className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
+                                                                    >
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div>
+                                                                                <p className="font-medium text-gray-900 dark:text-white">
+                                                                                    {packagingType.display_name ||
+                                                                                        packagingType.name}
+                                                                                </p>
+                                                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                                    {packagingType.units_per_package}{' '}
+                                                                                    {variant.base_unit_name}
+                                                                                    {packagingType.units_per_package >
+                                                                                    1
+                                                                                        ? 's'
+                                                                                        : ''}
+                                                                                    {packagingType.is_base_unit && (
+                                                                                        <Badge
+                                                                                            variant="light"
+                                                                                            color="brand"
+                                                                                            className="ml-2"
+                                                                                        >
+                                                                                            Base
+                                                                                            Unit
+                                                                                        </Badge>
+                                                                                    )}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="text-right">
+                                                                            <p className="font-semibold text-gray-900 dark:text-white">
+                                                                                {formatPrice(
+                                                                                    packagingType.price,
+                                                                                )}
+                                                                            </p>
+                                                                            {!packagingType.is_base_unit &&
+                                                                                packagingType.price_per_unit && (
+                                                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                                        {formatPrice(
+                                                                                            packagingType.price_per_unit,
+                                                                                        )}
+                                                                                        /
+                                                                                        {
+                                                                                            variant.base_unit_name
+                                                                                        }
+                                                                                    </p>
+                                                                                )}
+                                                                        </div>
+                                                                    </div>
+                                                                ),
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                             {variant.attributes &&
                                                 Object.keys(variant.attributes)
                                                     .length > 0 && (
@@ -428,9 +493,9 @@ export default function Show({ product, can_manage }: Props) {
                                                                 variant.attributes,
                                                             ).map(
                                                                 ([
-                                                                     key,
-                                                                     value,
-                                                                 ]) => (
+                                                                    key,
+                                                                    value,
+                                                                ]) => (
                                                                     <Badge
                                                                         key={
                                                                             key
@@ -446,37 +511,98 @@ export default function Show({ product, can_manage }: Props) {
                                                     </div>
                                                 )}
 
-                                            {can_manage &&
-                                                variant.inventory_locations
-                                                    .length > 0 && (
-                                                    <div
-                                                        className="mt-4 flex gap-2 border-t border-gray-200 pt-4 dark:border-gray-700"
-                                                        onClick={(e) => e.stopPropagation()}
+                                            {variant.inventory_locations &&
+                                            variant.inventory_locations.length >
+                                                0 ? (
+                                                <div
+                                                    className="mt-4 space-y-2 border-t border-gray-200 pt-4 dark:border-gray-700"
+                                                    onClick={(e) =>
+                                                        e.stopPropagation()
+                                                    }
+                                                >
+                                                    {can_manage && (
+                                                        <div className="flex gap-2">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() =>
+                                                                    handleAdjustStock(
+                                                                        variant,
+                                                                    )
+                                                                }
+                                                                className="flex-1"
+                                                            >
+                                                                <Plus className="mr-2 h-4 w-4" />
+                                                                Adjust Stock
+                                                            </Button>
+                                                            {variant
+                                                                .inventory_locations
+                                                                .length > 1 && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() =>
+                                                                        handleTransferStock(
+                                                                            variant,
+                                                                        )
+                                                                    }
+                                                                    className="flex-1"
+                                                                >
+                                                                    <ArrowRightLeft className="mr-2 h-4 w-4" />
+                                                                    Transfer
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    <Link
+                                                        href={StockMovementController.history.url(
+                                                            {
+                                                                variant:
+                                                                    variant.id,
+                                                            },
+                                                        )}
+                                                        className="block"
                                                     >
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
-                                                            onClick={() => handleAdjustStock(variant)}
-                                                            className="flex-1"
+                                                            className="w-full"
                                                         >
-                                                            <Plus className="mr-2 h-4 w-4" />
-                                                            Adjust Stock
+                                                            <ClipboardList className="mr-2 h-4 w-4" />
+                                                            View Stock History
                                                         </Button>
-                                                        {variant
-                                                            .inventory_locations
-                                                            .length > 1 && (
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => handleTransferStock(variant)}
-                                                                className="flex-1"
-                                                            >
-                                                                <ArrowRightLeft className="mr-2 h-4 w-4" />
-                                                                Transfer
-                                                            </Button>
-                                                        )}
+                                                    </Link>
+                                                </div>
+                                            ) : (
+                                                can_manage && (
+                                                    <div
+                                                        className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700"
+                                                        onClick={(e) =>
+                                                            e.stopPropagation()
+                                                        }
+                                                    >
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() =>
+                                                                handleSetupInventory(
+                                                                    variant,
+                                                                )
+                                                            }
+                                                            className="w-full"
+                                                        >
+                                                            <Warehouse className="mr-2 h-4 w-4" />
+                                                            Setup Stock
+                                                            Locations
+                                                        </Button>
+                                                        <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
+                                                            Configure where this
+                                                            variant will be
+                                                            stocked
+                                                        </p>
                                                     </div>
-                                                )}
+                                                )
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -538,28 +664,28 @@ export default function Show({ product, can_manage }: Props) {
                                                 {product.has_variants &&
                                                 product.variants.length > 1
                                                     ? `${formatPrice(
-                                                        Math.min(
-                                                            ...product.variants.map(
-                                                                (v) =>
-                                                                    parseFloat(
-                                                                        v.price.toString(),
-                                                                    ),
-                                                            ),
-                                                        ),
-                                                    )} - ${formatPrice(
-                                                        Math.max(
-                                                            ...product.variants.map(
-                                                                (v) =>
-                                                                    parseFloat(
-                                                                        v.price.toString(),
-                                                                    ),
-                                                            ),
-                                                        ),
-                                                    )}`
+                                                          Math.min(
+                                                              ...product.variants.map(
+                                                                  (v) =>
+                                                                      parseFloat(
+                                                                          v.price.toString(),
+                                                                      ),
+                                                              ),
+                                                          ),
+                                                      )} - ${formatPrice(
+                                                          Math.max(
+                                                              ...product.variants.map(
+                                                                  (v) =>
+                                                                      parseFloat(
+                                                                          v.price.toString(),
+                                                                      ),
+                                                              ),
+                                                          ),
+                                                      )}`
                                                     : formatPrice(
-                                                        product.variants[0]
-                                                            .price,
-                                                    )}
+                                                          product.variants[0]
+                                                              .price,
+                                                      )}
                                             </span>
                                         </div>
                                     </div>
@@ -589,11 +715,20 @@ export default function Show({ product, can_manage }: Props) {
                                 </div>
                             </div>
                         </Card>
+
+                        {recent_movements && recent_movements.length > 0 && (
+                            <Card title="Recent Stock Movements">
+                                <StockMovementHistory
+                                    movements={recent_movements}
+                                    showVariantInfo={true}
+                                />
+                            </Card>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {selectedVariant && (
+            {selectedVariant && selectedVariant.inventory_locations && (
                 <>
                     <StockAdjustmentModal
                         isOpen={adjustStockModal.isOpen}
@@ -607,15 +742,7 @@ export default function Show({ product, can_manage }: Props) {
                                 shop_id: product.shop.id,
                             },
                         }}
-                        locations={selectedVariant.inventory_locations.map(
-                            (loc) => ({
-                                ...loc,
-                                locatable: {
-                                    id: loc.location_id,
-                                    name: product.shop.name,
-                                },
-                            }),
-                        )}
+                        locations={selectedVariant.inventory_locations}
                     />
                     <StockTransferModal
                         isOpen={transferStockModal.isOpen}
@@ -629,17 +756,26 @@ export default function Show({ product, can_manage }: Props) {
                                 shop_id: product.shop.id,
                             },
                         }}
-                        locations={selectedVariant.inventory_locations.map(
-                            (loc) => ({
-                                ...loc,
-                                locatable: {
-                                    id: loc.location_id,
-                                    name: product.shop.name,
-                                },
-                            }),
-                        )}
+                        locations={selectedVariant.inventory_locations}
                     />
                 </>
+            )}
+
+            {selectedVariant && (
+                <SetupInventoryModal
+                    isOpen={setupInventoryModal.isOpen}
+                    onClose={setupInventoryModal.closeModal}
+                    variant={{
+                        ...selectedVariant,
+                        product: {
+                            id: product.id,
+                            name: product.name,
+                            slug: product.slug,
+                            shop_id: product.shop.id,
+                        },
+                    }}
+                    availableShops={available_shops}
+                />
             )}
         </AppLayout>
     );

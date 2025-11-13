@@ -10,19 +10,24 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { SchemaProperty } from '@/types';
-import { Shop, ShopType } from '@/types/shop';
+import { InventoryModelOption, Shop, ShopType } from '@/types/shop';
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Building2, MapPin, Save } from 'lucide-react';
+import { ArrowLeft, Building2, MapPin, Package, Save } from 'lucide-react';
 import { useState } from 'react';
+import Select from '@/components/form/Select';
 
 interface Props {
     shop: Shop;
     shopTypes: ShopType[];
+    inventoryModels: InventoryModelOption[];
 }
 
-export default function Edit({ shop, shopTypes }: Props) {
+export default function Edit({ shop, shopTypes, inventoryModels }: Props) {
     const [shopConfig, setShopConfig] = useState<Record<string, any>>(
         shop.config || {},
+    );
+    const [selectedInventoryModel, setSelectedInventoryModel] = useState<string>(
+        shop.inventory_model || 'simple_retail',
     );
     const [isActive, setIsActive] = useState<boolean>(
         shop.is_active ?? true,
@@ -30,6 +35,10 @@ export default function Edit({ shop, shopTypes }: Props) {
 
     const selectedType = shopTypes.find(
         (type) => type.slug === shop.type.slug,
+    );
+
+    const selectedInventoryModelData = inventoryModels.find(
+        (model) => model.value === selectedInventoryModel,
     );
 
     const handleConfigChange = (fieldName: string, value: any) => {
@@ -182,6 +191,109 @@ export default function Edit({ shop, shopTypes }: Props) {
                                             value={isActive ? '1' : '0'}
                                         />
                                     </div>
+                                </div>
+                            </Card>
+
+                            <Card>
+                                <div className="mb-6 flex items-center gap-3 border-b border-gray-200 pb-4 dark:border-gray-700">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/20">
+                                        <Package className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                            Inventory Management Model
+                                        </h2>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            Update how you manage inventory
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-5">
+                                    <div>
+                                        <Label htmlFor="inventory_model">
+                                            Inventory Model
+                                            <span className="text-error-500">
+                                                {' '}
+                                                *
+                                            </span>
+                                        </Label>
+                                        <Select
+                                            options={inventoryModels.map(
+                                                (model) => ({
+                                                    value: model.value,
+                                                    label: model.label,
+                                                }),
+                                            )}
+                                            onChange={(value) =>
+                                                setSelectedInventoryModel(value)
+                                            }
+                                            defaultValue={shop.inventory_model}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="inventory_model"
+                                            value={selectedInventoryModel}
+                                        />
+                                        <InputError
+                                            message={errors.inventory_model}
+                                        />
+                                    </div>
+
+                                    {selectedInventoryModelData && (
+                                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                                            <h3 className="mb-2 font-medium text-gray-900 dark:text-white">
+                                                {
+                                                    selectedInventoryModelData.label
+                                                }
+                                            </h3>
+                                            <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+                                                {
+                                                    selectedInventoryModelData.description
+                                                }
+                                            </p>
+                                            <div className="mb-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                                <span>
+                                                    Complexity:{' '}
+                                                    <span className="font-medium capitalize text-gray-700 dark:text-gray-300">
+                                                        {
+                                                            selectedInventoryModelData.complexity
+                                                        }
+                                                    </span>
+                                                </span>
+                                                <span className="text-gray-300 dark:text-gray-600">
+                                                    •
+                                                </span>
+                                                <span>
+                                                    {
+                                                        selectedInventoryModelData.suitable_for
+                                                    }
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <p className="mb-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                                                    Key Features:
+                                                </p>
+                                                <ul className="space-y-1">
+                                                    {selectedInventoryModelData.features.map(
+                                                        (feature, index) => (
+                                                            <li
+                                                                key={index}
+                                                                className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400"
+                                                            >
+                                                                <span className="mt-0.5 text-brand-500">
+                                                                    ✓
+                                                                </span>
+                                                                <span>
+                                                                    {feature}
+                                                                </span>
+                                                            </li>
+                                                        ),
+                                                    )}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </Card>
 

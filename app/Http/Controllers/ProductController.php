@@ -29,7 +29,7 @@ class ProductController extends Controller
 
         return Inertia::render('Products/Index', [
             'products' => Product::where('tenant_id', $tenantId)
-                ->with(['type', 'category', 'shop', 'variants'])
+                ->with(['type', 'category', 'shop', 'variants.inventoryLocations', 'variants.packagingTypes'])
                 ->withCount('variants')
                 ->latest()
                 ->paginate(20),
@@ -44,7 +44,7 @@ class ProductController extends Controller
 
         $shops = Shop::where('tenant_id', $tenantId)
             ->where('is_active', true)
-            ->get(['id', 'name', 'slug']);
+            ->get(['id', 'name', 'slug', 'inventory_model']);
 
         $productTypes = ProductType::accessibleTo($tenantId)
             ->where('is_active', true)
@@ -81,11 +81,33 @@ class ProductController extends Controller
     {
         Gate::authorize('view', $product);
 
-        $product->load(['type', 'category', 'shop', 'variants.inventoryLocations']);
+        $product->load([
+            'type',
+            'category',
+            'shop',
+            'variants.inventoryLocations.location',
+            'variants.packagingTypes'
+        ]);
+
+        $tenantId = auth()->user()->tenant_id;
+
+        $availableShops = \App\Models\Shop::where('tenant_id', $tenantId)
+            ->where('is_active', true)
+            ->get(['id', 'name']);
+
+        $variantIds = $product->variants->pluck('id');
+
+        $recentMovements = \App\Models\StockMovement::whereIn('product_variant_id', $variantIds)
+            ->with(['productVariant', 'fromLocation.location', 'toLocation.location', 'createdByUser'])
+            ->latest()
+            ->limit(10)
+            ->get();
 
         return Inertia::render('Products/Show', [
             'product' => $product,
             'can_manage' => auth()->user()->can('manage', $product),
+            'available_shops' => $availableShops,
+            'recent_movements' => $recentMovements,
         ]);
     }
 
@@ -93,7 +115,7 @@ class ProductController extends Controller
     {
         Gate::authorize('manage', $product);
 
-        $product->load(['type', 'category', 'variants']);
+        $product->load(['type', 'category', 'variants.packagingTypes']);
 
         $tenantId = auth()->user()->tenant_id;
 
