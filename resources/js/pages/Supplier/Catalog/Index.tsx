@@ -1,26 +1,49 @@
+import SupplierCatalogController from '@/actions/App/Http/Controllers/SupplierCatalogController.ts';
+import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
-import { SupplierCatalogListResponse, CatalogVisibility } from '@/types/supplier';
-import { Head, Link, router } from '@inertiajs/react';
-import { Package, Plus, Eye, EyeOff, Edit, Trash2, DollarSign } from 'lucide-react';
+import {
+    CatalogVisibility,
+    SupplierCatalogListResponse,
+} from '@/types/supplier';
+import { Head, Link } from '@inertiajs/react';
+import {
+    DollarSign,
+    Edit,
+    Eye,
+    EyeOff,
+    Package,
+    Plus,
+    Trash2,
+} from 'lucide-react';
 
 interface Props {
     catalogItems: SupplierCatalogListResponse;
 }
 
-const visibilityConfig: Record<CatalogVisibility, { label: string; variant: 'default' | 'success' | 'warning' }> = {
+const visibilityConfig: Record<
+    CatalogVisibility,
+    { label: string; variant: 'primary' | 'success' | 'warning' }
+> = {
     public: { label: 'Public', variant: 'success' },
-    private: { label: 'Private', variant: 'default' },
+    private: { label: 'Private', variant: 'primary' },
     connections_only: { label: 'Connections Only', variant: 'warning' },
 };
 
 export default function Index({ catalogItems }: Props) {
+    console.log(catalogItems);
+
     const handleDelete = (id: number, productName: string) => {
-        if (confirm(`Are you sure you want to remove "${productName}" from your supplier catalog?`)) {
-            router.delete(route('supplier.catalog.destroy', id));
+        if (
+            confirm(
+                `Are you sure you want to remove "${productName}" from your supplier catalog?`,
+            )
+        ) {
+            SupplierCatalogController.destroy({
+                id: id,
+            });
         }
     };
 
@@ -38,7 +61,7 @@ export default function Index({ catalogItems }: Props) {
                             Manage products available to buyers
                         </p>
                     </div>
-                    <Link href={route('supplier.catalog.create')}>
+                    <Link href={SupplierCatalogController.create.url()}>
                         <Button>
                             <Plus className="mr-2 h-4 w-4" />
                             Add Product
@@ -52,7 +75,7 @@ export default function Index({ catalogItems }: Props) {
                         title="No products in catalog"
                         description="Add products to your supplier catalog to start selling to other businesses"
                         action={
-                            <Link href={route('supplier.catalog.create')}>
+                            <Link href={SupplierCatalogController.create.url()}>
                                 <Button>
                                     <Plus className="mr-2 h-4 w-4" />
                                     Add First Product
@@ -74,7 +97,14 @@ export default function Index({ catalogItems }: Props) {
                                                 SKU: {item.product?.slug}
                                             </p>
                                         </div>
-                                        <Badge variant={item.is_available ? 'success' : 'secondary'}>
+                                        <Badge
+                                            variant="light"
+                                            color={
+                                                item.is_available
+                                                    ? 'success'
+                                                    : 'primary'
+                                            }
+                                        >
                                             {item.is_available ? (
                                                 <>
                                                     <Eye className="mr-1 h-3 w-3" />
@@ -95,7 +125,10 @@ export default function Index({ catalogItems }: Props) {
                                                 Base Price:
                                             </span>
                                             <span className="font-medium text-gray-900 dark:text-white">
-                                                ${item.base_wholesale_price.toFixed(2)}
+                                                $
+                                                {Number(item.base_wholesale_price).toFixed(
+                                                    2,
+                                                )}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
@@ -106,22 +139,41 @@ export default function Index({ catalogItems }: Props) {
                                                 {item.min_order_quantity} units
                                             </span>
                                         </div>
-                                        {item.pricing_tiers && item.pricing_tiers.length > 0 && (
-                                            <div className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400">
-                                                <DollarSign className="h-3 w-3" />
-                                                <span>{item.pricing_tiers.length} pricing tiers</span>
-                                            </div>
-                                        )}
+                                        {item.pricing_tiers &&
+                                            item.pricing_tiers.length > 0 && (
+                                                <div className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400">
+                                                    <DollarSign className="h-3 w-3" />
+                                                    <span>
+                                                        {
+                                                            item.pricing_tiers
+                                                                .length
+                                                        }{' '}
+                                                        pricing tiers
+                                                    </span>
+                                                </div>
+                                            )}
                                     </div>
 
                                     <div className="mt-4">
-                                        <Badge variant={visibilityConfig[item.visibility].variant} size="sm">
-                                            {visibilityConfig[item.visibility].label}
+                                        <Badge
+                                            variant={'light'}
+                                            color={
+                                                visibilityConfig[
+                                                    item.visibility
+                                                ].variant
+                                            }
+                                            size="sm"
+                                        >
+                                            {
+                                                visibilityConfig[
+                                                    item.visibility
+                                                ].label
+                                            }
                                         </Badge>
                                     </div>
 
                                     {item.description && (
-                                        <p className="mt-3 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                                        <p className="mt-3 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
                                             {item.description}
                                         </p>
                                     )}
@@ -129,14 +181,22 @@ export default function Index({ catalogItems }: Props) {
 
                                 <div className="flex border-t bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
                                     <Link
-                                        href={route('supplier.catalog.edit', item.id)}
+                                        href={SupplierCatalogController.edit({
+                                            id: item.id,
+                                        })}
                                         className="flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                                     >
                                         <Edit className="h-4 w-4" />
                                         Edit
                                     </Link>
                                     <button
-                                        onClick={() => handleDelete(item.id, item.product?.name || 'this product')}
+                                        onClick={() =>
+                                            handleDelete(
+                                                item.id,
+                                                item.product?.name ||
+                                                    'this product',
+                                            )
+                                        }
                                         className="flex flex-1 items-center justify-center gap-2 border-l px-4 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-gray-700 dark:text-red-400 dark:hover:bg-red-900/20"
                                     >
                                         <Trash2 className="h-4 w-4" />

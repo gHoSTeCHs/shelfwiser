@@ -20,7 +20,7 @@ class SupplierProfileController extends Controller
 
     public function index(): Response
     {
-        Gate::authorize('viewAny', SupplierProfile::class);
+//        Gate::authorize('viewAny', SupplierProfile::class);
 
         $tenant = auth()->user()->tenant;
         $profile = $tenant->supplierProfile;

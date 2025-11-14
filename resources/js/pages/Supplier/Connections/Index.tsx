@@ -1,17 +1,18 @@
+import SupplierConnectionController from '@/actions/App/Http/Controllers/SupplierConnectionController.ts';
+import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
-import { SupplierConnection, ConnectionStatus } from '@/types/supplier';
-import { Head, router } from '@inertiajs/react';
+import { ConnectionStatus, SupplierConnection } from '@/types/supplier';
+import { Head } from '@inertiajs/react';
 import {
-    Network,
     Building2,
     CheckCircle,
-    XCircle,
+    Network,
     Pause,
     Play,
+    XCircle,
 } from 'lucide-react';
 
 interface Props {
@@ -19,35 +20,50 @@ interface Props {
     supplierConnections: SupplierConnection[];
 }
 
-const statusConfig: Record<ConnectionStatus, { label: string; variant: 'default' | 'warning' | 'success' | 'danger' }> = {
+const statusConfig: Record<
+    ConnectionStatus,
+    {
+        label: string;
+        variant: 'primary' | 'warning' | 'success' | 'error';
+    }
+> = {
     pending: { label: 'Pending Approval', variant: 'warning' },
     approved: { label: 'Approved', variant: 'success' },
     active: { label: 'Active', variant: 'success' },
-    suspended: { label: 'Suspended', variant: 'danger' },
-    rejected: { label: 'Rejected', variant: 'danger' },
+    suspended: { label: 'Suspended', variant: 'error' },
+    rejected: { label: 'Rejected', variant: 'error' },
 };
 
-export default function Index({ buyerConnections, supplierConnections }: Props) {
+export default function Index({
+    buyerConnections,
+    supplierConnections,
+}: Props) {
     const handleApprove = (id: number) => {
         if (confirm('Approve this connection request?')) {
-            router.post(route('supplier.connections.approve', id));
+            SupplierConnectionController.approve({
+                id: id,
+            });
         }
     };
 
     const handleReject = (id: number) => {
         if (confirm('Reject this connection request?')) {
-            router.post(route('supplier.connections.reject', id));
+            SupplierConnectionController.reject({
+                id: id,
+            });
         }
     };
 
     const handleSuspend = (id: number) => {
-        if (confirm('Suspend this connection?')) {
-            router.post(route('supplier.connections.suspend', id));
-        }
+        SupplierConnectionController.suspend({
+            id: id,
+        });
     };
 
     const handleActivate = (id: number) => {
-        router.post(route('supplier.connections.activate', id));
+        SupplierConnectionController.activate({
+            id: id,
+        });
     };
 
     return (
@@ -88,25 +104,47 @@ export default function Index({ buyerConnections, supplierConnections }: Props) 
                                                     {conn.supplier_tenant?.name}
                                                 </h3>
                                             </div>
-                                            <Badge variant={statusConfig[conn.status].variant} size="sm" className="mt-2">
-                                                {statusConfig[conn.status].label}
+                                            <Badge
+                                                variant={'solid'}
+                                                color={
+                                                    statusConfig[conn.status]
+                                                        .variant
+                                                }
+                                                size="sm"
+                                            >
+                                                {
+                                                    statusConfig[conn.status]
+                                                        .label
+                                                }
                                             </Badge>
 
                                             <div className="mt-3 space-y-1 text-sm text-gray-600 dark:text-gray-400">
                                                 {conn.payment_terms_override && (
                                                     <p>
-                                                        <span className="font-medium">Payment Terms:</span>{' '}
-                                                        {conn.payment_terms_override}
+                                                        <span className="font-medium">
+                                                            Payment Terms:
+                                                        </span>{' '}
+                                                        {
+                                                            conn.payment_terms_override
+                                                        }
                                                     </p>
                                                 )}
                                                 {conn.credit_limit && (
                                                     <p>
-                                                        <span className="font-medium">Credit Limit:</span> $
-                                                        {conn.credit_limit.toFixed(2)}
+                                                        <span className="font-medium">
+                                                            Credit Limit:
+                                                        </span>{' '}
+                                                        $
+                                                        {conn.credit_limit.toFixed(
+                                                            2,
+                                                        )}
                                                     </p>
                                                 )}
                                                 <p className="text-xs">
-                                                    Requested: {new Date(conn.requested_at).toLocaleDateString()}
+                                                    Requested:{' '}
+                                                    {new Date(
+                                                        conn.requested_at,
+                                                    ).toLocaleDateString()}
                                                 </p>
                                             </div>
                                         </div>
@@ -139,15 +177,26 @@ export default function Index({ buyerConnections, supplierConnections }: Props) 
                                                 <div className="flex items-center gap-2">
                                                     <Building2 className="h-5 w-5 text-gray-400" />
                                                     <h3 className="font-semibold text-gray-900 dark:text-white">
-                                                        {conn.buyer_tenant?.name}
+                                                        {
+                                                            conn.buyer_tenant
+                                                                ?.name
+                                                        }
                                                     </h3>
                                                 </div>
                                                 <Badge
-                                                    variant={statusConfig[conn.status].variant}
+                                                    variant={'light'}
+                                                    color={
+                                                        statusConfig[
+                                                            conn.status
+                                                        ].variant
+                                                    }
                                                     size="sm"
-                                                    className="mt-2"
                                                 >
-                                                    {statusConfig[conn.status].label}
+                                                    {
+                                                        statusConfig[
+                                                            conn.status
+                                                        ].label
+                                                    }
                                                 </Badge>
                                             </div>
                                         </div>
@@ -159,14 +208,19 @@ export default function Index({ buyerConnections, supplierConnections }: Props) 
                                         )}
 
                                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                                            Requested: {new Date(conn.requested_at).toLocaleDateString()}
+                                            Requested:{' '}
+                                            {new Date(
+                                                conn.requested_at,
+                                            ).toLocaleDateString()}
                                         </div>
 
                                         {conn.status === 'pending' && (
                                             <div className="flex gap-2 border-t pt-3 dark:border-gray-700">
                                                 <Button
                                                     size="sm"
-                                                    onClick={() => handleApprove(conn.id)}
+                                                    onClick={() =>
+                                                        handleApprove(conn.id)
+                                                    }
                                                     className="flex-1"
                                                 >
                                                     <CheckCircle className="mr-1 h-4 w-4" />
@@ -175,7 +229,9 @@ export default function Index({ buyerConnections, supplierConnections }: Props) 
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
-                                                    onClick={() => handleReject(conn.id)}
+                                                    onClick={() =>
+                                                        handleReject(conn.id)
+                                                    }
                                                     className="flex-1"
                                                 >
                                                     <XCircle className="mr-1 h-4 w-4" />
@@ -184,12 +240,15 @@ export default function Index({ buyerConnections, supplierConnections }: Props) 
                                             </div>
                                         )}
 
-                                        {(conn.status === 'approved' || conn.status === 'active') && (
+                                        {(conn.status === 'approved' ||
+                                            conn.status === 'active') && (
                                             <div className="border-t pt-3 dark:border-gray-700">
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
-                                                    onClick={() => handleSuspend(conn.id)}
+                                                    onClick={() =>
+                                                        handleSuspend(conn.id)
+                                                    }
                                                     className="w-full"
                                                 >
                                                     <Pause className="mr-1 h-4 w-4" />
@@ -202,7 +261,9 @@ export default function Index({ buyerConnections, supplierConnections }: Props) 
                                             <div className="border-t pt-3 dark:border-gray-700">
                                                 <Button
                                                     size="sm"
-                                                    onClick={() => handleActivate(conn.id)}
+                                                    onClick={() =>
+                                                        handleActivate(conn.id)
+                                                    }
                                                     className="w-full"
                                                 >
                                                     <Play className="mr-1 h-4 w-4" />

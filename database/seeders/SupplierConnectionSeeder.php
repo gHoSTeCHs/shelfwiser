@@ -25,13 +25,13 @@ class SupplierConnectionSeeder extends Seeder
 
     protected function createConnectionsForSupplier(SupplierProfile $supplierProfile, $allTenants): void
     {
-        // Get potential buyer tenants (all tenants except the supplier itself)
+
         $potentialBuyers = $allTenants->filter(function ($tenant) use ($supplierProfile) {
             return $tenant->id !== $supplierProfile->tenant_id;
         });
 
         foreach ($potentialBuyers as $buyerTenant) {
-            // Create connection with weighted probability
+
             if ($this->shouldCreateConnection()) {
                 $this->createConnection($supplierProfile, $buyerTenant);
             }

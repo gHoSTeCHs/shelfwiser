@@ -7,10 +7,10 @@ use App\Enums\PurchaseOrderStatus;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\PurchaseOrderPayment;
-use App\Models\Shop;
 use App\Models\SupplierCatalogItem;
 use App\Models\SupplierConnection;
 use App\Models\User;
+use DateTime;
 use Illuminate\Database\Seeder;
 
 class PurchaseOrderSeeder extends Seeder
@@ -46,7 +46,7 @@ class PurchaseOrderSeeder extends Seeder
 
         $createdBy = $this->getRandomBuyerStaff($connection->buyer_tenant_id);
 
-        $purchaseOrder = PurchaseOrder::create([
+        $purchaseOrder = PurchaseOrder::query()->create([
             'buyer_tenant_id' => $connection->buyer_tenant_id,
             'supplier_tenant_id' => $connection->supplier_tenant_id,
             'shop_id' => $shop->id,
@@ -311,12 +311,12 @@ class PurchaseOrderSeeder extends Seeder
         return $user?->id;
     }
 
-    protected function getPaymentDueDate($createdAt, SupplierConnection $connection): ?\DateTime
+    protected function getPaymentDueDate($createdAt, SupplierConnection $connection): ?DateTime
     {
         $paymentTerms = $connection->payment_terms_override ?? $connection->supplierTenant->supplierProfile->payment_terms;
 
         if (str_contains($paymentTerms, 'Net')) {
-            $days = (int) filter_var($paymentTerms, FILTER_SANITIZE_NUMBER_INT);
+            $days = (int)filter_var($paymentTerms, FILTER_SANITIZE_NUMBER_INT);
             return $createdAt->copy()->addDays($days);
         }
 
@@ -378,7 +378,7 @@ class PurchaseOrderSeeder extends Seeder
         $date = now()->format('Ymd');
         $random = strtoupper(substr(uniqid(), -6));
 
-        return "PO-T{$tenantId}-{$date}-{$random}";
+        return "PO-T$tenantId-$date-$random";
     }
 
     protected function generatePaymentReference(): string
@@ -386,7 +386,7 @@ class PurchaseOrderSeeder extends Seeder
         $date = now()->format('Ymd');
         $random = strtoupper(substr(uniqid(), -8));
 
-        return "PAY-{$date}-{$random}";
+        return "PAY-$date-$random";
     }
 
     protected function getPaymentNotes(): ?string

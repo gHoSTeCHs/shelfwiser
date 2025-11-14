@@ -1,24 +1,28 @@
+import {
+    create,
+    show,
+} from '@/actions/App/Http/Controllers/PurchaseOrderController.ts';
+import Select from '@/components/form/Select';
+import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
+import { Shop } from '@/types/shop';
 import {
     PurchaseOrderListResponse,
-    PurchaseOrderStatus,
     PurchaseOrderPaymentStatus,
+    PurchaseOrderStatus,
 } from '@/types/supplier';
-import { Shop } from '@/types/shop';
 import { Head, Link } from '@inertiajs/react';
 import {
-    FileText,
-    Plus,
-    Calendar,
     Building2,
+    Calendar,
     DollarSign,
+    FileText,
     Package,
+    Plus,
 } from 'lucide-react';
-import Select from '@/components/form/Select';
 import { useState } from 'react';
 
 interface Props {
@@ -26,7 +30,13 @@ interface Props {
     shops: Shop[];
 }
 
-const statusConfig: Record<PurchaseOrderStatus, { label: string; variant: 'default' | 'warning' | 'success' | 'danger' }> = {
+const statusConfig: Record<
+    PurchaseOrderStatus,
+    {
+        label: string;
+        variant: 'default' | 'warning' | 'success' | 'danger';
+    }
+> = {
     draft: { label: 'Draft', variant: 'default' },
     submitted: { label: 'Submitted', variant: 'warning' },
     approved: { label: 'Approved', variant: 'success' },
@@ -37,7 +47,13 @@ const statusConfig: Record<PurchaseOrderStatus, { label: string; variant: 'defau
     cancelled: { label: 'Cancelled', variant: 'danger' },
 };
 
-const paymentStatusConfig: Record<PurchaseOrderPaymentStatus, { label: string; variant: 'default' | 'warning' | 'success' | 'danger' }> = {
+const paymentStatusConfig: Record<
+    PurchaseOrderPaymentStatus,
+    {
+        label: string;
+        variant: 'default' | 'warning' | 'success' | 'danger';
+    }
+> = {
     pending: { label: 'Pending', variant: 'warning' },
     partial: { label: 'Partial', variant: 'warning' },
     paid: { label: 'Paid', variant: 'success' },
@@ -49,7 +65,9 @@ export default function Index({ purchaseOrders, shops }: Props) {
     const [selectedShop, setSelectedShop] = useState('');
 
     const filteredOrders = selectedShop
-        ? purchaseOrders.data.filter((po) => po.shop_id.toString() === selectedShop)
+        ? purchaseOrders.data.filter(
+              (po) => po.shop_id.toString() === selectedShop,
+          )
         : purchaseOrders.data;
 
     return (
@@ -66,7 +84,7 @@ export default function Index({ purchaseOrders, shops }: Props) {
                             Manage orders from suppliers
                         </p>
                     </div>
-                    <Link href={route('purchase-orders.create')}>
+                    <Link href={create()}>
                         <Button>
                             <Plus className="mr-2 h-4 w-4" />
                             Create Purchase Order
@@ -97,7 +115,7 @@ export default function Index({ purchaseOrders, shops }: Props) {
                         title="No purchase orders"
                         description="Create your first purchase order to start ordering from suppliers"
                         action={
-                            <Link href={route('purchase-orders.create')}>
+                            <Link href={create()}>
                                 <Button>
                                     <Plus className="mr-2 h-4 w-4" />
                                     Create Purchase Order
@@ -114,16 +132,35 @@ export default function Index({ purchaseOrders, shops }: Props) {
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3">
                                                 <Link
-                                                    href={route('purchase-orders.show', po.id)}
+                                                    href={show(po.id)}
                                                     className="text-lg font-semibold text-gray-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400"
                                                 >
                                                     {po.po_number}
                                                 </Link>
-                                                <Badge variant={statusConfig[po.status].variant}>
-                                                    {statusConfig[po.status].label}
+                                                <Badge
+                                                    variant={
+                                                        statusConfig[po.status]
+                                                            .variant
+                                                    }
+                                                >
+                                                    {
+                                                        statusConfig[po.status]
+                                                            .label
+                                                    }
                                                 </Badge>
-                                                <Badge variant={paymentStatusConfig[po.payment_status].variant} size="sm">
-                                                    {paymentStatusConfig[po.payment_status].label}
+                                                <Badge
+                                                    variant={
+                                                        paymentStatusConfig[
+                                                            po.payment_status
+                                                        ].variant
+                                                    }
+                                                    size="sm"
+                                                >
+                                                    {
+                                                        paymentStatusConfig[
+                                                            po.payment_status
+                                                        ].label
+                                                    }
                                                 </Badge>
                                             </div>
 
@@ -131,15 +168,22 @@ export default function Index({ purchaseOrders, shops }: Props) {
                                                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                                     <Building2 className="h-4 w-4" />
                                                     <span>
-                                                        <span className="font-medium">Supplier:</span>{' '}
-                                                        {po.supplier_tenant?.name}
+                                                        <span className="font-medium">
+                                                            Supplier:
+                                                        </span>{' '}
+                                                        {
+                                                            po.supplier_tenant
+                                                                ?.name
+                                                        }
                                                     </span>
                                                 </div>
 
                                                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                                     <Package className="h-4 w-4" />
                                                     <span>
-                                                        <span className="font-medium">Shop:</span>{' '}
+                                                        <span className="font-medium">
+                                                            Shop:
+                                                        </span>{' '}
                                                         {po.shop?.name}
                                                     </span>
                                                 </div>
@@ -147,15 +191,22 @@ export default function Index({ purchaseOrders, shops }: Props) {
                                                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                                     <DollarSign className="h-4 w-4" />
                                                     <span>
-                                                        <span className="font-medium">Total:</span> $
-                                                        {po.total_amount.toFixed(2)}
+                                                        <span className="font-medium">
+                                                            Total:
+                                                        </span>{' '}
+                                                        $
+                                                        {po.total_amount.toFixed(
+                                                            2,
+                                                        )}
                                                     </span>
                                                 </div>
 
                                                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                                     <Calendar className="h-4 w-4" />
                                                     <span>
-                                                        {new Date(po.created_at).toLocaleDateString()}
+                                                        {new Date(
+                                                            po.created_at,
+                                                        ).toLocaleDateString()}
                                                     </span>
                                                 </div>
                                             </div>
@@ -163,12 +214,14 @@ export default function Index({ purchaseOrders, shops }: Props) {
                                             {po.expected_delivery_date && (
                                                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                                                     Expected delivery:{' '}
-                                                    {new Date(po.expected_delivery_date).toLocaleDateString()}
+                                                    {new Date(
+                                                        po.expected_delivery_date,
+                                                    ).toLocaleDateString()}
                                                 </p>
                                             )}
                                         </div>
 
-                                        <Link href={route('purchase-orders.show', po.id)}>
+                                        <Link href={show(po.id)}>
                                             <Button variant="outline" size="sm">
                                                 View Details
                                             </Button>

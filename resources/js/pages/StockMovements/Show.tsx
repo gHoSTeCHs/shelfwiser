@@ -4,78 +4,24 @@ import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
 import AppLayout from '@/layouts/AppLayout';
 import { StockMovement } from '@/types/stockMovement';
+import { getMovementIcon, getMovementLabel } from '@/utils/stock-movement';
 import { Head, Link } from '@inertiajs/react';
 import {
-    AlertCircle,
-    AlertTriangle,
-    ArrowDownCircle,
     ArrowLeft,
-    ArrowRightCircle,
-    ArrowUpCircle,
-    Building2,
     Calendar,
-    ClipboardCheck,
     Hash,
     MapPin,
     Package,
-    ShoppingCart,
     Tag,
-    Trash2,
-    Undo2,
     User,
-    Wrench,
 } from 'lucide-react';
+import { formatDate } from '@/lib/utils.ts';
 
 interface Props {
     movement: StockMovement;
 }
 
 export default function Show({ movement }: Props) {
-    const getMovementIcon = (type: string) => {
-        switch (type) {
-            case 'purchase':
-                return <ShoppingCart className="h-6 w-6 text-success-500" />;
-            case 'sale':
-                return <Package className="h-6 w-6 text-blue-500" />;
-            case 'adjustment_in':
-                return <ArrowUpCircle className="h-6 w-6 text-success-500" />;
-            case 'adjustment_out':
-                return <ArrowDownCircle className="h-6 w-6 text-warning-500" />;
-            case 'transfer_in':
-                return (
-                    <ArrowRightCircle className="h-6 w-6 rotate-180 text-brand-500" />
-                );
-            case 'transfer_out':
-                return <ArrowRightCircle className="h-6 w-6 text-brand-500" />;
-            case 'return':
-                return <Undo2 className="h-6 w-6 text-blue-500" />;
-            case 'damage':
-                return <Wrench className="h-6 w-6 text-warning-500" />;
-            case 'loss':
-                return <Trash2 className="h-6 w-6 text-error-500" />;
-            case 'stock_take':
-                return <ClipboardCheck className="h-6 w-6 text-purple-500" />;
-            default:
-                return <Package className="h-6 w-6 text-gray-500" />;
-        }
-    };
-
-    const getMovementLabel = (type: string): string => {
-        const labels: Record<string, string> = {
-            purchase: 'Purchase',
-            sale: 'Sale',
-            adjustment_in: 'Adjustment In',
-            adjustment_out: 'Adjustment Out',
-            transfer_in: 'Transfer In',
-            transfer_out: 'Transfer Out',
-            return: 'Return',
-            damage: 'Damage',
-            loss: 'Loss',
-            stock_take: 'Stock Take',
-        };
-        return labels[type] || type;
-    };
-
     const getMovementBadgeColor = (type: string): string => {
         const isIncrease = [
             'purchase',
@@ -86,16 +32,6 @@ export default function Show({ movement }: Props) {
         return isIncrease ? 'success' : 'warning';
     };
 
-    const formatDate = (dateString: string): string => {
-        const date = new Date(dateString);
-        return date.toLocaleString('en-US', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
 
     const isTransfer = movement.type.includes('transfer');
 
@@ -127,7 +63,7 @@ export default function Show({ movement }: Props) {
                                 {getMovementLabel(movement.type)}
                             </Badge>
                             {movement.reference_number && (
-                                <span className="text-sm font-mono text-gray-500 dark:text-gray-400">
+                                <span className="font-mono text-sm text-gray-500 dark:text-gray-400">
                                     {movement.reference_number}
                                 </span>
                             )}
@@ -146,8 +82,8 @@ export default function Show({ movement }: Props) {
                                             Product
                                         </p>
                                         <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                                            {movement.product_variant?.product?.name ||
-                                                'N/A'}
+                                            {movement.product_variant?.product
+                                                ?.name || 'N/A'}
                                         </p>
                                         {movement.product_variant?.name && (
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -161,8 +97,9 @@ export default function Show({ movement }: Props) {
                                             <Tag className="mr-2 h-4 w-4" />
                                             SKU
                                         </p>
-                                        <p className="mt-1 font-mono text-gray-900 dark:text-white">
-                                            {movement.product_variant?.sku || 'N/A'}
+                                        <p className="font-mono mt-1 text-gray-900 dark:text-white">
+                                            {movement.product_variant?.sku ||
+                                                'N/A'}
                                         </p>
                                     </div>
 
@@ -210,8 +147,9 @@ export default function Show({ movement }: Props) {
                                                     From
                                                 </p>
                                                 <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                                                    {movement.from_location?.location
-                                                        ?.name || 'N/A'}
+                                                    {movement.from_location
+                                                        ?.location?.name ||
+                                                        'N/A'}
                                                 </p>
                                             </div>
                                             <div>
@@ -219,8 +157,9 @@ export default function Show({ movement }: Props) {
                                                     To
                                                 </p>
                                                 <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                                                    {movement.to_location?.location
-                                                        ?.name || 'N/A'}
+                                                    {movement.to_location
+                                                        ?.location?.name ||
+                                                        'N/A'}
                                                 </p>
                                             </div>
                                         </div>
@@ -234,8 +173,8 @@ export default function Show({ movement }: Props) {
                                             Location
                                         </p>
                                         <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                                            {movement.to_location.location?.name ||
-                                                'N/A'}
+                                            {movement.to_location.location
+                                                ?.name || 'N/A'}
                                         </p>
                                     </div>
                                 )}
@@ -273,7 +212,7 @@ export default function Show({ movement }: Props) {
                                         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                             Reference Number
                                         </p>
-                                        <p className="mt-1 font-mono text-sm text-gray-900 dark:text-white">
+                                        <p className="font-mono mt-1 text-sm text-gray-900 dark:text-white">
                                             {movement.reference_number}
                                         </p>
                                     </div>
@@ -285,7 +224,8 @@ export default function Show({ movement }: Props) {
                                         Created By
                                     </p>
                                     <p className="mt-1 text-gray-900 dark:text-white">
-                                        {movement.created_by_user?.name || 'N/A'}
+                                        {movement.created_by_user?.name ||
+                                            'N/A'}
                                     </p>
                                 </div>
 
@@ -305,11 +245,17 @@ export default function Show({ movement }: Props) {
                             <Card title="Quick Actions">
                                 <div className="space-y-2">
                                     <Link
-                                        href={StockMovementController.history.url({
-                                            variant: movement.product_variant_id,
-                                        })}
+                                        href={StockMovementController.history.url(
+                                            {
+                                                variant:
+                                                    movement.product_variant_id,
+                                            },
+                                        )}
                                     >
-                                        <Button variant="outline" className="w-full">
+                                        <Button
+                                            variant="outline"
+                                            className="w-full"
+                                        >
                                             View Product History
                                         </Button>
                                     </Link>

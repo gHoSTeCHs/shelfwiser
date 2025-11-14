@@ -14,6 +14,8 @@ use Illuminate\Database\Seeder;
 
 class OrderSeeder extends Seeder
 {
+    private array $dailyCounters = [];
+
     public function run(): void
     {
         $shops = Shop::with(['products.variants.packagingTypes'])->get();
@@ -34,11 +36,22 @@ class OrderSeeder extends Seeder
         $createdBy = $this->getRandomStaff($shop);
 
         $createdAt = now()->subDays(rand(1, 90));
+        $dateKey = $createdAt->format('Y-m-d');
+
+        if (!isset($this->dailyCounters[$dateKey])) {
+            $lastOrder = Order::whereDate('created_at', $createdAt)->latest('id')->first();
+            $this->dailyCounters[$dateKey] = $lastOrder ? (int) substr($lastOrder->order_number, -4) : 0;
+        }
+
+        $this->dailyCounters[$dateKey]++;
+        $sequence = $this->dailyCounters[$dateKey];
+        $orderNumber = sprintf('ORD-%s-%04d', $createdAt->format('Ymd'), $sequence);
 
         $order = Order::create([
             'tenant_id' => $shop->tenant_id,
             'shop_id' => $shop->id,
             'customer_id' => null,
+            'order_number' => $orderNumber,
             'status' => $status,
             'payment_status' => $paymentStatus,
             'payment_method' => $this->getRandomPaymentMethod(),
@@ -122,13 +135,13 @@ class OrderSeeder extends Seeder
     protected function getRandomStatus(): OrderStatus
     {
         $statuses = [
-            OrderStatus::PENDING => 15,
-            OrderStatus::CONFIRMED => 10,
-            OrderStatus::PROCESSING => 10,
-            OrderStatus::PACKED => 5,
-            OrderStatus::SHIPPED => 5,
-            OrderStatus::DELIVERED => 50,
-            OrderStatus::CANCELLED => 5,
+            OrderStatus::PENDING->value => 15,
+            OrderStatus::CONFIRMED->value => 10,
+            OrderStatus::PROCESSING->value => 10,
+            OrderStatus::PACKED->value => 5,
+            OrderStatus::SHIPPED->value => 5,
+            OrderStatus::DELIVERED->value => 50,
+            OrderStatus::CANCELLED->value => 5,
         ];
 
         $rand = rand(1, 100);
@@ -137,7 +150,7 @@ class OrderSeeder extends Seeder
         foreach ($statuses as $status => $weight) {
             $cumulative += $weight;
             if ($rand <= $cumulative) {
-                return $status;
+                return OrderStatus::from($status);
             }
         }
 

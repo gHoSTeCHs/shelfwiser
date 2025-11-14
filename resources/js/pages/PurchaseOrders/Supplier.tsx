@@ -1,19 +1,20 @@
+import PurchaseOrderController from '@/actions/App/Http/Controllers/PurchaseOrderController.ts';
+import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
 import {
     PurchaseOrderListResponse,
-    PurchaseOrderStatus,
     PurchaseOrderPaymentStatus,
+    PurchaseOrderStatus,
 } from '@/types/supplier';
 import { Head, Link } from '@inertiajs/react';
 import {
-    FileText,
-    Calendar,
     Building2,
+    Calendar,
     DollarSign,
+    FileText,
     Package,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -24,27 +25,27 @@ interface Props {
 
 const statusConfig: Record<
     PurchaseOrderStatus,
-    { label: string; variant: 'default' | 'warning' | 'success' | 'danger' }
+    { label: string; variant: 'primary' | 'warning' | 'success' | 'error' }
 > = {
-    draft: { label: 'Draft', variant: 'default' },
+    draft: { label: 'Draft', variant: 'primary' },
     submitted: { label: 'Pending Approval', variant: 'warning' },
     approved: { label: 'Approved', variant: 'success' },
     processing: { label: 'Processing', variant: 'warning' },
     shipped: { label: 'Shipped', variant: 'success' },
     received: { label: 'Received', variant: 'success' },
     completed: { label: 'Completed', variant: 'success' },
-    cancelled: { label: 'Cancelled', variant: 'danger' },
+    cancelled: { label: 'Cancelled', variant: 'error' },
 };
 
 const paymentStatusConfig: Record<
     PurchaseOrderPaymentStatus,
-    { label: string; variant: 'default' | 'warning' | 'success' | 'danger' }
+    { label: string; variant: 'primary' | 'warning' | 'success' | 'error' }
 > = {
     pending: { label: 'Pending', variant: 'warning' },
     partial: { label: 'Partial', variant: 'warning' },
     paid: { label: 'Paid', variant: 'success' },
-    overdue: { label: 'Overdue', variant: 'danger' },
-    cancelled: { label: 'Cancelled', variant: 'default' },
+    overdue: { label: 'Overdue', variant: 'error' },
+    cancelled: { label: 'Cancelled', variant: 'primary' },
 };
 
 export default function Supplier({ purchaseOrders }: Props) {
@@ -56,11 +57,11 @@ export default function Supplier({ purchaseOrders }: Props) {
             : purchaseOrders.data.filter((po) => po.status === statusFilter);
 
     const pendingApprovalCount = purchaseOrders.data.filter(
-        (po) => po.status === 'submitted'
+        (po) => po.status === 'submitted',
     ).length;
 
     const activeOrdersCount = purchaseOrders.data.filter((po) =>
-        ['approved', 'processing'].includes(po.status)
+        ['approved', 'processing'].includes(po.status),
     ).length;
 
     return (
@@ -100,7 +101,9 @@ export default function Supplier({ purchaseOrders }: Props) {
                                 <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Active Orders</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Active Orders
+                                </p>
                                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                                     {activeOrdersCount}
                                 </p>
@@ -114,7 +117,9 @@ export default function Supplier({ purchaseOrders }: Props) {
                                 <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Total Orders</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Total Orders
+                                </p>
                                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                                     {purchaseOrders.data.length}
                                 </p>
@@ -201,19 +206,39 @@ export default function Supplier({ purchaseOrders }: Props) {
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3">
                                                 <Link
-                                                    href={route('purchase-orders.show', po.id)}
+                                                    href={PurchaseOrderController.show(
+                                                        {
+                                                            id: po.id,
+                                                        },
+                                                    )}
                                                     className="text-lg font-semibold text-gray-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400"
                                                 >
                                                     {po.po_number}
                                                 </Link>
-                                                <Badge variant={statusConfig[po.status].variant}>
-                                                    {statusConfig[po.status].label}
+                                                <Badge
+                                                    color={
+                                                        statusConfig[po.status]
+                                                            .variant
+                                                    }
+                                                >
+                                                    {
+                                                        statusConfig[po.status]
+                                                            .label
+                                                    }
                                                 </Badge>
                                                 <Badge
-                                                    variant={paymentStatusConfig[po.payment_status].variant}
+                                                    color={
+                                                        paymentStatusConfig[
+                                                            po.payment_status
+                                                        ].variant
+                                                    }
                                                     size="sm"
                                                 >
-                                                    {paymentStatusConfig[po.payment_status].label}
+                                                    {
+                                                        paymentStatusConfig[
+                                                            po.payment_status
+                                                        ].label
+                                                    }
                                                 </Badge>
                                             </div>
 
@@ -221,7 +246,9 @@ export default function Supplier({ purchaseOrders }: Props) {
                                                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                                     <Building2 className="h-4 w-4" />
                                                     <span>
-                                                        <span className="font-medium">Buyer:</span>{' '}
+                                                        <span className="font-medium">
+                                                            Buyer:
+                                                        </span>{' '}
                                                         {po.buyer_tenant?.name}
                                                     </span>
                                                 </div>
@@ -229,7 +256,9 @@ export default function Supplier({ purchaseOrders }: Props) {
                                                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                                     <Package className="h-4 w-4" />
                                                     <span>
-                                                        <span className="font-medium">Deliver to:</span>{' '}
+                                                        <span className="font-medium">
+                                                            Deliver to:
+                                                        </span>{' '}
                                                         {po.shop?.name}
                                                     </span>
                                                 </div>
@@ -237,15 +266,22 @@ export default function Supplier({ purchaseOrders }: Props) {
                                                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                                     <DollarSign className="h-4 w-4" />
                                                     <span>
-                                                        <span className="font-medium">Total:</span> $
-                                                        {po.total_amount.toFixed(2)}
+                                                        <span className="font-medium">
+                                                            Total:
+                                                        </span>{' '}
+                                                        $
+                                                        {Number(
+                                                            po.total_amount,
+                                                        ).toFixed(2)}
                                                     </span>
                                                 </div>
 
                                                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                                     <Calendar className="h-4 w-4" />
                                                     <span>
-                                                        {new Date(po.created_at).toLocaleDateString()}
+                                                        {new Date(
+                                                            po.created_at,
+                                                        ).toLocaleDateString()}
                                                     </span>
                                                 </div>
                                             </div>
@@ -253,20 +289,30 @@ export default function Supplier({ purchaseOrders }: Props) {
                                             {po.expected_delivery_date && (
                                                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                                                     Expected delivery:{' '}
-                                                    {new Date(po.expected_delivery_date).toLocaleDateString()}
+                                                    {new Date(
+                                                        po.expected_delivery_date,
+                                                    ).toLocaleDateString()}
                                                 </p>
                                             )}
 
                                             {po.status === 'submitted' && (
                                                 <div className="mt-3">
-                                                    <Badge variant="warning" size="sm">
-                                                        Action Required: Review and approve this order
+                                                    <Badge
+                                                        color="warning"
+                                                        size="sm"
+                                                    >
+                                                        Action Required: Review
+                                                        and approve this order
                                                     </Badge>
                                                 </div>
                                             )}
                                         </div>
 
-                                        <Link href={route('purchase-orders.show', po.id)}>
+                                        <Link
+                                            href={PurchaseOrderController.show({
+                                                id: po.id,
+                                            })}
+                                        >
                                             <Button variant="outline" size="sm">
                                                 View Details
                                             </Button>

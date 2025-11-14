@@ -8,6 +8,7 @@ use App\Http\Requests\Supplier\UpdateConnectionTermsRequest;
 use App\Models\SupplierConnection;
 use App\Models\Tenant;
 use App\Services\SupplierConnectionService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
@@ -20,6 +21,9 @@ class SupplierConnectionController extends Controller
     {
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function index(): Response
     {
         Gate::authorize('viewAny', SupplierConnection::class);
@@ -35,6 +39,9 @@ class SupplierConnectionController extends Controller
         ]);
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function pending(): Response
     {
         Gate::authorize('viewAny', SupplierConnection::class);
@@ -58,9 +65,12 @@ class SupplierConnectionController extends Controller
         );
 
         return Redirect::route('supplier.connections.index')
-            ->with('success', "Connection request sent to {$supplierTenant->name}.");
+            ->with('success', "Connection request sent to $supplierTenant->name.");
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function approve(SupplierConnection $connection): RedirectResponse
     {
         Gate::authorize('approve', $connection);
@@ -71,6 +81,9 @@ class SupplierConnectionController extends Controller
             ->with('success', 'Connection approved successfully.');
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function reject(SupplierConnection $connection): RedirectResponse
     {
         Gate::authorize('reject', $connection);
@@ -81,6 +94,9 @@ class SupplierConnectionController extends Controller
             ->with('success', 'Connection rejected.');
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function suspend(SupplierConnection $connection): RedirectResponse
     {
         Gate::authorize('suspend', $connection);
@@ -91,6 +107,9 @@ class SupplierConnectionController extends Controller
             ->with('success', 'Connection suspended.');
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function activate(SupplierConnection $connection): RedirectResponse
     {
         Gate::authorize('activate', $connection);

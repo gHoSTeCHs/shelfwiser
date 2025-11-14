@@ -1,49 +1,59 @@
-import Button from '@/components/ui/button/Button';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
-import AppLayout from '@/layouts/AppLayout';
-import { SupplierProfile, ConnectionApprovalMode } from '@/types/supplier';
-import { Form, Head, router } from '@inertiajs/react';
-import { Building2, CheckCircle2, Settings, XCircle, Info } from 'lucide-react';
+import SupplierProfileController from '@/actions/App/Http/Controllers/SupplierProfileController.ts';
 import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
-import Select from '@/components/form/Select';
 import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
+import { ConnectionApprovalMode, SupplierProfile } from '@/types/supplier';
+import { Form, Head } from '@inertiajs/react';
+import { Building2, CheckCircle2, Info, Settings, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
-    profile: SupplierProfile | null;
+    profile: SupplierProfile ;
     isSupplier: boolean;
 }
 
-const approvalModeOptions: { value: ConnectionApprovalMode; label: string }[] = [
-    { value: 'auto', label: 'Auto-approve all connections' },
-    { value: 'owner', label: 'Require Owner approval' },
-    { value: 'general_manager', label: 'Require General Manager approval' },
-    { value: 'assistant_manager', label: 'Require Assistant Manager approval' },
-];
+const approvalModeOptions: { value: ConnectionApprovalMode; label: string }[] =
+    [
+        { value: 'auto', label: 'Auto-approve all connections' },
+        { value: 'owner', label: 'Require Owner approval' },
+        { value: 'general_manager', label: 'Require General Manager approval' },
+        {
+            value: 'assistant_manager',
+            label: 'Require Assistant Manager approval',
+        },
+    ];
 
 export default function Index({ profile, isSupplier }: Props) {
     const [businessRegistration, setBusinessRegistration] = useState<string>(
-        profile?.business_registration || ''
+        profile?.business_registration || '',
     );
     const [taxId, setTaxId] = useState<string>(profile?.tax_id || '');
-    const [paymentTerms, setPaymentTerms] = useState<string>(profile?.payment_terms || 'Net 30');
-    const [leadTimeDays, setLeadTimeDays] = useState<number>(profile?.lead_time_days || 7);
+    const [paymentTerms, setPaymentTerms] = useState<string>(
+        profile?.payment_terms || 'Net 30',
+    );
+    const [leadTimeDays, setLeadTimeDays] = useState<number>(
+        profile?.lead_time_days || 7,
+    );
     const [minimumOrderValue, setMinimumOrderValue] = useState<number>(
-        profile?.minimum_order_value || 0
+        profile?.minimum_order_value || 0,
     );
-    const [connectionApprovalMode, setConnectionApprovalMode] = useState<ConnectionApprovalMode>(
-        profile?.connection_approval_mode || 'owner'
-    );
+    const [connectionApprovalMode, setConnectionApprovalMode] =
+        useState<ConnectionApprovalMode>(
+            profile?.connection_approval_mode || 'owner',
+        );
 
     const handleDisable = () => {
         if (
             confirm(
-                'Are you sure you want to disable supplier mode? This will affect your active connections.'
+                'Are you sure you want to disable supplier mode? This will affect your active connections.',
             )
         ) {
-            router.post(route('supplier.profile.disable'));
+            SupplierProfileController.disable();
         }
     };
 
@@ -69,12 +79,13 @@ export default function Index({ profile, isSupplier }: Props) {
                                 Become a Supplier
                             </h3>
                             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                                Enable supplier mode to create a catalog and sell your products to
-                                other businesses on the ShelfWiser network.
+                                Enable supplier mode to create a catalog and
+                                sell your products to other businesses on the
+                                ShelfWiser network.
                             </p>
 
                             <Form
-                                action={route('supplier.profile.enable')}
+                                action={SupplierProfileController.enable()}
                                 method="post"
                                 className="mt-8 space-y-6 text-left"
                             >
@@ -90,41 +101,65 @@ export default function Index({ profile, isSupplier }: Props) {
                                                     name="business_registration"
                                                     value={businessRegistration}
                                                     onChange={(e) =>
-                                                        setBusinessRegistration(e.target.value)
+                                                        setBusinessRegistration(
+                                                            e.target.value,
+                                                        )
                                                     }
-                                                    error={!!errors.business_registration}
+                                                    error={
+                                                        !!errors.business_registration
+                                                    }
                                                     placeholder="e.g., REG123456"
                                                 />
-                                                <InputError message={errors.business_registration} />
+                                                <InputError
+                                                    message={
+                                                        errors.business_registration
+                                                    }
+                                                />
                                             </div>
 
                                             <div>
-                                                <Label htmlFor="tax_id">Tax ID</Label>
+                                                <Label htmlFor="tax_id">
+                                                    Tax ID
+                                                </Label>
                                                 <Input
                                                     id="tax_id"
                                                     name="tax_id"
                                                     value={taxId}
-                                                    onChange={(e) => setTaxId(e.target.value)}
+                                                    onChange={(e) =>
+                                                        setTaxId(e.target.value)
+                                                    }
                                                     error={!!errors.tax_id}
                                                     placeholder="e.g., TAX-123-456"
                                                 />
-                                                <InputError message={errors.tax_id} />
+                                                <InputError
+                                                    message={errors.tax_id}
+                                                />
                                             </div>
 
                                             <div>
-                                                <Label htmlFor="payment_terms" required>
+                                                <Label htmlFor="payment_terms">
                                                     Payment Terms
                                                 </Label>
                                                 <Input
                                                     id="payment_terms"
                                                     name="payment_terms"
                                                     value={paymentTerms}
-                                                    onChange={(e) => setPaymentTerms(e.target.value)}
-                                                    error={!!errors.payment_terms}
+                                                    onChange={(e) =>
+                                                        setPaymentTerms(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    error={
+                                                        !!errors.payment_terms
+                                                    }
                                                     placeholder="e.g., Net 30, Net 60"
                                                     required
                                                 />
-                                                <InputError message={errors.payment_terms} />
+                                                <InputError
+                                                    message={
+                                                        errors.payment_terms
+                                                    }
+                                                />
                                             </div>
 
                                             <div>
@@ -138,11 +173,21 @@ export default function Index({ profile, isSupplier }: Props) {
                                                     min="1"
                                                     value={leadTimeDays.toString()}
                                                     onChange={(e) =>
-                                                        setLeadTimeDays(parseInt(e.target.value))
+                                                        setLeadTimeDays(
+                                                            parseInt(
+                                                                e.target.value,
+                                                            ),
+                                                        )
                                                     }
-                                                    error={!!errors.lead_time_days}
+                                                    error={
+                                                        !!errors.lead_time_days
+                                                    }
                                                 />
-                                                <InputError message={errors.lead_time_days} />
+                                                <InputError
+                                                    message={
+                                                        errors.lead_time_days
+                                                    }
+                                                />
                                             </div>
 
                                             <div>
@@ -158,35 +203,50 @@ export default function Index({ profile, isSupplier }: Props) {
                                                     value={minimumOrderValue.toString()}
                                                     onChange={(e) =>
                                                         setMinimumOrderValue(
-                                                            parseFloat(e.target.value)
+                                                            parseFloat(
+                                                                e.target.value,
+                                                            ),
                                                         )
                                                     }
-                                                    error={!!errors.minimum_order_value}
+                                                    error={
+                                                        !!errors.minimum_order_value
+                                                    }
                                                 />
-                                                <InputError message={errors.minimum_order_value} />
+                                                <InputError
+                                                    message={
+                                                        errors.minimum_order_value
+                                                    }
+                                                />
                                             </div>
 
                                             <div>
-                                                <Label htmlFor="approval_mode" required>
+                                                <Label htmlFor="approval_mode">
                                                     Connection Approval Mode
                                                 </Label>
                                                 <Select
-                                                    options={approvalModeOptions}
-                                                    value={connectionApprovalMode}
+                                                    options={
+                                                        approvalModeOptions
+                                                    }
+                                                    value={
+                                                        connectionApprovalMode
+                                                    }
                                                     onChange={(value) =>
                                                         setConnectionApprovalMode(
-                                                            value as ConnectionApprovalMode
+                                                            value as ConnectionApprovalMode,
                                                         )
                                                     }
                                                 />
                                                 <input
                                                     type="hidden"
                                                     name="connection_approval_mode"
-                                                    value={connectionApprovalMode}
+                                                    value={
+                                                        connectionApprovalMode
+                                                    }
                                                 />
                                                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                                                     <Info className="mr-1 inline h-4 w-4" />
-                                                    Choose who can approve connection requests from
+                                                    Choose who can approve
+                                                    connection requests from
                                                     buyers
                                                 </p>
                                             </div>
@@ -227,7 +287,9 @@ export default function Index({ profile, isSupplier }: Props) {
                         </p>
                     </div>
                     <div className="flex gap-2">
-                        <Badge variant={profile?.is_enabled ? 'success' : 'secondary'}>
+                        <Badge
+                            color={profile?.is_enabled ? 'success' : 'primary'}
+                        >
                             {profile?.is_enabled ? (
                                 <>
                                     <CheckCircle2 className="mr-1 h-3 w-3" />
@@ -245,7 +307,9 @@ export default function Index({ profile, isSupplier }: Props) {
 
                 <Card className="p-6">
                     <Form
-                        action={route('supplier.profile.update', profile?.id)}
+                        action={SupplierProfileController.update({
+                            id: profile.id,
+                        })}
                         method="put"
                         className="space-y-6"
                     >
@@ -270,10 +334,20 @@ export default function Index({ profile, isSupplier }: Props) {
                                             id="business_registration"
                                             name="business_registration"
                                             value={businessRegistration}
-                                            onChange={(e) => setBusinessRegistration(e.target.value)}
-                                            error={!!errors.business_registration}
+                                            onChange={(e) =>
+                                                setBusinessRegistration(
+                                                    e.target.value,
+                                                )
+                                            }
+                                            error={
+                                                !!errors.business_registration
+                                            }
                                         />
-                                        <InputError message={errors.business_registration} />
+                                        <InputError
+                                            message={
+                                                errors.business_registration
+                                            }
+                                        />
                                     </div>
 
                                     <div>
@@ -282,25 +356,31 @@ export default function Index({ profile, isSupplier }: Props) {
                                             id="tax_id"
                                             name="tax_id"
                                             value={taxId}
-                                            onChange={(e) => setTaxId(e.target.value)}
+                                            onChange={(e) =>
+                                                setTaxId(e.target.value)
+                                            }
                                             error={!!errors.tax_id}
                                         />
                                         <InputError message={errors.tax_id} />
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="payment_terms" required>
+                                        <Label htmlFor="payment_terms">
                                             Payment Terms
                                         </Label>
                                         <Input
                                             id="payment_terms"
                                             name="payment_terms"
                                             value={paymentTerms}
-                                            onChange={(e) => setPaymentTerms(e.target.value)}
+                                            onChange={(e) =>
+                                                setPaymentTerms(e.target.value)
+                                            }
                                             error={!!errors.payment_terms}
                                             required
                                         />
-                                        <InputError message={errors.payment_terms} />
+                                        <InputError
+                                            message={errors.payment_terms}
+                                        />
                                     </div>
 
                                     <div>
@@ -313,10 +393,16 @@ export default function Index({ profile, isSupplier }: Props) {
                                             type="number"
                                             min="1"
                                             value={leadTimeDays.toString()}
-                                            onChange={(e) => setLeadTimeDays(parseInt(e.target.value))}
+                                            onChange={(e) =>
+                                                setLeadTimeDays(
+                                                    parseInt(e.target.value),
+                                                )
+                                            }
                                             error={!!errors.lead_time_days}
                                         />
-                                        <InputError message={errors.lead_time_days} />
+                                        <InputError
+                                            message={errors.lead_time_days}
+                                        />
                                     </div>
 
                                     <div>
@@ -331,15 +417,19 @@ export default function Index({ profile, isSupplier }: Props) {
                                             step="0.01"
                                             value={minimumOrderValue.toString()}
                                             onChange={(e) =>
-                                                setMinimumOrderValue(parseFloat(e.target.value))
+                                                setMinimumOrderValue(
+                                                    parseFloat(e.target.value),
+                                                )
                                             }
                                             error={!!errors.minimum_order_value}
                                         />
-                                        <InputError message={errors.minimum_order_value} />
+                                        <InputError
+                                            message={errors.minimum_order_value}
+                                        />
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="approval_mode" required>
+                                        <Label htmlFor="approval_mode">
                                             Connection Approval Mode
                                         </Label>
                                         <Select
@@ -347,7 +437,7 @@ export default function Index({ profile, isSupplier }: Props) {
                                             value={connectionApprovalMode}
                                             onChange={(value) =>
                                                 setConnectionApprovalMode(
-                                                    value as ConnectionApprovalMode
+                                                    value as ConnectionApprovalMode,
                                                 )
                                             }
                                         />
@@ -358,7 +448,8 @@ export default function Index({ profile, isSupplier }: Props) {
                                         />
                                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                                             <Info className="mr-1 inline h-4 w-4" />
-                                            Who can approve buyer connection requests
+                                            Who can approve buyer connection
+                                            requests
                                         </p>
                                     </div>
                                 </div>
@@ -375,7 +466,9 @@ export default function Index({ profile, isSupplier }: Props) {
                                     </Button>
                                     <Button type="submit" disabled={processing}>
                                         <CheckCircle2 className="mr-2 h-4 w-4" />
-                                        {processing ? 'Saving...' : 'Save Changes'}
+                                        {processing
+                                            ? 'Saving...'
+                                            : 'Save Changes'}
                                     </Button>
                                 </div>
                             </>

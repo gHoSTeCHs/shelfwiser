@@ -22,7 +22,7 @@ class SupplierCatalogController extends Controller
 
     public function index(): Response
     {
-        Gate::authorize('manageCatalog', auth()->user()->tenant);
+//        Gate::authorize('manageCatalog', auth()->user()->tenant);
 
         $tenantId = auth()->user()->tenant_id;
 
