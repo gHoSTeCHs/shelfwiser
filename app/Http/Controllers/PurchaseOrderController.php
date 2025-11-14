@@ -53,7 +53,10 @@ class PurchaseOrderController extends Controller
     {
         Gate::authorize('viewAsSupplier', auth()->user()->tenant);
 
-        $purchaseOrders = $this->purchaseOrderService->getPurchaseOrdersForSupplier(auth()->user()->tenant);
+        $purchaseOrders = PurchaseOrder::forSupplier(auth()->user()->tenant_id)
+            ->with(['buyerTenant', 'shop', 'items.productVariant', 'createdBy'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
 
         return Inertia::render('PurchaseOrders/Supplier', [
             'purchaseOrders' => $purchaseOrders,
@@ -62,17 +65,31 @@ class PurchaseOrderController extends Controller
 
     public function create(Request $request): Response
     {
-        $shopId = $request->input('shop_id');
-        $shop = Shop::findOrFail($shopId);
+        Gate::authorize('viewAny', PurchaseOrder::class);
 
-        Gate::authorize('create', $shop);
+        $tenantId = auth()->user()->tenant_id;
+        $shops = Shop::where('tenant_id', $tenantId)->get(['id', 'name']);
 
         $connections = $this->connectionService->getConnectionsForBuyer(auth()->user()->tenant);
-        $approvedSuppliers = $connections->filter(fn($conn) => $conn->status->canOrder());
+        $approvedConnections = $connections->filter(fn($conn) => $conn->status->canOrder());
+
+        $supplierCatalog = [];
+        $selectedSupplierId = $request->input('supplier');
+
+        if ($selectedSupplierId) {
+            $supplierTenant = Tenant::findOrFail($selectedSupplierId);
+            $supplierCatalog = $supplierTenant->supplierProfile
+                ->catalogItems()
+                ->where('is_available', true)
+                ->with(['product', 'pricingTiers'])
+                ->get();
+        }
 
         return Inertia::render('PurchaseOrders/Create', [
-            'shop' => $shop,
-            'suppliers' => $approvedSuppliers->pluck('supplierTenant'),
+            'shops' => $shops,
+            'supplierConnections' => $approvedConnections,
+            'supplierCatalog' => $supplierCatalog,
+            'selectedSupplierId' => $selectedSupplierId ? (int) $selectedSupplierId : null,
         ]);
     }
 
