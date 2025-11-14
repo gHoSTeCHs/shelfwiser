@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 class Order extends Model
 {
@@ -55,7 +56,7 @@ class Order extends Model
 
         static::creating(function ($order) {
             if (empty($order->order_number)) {
-                $order->order_number = self::generateOrderNumber($order->tenant_id);
+                $order->order_number = self::generateOrderNumber($order->tenant_id, $order->created_at);
             }
         });
     }
@@ -138,17 +139,25 @@ class Order extends Model
         $this->total_amount = $this->subtotal + $this->tax_amount - $this->discount_amount + $this->shipping_cost;
     }
 
-    public static function generateOrderNumber(int $tenantId): string
+    public static function generateOrderNumber(int $tenantId, $createdAt = null): string
     {
+        static $sequenceCache = [];
+
+        $creationDate = $createdAt ? Carbon::parse($createdAt) : now();
         $prefix = 'ORD';
-        $date = now()->format('Ymd');
-        $lastOrder = self::where('tenant_id', $tenantId)
-            ->whereDate('created_at', today())
-            ->latest()
-            ->first();
+        $date = $creationDate->format('Ymd');
+        $cacheKey = $tenantId . '-' . $date;
 
-        $sequence = $lastOrder ? (int) substr($lastOrder->order_number, -4) + 1 : 1;
+        if (!isset($sequenceCache[$cacheKey])) {
+            $lastOrder = self::where('tenant_id', $tenantId)
+                ->whereDate('created_at', $creationDate)
+                ->latest('id')
+                ->first();
+            $sequenceCache[$cacheKey] = $lastOrder ? (int) substr($lastOrder->order_number, -4) : 0;
+        }
 
-        return sprintf('%s-%s-%04d', $prefix, $date, $sequence);
+        $sequenceCache[$cacheKey]++;
+
+        return sprintf('%s-%s-%04d', $prefix, $date, $sequenceCache[$cacheKey]);
     }
 }

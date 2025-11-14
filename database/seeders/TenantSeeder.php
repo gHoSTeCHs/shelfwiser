@@ -16,7 +16,7 @@ class TenantSeeder extends Seeder
                 'owner_email' => 'owner@sunshine-retail.com',
                 'business_type' => 'Retail Chain',
                 'phone' => '+234-802-555-0101',
-                'address' => '123 Marina Street, Lagos Island, Lagos, Nigeria',
+//                'address' => '123 Marina Street, Lagos Island, Lagos, Nigeria',
                 'subscription_plan' => 'business',
                 'max_shops' => 10,
                 'max_users' => 50,
@@ -29,7 +29,7 @@ class TenantSeeder extends Seeder
                 'owner_email' => 'admin@freshmart.ng',
                 'business_type' => 'Supermarket',
                 'phone' => '+234-803-555-0202',
-                'address' => '45 Allen Avenue, Ikeja, Lagos, Nigeria',
+//                'address' => '45 Allen Avenue, Ikeja, Lagos, Nigeria',
                 'subscription_plan' => 'business',
                 'max_shops' => 8,
                 'max_users' => 40,
@@ -42,7 +42,7 @@ class TenantSeeder extends Seeder
                 'owner_email' => 'contact@quickstop.com.ng',
                 'business_type' => 'Convenience Store Chain',
                 'phone' => '+234-805-555-0303',
-                'address' => '78 Awolowo Road, Ikoyi, Lagos, Nigeria',
+//                'address' => '78 Awolowo Road, Ikoyi, Lagos, Nigeria',
                 'subscription_plan' => 'trial',
                 'max_shops' => 5,
                 'max_users' => 20,
@@ -52,7 +52,7 @@ class TenantSeeder extends Seeder
         ];
 
         foreach ($tenants as $tenantData) {
-            Tenant::create($tenantData);
+            Tenant::query()->create($tenantData);
         }
     }
 }
