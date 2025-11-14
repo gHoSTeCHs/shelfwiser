@@ -37,7 +37,7 @@ class PurchaseOrderService
                 'shop_id' => $shop->id,
                 'po_number' => $this->generatePONumber(),
                 'status' => PurchaseOrderStatus::DRAFT,
-                'buyer_notes' => $data['buyer_notes'] ?? null,
+                'buyer_notes' => $data['notes'] ?? null,
                 'expected_delivery_date' => $data['expected_delivery_date'] ?? null,
                 'created_by' => $user->id,
             ]);
@@ -70,15 +70,22 @@ class PurchaseOrderService
 
     public function addItem(PurchaseOrder $po, array $data): PurchaseOrderItem
     {
-        $catalogItem = SupplierCatalogItem::findOrFail($data['catalog_item_id']);
+        $catalogItem = SupplierCatalogItem::with('product.variants')->findOrFail($data['catalog_item_id']);
         $connection = $this->connectionService->getConnection($po->buyerTenant, $po->supplierTenant);
 
         $quantity = $data['quantity'];
         $unitPrice = $data['unit_price'] ?? $catalogItem->getPriceForQuantity($quantity, $connection?->id);
 
+        $product = $catalogItem->product;
+        $productVariantId = $data['product_variant_id'] ?? $product->variants()->first()?->id;
+
+        if (! $productVariantId) {
+            throw new \Exception("Product {$product->name} has no variants available");
+        }
+
         return PurchaseOrderItem::create([
             'purchase_order_id' => $po->id,
-            'product_variant_id' => $data['product_variant_id'],
+            'product_variant_id' => $productVariantId,
             'catalog_item_id' => $catalogItem->id,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,

@@ -20,13 +20,11 @@ class CreatePurchaseOrderRequest extends FormRequest
             'supplier_tenant_id' => ['required', 'exists:tenants,id'],
             'shop_id' => ['required', 'exists:shops,id'],
             'expected_delivery_date' => ['nullable', 'date', 'after:today'],
-            'buyer_notes' => ['nullable', 'string', 'max:1000'],
+            'notes' => ['nullable', 'string', 'max:1000'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.catalog_item_id' => ['required', 'exists:supplier_catalog_items,id'],
-            'items.*.product_variant_id' => ['required', 'exists:product_variants,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
-            'items.*.notes' => ['nullable', 'string', 'max:500'],
+            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
         ];
     }
 
