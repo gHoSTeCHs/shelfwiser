@@ -22,11 +22,10 @@ class DashboardController extends Controller
     }
 
     /**
-     * @throws AuthorizationException
      */
     public function index(Request $request): Response
     {
-        Gate::authorize('view', DashboardPolicy::class);
+//        Gate::authorize('view', DashboardPolicy::class);
 
         $user = $request->user();
 

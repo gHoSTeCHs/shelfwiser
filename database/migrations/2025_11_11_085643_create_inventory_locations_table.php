@@ -18,8 +18,7 @@ return new class extends Migration {
             $table->integer('reserved_quantity')->default(0);
             $table->timestamps();
 
-            $table->unique(['product_variant_id', 'location_type', 'location_id']);
-            $table->index(['location_type', 'location_id']);
+            $table->unique(['product_variant_id', 'location_type', 'location_id'], 'inv_loc_variant_loc_unique');
         });
     }
 

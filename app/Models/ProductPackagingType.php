@@ -69,7 +69,7 @@ class ProductPackagingType extends Model
     /**
      * Check if this packaging offers a discount compared to base unit
      */
-    public function hasDiscountAttribute(): bool
+    public function getHasDiscountAttribute(): bool
     {
         $baseUnit = $this->productVariant->packagingTypes()
             ->where('is_base_unit', true)
