@@ -67,6 +67,9 @@ enum UserRole: string
                 'process_orders',
                 'manage_customers',
                 'manage_settings',
+                'view_financials',
+                'view_profits',
+                'view_costs',
             ],
             self::GENERAL_MANAGER => [
                 'manage_stores',
@@ -77,6 +80,9 @@ enum UserRole: string
                 'manage_products',
                 'process_orders',
                 'manage_customers',
+                'view_financials',
+                'view_profits',
+                'view_costs',
             ],
             self::STORE_MANAGER => [
                 'manage_store_users',
