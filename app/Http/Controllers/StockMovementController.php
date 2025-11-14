@@ -33,24 +33,50 @@ class StockMovementController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
         Gate::authorize('viewAny', StockMovement::class);
 
-        $tenantId = auth()->user()->tenant_id;
+        $user = $request->user();
+        $tenantId = $user->tenant_id;
+
+        $validated = $request->validate([
+            'shop' => ['nullable', 'integer', 'exists:shops,id'],
+        ]);
+
+        $shopId = $validated['shop'] ?? null;
+
+        $query = StockMovement::query()
+            ->where('tenant_id', $tenantId)
+            ->with([
+                'shop:id,name',
+                'productVariant.product',
+                'packagingType',
+                'fromLocation.location',
+                'toLocation.location',
+                'createdBy:id,first_name',
+            ]);
+
+        if ($user->isTenantOwner() || $user->role->value === \App\Enums\UserRole::GENERAL_MANAGER->value) {
+            if ($shopId) {
+                $query->forShop($shopId);
+            }
+            $shops = \App\Models\Shop::where('tenant_id', $tenantId)->get(['id', 'name']);
+        } else {
+            $userShops = $user->shops()->pluck('shops.id');
+            $query->whereIn('shop_id', $userShops);
+
+            if ($shopId && $userShops->contains($shopId)) {
+                $query->forShop($shopId);
+            }
+            $shops = $user->shops()->get(['shops.id as id', 'shops.name as name']);
+        }
 
         return Inertia::render('StockMovements/Index', [
-            'movements' => StockMovement::query()->where('tenant_id', $tenantId)
-                ->with([
-                    'productVariant.product',
-                    'packagingType',
-                    'fromLocation.location',
-                    'toLocation.location',
-                    'createdBy:id,first_name',
-                ])
-                ->latest()
-                ->paginate(50),
+            'movements' => $query->latest()->paginate(50),
             'movementTypes' => StockMovementType::forSelect(),
+            'shops' => $shops,
+            'selectedShop' => $shopId,
         ]);
     }
 
