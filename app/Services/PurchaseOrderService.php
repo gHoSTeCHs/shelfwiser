@@ -314,8 +314,13 @@ class PurchaseOrderService
         $quantityBefore = $location->quantity;
         $location->decrement('quantity', $item->quantity);
 
+        $supplierShopId = $location->location_type === Shop::class
+            ? $location->location_id
+            : $po->supplierTenant->shops()->first()->id;
+
         $this->stockMovementService->recordMovement([
             'tenant_id' => $po->supplier_tenant_id,
+            'shop_id' => $supplierShopId,
             'product_variant_id' => $variant->id,
             'purchase_order_id' => $po->id,
             'type' => StockMovementType::PURCHASE_ORDER_SHIPPED,
@@ -352,6 +357,7 @@ class PurchaseOrderService
 
         $this->stockMovementService->recordMovement([
             'tenant_id' => $po->buyer_tenant_id,
+            'shop_id' => $po->shop_id,
             'product_variant_id' => $variant->id,
             'purchase_order_id' => $po->id,
             'type' => StockMovementType::PURCHASE_ORDER_RECEIVED,

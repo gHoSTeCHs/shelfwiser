@@ -49,8 +49,13 @@ class StockMovementService
 
                 $location->save();
 
+                $shopId = $location->location_type === \App\Models\Shop::class
+                    ? $location->location_id
+                    : $variant->product->shop_id;
+
                 $movement = StockMovement::query()->create([
                     'tenant_id' => $user->tenant_id,
+                    'shop_id' => $shopId,
                     'product_variant_id' => $variant->id,
                     'to_location_id' => $location->id,
                     'type' => $type,
