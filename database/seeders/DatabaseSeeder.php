@@ -21,6 +21,12 @@ class DatabaseSeeder extends Seeder
             InventoryLocationSeeder::class,
             OrderSeeder::class,
             StockMovementSeeder::class,
+
+            // Supplier/Procurement System
+            SupplierProfileSeeder::class,
+            SupplierCatalogSeeder::class,
+            SupplierConnectionSeeder::class,
+            PurchaseOrderSeeder::class,
         ]);
     }
 }
