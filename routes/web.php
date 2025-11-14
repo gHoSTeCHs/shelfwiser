@@ -18,6 +18,7 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('dashboard/refresh', [DashboardController::class, 'refresh'])->name('dashboard.refresh');
@@ -99,6 +100,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel'])->name('cancel');
         Route::post('/{purchaseOrder}/payment', [PurchaseOrderController::class, 'recordPayment'])->name('record-payment');
     });
+
 
 });
 
