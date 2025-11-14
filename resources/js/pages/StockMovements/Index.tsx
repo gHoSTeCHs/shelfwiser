@@ -8,7 +8,8 @@ import EmptyState from '@/components/ui/EmptyState';
 import Pagination from '@/components/ui/pagination/Pagination';
 import AppLayout from '@/layouts/AppLayout';
 import { StockMovement } from '@/types/stockMovement';
-import { Head, Link } from '@inertiajs/react';
+import { Shop } from '@/types/shop';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowDownCircle,
     ArrowRightCircle,
@@ -36,11 +37,22 @@ interface PaginatedMovements {
 interface Props {
     movements: PaginatedMovements;
     movementTypes: Record<string, string>;
+    shops: Shop[];
+    selectedShop?: number;
 }
 
-export default function Index({ movements, movementTypes }: Props) {
+export default function Index({ movements, movementTypes, shops, selectedShop }: Props) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedType, setSelectedType] = useState('');
+
+    const handleShopChange = (value: string) => {
+        const params: Record<string, string> = {};
+        if (value) params.shop = value;
+        router.get(route('stock-movements.index'), params, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
 
     const getMovementIcon = (type: string) => {
         switch (type) {
@@ -221,6 +233,20 @@ export default function Index({ movements, movementTypes }: Props) {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-10"
+                        />
+                    </div>
+                    <div className="sm:w-48">
+                        <Select
+                            options={[
+                                { value: '', label: 'All Shops' },
+                                ...shops.map((shop) => ({
+                                    value: shop.id.toString(),
+                                    label: shop.name,
+                                })),
+                            ]}
+                            onChange={handleShopChange}
+                            value={selectedShop ? selectedShop.toString() : ''}
+                            placeholder="All Shops"
                         />
                     </div>
                     <div className="sm:w-48">
