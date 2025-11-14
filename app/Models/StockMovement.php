@@ -13,6 +13,7 @@ class StockMovement extends Model
 
     protected $fillable = [
         'tenant_id',
+        'shop_id',
         'product_variant_id',
         'product_packaging_type_id',
         'from_location_id',
@@ -44,6 +45,11 @@ class StockMovement extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function shop(): BelongsTo
+    {
+        return $this->belongsTo(Shop::class);
     }
 
     public function productVariant(): BelongsTo
@@ -114,6 +120,11 @@ class StockMovement extends Model
     public function scopeForTenant($query, int $tenantId)
     {
         return $query->where('tenant_id', $tenantId);
+    }
+
+    public function scopeForShop($query, int $shopId)
+    {
+        return $query->where('shop_id', $shopId);
     }
 
     public function scopeForVariant($query, int $variantId)
