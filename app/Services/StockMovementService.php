@@ -378,6 +378,20 @@ class StockMovementService
         }
     }
 
+    public function recordMovement(array $data): StockMovement
+    {
+        return DB::transaction(function () use ($data) {
+            $movement = StockMovement::create($data);
+
+            Log::info('Stock movement recorded', [
+                'movement_id' => $movement->id,
+                'type' => $movement->type->value,
+            ]);
+
+            return $movement;
+        });
+    }
+
     private function generateReferenceNumber(StockMovementType $type): string
     {
         $prefix = match ($type) {
@@ -390,6 +404,8 @@ class StockMovementService
             StockMovementType::DAMAGE => 'DMG',
             StockMovementType::LOSS => 'LOSS',
             StockMovementType::STOCK_TAKE => 'STK',
+            StockMovementType::PURCHASE_ORDER_SHIPPED => 'PO-SHIP',
+            StockMovementType::PURCHASE_ORDER_RECEIVED => 'PO-RCV',
         };
 
         return $prefix . '-' . strtoupper(uniqid());

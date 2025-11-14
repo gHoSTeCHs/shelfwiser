@@ -17,6 +17,7 @@ class StockMovement extends Model
         'product_packaging_type_id',
         'from_location_id',
         'to_location_id',
+        'purchase_order_id',
         'type',
         'quantity',
         'package_quantity',
@@ -68,6 +69,11 @@ class StockMovement extends Model
     public function packagingType(): BelongsTo
     {
         return $this->belongsTo(ProductPackagingType::class, 'product_packaging_type_id');
+    }
+
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
     }
 
     /**

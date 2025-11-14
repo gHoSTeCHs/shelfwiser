@@ -70,6 +70,13 @@ enum UserRole: string
                 'view_financials',
                 'view_profits',
                 'view_costs',
+                'manage_supplier_profile',
+                'manage_supplier_catalog',
+                'approve_supplier_connections',
+                'manage_purchase_orders',
+                'process_supplier_orders',
+                'receive_stock',
+                'view_supplier_analytics',
             ],
             self::GENERAL_MANAGER => [
                 'manage_stores',
@@ -83,6 +90,12 @@ enum UserRole: string
                 'view_financials',
                 'view_profits',
                 'view_costs',
+                'manage_supplier_catalog',
+                'approve_supplier_connections',
+                'manage_purchase_orders',
+                'process_supplier_orders',
+                'receive_stock',
+                'view_supplier_analytics',
             ],
             self::STORE_MANAGER => [
                 'manage_store_users',
@@ -91,12 +104,17 @@ enum UserRole: string
                 'manage_products',
                 'process_orders',
                 'manage_customers',
+                'manage_purchase_orders',
+                'receive_stock',
             ],
             self::ASSISTANT_MANAGER => [
                 'view_store_reports',
                 'manage_store_inventory',
                 'process_orders',
                 'manage_customers',
+                'approve_supplier_connections',
+                'manage_purchase_orders',
+                'receive_stock',
             ],
             self::SALES_REP => [
                 'process_orders',
@@ -114,6 +132,7 @@ enum UserRole: string
                 'view_products',
                 'receive_stock',
                 'stock_transfers',
+                'view_purchase_orders',
             ],
         };
     }
