@@ -6,6 +6,7 @@ use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Tenant extends Model
 {
@@ -45,5 +46,35 @@ class Tenant extends Model
     public function shops(): HasMany
     {
         return $this->hasMany(Shop::class);
+    }
+
+    public function supplierProfile(): HasOne
+    {
+        return $this->hasOne(SupplierProfile::class);
+    }
+
+    public function supplierConnections(): HasMany
+    {
+        return $this->hasMany(SupplierConnection::class, 'supplier_tenant_id');
+    }
+
+    public function buyerConnections(): HasMany
+    {
+        return $this->hasMany(SupplierConnection::class, 'buyer_tenant_id');
+    }
+
+    public function purchaseOrdersAsBuyer(): HasMany
+    {
+        return $this->hasMany(PurchaseOrder::class, 'buyer_tenant_id');
+    }
+
+    public function purchaseOrdersAsSupplier(): HasMany
+    {
+        return $this->hasMany(PurchaseOrder::class, 'supplier_tenant_id');
+    }
+
+    public function isSupplier(): bool
+    {
+        return $this->supplierProfile?->is_enabled ?? false;
     }
 }

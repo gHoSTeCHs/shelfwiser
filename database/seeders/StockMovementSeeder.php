@@ -55,8 +55,13 @@ class StockMovementSeeder extends Seeder
 
         $user = $this->getRandomStaff($variant->product->shop->tenant_id);
 
+        $shopId = $location->location_type === \App\Models\Shop::class
+            ? $location->location_id
+            : $variant->product->shop_id;
+
         StockMovement::create([
             'tenant_id' => $variant->product->shop->tenant_id,
+            'shop_id' => $shopId,
             'product_variant_id' => $variant->id,
             'product_packaging_type_id' => $packaging->id,
             'from_location_id' => null,
@@ -100,8 +105,13 @@ class StockMovementSeeder extends Seeder
 
         $user = $this->getRandomStaff($variant->product->shop->tenant_id);
 
+        $shopId = $location->location_type === \App\Models\Shop::class
+            ? $location->location_id
+            : $variant->product->shop_id;
+
         StockMovement::create([
             'tenant_id' => $variant->product->shop->tenant_id,
+            'shop_id' => $shopId,
             'product_variant_id' => $variant->id,
             'product_packaging_type_id' => $packaging->id,
             'from_location_id' => $location->id,
@@ -147,8 +157,13 @@ class StockMovementSeeder extends Seeder
 
         $user = $this->getRandomStaff($variant->product->shop->tenant_id);
 
+        $shopId = $location->location_type === \App\Models\Shop::class
+            ? $location->location_id
+            : $variant->product->shop_id;
+
         StockMovement::create([
             'tenant_id' => $variant->product->shop->tenant_id,
+            'shop_id' => $shopId,
             'product_variant_id' => $variant->id,
             'product_packaging_type_id' => $packaging->id,
             'from_location_id' => $isIncrease ? null : $location->id,
@@ -207,8 +222,13 @@ class StockMovementSeeder extends Seeder
             default => 'Unknown',
         };
 
+        $shopId = $location->location_type === \App\Models\Shop::class
+            ? $location->location_id
+            : $variant->product->shop_id;
+
         StockMovement::create([
             'tenant_id' => $variant->product->shop->tenant_id,
+            'shop_id' => $shopId,
             'product_variant_id' => $variant->id,
             'product_packaging_type_id' => $packaging->id,
             'from_location_id' => $location->id,

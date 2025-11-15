@@ -14,6 +14,8 @@ enum StockMovementType: string
     case DAMAGE = 'damage';
     case LOSS = 'loss';
     case STOCK_TAKE = 'stock_take';
+    case PURCHASE_ORDER_SHIPPED = 'purchase_order_shipped';
+    case PURCHASE_ORDER_RECEIVED = 'purchase_order_received';
 
     public function label(): string
     {
@@ -28,6 +30,8 @@ enum StockMovementType: string
             self::DAMAGE => 'Damaged',
             self::LOSS => 'Loss/Theft',
             self::STOCK_TAKE => 'Stock Take',
+            self::PURCHASE_ORDER_SHIPPED => 'PO Shipped (Supplier)',
+            self::PURCHASE_ORDER_RECEIVED => 'PO Received (Buyer)',
         };
     }
 
@@ -44,6 +48,8 @@ enum StockMovementType: string
             self::DAMAGE => 'Stock damaged or defective',
             self::LOSS => 'Stock lost or stolen',
             self::STOCK_TAKE => 'Physical inventory count adjustment',
+            self::PURCHASE_ORDER_SHIPPED => 'Stock shipped to buyer via purchase order',
+            self::PURCHASE_ORDER_RECEIVED => 'Stock received from supplier via purchase order',
         };
     }
 
@@ -55,6 +61,7 @@ enum StockMovementType: string
             self::TRANSFER_IN,
             self::RETURN,
             self::STOCK_TAKE,
+            self::PURCHASE_ORDER_RECEIVED,
         ]);
     }
 
@@ -66,6 +73,7 @@ enum StockMovementType: string
             self::TRANSFER_OUT,
             self::DAMAGE,
             self::LOSS,
+            self::PURCHASE_ORDER_SHIPPED,
         ]);
     }
 

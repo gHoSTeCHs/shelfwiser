@@ -75,8 +75,179 @@ export interface DashboardMetrics {
     profit?: ProfitMetrics;
 }
 
+// NEW: Supplier Tab Types
+export interface SupplierSummary {
+    total_suppliers: number;
+    active_pos: number;
+    pending_payments: number;
+    overdue_payments: number;
+    total_spend: number;
+}
+
+export interface TopSupplier {
+    supplier_id: number;
+    supplier_name: string;
+    po_count: number;
+    total_spend: number;
+    avg_order_value: number;
+}
+
+export interface RecentPurchaseOrder {
+    id: number;
+    po_number: string;
+    supplier_name: string;
+    shop_name: string;
+    total_amount: number;
+    status: string;
+    payment_status: string;
+    created_at: string;
+}
+
+export interface StatusBreakdown {
+    [key: string]: {
+        count: number;
+        total: number;
+        label: string;
+        color: string;
+    };
+}
+
+export interface SupplierData {
+    summary: SupplierSummary;
+    top_suppliers: TopSupplier[];
+    recent_pos: RecentPurchaseOrder[];
+    payment_status_breakdown: StatusBreakdown;
+    po_status_breakdown: StatusBreakdown;
+}
+
+// NEW: Sales Tab Types
+export interface SalesTabSummary {
+    total_orders: number;
+    total_revenue: number;
+    avg_order_value: number;
+    total_discounts: number;
+}
+
+export interface RevenueByShop {
+    shop_id: number;
+    shop_name: string;
+    revenue: number;
+    order_count: number;
+}
+
+export interface SalesData {
+    summary: SalesTabSummary;
+    revenue_by_shop: RevenueByShop[];
+    revenue_trend: ChartData;
+    top_products: TopProduct[];
+    orders_by_status: StatusBreakdown;
+}
+
+// NEW: Inventory Tab Types
+export interface InventorySummary {
+    total_products: number;
+    total_variants: number;
+    total_value: number;
+    low_stock_count: number;
+}
+
+export interface StockMovement {
+    id: number;
+    reference_number: string;
+    product_name: string;
+    variant_name: string;
+    type: string;
+    quantity: number;
+    shop_name: string;
+    performed_by: string;
+    created_at: string;
+}
+
+export interface ValuationByShop {
+    shop_id: number;
+    shop_name: string;
+    valuation: number;
+}
+
+export interface InventoryData {
+    summary: InventorySummary;
+    low_stock: LowStockAlert[];
+    stock_movements: StockMovement[];
+    valuation_by_shop: ValuationByShop[];
+}
+
+// NEW: Financials Tab Types
+export interface FinancialSummary {
+    total_revenue: number;
+    collected_revenue: number;
+    total_expenses: number;
+    paid_expenses: number;
+    gross_profit: number;
+    net_profit: number;
+    profit_margin: number;
+    cogs: number;
+    cash_flow: number;
+}
+
+export interface AgingBreakdown {
+    current: number;
+    '30_60_days': number;
+    '60_90_days': number;
+    over_90_days: number;
+}
+
+export interface AccountsReceivable {
+    total_count: number;
+    total_amount: number;
+    overdue_amount: number;
+    aging: AgingBreakdown;
+}
+
+export interface AccountsPayable {
+    total_count: number;
+    total_amount: number;
+    overdue_amount: number;
+    aging: AgingBreakdown;
+}
+
+export interface CashFlowTrend {
+    labels: string[];
+    inflow: number[];
+    outflow: number[];
+    net_flow: number[];
+}
+
+export interface ExpenseCategory {
+    category: string;
+    amount: number;
+}
+
+export interface ProfitByShop {
+    shop_id: number;
+    shop_name: string;
+    revenue: number;
+    gross_profit: number;
+    net_profit: number;
+}
+
+export interface FinancialData {
+    summary: FinancialSummary;
+    accounts_receivable: AccountsReceivable;
+    accounts_payable: AccountsPayable;
+    cash_flow_trend: CashFlowTrend;
+    expense_breakdown: ExpenseCategory[];
+    profit_by_shop: ProfitByShop[];
+}
+
+// UPDATED: Dashboard Props with Tab Support
 export interface DashboardProps {
-    metrics: DashboardMetrics;
+    activeTab: 'overview' | 'sales' | 'inventory' | 'suppliers' | 'financials';
+    data:
+        | DashboardMetrics
+        | SupplierData
+        | SalesData
+        | InventoryData
+        | FinancialData;
     shops: Shop[];
     selectedShop: number | null;
     period: 'today' | 'week' | 'month' | 'custom';

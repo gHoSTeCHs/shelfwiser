@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Tab, TabList, TabTrigger, TabContent } from '../../components/ui/tabs/Tab';
+import { Tab, TabList, TabTrigger, TabContent } from '@/components/ui/tabs';
 import PageBreadcrumb from '../../components/common/PageBreadCrumb';
 import PageMeta from '../../components/common/PageMeta';
 import ComponentCard from '../../components/common/ComponentCard';

@@ -7,21 +7,22 @@ import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import Pagination from '@/components/ui/pagination/Pagination';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDate } from '@/lib/utils.ts';
+import { Shop } from '@/types/shop';
 import { StockMovement } from '@/types/stockMovement';
-import { Head, Link } from '@inertiajs/react';
 import {
-    ArrowDownCircle,
-    ArrowRightCircle,
+    getMovementBadgeColor,
+    getMovementIcon,
+    getMovementLabel,
+} from '@/utils/stock-movement';
+import { Head, Link, router } from '@inertiajs/react';
+import {
     ArrowUpCircle,
     ClipboardCheck,
     Download,
     Eye,
     Package,
     Search,
-    ShoppingCart,
-    Trash2,
-    Undo2,
-    Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -36,75 +37,25 @@ interface PaginatedMovements {
 interface Props {
     movements: PaginatedMovements;
     movementTypes: Record<string, string>;
+    shops: Shop[];
+    selectedShop?: number;
 }
 
-export default function Index({ movements, movementTypes }: Props) {
+export default function Index({
+    movements,
+    movementTypes,
+    shops,
+    selectedShop,
+}: Props) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedType, setSelectedType] = useState('');
 
-    const getMovementIcon = (type: string) => {
-        switch (type) {
-            case 'purchase':
-                return <ShoppingCart className="h-5 w-5 text-success-500" />;
-            case 'sale':
-                return <Package className="h-5 w-5 text-blue-500" />;
-            case 'adjustment_in':
-                return <ArrowUpCircle className="h-5 w-5 text-success-500" />;
-            case 'adjustment_out':
-                return <ArrowDownCircle className="h-5 w-5 text-warning-500" />;
-            case 'transfer_in':
-                return (
-                    <ArrowRightCircle className="h-5 w-5 rotate-180 text-brand-500" />
-                );
-            case 'transfer_out':
-                return <ArrowRightCircle className="h-5 w-5 text-brand-500" />;
-            case 'return':
-                return <Undo2 className="h-5 w-5 text-blue-500" />;
-            case 'damage':
-                return <Wrench className="h-5 w-5 text-warning-500" />;
-            case 'loss':
-                return <Trash2 className="h-5 w-5 text-error-500" />;
-            case 'stock_take':
-                return <ClipboardCheck className="h-5 w-5 text-purple-500" />;
-            default:
-                return <Package className="h-5 w-5 text-gray-500" />;
-        }
-    };
-
-    const getMovementLabel = (type: string): string => {
-        const labels: Record<string, string> = {
-            purchase: 'Purchase',
-            sale: 'Sale',
-            adjustment_in: 'Adjustment In',
-            adjustment_out: 'Adjustment Out',
-            transfer_in: 'Transfer In',
-            transfer_out: 'Transfer Out',
-            return: 'Return',
-            damage: 'Damage',
-            loss: 'Loss',
-            stock_take: 'Stock Take',
-        };
-        return labels[type] || type;
-    };
-
-    const getMovementBadgeColor = (type: string): string => {
-        const isIncrease = [
-            'purchase',
-            'adjustment_in',
-            'transfer_in',
-            'return',
-        ].includes(type);
-        return isIncrease ? 'success' : 'warning';
-    };
-
-    const formatDate = (dateString: string): string => {
-        const date = new Date(dateString);
-        return date.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
+    const handleShopChange = (value: string) => {
+        const params: Record<string, string> = {};
+        if (value) params.shop = value;
+        router.get(route('stock-movements.index'), params, {
+            preserveState: true,
+            preserveScroll: true,
         });
     };
 
@@ -221,6 +172,20 @@ export default function Index({ movements, movementTypes }: Props) {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-10"
+                        />
+                    </div>
+                    <div className="sm:w-48">
+                        <Select
+                            options={[
+                                { value: '', label: 'All Shops' },
+                                ...shops.map((shop) => ({
+                                    value: shop.id.toString(),
+                                    label: shop.name,
+                                })),
+                            ]}
+                            onChange={handleShopChange}
+                            value={selectedShop ? selectedShop.toString() : ''}
+                            placeholder="All Shops"
                         />
                     </div>
                     <div className="sm:w-48">

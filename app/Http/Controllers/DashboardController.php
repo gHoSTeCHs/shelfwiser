@@ -34,15 +34,43 @@ class DashboardController extends Controller
             'period' => ['nullable', 'in:today,week,month,custom'],
             'from' => ['nullable', 'date', 'required_if:period,custom'],
             'to' => ['nullable', 'date', 'required_if:period,custom', 'after_or_equal:from'],
+            'tab' => ['nullable', 'in:overview,sales,inventory,suppliers,financials'],
         ]);
 
         $shopId = $validated['shop'] ?? null;
         $period = $validated['period'] ?? 'today';
         $startDate = $validated['from'] ?? null;
         $endDate = $validated['to'] ?? null;
+        $activeTab = $validated['tab'] ?? 'overview';
 
         $accessibleShops = $this->getAccessibleShops($user);
+        $shopIds = $this->getShopIdsForMetrics($user, $shopId);
+        $dateRange = $this->dashboardService->getDateRange($period, $startDate, $endDate);
 
+        // Get data based on active tab
+        $data = match ($activeTab) {
+            'overview' => $this->getOverviewData($user, $shopId, $shopIds, $period, $dateRange, $startDate, $endDate),
+            'sales' => $this->getSalesTabData($user, $shopIds, $dateRange),
+            'inventory' => $this->getInventoryTabData($user, $shopIds),
+            'suppliers' => $this->getSuppliersTabData($user, $shopIds, $dateRange),
+            'financials' => $this->getFinancialsTabData($user, $shopIds, $dateRange),
+            default => $this->getOverviewData($user, $shopId, $shopIds, $period, $dateRange, $startDate, $endDate),
+        };
+
+        return Inertia::render('dashboard', [
+            'activeTab' => $activeTab,
+            'data' => $data,
+            'shops' => $accessibleShops->toArray(),
+            'selectedShop' => $shopId,
+            'period' => $period,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'can_view_financials' => $user->can('viewFinancials', DashboardPolicy::class),
+        ]);
+    }
+
+    protected function getOverviewData($user, $shopId, Collection $shopIds, string $period, array $dateRange, $startDate, $endDate): array
+    {
         $metrics = $this->dashboardService->getDashboardMetrics(
             $user,
             $shopId,
@@ -51,11 +79,7 @@ class DashboardController extends Controller
             $endDate
         );
 
-        $shopIds = $this->getShopIdsForMetrics($user, $shopId);
-
         if ($user->can('viewFinancials', DashboardPolicy::class)) {
-            $dateRange = $this->dashboardService->getDateRange($period, $startDate, $endDate);
-
             $metrics['inventory_valuation'] = $this->dashboardService->getInventoryValuation($shopIds);
             $metrics['profit'] = $this->dashboardService->getProfitMetrics(
                 $shopIds,
@@ -64,17 +88,40 @@ class DashboardController extends Controller
             );
         }
 
-        $filteredMetrics = $this->filterMetricsByPermissions($metrics, $user);
+        return $this->filterMetricsByPermissions($metrics, $user);
+    }
 
-        return Inertia::render('dashboard', [
-            'metrics' => $filteredMetrics,
-            'shops' => $accessibleShops->toArray(),
-            'selectedShop' => $shopId,
-            'period' => $period,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'can_view_financials' => $user->can('viewFinancials', DashboardPolicy::class),
-        ]);
+    protected function getSalesTabData($user, Collection $shopIds, array $dateRange): array
+    {
+        $data = $this->dashboardService->getSalesData($user, $shopIds, $dateRange['start'], $dateRange['end']);
+
+        return $this->filterMetricsByPermissions($data, $user);
+    }
+
+    protected function getInventoryTabData($user, Collection $shopIds): array
+    {
+        $data = $this->dashboardService->getInventoryData($user, $shopIds);
+
+        return $this->filterMetricsByPermissions($data, $user);
+    }
+
+    protected function getSuppliersTabData($user, Collection $shopIds, array $dateRange): array
+    {
+        $data = $this->dashboardService->getSupplierData($user, $shopIds, $dateRange['start'], $dateRange['end']);
+
+        return $this->filterMetricsByPermissions($data, $user);
+    }
+
+    protected function getFinancialsTabData($user, Collection $shopIds, array $dateRange): array
+    {
+        // Only allow users with financial permissions to access this tab
+        if (!$user->can('viewFinancials', DashboardPolicy::class)) {
+            abort(403, 'You do not have permission to view financial data');
+        }
+
+        $data = $this->dashboardService->getFinancialsData($user, $shopIds, $dateRange['start'], $dateRange['end']);
+
+        return $this->filterMetricsByPermissions($data, $user);
     }
 
     /**

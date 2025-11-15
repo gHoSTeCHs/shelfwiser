@@ -49,8 +49,13 @@ class StockMovementService
 
                 $location->save();
 
+                $shopId = $location->location_type === \App\Models\Shop::class
+                    ? $location->location_id
+                    : $variant->product->shop_id;
+
                 $movement = StockMovement::query()->create([
                     'tenant_id' => $user->tenant_id,
+                    'shop_id' => $shopId,
                     'product_variant_id' => $variant->id,
                     'to_location_id' => $location->id,
                     'type' => $type,
@@ -378,6 +383,20 @@ class StockMovementService
         }
     }
 
+    public function recordMovement(array $data): StockMovement
+    {
+        return DB::transaction(function () use ($data) {
+            $movement = StockMovement::create($data);
+
+            Log::info('Stock movement recorded', [
+                'movement_id' => $movement->id,
+                'type' => $movement->type->value,
+            ]);
+
+            return $movement;
+        });
+    }
+
     private function generateReferenceNumber(StockMovementType $type): string
     {
         $prefix = match ($type) {
@@ -390,6 +409,8 @@ class StockMovementService
             StockMovementType::DAMAGE => 'DMG',
             StockMovementType::LOSS => 'LOSS',
             StockMovementType::STOCK_TAKE => 'STK',
+            StockMovementType::PURCHASE_ORDER_SHIPPED => 'PO-SHIP',
+            StockMovementType::PURCHASE_ORDER_RECEIVED => 'PO-RCV',
         };
 
         return $prefix . '-' . strtoupper(uniqid());
