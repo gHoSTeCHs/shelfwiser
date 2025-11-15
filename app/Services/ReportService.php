@@ -552,4 +552,235 @@ class ReportService
             'low_stock_count' => $lowStockCount,
         ];
     }
+
+    /**
+     * Get Customer Analytics Report
+     */
+    public function getCustomerAnalytics(
+        Collection $shopIds,
+        ?Carbon    $startDate = null,
+        ?Carbon    $endDate = null,
+        ?int       $customerId = null,
+        string     $segment = 'all', // all, high_value, at_risk, inactive
+        int        $perPage = 25
+    ): LengthAwarePaginator
+    {
+        $startDate = $startDate ?? now()->startOfMonth();
+        $endDate = $endDate ?? now()->endOfMonth();
+
+        $query = DB::table('orders')
+            ->select([
+                'customer_id',
+                DB::raw('COUNT(*) as order_count'),
+                DB::raw('SUM(total_amount) as total_revenue'),
+                DB::raw('AVG(total_amount) as avg_order_value'),
+                DB::raw('MAX(created_at) as last_order_date'),
+                DB::raw('MIN(created_at) as first_order_date'),
+                DB::raw('DATEDIFF(NOW(), MAX(created_at)) as days_since_last_order'),
+            ])
+            ->whereIn('shop_id', $shopIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereNotNull('customer_id')
+            ->groupBy('customer_id');
+
+        if ($customerId) {
+            $query->where('customer_id', $customerId);
+        }
+
+        // Apply segmentation
+        if ($segment === 'high_value') {
+            $query->havingRaw('SUM(total_amount) > ?', [10000]); // Customers with >10k revenue
+        } elseif ($segment === 'at_risk') {
+            $query->havingRaw('DATEDIFF(NOW(), MAX(created_at)) BETWEEN 30 AND 90'); // No orders in 30-90 days
+        } elseif ($segment === 'inactive') {
+            $query->havingRaw('DATEDIFF(NOW(), MAX(created_at)) > 90'); // No orders in >90 days
+        }
+
+        $query->orderByDesc('total_revenue');
+
+        return $query->paginate($perPage)
+            ->through(function ($item) {
+                $customer = User::find($item->customer_id);
+                $item->customer = $customer;
+                $item->customer_status = $this->getCustomerStatus($item->days_since_last_order);
+                $item->lifetime_value = (float)$item->total_revenue;
+                return $item;
+            });
+    }
+
+    /**
+     * Get Customer Analytics Summary
+     */
+    public function getCustomerAnalyticsSummary(Collection $shopIds, Carbon $startDate, Carbon $endDate): array
+    {
+        $stats = DB::table('orders')
+            ->selectRaw('
+                COUNT(DISTINCT customer_id) as total_customers,
+                COUNT(*) as total_orders,
+                SUM(total_amount) as total_revenue,
+                AVG(total_amount) as avg_order_value
+            ')
+            ->whereIn('shop_id', $shopIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereNotNull('customer_id')
+            ->first();
+
+        $highValueCustomers = DB::table('orders')
+            ->select('customer_id')
+            ->selectRaw('SUM(total_amount) as total_spent')
+            ->whereIn('shop_id', $shopIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereNotNull('customer_id')
+            ->groupBy('customer_id')
+            ->havingRaw('SUM(total_amount) > ?', [10000])
+            ->count();
+
+        $atRiskCustomers = DB::table('orders')
+            ->select('customer_id')
+            ->selectRaw('MAX(created_at) as last_order_date')
+            ->whereIn('shop_id', $shopIds)
+            ->whereNotNull('customer_id')
+            ->groupBy('customer_id')
+            ->havingRaw('DATEDIFF(NOW(), MAX(created_at)) BETWEEN 30 AND 90')
+            ->count();
+
+        $inactiveCustomers = DB::table('orders')
+            ->select('customer_id')
+            ->selectRaw('MAX(created_at) as last_order_date')
+            ->whereIn('shop_id', $shopIds)
+            ->whereNotNull('customer_id')
+            ->groupBy('customer_id')
+            ->havingRaw('DATEDIFF(NOW(), MAX(created_at)) > 90')
+            ->count();
+
+        return [
+            'total_customers' => $stats->total_customers ?? 0,
+            'total_orders' => $stats->total_orders ?? 0,
+            'total_revenue' => (float)($stats->total_revenue ?? 0),
+            'avg_order_value' => (float)($stats->avg_order_value ?? 0),
+            'high_value_customers' => $highValueCustomers,
+            'at_risk_customers' => $atRiskCustomers,
+            'inactive_customers' => $inactiveCustomers,
+        ];
+    }
+
+    /**
+     * Get Product Profitability Report
+     */
+    public function getProductProfitability(
+        Collection $shopIds,
+        ?Carbon    $startDate = null,
+        ?Carbon    $endDate = null,
+        ?int       $categoryId = null,
+        ?int       $productId = null,
+        string     $sortBy = 'profit', // profit, margin, revenue, quantity
+        int        $perPage = 25
+    ): LengthAwarePaginator
+    {
+        $startDate = $startDate ?? now()->startOfMonth();
+        $endDate = $endDate ?? now()->endOfMonth();
+
+        $query = DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->join('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
+            ->join('products', 'product_variants.product_id', '=', 'products.id')
+            ->leftJoin('product_categories', 'products.category_id', '=', 'product_categories.id')
+            ->select([
+                'order_items.product_variant_id',
+                DB::raw('SUM(order_items.quantity) as total_quantity'),
+                DB::raw('SUM(order_items.total_price) as total_revenue'),
+                DB::raw('SUM(order_items.quantity * product_variants.cost_price) as total_cogs'),
+                DB::raw('SUM(order_items.total_price - (order_items.quantity * product_variants.cost_price)) as gross_profit'),
+                DB::raw('AVG(order_items.unit_price) as avg_selling_price'),
+                DB::raw('AVG(product_variants.cost_price) as cost_price'),
+            ])
+            ->whereIn('orders.shop_id', $shopIds)
+            ->whereBetween('orders.created_at', [$startDate, $endDate])
+            ->where('orders.status', '!=', OrderStatus::CANCELLED->value)
+            ->groupBy('order_items.product_variant_id');
+
+        if ($categoryId) {
+            $query->where('products.category_id', $categoryId);
+        }
+
+        if ($productId) {
+            $query->where('products.id', $productId);
+        }
+
+        // Apply sorting
+        $query->orderByDesc(match ($sortBy) {
+            'margin' => DB::raw('(SUM(order_items.total_price - (order_items.quantity * product_variants.cost_price)) / NULLIF(SUM(order_items.total_price), 0)) * 100'),
+            'revenue' => 'total_revenue',
+            'quantity' => 'total_quantity',
+            default => 'gross_profit',
+        });
+
+        return $query->paginate($perPage)
+            ->through(function ($item) {
+                $variant = ProductVariant::with(['product.category'])->find($item->product_variant_id);
+                $item->productVariant = $variant;
+                $item->profit_margin = $item->total_revenue > 0
+                    ? (($item->gross_profit / $item->total_revenue) * 100)
+                    : 0;
+                return $item;
+            });
+    }
+
+    /**
+     * Get Product Profitability Summary
+     */
+    public function getProductProfitabilitySummary(Collection $shopIds, Carbon $startDate, Carbon $endDate): array
+    {
+        $stats = DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->join('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
+            ->selectRaw('
+                SUM(order_items.quantity) as total_units_sold,
+                SUM(order_items.total_price) as total_revenue,
+                SUM(order_items.quantity * product_variants.cost_price) as total_cogs,
+                SUM(order_items.total_price - (order_items.quantity * product_variants.cost_price)) as gross_profit
+            ')
+            ->whereIn('orders.shop_id', $shopIds)
+            ->whereBetween('orders.created_at', [$startDate, $endDate])
+            ->where('orders.status', '!=', OrderStatus::CANCELLED->value)
+            ->first();
+
+        $avgMargin = $stats->total_revenue > 0
+            ? (($stats->gross_profit / $stats->total_revenue) * 100)
+            : 0;
+
+        $topProducts = DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->join('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
+            ->select('order_items.product_variant_id')
+            ->selectRaw('SUM(order_items.total_price - (order_items.quantity * product_variants.cost_price)) as profit')
+            ->whereIn('orders.shop_id', $shopIds)
+            ->whereBetween('orders.created_at', [$startDate, $endDate])
+            ->where('orders.status', '!=', OrderStatus::CANCELLED->value)
+            ->groupBy('order_items.product_variant_id')
+            ->orderByDesc('profit')
+            ->limit(5)
+            ->get();
+
+        return [
+            'total_units_sold' => $stats->total_units_sold ?? 0,
+            'total_revenue' => (float)($stats->total_revenue ?? 0),
+            'total_cogs' => (float)($stats->total_cogs ?? 0),
+            'gross_profit' => (float)($stats->gross_profit ?? 0),
+            'avg_margin' => (float)$avgMargin,
+            'top_products' => $topProducts,
+        ];
+    }
+
+    /**
+     * Get customer status based on days since last order
+     */
+    protected function getCustomerStatus(int $daysSinceLastOrder): string
+    {
+        return match (true) {
+            $daysSinceLastOrder <= 30 => 'Active',
+            $daysSinceLastOrder <= 90 => 'At Risk',
+            default => 'Inactive',
+        };
+    }
 }

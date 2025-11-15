@@ -297,3 +297,93 @@ export interface ReportFilters {
     group_by?: 'order' | 'product' | 'customer' | 'shop' | 'day';
     per_page?: number;
 }
+
+// Customer Analytics Types
+export interface CustomerAnalyticsItem {
+    customer_id: number;
+    customer: User | null;
+    order_count: number;
+    total_revenue: number;
+    avg_order_value: number;
+    lifetime_value: number;
+    first_order_date: string;
+    last_order_date: string;
+    days_since_last_order: number;
+    customer_status: 'Active' | 'At Risk' | 'Inactive';
+}
+
+export interface CustomerAnalyticsSummary {
+    total_customers: number;
+    total_orders: number;
+    total_revenue: number;
+    avg_order_value: number;
+    high_value_customers: number;
+    at_risk_customers: number;
+    inactive_customers: number;
+}
+
+export interface CustomerAnalyticsData {
+    current_page: number;
+    data: CustomerAnalyticsItem[];
+    per_page: number;
+    total: number;
+    last_page: number;
+}
+
+export interface CustomerAnalyticsProps {
+    summary: CustomerAnalyticsSummary;
+    customerData: CustomerAnalyticsData;
+    shops: Shop[];
+    filters: {
+        shop: number | null;
+        from: string;
+        to: string;
+        customer: number | null;
+        segment: 'all' | 'high_value' | 'at_risk' | 'inactive';
+    };
+}
+
+// Product Profitability Types
+export interface ProductProfitabilityItem {
+    product_variant_id: number;
+    productVariant?: ProductVariant;
+    total_quantity: number;
+    total_revenue: number;
+    total_cogs: number;
+    gross_profit: number;
+    profit_margin: number;
+    avg_selling_price: number;
+    cost_price: number;
+}
+
+export interface ProductProfitabilitySummary {
+    total_units_sold: number;
+    total_revenue: number;
+    total_cogs: number;
+    gross_profit: number;
+    avg_margin: number;
+    top_products: any[];
+}
+
+export interface ProductProfitabilityData {
+    current_page: number;
+    data: ProductProfitabilityItem[];
+    per_page: number;
+    total: number;
+    last_page: number;
+}
+
+export interface ProductProfitabilityProps {
+    summary: ProductProfitabilitySummary;
+    productData: ProductProfitabilityData;
+    shops: Shop[];
+    categories: ProductCategory[];
+    filters: {
+        shop: number | null;
+        from: string;
+        to: string;
+        category: number | null;
+        product: number | null;
+        sort_by: 'profit' | 'margin' | 'revenue' | 'quantity';
+    };
+}
