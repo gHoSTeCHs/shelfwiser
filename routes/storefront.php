@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Storefront\CartController;
+use App\Http\Controllers\Storefront\CheckoutController;
+use App\Http\Controllers\Storefront\CustomerAuthController;
+use App\Http\Controllers\Storefront\CustomerPortalController;
 use App\Http\Controllers\Storefront\StorefrontController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,14 +18,35 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('store/{shop:slug}')->name('storefront.')->group(function () {
-    // Shop home and product browsing
     Route::get('/', [StorefrontController::class, 'index'])->name('index');
     Route::get('/products', [StorefrontController::class, 'products'])->name('products');
     Route::get('/products/{product:slug}', [StorefrontController::class, 'show'])->name('product');
 
-    // Shopping cart
     Route::get('/cart', [CartController::class, 'index'])->name('cart');
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
     Route::patch('/cart/{item}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{item}', [CartController::class, 'destroy'])->name('cart.destroy');
+
+    Route::middleware('guest:customer')->group(function () {
+        Route::get('/login', [CustomerAuthController::class, 'showLogin'])->name('login');
+        Route::post('/login', [CustomerAuthController::class, 'login']);
+        Route::get('/register', [CustomerAuthController::class, 'showRegister'])->name('register');
+        Route::post('/register', [CustomerAuthController::class, 'register']);
+    });
+
+    Route::middleware('auth:customer')->group(function () {
+        Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
+
+        Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
+        Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
+        Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
+
+        Route::prefix('account')->name('account.')->group(function () {
+            Route::get('/', [CustomerPortalController::class, 'dashboard'])->name('dashboard');
+            Route::get('/orders', [CustomerPortalController::class, 'orders'])->name('orders');
+            Route::get('/orders/{order}', [CustomerPortalController::class, 'orderDetail'])->name('orders.show');
+            Route::get('/profile', [CustomerPortalController::class, 'profile'])->name('profile');
+            Route::patch('/profile', [CustomerPortalController::class, 'updateProfile'])->name('profile.update');
+        });
+    });
 });
