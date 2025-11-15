@@ -5,6 +5,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\SupplierCatalogController;
@@ -22,6 +23,18 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('dashboard/refresh', [DashboardController::class, 'refresh'])->name('dashboard.refresh');
+
+    // Reports
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/sales', [ReportsController::class, 'sales'])->name('sales');
+        Route::get('/sales/export', [ReportsController::class, 'exportSales'])->name('sales.export');
+        Route::get('/inventory', [ReportsController::class, 'inventory'])->name('inventory');
+        Route::get('/inventory/export', [ReportsController::class, 'exportInventory'])->name('inventory.export');
+        Route::get('/suppliers', [ReportsController::class, 'suppliers'])->name('suppliers');
+        Route::get('/suppliers/export', [ReportsController::class, 'exportSuppliers'])->name('suppliers.export');
+        Route::get('/financials', [ReportsController::class, 'financials'])->name('financials');
+        Route::get('/financials/export', [ReportsController::class, 'exportFinancials'])->name('financials.export');
+    });
 
     Route::prefix('staff')->name('users.')->group(function () {
         Route::get('/', [StaffManagementController::class, 'index'])->name('index');
