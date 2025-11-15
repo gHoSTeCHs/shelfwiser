@@ -1,6 +1,7 @@
-import { PaginationMeta, Shop } from './index';
-import { Product } from './product';
-import { ProductCategory } from './productCategory';
+import { User } from './index';
+import { Shop } from './shop';
+import { Product, ProductCategory } from './product';
+import { ProductVariant } from './stockMovement';
 
 // Sales Report Types
 export interface SalesSummary {
