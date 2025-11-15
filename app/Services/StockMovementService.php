@@ -383,6 +383,9 @@ class StockMovementService
         }
     }
 
+    /**
+     * @throws Throwable
+     */
     public function recordMovement(array $data): StockMovement
     {
         return DB::transaction(function () use ($data) {
