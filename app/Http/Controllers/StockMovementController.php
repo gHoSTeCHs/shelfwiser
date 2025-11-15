@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\StockMovementType;
+use App\Enums\UserRole;
 use App\Http\Requests\AdjustStockRequest;
 use App\Http\Requests\RecordPurchaseRequest;
 use App\Http\Requests\SetupInventoryLocationsRequest;
@@ -11,6 +12,7 @@ use App\Http\Requests\TransferStockRequest;
 use App\Models\InventoryLocation;
 use App\Models\ProductPackagingType;
 use App\Models\ProductVariant;
+use App\Models\Shop;
 use App\Models\StockMovement;
 use App\Services\StockMovementService;
 use Exception;
@@ -57,11 +59,11 @@ class StockMovementController extends Controller
                 'createdBy:id,first_name',
             ]);
 
-        if ($user->isTenantOwner() || $user->role->value === \App\Enums\UserRole::GENERAL_MANAGER->value) {
+        if ($user->isTenantOwner() || $user->role->value === UserRole::GENERAL_MANAGER->value) {
             if ($shopId) {
                 $query->forShop($shopId);
             }
-            $shops = \App\Models\Shop::where('tenant_id', $tenantId)->get(['id', 'name']);
+            $shops = Shop::query()->where('tenant_id', $tenantId)->get(['id', 'name']);
         } else {
             $userShops = $user->shops()->pluck('shops.id');
             $query->whereIn('shop_id', $userShops);
@@ -182,6 +184,9 @@ class StockMovementController extends Controller
         }
     }
 
+    /**
+     * @throws Throwable
+     */
     public function stockTake(StockTakeRequest $request): RedirectResponse|JsonResponse
     {
         try {

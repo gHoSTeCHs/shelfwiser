@@ -8,6 +8,8 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -30,6 +32,8 @@ class User extends Authenticatable
         'is_tenant_owner',
         'role',
         'is_active',
+        'is_customer',
+        'marketing_opt_in',
         'password',
     ];
 
@@ -56,6 +60,8 @@ class User extends Authenticatable
             'role' => UserRole::class,
             'is_tenant_owner' => 'boolean',
             'is_active' => 'boolean',
+            'is_customer' => 'boolean',
+            'marketing_opt_in' => 'boolean',
         ];
     }
 
@@ -81,6 +87,42 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Shop::class, 'shop_user')
             ->withTimestamps();
+    }
+
+    /**
+     * Get the customer's cart for a specific shop.
+     */
+    public function carts(): HasMany
+    {
+        return $this->hasMany(Cart::class, 'customer_id');
+    }
+
+    /**
+     * Get the customer's addresses.
+     */
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(CustomerAddress::class, 'customer_id');
+    }
+
+    /**
+     * Get the customer's default shipping address.
+     */
+    public function defaultShippingAddress(): HasOne
+    {
+        return $this->hasOne(CustomerAddress::class, 'customer_id')
+            ->where('is_default', true)
+            ->ofType('shipping');
+    }
+
+    /**
+     * Get the customer's default billing address.
+     */
+    public function defaultBillingAddress(): HasOne
+    {
+        return $this->hasOne(CustomerAddress::class, 'customer_id')
+            ->where('is_default', true)
+            ->ofType('billing');
     }
 
 }

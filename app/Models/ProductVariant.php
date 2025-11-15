@@ -27,6 +27,8 @@ class ProductVariant extends Model
         'expiry_date',
         'serial_number',
         'is_active',
+        'is_available_online',
+        'max_order_quantity',
     ];
 
     protected $casts = [
@@ -36,6 +38,8 @@ class ProductVariant extends Model
         'cost_price' => 'decimal:2',
         'expiry_date' => 'date',
         'is_active' => 'boolean',
+        'is_available_online' => 'boolean',
+        'max_order_quantity' => 'integer',
     ];
 
     protected $appends = [

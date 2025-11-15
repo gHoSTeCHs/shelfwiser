@@ -19,6 +19,7 @@ class Order extends Model
         'shop_id',
         'customer_id',
         'order_number',
+        'tracking_number',
         'status',
         'payment_status',
         'payment_method',
@@ -31,9 +32,13 @@ class Order extends Model
         'internal_notes',
         'shipping_address',
         'billing_address',
+        'customer_shipping_address_id',
+        'customer_billing_address_id',
         'confirmed_at',
         'shipped_at',
         'delivered_at',
+        'estimated_delivery_date',
+        'actual_delivery_date',
         'created_by',
     ];
 
@@ -48,6 +53,8 @@ class Order extends Model
         'confirmed_at' => 'datetime',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
+        'estimated_delivery_date' => 'date',
+        'actual_delivery_date' => 'date',
     ];
 
     protected static function boot(): void
@@ -74,6 +81,16 @@ class Order extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    public function shippingAddress(): BelongsTo
+    {
+        return $this->belongsTo(CustomerAddress::class, 'customer_shipping_address_id');
+    }
+
+    public function billingAddress(): BelongsTo
+    {
+        return $this->belongsTo(CustomerAddress::class, 'customer_billing_address_id');
     }
 
     public function items(): HasMany
