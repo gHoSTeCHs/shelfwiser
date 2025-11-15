@@ -3,6 +3,7 @@ import { ProductCategory } from './product';
 import { Shop } from './shop';
 import { User } from './index';
 import { ProductVariant, ProductPackagingType } from './stockMovement';
+import { Service, ServiceCategory } from './service';
 
 export interface Customer {
     id: number;
@@ -254,3 +255,34 @@ export interface AccountProfileProps {
     customer: Customer;
     addresses: CustomerAddress[];
 }
+
+// Service Storefront Props
+export interface StorefrontServicesProps {
+    shop: Shop;
+    services: {
+        data: Service[];
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
+    categories: ServiceCategory[];
+    filters: {
+        search?: string;
+        category?: number;
+        sort?: string;
+        per_page?: number;
+    };
+    cartSummary: CartSummary;
+}
+
+export interface StorefrontServiceDetailProps {
+    shop: Shop;
+    service: Service;
+    categoryAddons: any[];
+    relatedServices: Service[];
+    cartSummary: CartSummary;
+}
+
+// Service Sort Options
+export type ServiceSortOption = 'name' | 'price_low' | 'price_high' | 'newest';
