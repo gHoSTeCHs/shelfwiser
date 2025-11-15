@@ -6,6 +6,10 @@ use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\ServiceAddonController;
+use App\Http\Controllers\ServiceCategoryController;
+use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\ServiceVariantController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\SupplierCatalogController;
@@ -60,6 +64,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('categories', ProductCategoryController::class);
 
     Route::resource('products', ProductController::class);
+
+    // Service Management Routes
+    Route::resource('service-categories', ServiceCategoryController::class);
+    Route::resource('services', ServiceController::class);
+
+    // Service Variants
+    Route::prefix('services/{service}/variants')->name('services.variants.')->group(function () {
+        Route::post('/', [ServiceVariantController::class, 'store'])->name('store');
+        Route::put('/{variant}', [ServiceVariantController::class, 'update'])->name('update');
+        Route::delete('/{variant}', [ServiceVariantController::class, 'destroy'])->name('destroy');
+    });
+
+    // Service Addons
+    Route::prefix('services/{service}/addons')->name('services.addons.')->group(function () {
+        Route::post('/', [ServiceAddonController::class, 'store'])->name('store');
+    });
+
+    // Category-wide Addons
+    Route::prefix('service-categories/{category}/addons')->name('service-categories.addons.')->group(function () {
+        Route::post('/', [ServiceAddonController::class, 'storeForCategory'])->name('store');
+    });
+
+    // Common Addon Routes
+    Route::prefix('service-addons')->name('service-addons.')->group(function () {
+        Route::put('/{addon}', [ServiceAddonController::class, 'update'])->name('update');
+        Route::delete('/{addon}', [ServiceAddonController::class, 'destroy'])->name('destroy');
+    });
 
     Route::resource('orders', OrderController::class);
 

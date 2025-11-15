@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export type InventoryModelType = 'simple_retail' | 'wholesale_only' | 'hybrid';
+export type ShopOfferingType = 'products' | 'services' | 'both';
 
 export interface InventoryModelOption {
     value: InventoryModelType;
@@ -67,6 +68,7 @@ export interface Shop {
     storefront_enabled: boolean;
     storefront_settings: StorefrontSettings | null;
     allow_retail_sales: boolean;
+    shop_offering_type: ShopOfferingType;
     currency: string;
     currency_symbol: string;
     currency_decimals: number;
