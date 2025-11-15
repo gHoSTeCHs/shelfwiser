@@ -21,6 +21,8 @@ Route::prefix('store/{shop:slug}')->name('storefront.')->group(function () {
     Route::get('/', [StorefrontController::class, 'index'])->name('index');
     Route::get('/products', [StorefrontController::class, 'products'])->name('products');
     Route::get('/products/{product:slug}', [StorefrontController::class, 'show'])->name('product');
+    Route::get('/services', [StorefrontController::class, 'services'])->name('services');
+    Route::get('/services/{service:slug}', [StorefrontController::class, 'showService'])->name('service');
 
     Route::get('/cart', [CartController::class, 'index'])->name('cart');
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');

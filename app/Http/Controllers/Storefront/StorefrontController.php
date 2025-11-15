@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\Service;
 use App\Models\Shop;
 use App\Services\CartService;
 use App\Services\StorefrontService;
@@ -106,6 +107,83 @@ class StorefrontController extends Controller
             'shop' => $shop,
             'product' => $product,
             'relatedProducts' => $relatedProducts,
+            'cartSummary' => $cartSummary,
+        ]);
+    }
+
+    /**
+     * Display service listing page.
+     */
+    public function services(Request $request, Shop $shop): Response
+    {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'category' => ['nullable', 'integer', 'exists:service_categories,id'],
+            'sort' => ['nullable', 'string', 'in:name,price_low,price_high,newest'],
+            'per_page' => ['nullable', 'integer', 'min:6', 'max:24'],
+        ]);
+
+        $services = $this->storefrontService->getServices(
+            $shop,
+            $validated['search'] ?? null,
+            $validated['category'] ?? null,
+            $validated['sort'] ?? 'name',
+            $validated['per_page'] ?? 12
+        );
+
+        $categories = $this->storefrontService->getServiceCategories($shop);
+
+        // Get cart summary
+        $cart = $this->cartService->getCart($shop, auth()->id());
+        $cartSummary = $this->cartService->getCartSummary($cart);
+
+        return Inertia::render('Storefront/Services', [
+            'shop' => $shop,
+            'services' => $services,
+            'categories' => $categories,
+            'filters' => $validated,
+            'cartSummary' => $cartSummary,
+        ]);
+    }
+
+    /**
+     * Display single service page.
+     */
+    public function showService(Shop $shop, Service $service): Response
+    {
+        // Ensure service belongs to the shop
+        if ($service->shop_id !== $shop->id || !$service->is_active) {
+            abort(404);
+        }
+
+        $service->load([
+            'variants' => fn($q) => $q->where('is_active', true)
+                ->orderBy('sort_order'),
+            'category',
+            'addons' => fn($q) => $q->where('is_active', true)->orderBy('sort_order'),
+        ]);
+
+        // Get category-wide addons if service has a category
+        $categoryAddons = [];
+        if ($service->service_category_id) {
+            $categoryAddons = \App\Models\ServiceAddon::where('service_category_id', $service->service_category_id)
+                ->whereNull('service_id')
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->get();
+        }
+
+        $relatedServices = $this->storefrontService->getRelatedServices($service);
+
+        // Get cart summary
+        $cart = $this->cartService->getCart($shop, auth()->id());
+        $cartSummary = $this->cartService->getCartSummary($cart);
+
+        return Inertia::render('Storefront/ServiceDetail', [
+            'shop' => $shop,
+            'service' => $service,
+            'categoryAddons' => $categoryAddons,
+            'relatedServices' => $relatedServices,
             'cartSummary' => $cartSummary,
         ]);
     }
