@@ -235,7 +235,7 @@ class StockMovementController extends Controller
                 'createdBy:id,first_name',
             ])
             ->latest()
-            ->paginate(50);
+            ->paginate(20);
 
         if (request()->wantsJson()) {
             return response()->json($movements);

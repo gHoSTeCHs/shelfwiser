@@ -49,7 +49,7 @@ class TenantSeeder extends Seeder
         ];
 
         foreach ($tenants as $tenantData) {
-            Tenant::create($tenantData);
+            Tenant::query()->create($tenantData);
         }
     }
 }

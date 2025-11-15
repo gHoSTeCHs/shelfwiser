@@ -22,7 +22,6 @@ class DashboardController extends Controller
     }
 
     /**
-     * @throws AuthorizationException
      */
     public function index(Request $request): Response
     {
