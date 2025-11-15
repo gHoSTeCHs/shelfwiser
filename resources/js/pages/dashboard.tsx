@@ -5,18 +5,27 @@ import {
     SupplierData,
     SalesData,
     InventoryData,
+    FinancialData,
 } from '@/types/dashboard';
 import { Head, router } from '@inertiajs/react';
 import React, { useState } from 'react';
 import Select from '@/components/form/Select';
 import DatePicker from '@/components/form/date-picker';
-import { RefreshCw, BarChart3, Package, TrendingUp, Truck } from 'lucide-react';
+import {
+    RefreshCw,
+    BarChart3,
+    Package,
+    TrendingUp,
+    Truck,
+    DollarSign,
+} from 'lucide-react';
 import Button from '@/components/ui/button/Button';
 import { TabList, TabTrigger, TabContent } from '@/components/ui/tabs/Tab';
 import OverviewTab from '@/components/dashboard/tabs/OverviewTab';
 import SalesTab from '@/components/dashboard/tabs/SalesTab';
 import InventoryTab from '@/components/dashboard/tabs/InventoryTab';
 import SuppliersTab from '@/components/dashboard/tabs/SuppliersTab';
+import FinancialsTab from '@/components/dashboard/tabs/FinancialsTab';
 
 export default function Dashboard({
     activeTab,
@@ -216,6 +225,16 @@ export default function Dashboard({
                             <Truck className="mr-2 h-4 w-4" />
                             Suppliers
                         </TabTrigger>
+                        {can_view_financials && (
+                            <TabTrigger
+                                variant="underline"
+                                isActive={activeTab === 'financials'}
+                                onClick={() => handleTabChange('financials')}
+                            >
+                                <DollarSign className="mr-2 h-4 w-4" />
+                                Financials
+                            </TabTrigger>
+                        )}
                     </TabList>
 
                     <TabContent>
@@ -233,6 +252,9 @@ export default function Dashboard({
                         )}
                         {activeTab === 'suppliers' && (
                             <SuppliersTab data={data as SupplierData} />
+                        )}
+                        {activeTab === 'financials' && (
+                            <FinancialsTab data={data as FinancialData} />
                         )}
                     </TabContent>
                 </div>

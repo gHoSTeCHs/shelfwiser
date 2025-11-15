@@ -176,10 +176,78 @@ export interface InventoryData {
     valuation_by_shop: ValuationByShop[];
 }
 
+// NEW: Financials Tab Types
+export interface FinancialSummary {
+    total_revenue: number;
+    collected_revenue: number;
+    total_expenses: number;
+    paid_expenses: number;
+    gross_profit: number;
+    net_profit: number;
+    profit_margin: number;
+    cogs: number;
+    cash_flow: number;
+}
+
+export interface AgingBreakdown {
+    current: number;
+    '30_60_days': number;
+    '60_90_days': number;
+    over_90_days: number;
+}
+
+export interface AccountsReceivable {
+    total_count: number;
+    total_amount: number;
+    overdue_amount: number;
+    aging: AgingBreakdown;
+}
+
+export interface AccountsPayable {
+    total_count: number;
+    total_amount: number;
+    overdue_amount: number;
+    aging: AgingBreakdown;
+}
+
+export interface CashFlowTrend {
+    labels: string[];
+    inflow: number[];
+    outflow: number[];
+    net_flow: number[];
+}
+
+export interface ExpenseCategory {
+    category: string;
+    amount: number;
+}
+
+export interface ProfitByShop {
+    shop_id: number;
+    shop_name: string;
+    revenue: number;
+    gross_profit: number;
+    net_profit: number;
+}
+
+export interface FinancialData {
+    summary: FinancialSummary;
+    accounts_receivable: AccountsReceivable;
+    accounts_payable: AccountsPayable;
+    cash_flow_trend: CashFlowTrend;
+    expense_breakdown: ExpenseCategory[];
+    profit_by_shop: ProfitByShop[];
+}
+
 // UPDATED: Dashboard Props with Tab Support
 export interface DashboardProps {
-    activeTab: 'overview' | 'sales' | 'inventory' | 'suppliers';
-    data: DashboardMetrics | SupplierData | SalesData | InventoryData;
+    activeTab: 'overview' | 'sales' | 'inventory' | 'suppliers' | 'financials';
+    data:
+        | DashboardMetrics
+        | SupplierData
+        | SalesData
+        | InventoryData
+        | FinancialData;
     shops: Shop[];
     selectedShop: number | null;
     period: 'today' | 'week' | 'month' | 'custom';

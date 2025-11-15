@@ -721,4 +721,283 @@ class DashboardService
             ];
         })->toArray();
     }
+
+    // FINANCIALS TAB METHODS
+    public function getFinancialsData(User $user, Collection $shopIds, Carbon $start, Carbon $end): array
+    {
+        $tenantId = $user->tenant_id;
+        $cacheKey = "dashboard:financials:{$shopIds->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
+
+        return Cache::tags(['dashboard'])->remember($cacheKey, now()->addMinutes(10), function () use ($shopIds, $start, $end) {
+            return [
+                'summary' => $this->getFinancialSummary($shopIds, $start, $end),
+                'accounts_receivable' => $this->getAccountsReceivable($shopIds),
+                'accounts_payable' => $this->getAccountsPayable($shopIds),
+                'cash_flow_trend' => $this->getCashFlowTrend($shopIds, $start, $end),
+                'expense_breakdown' => $this->getExpenseBreakdown($shopIds, $start, $end),
+                'profit_by_shop' => $this->getProfitByShop($shopIds, $start, $end),
+            ];
+        });
+    }
+
+    protected function getFinancialSummary(Collection $shopIds, Carbon $start, Carbon $end): array
+    {
+        // Revenue from orders
+        $revenue = Order::whereIn('shop_id', $shopIds)
+            ->whereBetween('created_at', [$start, $end])
+            ->whereNotIn('status', [OrderStatus::CANCELLED])
+            ->selectRaw('
+                SUM(total_amount) as total_revenue,
+                SUM(CASE WHEN payment_status = ? THEN total_amount ELSE 0 END) as collected_revenue
+            ', [PaymentStatus::PAID->value])
+            ->first();
+
+        // Expenses from purchase orders
+        $expenses = PurchaseOrder::whereIn('shop_id', $shopIds)
+            ->whereBetween('created_at', [$start, $end])
+            ->whereNotIn('status', [PurchaseOrderStatus::CANCELLED])
+            ->selectRaw('
+                SUM(total_amount) as total_expenses,
+                SUM(paid_amount) as paid_expenses
+            ')
+            ->first();
+
+        // Calculate profit using COGS
+        $orderItems = OrderItem::whereHas('order', function ($query) use ($shopIds, $start, $end) {
+            $query->whereIn('shop_id', $shopIds)
+                ->whereBetween('created_at', [$start, $end])
+                ->whereNotIn('status', [OrderStatus::CANCELLED]);
+        })
+            ->with('productVariant:id,cost_price')
+            ->get();
+
+        $cogs = $orderItems->sum(function ($item) {
+            return $item->quantity * ($item->productVariant?->cost_price ?? 0);
+        });
+
+        $totalRevenue = (float)($revenue->total_revenue ?? 0);
+        $collectedRevenue = (float)($revenue->collected_revenue ?? 0);
+        $totalExpenses = (float)($expenses->total_expenses ?? 0);
+        $paidExpenses = (float)($expenses->paid_expenses ?? 0);
+        $grossProfit = $totalRevenue - $cogs;
+        $netProfit = $grossProfit - $paidExpenses;
+        $profitMargin = $totalRevenue > 0 ? ($grossProfit / $totalRevenue) * 100 : 0;
+
+        // Cash flow = collected revenue - paid expenses
+        $cashFlow = $collectedRevenue - $paidExpenses;
+
+        return [
+            'total_revenue' => $totalRevenue,
+            'collected_revenue' => $collectedRevenue,
+            'total_expenses' => $totalExpenses,
+            'paid_expenses' => $paidExpenses,
+            'gross_profit' => (float)$grossProfit,
+            'net_profit' => (float)$netProfit,
+            'profit_margin' => round($profitMargin, 2),
+            'cogs' => (float)$cogs,
+            'cash_flow' => (float)$cashFlow,
+        ];
+    }
+
+    protected function getAccountsReceivable(Collection $shopIds): array
+    {
+        $unpaidOrders = Order::whereIn('shop_id', $shopIds)
+            ->where('payment_status', PaymentStatus::UNPAID)
+            ->whereNotIn('status', [OrderStatus::CANCELLED])
+            ->selectRaw('
+                COUNT(*) as count,
+                SUM(total_amount) as total_amount,
+                SUM(CASE WHEN created_at < ? THEN total_amount ELSE 0 END) as overdue_amount
+            ', [now()->subDays(30)])
+            ->first();
+
+        // Breakdown by aging
+        $aging = [
+            'current' => Order::whereIn('shop_id', $shopIds)
+                ->where('payment_status', PaymentStatus::UNPAID)
+                ->whereNotIn('status', [OrderStatus::CANCELLED])
+                ->where('created_at', '>=', now()->subDays(30))
+                ->sum('total_amount'),
+            '30_60_days' => Order::whereIn('shop_id', $shopIds)
+                ->where('payment_status', PaymentStatus::UNPAID)
+                ->whereNotIn('status', [OrderStatus::CANCELLED])
+                ->whereBetween('created_at', [now()->subDays(60), now()->subDays(30)])
+                ->sum('total_amount'),
+            '60_90_days' => Order::whereIn('shop_id', $shopIds)
+                ->where('payment_status', PaymentStatus::UNPAID)
+                ->whereNotIn('status', [OrderStatus::CANCELLED])
+                ->whereBetween('created_at', [now()->subDays(90), now()->subDays(60)])
+                ->sum('total_amount'),
+            'over_90_days' => Order::whereIn('shop_id', $shopIds)
+                ->where('payment_status', PaymentStatus::UNPAID)
+                ->whereNotIn('status', [OrderStatus::CANCELLED])
+                ->where('created_at', '<', now()->subDays(90))
+                ->sum('total_amount'),
+        ];
+
+        return [
+            'total_count' => (int)($unpaidOrders->count ?? 0),
+            'total_amount' => (float)($unpaidOrders->total_amount ?? 0),
+            'overdue_amount' => (float)($unpaidOrders->overdue_amount ?? 0),
+            'aging' => [
+                'current' => (float)$aging['current'],
+                '30_60_days' => (float)$aging['30_60_days'],
+                '60_90_days' => (float)$aging['60_90_days'],
+                'over_90_days' => (float)$aging['over_90_days'],
+            ],
+        ];
+    }
+
+    protected function getAccountsPayable(Collection $shopIds): array
+    {
+        $unpaidPOs = PurchaseOrder::whereIn('shop_id', $shopIds)
+            ->whereIn('payment_status', [PurchaseOrderPaymentStatus::PENDING, PurchaseOrderPaymentStatus::PARTIAL])
+            ->whereNotIn('status', [PurchaseOrderStatus::CANCELLED])
+            ->selectRaw('
+                COUNT(*) as count,
+                SUM(total_amount - paid_amount) as total_amount,
+                SUM(CASE WHEN expected_delivery_date < ? THEN (total_amount - paid_amount) ELSE 0 END) as overdue_amount
+            ', [now()])
+            ->first();
+
+        // Breakdown by aging
+        $aging = [
+            'current' => PurchaseOrder::whereIn('shop_id', $shopIds)
+                ->whereIn('payment_status', [PurchaseOrderPaymentStatus::PENDING, PurchaseOrderPaymentStatus::PARTIAL])
+                ->whereNotIn('status', [PurchaseOrderStatus::CANCELLED])
+                ->where('created_at', '>=', now()->subDays(30))
+                ->sum(DB::raw('total_amount - paid_amount')),
+            '30_60_days' => PurchaseOrder::whereIn('shop_id', $shopIds)
+                ->whereIn('payment_status', [PurchaseOrderPaymentStatus::PENDING, PurchaseOrderPaymentStatus::PARTIAL])
+                ->whereNotIn('status', [PurchaseOrderStatus::CANCELLED])
+                ->whereBetween('created_at', [now()->subDays(60), now()->subDays(30)])
+                ->sum(DB::raw('total_amount - paid_amount')),
+            '60_90_days' => PurchaseOrder::whereIn('shop_id', $shopIds)
+                ->whereIn('payment_status', [PurchaseOrderPaymentStatus::PENDING, PurchaseOrderPaymentStatus::PARTIAL])
+                ->whereNotIn('status', [PurchaseOrderStatus::CANCELLED])
+                ->whereBetween('created_at', [now()->subDays(90), now()->subDays(60)])
+                ->sum(DB::raw('total_amount - paid_amount')),
+            'over_90_days' => PurchaseOrder::whereIn('shop_id', $shopIds)
+                ->whereIn('payment_status', [PurchaseOrderPaymentStatus::PENDING, PurchaseOrderPaymentStatus::PARTIAL])
+                ->whereNotIn('status', [PurchaseOrderStatus::CANCELLED])
+                ->where('created_at', '<', now()->subDays(90))
+                ->sum(DB::raw('total_amount - paid_amount')),
+        ];
+
+        return [
+            'total_count' => (int)($unpaidPOs->count ?? 0),
+            'total_amount' => (float)($unpaidPOs->total_amount ?? 0),
+            'overdue_amount' => (float)($unpaidPOs->overdue_amount ?? 0),
+            'aging' => [
+                'current' => (float)$aging['current'],
+                '30_60_days' => (float)$aging['30_60_days'],
+                '60_90_days' => (float)$aging['60_90_days'],
+                'over_90_days' => (float)$aging['over_90_days'],
+            ],
+        ];
+    }
+
+    protected function getCashFlowTrend(Collection $shopIds, Carbon $start, Carbon $end): array
+    {
+        $days = min($start->diffInDays($end) + 1, 30);
+        $labels = [];
+        $inflow = [];
+        $outflow = [];
+        $netFlow = [];
+
+        for ($i = 0; $i < $days; $i++) {
+            $date = $start->copy()->addDays($i);
+            $dayStart = $date->copy()->startOfDay();
+            $dayEnd = $date->copy()->endOfDay();
+
+            // Cash inflow from paid orders
+            $cashIn = Order::whereIn('shop_id', $shopIds)
+                ->whereBetween('updated_at', [$dayStart, $dayEnd])
+                ->where('payment_status', PaymentStatus::PAID)
+                ->sum('total_amount');
+
+            // Cash outflow from paid POs
+            $cashOut = PurchaseOrder::whereIn('shop_id', $shopIds)
+                ->whereBetween('updated_at', [$dayStart, $dayEnd])
+                ->sum('paid_amount');
+
+            $labels[] = $date->format('M d');
+            $inflow[] = (float)$cashIn;
+            $outflow[] = (float)$cashOut;
+            $netFlow[] = (float)($cashIn - $cashOut);
+        }
+
+        return [
+            'labels' => $labels,
+            'inflow' => $inflow,
+            'outflow' => $outflow,
+            'net_flow' => $netFlow,
+        ];
+    }
+
+    protected function getExpenseBreakdown(Collection $shopIds, Carbon $start, Carbon $end): array
+    {
+        // For now, we categorize expenses by supplier
+        $breakdown = PurchaseOrder::whereIn('shop_id', $shopIds)
+            ->whereBetween('created_at', [$start, $end])
+            ->whereNotIn('status', [PurchaseOrderStatus::CANCELLED])
+            ->select('supplier_tenant_id')
+            ->selectRaw('SUM(total_amount) as total')
+            ->groupBy('supplier_tenant_id')
+            ->with('supplierTenant:id,name')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'category' => $item->supplierTenant?->name ?? 'Unknown Supplier',
+                    'amount' => (float)$item->total,
+                ];
+            })
+            ->sortByDesc('amount')
+            ->values()
+            ->toArray();
+
+        return $breakdown;
+    }
+
+    protected function getProfitByShop(Collection $shopIds, Carbon $start, Carbon $end): array
+    {
+        return $shopIds->map(function ($shopId) use ($start, $end) {
+            $shop = Shop::find($shopId);
+
+            // Revenue for this shop
+            $revenue = Order::where('shop_id', $shopId)
+                ->whereBetween('created_at', [$start, $end])
+                ->whereNotIn('status', [OrderStatus::CANCELLED])
+                ->sum('total_amount');
+
+            // COGS for this shop
+            $cogs = OrderItem::whereHas('order', function ($query) use ($shopId, $start, $end) {
+                $query->where('shop_id', $shopId)
+                    ->whereBetween('created_at', [$start, $end])
+                    ->whereNotIn('status', [OrderStatus::CANCELLED]);
+            })
+                ->with('productVariant:id,cost_price')
+                ->get()
+                ->sum(function ($item) {
+                    return $item->quantity * ($item->productVariant?->cost_price ?? 0);
+                });
+
+            // Expenses for this shop (purchase orders)
+            $expenses = PurchaseOrder::where('shop_id', $shopId)
+                ->whereBetween('created_at', [$start, $end])
+                ->whereNotIn('status', [PurchaseOrderStatus::CANCELLED])
+                ->sum('paid_amount');
+
+            $grossProfit = $revenue - $cogs;
+            $netProfit = $grossProfit - $expenses;
+
+            return [
+                'shop_id' => $shopId,
+                'shop_name' => $shop?->name ?? 'Unknown',
+                'revenue' => (float)$revenue,
+                'gross_profit' => (float)$grossProfit,
+                'net_profit' => (float)$netProfit,
+            ];
+        })->toArray();
+    }
 }

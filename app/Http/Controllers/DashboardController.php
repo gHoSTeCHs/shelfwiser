@@ -35,7 +35,7 @@ class DashboardController extends Controller
             'period' => ['nullable', 'in:today,week,month,custom'],
             'from' => ['nullable', 'date', 'required_if:period,custom'],
             'to' => ['nullable', 'date', 'required_if:period,custom', 'after_or_equal:from'],
-            'tab' => ['nullable', 'in:overview,sales,inventory,suppliers'],
+            'tab' => ['nullable', 'in:overview,sales,inventory,suppliers,financials'],
         ]);
 
         $shopId = $validated['shop'] ?? null;
@@ -54,6 +54,7 @@ class DashboardController extends Controller
             'sales' => $this->getSalesTabData($user, $shopIds, $dateRange),
             'inventory' => $this->getInventoryTabData($user, $shopIds),
             'suppliers' => $this->getSuppliersTabData($user, $shopIds, $dateRange),
+            'financials' => $this->getFinancialsTabData($user, $shopIds, $dateRange),
             default => $this->getOverviewData($user, $shopId, $shopIds, $period, $dateRange, $startDate, $endDate),
         };
 
@@ -108,6 +109,18 @@ class DashboardController extends Controller
     protected function getSuppliersTabData($user, Collection $shopIds, array $dateRange): array
     {
         $data = $this->dashboardService->getSupplierData($user, $shopIds, $dateRange['start'], $dateRange['end']);
+
+        return $this->filterMetricsByPermissions($data, $user);
+    }
+
+    protected function getFinancialsTabData($user, Collection $shopIds, array $dateRange): array
+    {
+        // Only allow users with financial permissions to access this tab
+        if (!$user->can('viewFinancials', DashboardPolicy::class)) {
+            abort(403, 'You do not have permission to view financial data');
+        }
+
+        $data = $this->dashboardService->getFinancialsData($user, $shopIds, $dateRange['start'], $dateRange['end']);
 
         return $this->filterMetricsByPermissions($data, $user);
     }
