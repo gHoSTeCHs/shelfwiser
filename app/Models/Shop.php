@@ -17,6 +17,7 @@ class Shop extends Model
         'tenant_id', 'shop_type_id', 'name', 'slug', 'config', 'inventory_model',
         'address', 'city', 'state', 'country', 'phone', 'email', 'is_active',
         'storefront_enabled', 'storefront_settings', 'allow_retail_sales',
+        'shop_offering_type',
         'currency', 'currency_symbol', 'currency_decimals',
         'vat_enabled', 'vat_rate', 'vat_inclusive',
     ];
@@ -55,7 +56,15 @@ class Shop extends Model
     }
 
     /**
-     * Get the carts for the shop.
+     * Get the services for the shop
+     */
+    public function services(): HasMany
+    {
+        return $this->hasMany(Service::class);
+    }
+
+    /**
+     * Get the carts for the shop
      */
     public function carts(): HasMany
     {
