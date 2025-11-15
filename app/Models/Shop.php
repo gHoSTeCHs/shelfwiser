@@ -15,13 +15,16 @@ class Shop extends Model
 
     protected $fillable = [
         'tenant_id', 'shop_type_id', 'name', 'slug', 'config', 'inventory_model',
-        'address', 'city', 'state', 'country', 'phone', 'email', 'is_active'
+        'address', 'city', 'state', 'country', 'phone', 'email', 'is_active',
+        'storefront_enabled', 'storefront_settings'
     ];
 
     protected $casts = [
         'config' => 'array',
+        'storefront_settings' => 'array',
         'inventory_model' => InventoryModel::class,
         'is_active' => 'boolean',
+        'storefront_enabled' => 'boolean',
     ];
 
     public function tenant(): BelongsTo
@@ -42,5 +45,13 @@ class Shop extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
+    }
+
+    /**
+     * Get the carts for the shop.
+     */
+    public function carts(): HasMany
+    {
+        return $this->hasMany(Cart::class);
     }
 }

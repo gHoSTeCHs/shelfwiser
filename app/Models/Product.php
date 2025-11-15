@@ -22,12 +22,19 @@ class Product extends Model
         'custom_attributes',
         'has_variants',
         'is_active',
+        'is_featured',
+        'display_order',
+        'seo_title',
+        'seo_description',
+        'seo_keywords',
     ];
 
     protected $casts = [
         'custom_attributes' => 'array',
         'has_variants' => 'boolean',
         'is_active' => 'boolean',
+        'is_featured' => 'boolean',
+        'display_order' => 'integer',
     ];
 
     public function tenant(): BelongsTo
