@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductPackagingType;
 use App\Models\ProductVariant;
+use App\Models\ServiceVariant;
 use App\Models\Shop;
 use App\Models\Tenant;
 use App\Models\User;
@@ -72,39 +73,89 @@ class OrderService
                 ]);
 
                 foreach ($items as $item) {
-                    $variant = ProductVariant::findOrFail($item['product_variant_id']);
+                    // Determine if this is a product or service item
+                    $sellableType = $item['sellable_type'] ?? null;
+                    $sellableId = $item['sellable_id'] ?? null;
 
-                    $packagingType = null;
-                    $packagingDescription = null;
-                    $quantity = $item['quantity'];
-                    $unitPrice = $item['unit_price'] ?? $variant->price;
-
-                    if (isset($item['product_packaging_type_id'])) {
-                        $packagingType = ProductPackagingType::find($item['product_packaging_type_id']);
-
-                        if ($packagingType) {
-                            if (isset($item['package_quantity'])) {
-                                $quantity = $item['package_quantity'] * $packagingType->units_per_package;
-                            }
-
-                            $unitPrice = $packagingType->price / $packagingType->units_per_package;
-                            $packagingDescription = $packagingType->display_name ?? $packagingType->name;
-                        }
+                    // Backward compatibility: fallback to product_variant_id
+                    if (!$sellableType && isset($item['product_variant_id'])) {
+                        $sellableType = ProductVariant::class;
+                        $sellableId = $item['product_variant_id'];
                     }
 
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'product_variant_id' => $variant->id,
-                        'product_packaging_type_id' => $packagingType?->id,
-                        'packaging_description' => $packagingDescription,
-                        'quantity' => $quantity,
-                        'unit_price' => $unitPrice,
-                        'discount_amount' => $item['discount_amount'] ?? 0,
-                        'tax_amount' => $item['tax_amount'] ?? 0,
-                    ]);
+                    if (!$sellableType || !$sellableId) {
+                        throw new Exception('Order item must specify sellable_type and sellable_id');
+                    }
+
+                    // Handle product items
+                    if ($sellableType === ProductVariant::class) {
+                        $variant = ProductVariant::findOrFail($sellableId);
+
+                        $packagingType = null;
+                        $packagingDescription = null;
+                        $quantity = $item['quantity'];
+                        $unitPrice = $item['unit_price'] ?? $variant->price;
+
+                        if (isset($item['product_packaging_type_id'])) {
+                            $packagingType = ProductPackagingType::find($item['product_packaging_type_id']);
+
+                            if ($packagingType) {
+                                if (isset($item['package_quantity'])) {
+                                    $quantity = $item['package_quantity'] * $packagingType->units_per_package;
+                                }
+
+                                $unitPrice = $packagingType->price / $packagingType->units_per_package;
+                                $packagingDescription = $packagingType->display_name ?? $packagingType->name;
+                            }
+                        }
+
+                        OrderItem::create([
+                            'order_id' => $order->id,
+                            'sellable_type' => $sellableType,
+                            'sellable_id' => $sellableId,
+                            'product_variant_id' => $variant->id, // Backward compatibility
+                            'product_packaging_type_id' => $packagingType?->id,
+                            'packaging_description' => $packagingDescription,
+                            'quantity' => $quantity,
+                            'unit_price' => $unitPrice,
+                            'discount_amount' => $item['discount_amount'] ?? 0,
+                            'tax_amount' => $item['tax_amount'] ?? 0,
+                        ]);
+                    }
+                    // Handle service items
+                    elseif ($sellableType === ServiceVariant::class) {
+                        $variant = ServiceVariant::findOrFail($sellableId);
+
+                        $quantity = $item['quantity'] ?? 1;
+                        $unitPrice = $item['unit_price'] ?? $variant->base_price;
+
+                        // Service metadata (material option, addons, etc.)
+                        $metadata = [
+                            'material_option' => $item['material_option'] ?? null,
+                            'selected_addons' => $item['selected_addons'] ?? [],
+                            'base_price' => $variant->base_price,
+                        ];
+
+                        OrderItem::create([
+                            'order_id' => $order->id,
+                            'sellable_type' => $sellableType,
+                            'sellable_id' => $sellableId,
+                            'quantity' => $quantity,
+                            'unit_price' => $unitPrice,
+                            'discount_amount' => $item['discount_amount'] ?? 0,
+                            'tax_amount' => $item['tax_amount'] ?? 0,
+                            'metadata' => $metadata,
+                        ]);
+                    }
+                    else {
+                        throw new Exception("Unsupported sellable type: {$sellableType}");
+                    }
                 }
 
-                $order->load('items.productVariant.product');
+                $order->load([
+                    'items.productVariant.product',
+                    'items.sellable'
+                ]);
                 $order->calculateTotals();
                 $order->save();
 
@@ -140,36 +191,83 @@ class OrderService
                     $order->items()->delete();
 
                     foreach ($data['items'] as $item) {
-                        $variant = ProductVariant::findOrFail($item['product_variant_id']);
+                        // Determine if this is a product or service item
+                        $sellableType = $item['sellable_type'] ?? null;
+                        $sellableId = $item['sellable_id'] ?? null;
 
-                        $packagingType = null;
-                        $packagingDescription = null;
-                        $quantity = $item['quantity'];
-                        $unitPrice = $item['unit_price'] ?? $variant->price;
-
-                        if (isset($item['product_packaging_type_id'])) {
-                            $packagingType = ProductPackagingType::find($item['product_packaging_type_id']);
-
-                            if ($packagingType) {
-                                if (isset($item['package_quantity'])) {
-                                    $quantity = $item['package_quantity'] * $packagingType->units_per_package;
-                                }
-
-                                $unitPrice = $packagingType->price / $packagingType->units_per_package;
-                                $packagingDescription = $packagingType->display_name ?? $packagingType->name;
-                            }
+                        // Backward compatibility: fallback to product_variant_id
+                        if (!$sellableType && isset($item['product_variant_id'])) {
+                            $sellableType = ProductVariant::class;
+                            $sellableId = $item['product_variant_id'];
                         }
 
-                        OrderItem::create([
-                            'order_id' => $order->id,
-                            'product_variant_id' => $variant->id,
-                            'product_packaging_type_id' => $packagingType?->id,
-                            'packaging_description' => $packagingDescription,
-                            'quantity' => $quantity,
-                            'unit_price' => $unitPrice,
-                            'discount_amount' => $item['discount_amount'] ?? 0,
-                            'tax_amount' => $item['tax_amount'] ?? 0,
-                        ]);
+                        if (!$sellableType || !$sellableId) {
+                            throw new Exception('Order item must specify sellable_type and sellable_id');
+                        }
+
+                        // Handle product items
+                        if ($sellableType === ProductVariant::class) {
+                            $variant = ProductVariant::findOrFail($sellableId);
+
+                            $packagingType = null;
+                            $packagingDescription = null;
+                            $quantity = $item['quantity'];
+                            $unitPrice = $item['unit_price'] ?? $variant->price;
+
+                            if (isset($item['product_packaging_type_id'])) {
+                                $packagingType = ProductPackagingType::find($item['product_packaging_type_id']);
+
+                                if ($packagingType) {
+                                    if (isset($item['package_quantity'])) {
+                                        $quantity = $item['package_quantity'] * $packagingType->units_per_package;
+                                    }
+
+                                    $unitPrice = $packagingType->price / $packagingType->units_per_package;
+                                    $packagingDescription = $packagingType->display_name ?? $packagingType->name;
+                                }
+                            }
+
+                            OrderItem::create([
+                                'order_id' => $order->id,
+                                'sellable_type' => $sellableType,
+                                'sellable_id' => $sellableId,
+                                'product_variant_id' => $variant->id, // Backward compatibility
+                                'product_packaging_type_id' => $packagingType?->id,
+                                'packaging_description' => $packagingDescription,
+                                'quantity' => $quantity,
+                                'unit_price' => $unitPrice,
+                                'discount_amount' => $item['discount_amount'] ?? 0,
+                                'tax_amount' => $item['tax_amount'] ?? 0,
+                            ]);
+                        }
+                        // Handle service items
+                        elseif ($sellableType === ServiceVariant::class) {
+                            $variant = ServiceVariant::findOrFail($sellableId);
+
+                            $quantity = $item['quantity'] ?? 1;
+                            $unitPrice = $item['unit_price'] ?? $variant->base_price;
+
+                            // Service metadata (material option, addons, etc.)
+                            $metadata = [
+                                'material_option' => $item['material_option'] ?? null,
+                                'selected_addons' => $item['selected_addons'] ?? [],
+                                'base_price' => $variant->base_price,
+                            ];
+
+                            OrderItem::create([
+                                'order_id' => $order->id,
+                                'sellable_type' => $sellableType,
+                                'sellable_id' => $sellableId,
+                                'quantity' => $quantity,
+                                'unit_price' => $unitPrice,
+                                'discount_amount' => $item['discount_amount'] ?? 0,
+                                'tax_amount' => $item['tax_amount'] ?? 0,
+                                'metadata' => $metadata,
+                            ]);
+                        }
+                        else {
+                            throw new Exception("Unsupported sellable type: {$sellableType}");
+                        }
                     }
                 }
 
@@ -181,13 +279,19 @@ class OrderService
                     'billing_address' => $data['billing_address'] ?? $order->billing_address,
                 ]);
 
-                $order->load('items.productVariant.product');
+                $order->load([
+                    'items.productVariant.product',
+                    'items.sellable'
+                ]);
                 $order->calculateTotals();
                 $order->save();
 
                 Log::info('Order updated successfully.', ['order_id' => $order->id]);
 
-                return $order->fresh(['items.productVariant.product']);
+                return $order->fresh([
+                    'items.productVariant.product',
+                    'items.sellable'
+                ]);
             });
         } catch (Throwable $e) {
             Log::error('Order update failed.', [
@@ -211,22 +315,26 @@ class OrderService
         try {
             return DB::transaction(function () use ($order, $user) {
                 foreach ($order->items as $item) {
-                    $variant = $item->productVariant;
-                    $location = $variant->inventoryLocations()
-                        ->where('location_type', 'App\\Models\\Shop')
-                        ->where('location_id', $order->shop_id)
-                        ->first();
+                    // Only handle inventory for product items, skip services
+                    if ($item->isProduct()) {
+                        $variant = $item->productVariant;
+                        $location = $variant->inventoryLocations()
+                            ->where('location_type', 'App\\Models\\Shop')
+                            ->where('location_id', $order->shop_id)
+                            ->first();
 
-                    if (!$location) {
-                        throw new Exception("No inventory location found for variant {$variant->sku} at shop");
+                        if (!$location) {
+                            throw new Exception("No inventory location found for variant {$variant->sku} at shop");
+                        }
+
+                        if ($location->quantity - $location->reserved_quantity < $item->quantity) {
+                            throw new Exception("Insufficient stock for variant {$variant->sku}. Available: " . ($location->quantity - $location->reserved_quantity));
+                        }
+
+                        $location->reserved_quantity += $item->quantity;
+                        $location->save();
                     }
-
-                    if ($location->quantity - $location->reserved_quantity < $item->quantity) {
-                        throw new Exception("Insufficient stock for variant {$variant->sku}. Available: " . ($location->quantity - $location->reserved_quantity));
-                    }
-
-                    $location->reserved_quantity += $item->quantity;
-                    $location->save();
+                    // Services don't require inventory reservation
                 }
 
                 $order->status = OrderStatus::CONFIRMED;
@@ -259,29 +367,33 @@ class OrderService
         try {
             return DB::transaction(function () use ($order, $user) {
                 foreach ($order->items as $item) {
-                    $variant = $item->productVariant;
-                    $location = $variant->inventoryLocations()
-                        ->where('location_type', 'App\\Models\\Shop')
-                        ->where('location_id', $order->shop_id)
-                        ->first();
+                    // Only handle inventory for product items, skip services
+                    if ($item->isProduct()) {
+                        $variant = $item->productVariant;
+                        $location = $variant->inventoryLocations()
+                            ->where('location_type', 'App\\Models\\Shop')
+                            ->where('location_id', $order->shop_id)
+                            ->first();
 
-                    if (!$location) {
-                        throw new Exception("No inventory location found for variant {$variant->sku}");
+                        if (!$location) {
+                            throw new Exception("No inventory location found for variant {$variant->sku}");
+                        }
+
+                        $location->reserved_quantity -= $item->quantity;
+                        $location->quantity -= $item->quantity;
+                        $location->save();
+
+                        $this->stockMovementService->adjustStock(
+                            $variant,
+                            $location,
+                            $item->quantity,
+                            StockMovementType::SALE,
+                            $user,
+                            "Order #{$order->order_number}",
+                            "Fulfilled order item"
+                        );
                     }
-
-                    $location->reserved_quantity -= $item->quantity;
-                    $location->quantity -= $item->quantity;
-                    $location->save();
-
-                    $this->stockMovementService->adjustStock(
-                        $variant,
-                        $location,
-                        $item->quantity,
-                        StockMovementType::SALE,
-                        $user,
-                        "Order #{$order->order_number}",
-                        "Fulfilled order item"
-                    );
+                    // Services don't require stock movements
                 }
 
                 $order->status = OrderStatus::PROCESSING;
@@ -314,16 +426,20 @@ class OrderService
             return DB::transaction(function () use ($order, $user, $reason) {
                 if ($order->status === OrderStatus::CONFIRMED) {
                     foreach ($order->items as $item) {
-                        $variant = $item->productVariant;
-                        $location = $variant->inventoryLocations()
-                            ->where('location_type', 'App\\Models\\Shop')
-                            ->where('location_id', $order->shop_id)
-                            ->first();
+                        // Only handle inventory for product items, skip services
+                        if ($item->isProduct()) {
+                            $variant = $item->productVariant;
+                            $location = $variant->inventoryLocations()
+                                ->where('location_type', 'App\\Models\\Shop')
+                                ->where('location_id', $order->shop_id)
+                                ->first();
 
-                        if ($location) {
-                            $location->reserved_quantity -= $item->quantity;
-                            $location->save();
+                            if ($location) {
+                                $location->reserved_quantity -= $item->quantity;
+                                $location->save();
+                            }
                         }
+                        // Services don't have reserved inventory
                     }
                 }
 
