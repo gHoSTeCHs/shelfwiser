@@ -16,7 +16,9 @@ class Shop extends Model
     protected $fillable = [
         'tenant_id', 'shop_type_id', 'name', 'slug', 'config', 'inventory_model',
         'address', 'city', 'state', 'country', 'phone', 'email', 'is_active',
-        'storefront_enabled', 'storefront_settings'
+        'storefront_enabled', 'storefront_settings', 'allow_retail_sales',
+        'currency', 'currency_symbol', 'currency_decimals',
+        'vat_enabled', 'vat_rate', 'vat_inclusive',
     ];
 
     protected $casts = [
@@ -25,6 +27,11 @@ class Shop extends Model
         'inventory_model' => InventoryModel::class,
         'is_active' => 'boolean',
         'storefront_enabled' => 'boolean',
+        'allow_retail_sales' => 'boolean',
+        'vat_enabled' => 'boolean',
+        'vat_inclusive' => 'boolean',
+        'currency_decimals' => 'integer',
+        'vat_rate' => 'decimal:2',
     ];
 
     public function tenant(): BelongsTo

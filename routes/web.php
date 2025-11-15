@@ -52,6 +52,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('shops', ShopController::class);
 
+    Route::prefix('shops/{shop}/storefront-settings')->name('shops.storefront-settings.')->group(function () {
+        Route::get('/', [ShopController::class, 'editStorefrontSettings'])->name('edit');
+        Route::patch('/', [ShopController::class, 'updateStorefrontSettings'])->name('update');
+    });
+
     Route::resource('categories', ProductCategoryController::class);
 
     Route::resource('products', ProductController::class);
