@@ -12,6 +12,7 @@ use App\Models\Shop;
 use App\Models\Tenant;
 use App\Policies\DashboardPolicy;
 use App\Services\DashboardService;
+use App\Services\ExportService;
 use App\Services\ReportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -25,7 +26,8 @@ class ReportsController extends Controller
 {
     public function __construct(
         protected ReportService     $reportService,
-        protected DashboardService  $dashboardService
+        protected DashboardService  $dashboardService,
+        protected ExportService     $exportService
     )
     {
     }
@@ -103,7 +105,7 @@ class ReportsController extends Controller
     /**
      * Export Sales Report
      */
-    public function exportSales(Request $request): StreamedResponse
+    public function exportSales(Request $request): StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
     {
         $user = $request->user();
 
@@ -111,10 +113,47 @@ class ReportsController extends Controller
             abort(403, 'You do not have permission to view reports');
         }
 
-        // TODO: Implement CSV export
-        return response()->streamDownload(function () {
-            echo "Export functionality coming soon";
-        }, 'sales-report.csv');
+        $validated = $request->validate([
+            'shop' => ['nullable', 'integer', 'exists:shops,id'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', 'after_or_equal:from'],
+            'category' => ['nullable', 'integer', 'exists:product_categories,id'],
+            'product' => ['nullable', 'integer', 'exists:products,id'],
+            'customer' => ['nullable', 'integer', 'exists:users,id'],
+            'status' => ['nullable', 'in:' . implode(',', array_column(OrderStatus::cases(), 'value'))],
+            'payment_status' => ['nullable', 'in:' . implode(',', array_column(PaymentStatus::cases(), 'value'))],
+            'group_by' => ['nullable', 'in:order,product,customer,shop,day'],
+            'format' => ['nullable', 'in:csv,excel,pdf'],
+        ]);
+
+        $format = $validated['format'] ?? 'csv';
+        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
+
+        $startDate = isset($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : now()->startOfMonth();
+        $endDate = isset($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : now()->endOfMonth();
+
+        $salesData = $this->reportService->getSalesReport(
+            $shopIds,
+            $startDate,
+            $endDate,
+            $validated['category'] ?? null,
+            $validated['product'] ?? null,
+            $validated['customer'] ?? null,
+            $validated['status'] ?? null,
+            $validated['payment_status'] ?? null,
+            $validated['group_by'] ?? 'order',
+            1000 // Get more records for export
+        );
+
+        $formatted = $this->exportService->formatSalesExport(collect($salesData->items()), $validated['group_by'] ?? 'order');
+
+        $timestamp = now()->format('Y-m-d-His');
+
+        return match($format) {
+            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "sales-report-{$timestamp}.xlsx"),
+            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "sales-report-{$timestamp}.pdf", 'Sales Report'),
+            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "sales-report-{$timestamp}.csv"),
+        };
     }
 
     /**
@@ -168,7 +207,7 @@ class ReportsController extends Controller
     /**
      * Export Inventory Report
      */
-    public function exportInventory(Request $request): StreamedResponse
+    public function exportInventory(Request $request): StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
     {
         $user = $request->user();
 
@@ -176,10 +215,34 @@ class ReportsController extends Controller
             abort(403, 'You do not have permission to view reports');
         }
 
-        // TODO: Implement CSV export
-        return response()->streamDownload(function () {
-            echo "Export functionality coming soon";
-        }, 'inventory-report.csv');
+        $validated = $request->validate([
+            'shop' => ['nullable', 'integer', 'exists:shops,id'],
+            'category' => ['nullable', 'integer', 'exists:product_categories,id'],
+            'product' => ['nullable', 'integer', 'exists:products,id'],
+            'stock_status' => ['nullable', 'in:low,adequate,overstocked'],
+            'format' => ['nullable', 'in:csv,excel,pdf'],
+        ]);
+
+        $format = $validated['format'] ?? 'csv';
+        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
+
+        $inventoryData = $this->reportService->getInventoryReport(
+            $shopIds,
+            $validated['category'] ?? null,
+            $validated['product'] ?? null,
+            $validated['stock_status'] ?? null,
+            1000 // Get more records for export
+        );
+
+        $formatted = $this->exportService->formatInventoryExport(collect($inventoryData->items()));
+
+        $timestamp = now()->format('Y-m-d-His');
+
+        return match($format) {
+            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "inventory-report-{$timestamp}.xlsx"),
+            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "inventory-report-{$timestamp}.pdf", 'Inventory Report'),
+            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "inventory-report-{$timestamp}.csv"),
+        };
     }
 
     /**
@@ -248,7 +311,7 @@ class ReportsController extends Controller
     /**
      * Export Supplier Report
      */
-    public function exportSuppliers(Request $request): StreamedResponse
+    public function exportSuppliers(Request $request): StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
     {
         $user = $request->user();
 
@@ -256,10 +319,42 @@ class ReportsController extends Controller
             abort(403, 'You do not have permission to view reports');
         }
 
-        // TODO: Implement CSV export
-        return response()->streamDownload(function () {
-            echo "Export functionality coming soon";
-        }, 'supplier-report.csv');
+        $validated = $request->validate([
+            'shop' => ['nullable', 'integer', 'exists:shops,id'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', 'after_or_equal:from'],
+            'supplier' => ['nullable', 'integer', 'exists:tenants,id'],
+            'status' => ['nullable', 'in:' . implode(',', array_column(PurchaseOrderStatus::cases(), 'value'))],
+            'payment_status' => ['nullable', 'in:' . implode(',', array_column(PurchaseOrderPaymentStatus::cases(), 'value'))],
+            'format' => ['nullable', 'in:csv,excel,pdf'],
+        ]);
+
+        $format = $validated['format'] ?? 'csv';
+        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
+
+        $startDate = isset($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : now()->startOfMonth();
+        $endDate = isset($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : now()->endOfMonth();
+
+        $supplierData = $this->reportService->getSupplierReport(
+            $user->tenant_id,
+            $shopIds,
+            $startDate,
+            $endDate,
+            $validated['supplier'] ?? null,
+            $validated['status'] ?? null,
+            $validated['payment_status'] ?? null,
+            1000 // Get more records for export
+        );
+
+        $formatted = $this->exportService->formatSupplierExport(collect($supplierData->items()));
+
+        $timestamp = now()->format('Y-m-d-His');
+
+        return match($format) {
+            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "supplier-report-{$timestamp}.xlsx"),
+            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "supplier-report-{$timestamp}.pdf", 'Supplier Report'),
+            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "supplier-report-{$timestamp}.csv"),
+        };
     }
 
     /**
@@ -301,7 +396,7 @@ class ReportsController extends Controller
     /**
      * Export Financial Report
      */
-    public function exportFinancials(Request $request): StreamedResponse
+    public function exportFinancials(Request $request): StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
     {
         $user = $request->user();
 
@@ -309,10 +404,34 @@ class ReportsController extends Controller
             abort(403, 'You do not have permission to view financial reports');
         }
 
-        // TODO: Implement PDF export
-        return response()->streamDownload(function () {
-            echo "Export functionality coming soon";
-        }, 'financial-report.pdf');
+        $validated = $request->validate([
+            'shop' => ['nullable', 'integer', 'exists:shops,id'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', 'after_or_equal:from'],
+            'format' => ['nullable', 'in:csv,excel,pdf'],
+        ]);
+
+        $format = $validated['format'] ?? 'csv';
+        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
+
+        $startDate = isset($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : now()->startOfMonth();
+        $endDate = isset($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : now()->endOfMonth();
+
+        $financialData = $this->reportService->getFinancialReport($shopIds, $startDate, $endDate);
+
+        $formatted = $this->exportService->formatFinancialExport(
+            $financialData,
+            $validated['from'] ?? $startDate->format('Y-m-d'),
+            $validated['to'] ?? $endDate->format('Y-m-d')
+        );
+
+        $timestamp = now()->format('Y-m-d-His');
+
+        return match($format) {
+            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "financial-report-{$timestamp}.xlsx"),
+            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "financial-report-{$timestamp}.pdf", 'Financial Report'),
+            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "financial-report-{$timestamp}.csv"),
+        };
     }
 
     /**

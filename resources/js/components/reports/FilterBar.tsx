@@ -1,9 +1,9 @@
 import { router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Select from '@/components/form/Select';
 import DatePicker from '@/components/form/date-picker';
 import Button from '@/components/ui/button/Button';
-import { Filter, Download, RefreshCw } from 'lucide-react';
+import { Filter, Download, RefreshCw, ChevronDown } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 interface FilterOption {
@@ -43,6 +43,19 @@ export default function FilterBar({
 }: FilterBarProps) {
     const [localFilters, setLocalFilters] = useState(currentFilters);
     const [showFilters, setShowFilters] = useState(false);
+    const [showExportMenu, setShowExportMenu] = useState(false);
+    const exportMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+                setShowExportMenu(false);
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleFilterChange = (name: string, value: any) => {
         const newFilters = { ...localFilters, [name]: value };
@@ -83,7 +96,9 @@ export default function FilterBar({
         }
     };
 
-    const handleExport = () => {
+    const handleExport = (format: 'csv' | 'excel' | 'pdf' = 'csv') => {
+        setShowExportMenu(false);
+
         if (onExport) {
             onExport();
         } else if (exportUrl) {
@@ -92,6 +107,7 @@ export default function FilterBar({
                     Object.entries(currentFilters).filter(([_, value]) => value !== null && value !== ''),
                 ),
             );
+            params.append('format', format);
             window.location.href = `${exportUrl}?${params.toString()}`;
         }
     };
@@ -111,14 +127,45 @@ export default function FilterBar({
 
                     <div className="flex flex-wrap gap-2">
                         {showExport && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleExport}
-                            >
-                                <Download className="mr-2 h-4 w-4" />
-                                Export
-                            </Button>
+                            <div className="relative" ref={exportMenuRef}>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowExportMenu(!showExportMenu)}
+                                >
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Export
+                                    <ChevronDown className="ml-2 h-4 w-4" />
+                                </Button>
+
+                                {showExportMenu && (
+                                    <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                                        <div className="py-1">
+                                            <button
+                                                onClick={() => handleExport('csv')}
+                                                className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                            >
+                                                <Download className="mr-2 h-4 w-4" />
+                                                Export as CSV
+                                            </button>
+                                            <button
+                                                onClick={() => handleExport('excel')}
+                                                className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                            >
+                                                <Download className="mr-2 h-4 w-4" />
+                                                Export as Excel
+                                            </button>
+                                            <button
+                                                onClick={() => handleExport('pdf')}
+                                                className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                            >
+                                                <Download className="mr-2 h-4 w-4" />
+                                                Export as PDF
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         )}
                         {showReset && (
                             <Button
