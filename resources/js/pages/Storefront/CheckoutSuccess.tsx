@@ -16,6 +16,36 @@ import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/
 const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
     const shippingAddress = JSON.parse(order.shipping_address);
 
+    const isProduct = (item: any) => {
+        return item.sellable_type === 'App\\Models\\ProductVariant' || item.product_variant_id;
+    };
+
+    const isService = (item: any) => {
+        return item.sellable_type === 'App\\Models\\ServiceVariant';
+    };
+
+    const getItemName = (item: any) => {
+        if (isProduct(item)) {
+            return item.productVariant?.product?.name || 'Product';
+        } else if (isService(item)) {
+            return item.sellable?.service?.name || 'Service';
+        }
+        return 'Item';
+    };
+
+    const getItemDetails = (item: any) => {
+        if (isProduct(item)) {
+            return `${item.productVariant?.sku} × ${item.quantity}`;
+        } else if (isService(item)) {
+            const details = [item.sellable?.name];
+            if (item.quantity > 1) {
+                details.push(`× ${item.quantity}`);
+            }
+            return details.join(' ');
+        }
+        return `Qty: ${item.quantity}`;
+    };
+
     return (
         <StorefrontLayout shop={shop}>
             <div className="max-w-3xl mx-auto">
@@ -46,11 +76,16 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
                             {order.items?.map((item) => (
                                 <div key={item.id} className="flex justify-between items-center">
                                     <div>
-                                        <p className="font-medium">
-                                            {item.productVariant?.product?.name}
-                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-medium">
+                                                {getItemName(item)}
+                                            </p>
+                                            {isService(item) && (
+                                                <Badge color="info" size="sm">Service</Badge>
+                                            )}
+                                        </div>
                                         <p className="text-sm text-gray-600">
-                                            {item.productVariant?.sku} × {item.quantity}
+                                            {getItemDetails(item)}
                                         </p>
                                     </div>
                                     <p className="font-medium">

@@ -45,7 +45,11 @@ class CheckoutController extends Controller
 
         return Inertia::render('Storefront/Checkout', [
             'shop' => $shop,
-            'cart' => $cart->load(['items.productVariant.product', 'items.packagingType']),
+            'cart' => $cart->load([
+                'items.productVariant.product',
+                'items.packagingType',
+                'items.sellable.service', // For service items
+            ]),
             'cartSummary' => $cartSummary,
             'addresses' => $addresses,
             'customer' => $customer,
@@ -127,7 +131,11 @@ class CheckoutController extends Controller
 
         $order = Order::where('id', $orderId)
             ->where('customer_id', $customer->id)
-            ->with(['items.productVariant.product', 'items.packagingType'])
+            ->with([
+                'items.productVariant.product',
+                'items.packagingType',
+                'items.sellable.service', // For service items
+            ])
             ->firstOrFail();
 
         return Inertia::render('Storefront/CheckoutSuccess', [

@@ -8,6 +8,7 @@ import InputError from '@/components/form/InputError';
 import Button from '@/components/ui/button/Button';
 import Checkbox from '@/components/form/input/Checkbox';
 import { Card } from '@/components/ui/card';
+import Badge from '@/components/ui/badge/Badge';
 import CheckoutController from '@/actions/App/Http/Controllers/Storefront/CheckoutController';
 
 /**
@@ -19,6 +20,32 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
     const [saveAddresses, setSaveAddresses] = React.useState(true);
 
     const defaultAddress = addresses.find(addr => addr.is_default && addr.type === 'shipping');
+
+    const isProduct = (item: any) => {
+        return item.sellable_type === 'App\\Models\\ProductVariant' || item.product_variant_id;
+    };
+
+    const isService = (item: any) => {
+        return item.sellable_type === 'App\\Models\\ServiceVariant';
+    };
+
+    const getItemName = (item: any) => {
+        if (isProduct(item)) {
+            return item.productVariant?.product?.name || 'Product';
+        } else if (isService(item)) {
+            return item.sellable?.service?.name || 'Service';
+        }
+        return 'Item';
+    };
+
+    const getItemVariantName = (item: any) => {
+        if (isProduct(item)) {
+            return item.productVariant?.sku;
+        } else if (isService(item)) {
+            return item.sellable?.name;
+        }
+        return null;
+    };
 
     return (
         <StorefrontLayout shop={shop} customer={customer} cartItemCount={cartSummary.item_count}>
@@ -275,11 +302,19 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
                                     <div className="space-y-4">
                                         {cartSummary.items.map((item) => (
                                             <div key={item.id} className="flex justify-between text-sm">
-                                                <div>
-                                                    <p className="font-medium">
-                                                        {item.productVariant?.product?.name}
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-medium">
+                                                            {getItemName(item)}
+                                                        </p>
+                                                        {isService(item) && (
+                                                            <Badge color="info" size="sm">Service</Badge>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-gray-600 text-xs">
+                                                        {getItemVariantName(item)}
                                                     </p>
-                                                    <p className="text-gray-600">
+                                                    <p className="text-gray-600 text-xs">
                                                         Qty: {item.quantity}
                                                     </p>
                                                 </div>

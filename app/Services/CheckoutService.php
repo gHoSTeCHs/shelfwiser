@@ -53,12 +53,15 @@ class CheckoutService
                 throw new \Exception('Cannot checkout with empty cart');
             }
 
+            // Validate stock availability for products only (services don't require stock)
             foreach ($cartSummary['items'] as $item) {
-                if ($item->productVariant->available_stock < $item->quantity) {
-                    throw new \Exception(
-                        "Insufficient stock for {$item->productVariant->product->name}. " .
-                        "Only {$item->productVariant->available_stock} available."
-                    );
+                if ($item->isProduct()) {
+                    if ($item->productVariant->available_stock < $item->quantity) {
+                        throw new \Exception(
+                            "Insufficient stock for {$item->productVariant->product->name}. " .
+                            "Only {$item->productVariant->available_stock} available."
+                        );
+                    }
                 }
             }
 
@@ -82,33 +85,67 @@ class CheckoutService
             ]);
 
             foreach ($cartSummary['items'] as $cartItem) {
-                OrderItem::create([
+                $orderItemData = [
                     'order_id' => $order->id,
-                    'product_variant_id' => $cartItem->product_variant_id,
-                    'product_packaging_type_id' => $cartItem->product_packaging_type_id,
                     'quantity' => $cartItem->quantity,
                     'unit_price' => $cartItem->price,
                     'total_amount' => $cartItem->price * $cartItem->quantity,
-                ]);
+                ];
 
-                $this->stockMovementService->recordMovement(
-                    $cartItem->productVariant,
-                    -$cartItem->quantity,
-                    StockMovementType::SALE,
-                    "E-commerce order {$order->order_number}",
-                    $customer->id,
-                    null,
-                    null,
-                    null,
-                    0,
-                    $order->id
-                );
+                if ($cartItem->isProduct()) {
+                    // Product-specific fields
+                    $orderItemData['product_variant_id'] = $cartItem->product_variant_id;
+                    $orderItemData['product_packaging_type_id'] = $cartItem->product_packaging_type_id;
+                    $orderItemData['sellable_type'] = \App\Models\ProductVariant::class;
+                    $orderItemData['sellable_id'] = $cartItem->product_variant_id;
+                } else {
+                    // Service-specific fields
+                    $orderItemData['sellable_type'] = $cartItem->sellable_type;
+                    $orderItemData['sellable_id'] = $cartItem->sellable_id;
+
+                    // Store service metadata (material option, addons, etc.)
+                    $metadata = [];
+                    if ($cartItem->material_option) {
+                        $metadata['material_option'] = $cartItem->material_option;
+                    }
+                    if ($cartItem->selected_addons) {
+                        $metadata['selected_addons'] = $cartItem->selected_addons;
+                    }
+                    if ($cartItem->base_price) {
+                        $metadata['base_price'] = $cartItem->base_price;
+                    }
+                    if (!empty($metadata)) {
+                        $orderItemData['metadata'] = $metadata;
+                    }
+                }
+
+                OrderItem::create($orderItemData);
+
+                // Only record stock movements for products (services don't affect inventory)
+                if ($cartItem->isProduct()) {
+                    $this->stockMovementService->recordMovement(
+                        $cartItem->productVariant,
+                        -$cartItem->quantity,
+                        StockMovementType::SALE,
+                        "E-commerce order {$order->order_number}",
+                        $customer->id,
+                        null,
+                        null,
+                        null,
+                        0,
+                        $order->id
+                    );
+                }
             }
 
             $cart->items()->delete();
             $cart->delete();
 
-            return $order->fresh(['items.productVariant.product', 'items.packagingType']);
+            return $order->fresh([
+                'items.productVariant.product',
+                'items.packagingType',
+                'items.sellable.service', // For service items
+            ]);
         });
     }
 
