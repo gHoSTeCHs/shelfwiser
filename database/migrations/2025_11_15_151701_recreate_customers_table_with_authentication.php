@@ -11,15 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Drop existing placeholder customers table
         Schema::dropIfExists('customers');
 
-        // Create proper customers table with authentication
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
 
-            // Preferred shop for personalization (hybrid approach)
             $table->foreignId('preferred_shop_id')
                 ->nullable()
                 ->constrained('shops')
@@ -36,7 +33,6 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
 
-            // Indexes for performance
             $table->index(['tenant_id', 'email']);
             $table->index('email');
             $table->index('preferred_shop_id');

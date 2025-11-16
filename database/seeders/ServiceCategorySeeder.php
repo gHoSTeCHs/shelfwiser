@@ -79,10 +79,19 @@ class ServiceCategorySeeder extends Seeder
         ];
 
         foreach ($categories as $category) {
-            ServiceCategory::create(array_merge($category, [
-                'tenant_id' => $tenant->id,
-                'is_active' => true,
-            ]));
+            ServiceCategory::updateOrCreate(
+                [
+                    'tenant_id' => $tenant->id,
+                    'slug' => $category['slug'],
+                ],
+                [
+                    'name' => $category['name'],
+                    'description' => $category['description'],
+                    'icon' => $category['icon'],
+                    'sort_order' => $category['sort_order'],
+                    'is_active' => true,
+                ]
+            );
         }
     }
 }

@@ -12,7 +12,7 @@ class CustomerSeeder extends Seeder
 {
     public function run(): void
     {
-        $shops = Shop::with('tenant')->where('retail_sales_enabled', true)->get();
+        $shops = Shop::with('tenant')->where('allow_retail_sales', true)->get();
 
         foreach ($shops as $shop) {
             $customerCount = rand(3, 6);
@@ -39,14 +39,13 @@ class CustomerSeeder extends Seeder
                 'last_name' => $template['last_name'],
                 'email' => $this->generateUniqueEmail($template['email'], $shop->id),
                 'phone' => $template['phone'],
-                'password' => Hash::make('password'), // Default password for testing
+                'password' => Hash::make('password'),
                 'is_active' => true,
                 'marketing_opt_in' => $template['marketing_opt_in'] ?? false,
                 'email_verified_at' => now(),
             ]);
 
-            // Create addresses for some customers
-            if (rand(1, 10) > 3) { // 70% chance
+            if (rand(1, 10) > 3) {
                 $this->createAddressesForCustomer($customer);
             }
         }
@@ -56,7 +55,6 @@ class CustomerSeeder extends Seeder
     {
         $addresses = $this->getAddressTemplates();
 
-        // Create 1-2 addresses per customer
         $addressCount = rand(1, 2);
         $selectedAddresses = array_rand($addresses, min($addressCount, count($addresses)));
         if (!is_array($selectedAddresses)) {
