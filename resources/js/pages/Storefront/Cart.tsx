@@ -7,14 +7,15 @@ import QuantitySelector from '@/components/storefront/QuantitySelector';
 import OrderSummary from '@/components/storefront/OrderSummary';
 import Button from '@/components/ui/button/Button';
 import EmptyState from '@/components/ui/EmptyState';
+import Badge from '@/components/ui/badge/Badge';
 import { Card } from '@/components/ui/card';
-import { ShoppingCart, Trash2, ArrowRight } from 'lucide-react';
+import { ShoppingCart, Trash2, ArrowRight, Package, Briefcase } from 'lucide-react';
 import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
 import CheckoutController from '@/actions/App/Http/Controllers/Storefront/CheckoutController';
 
 /**
- * Shopping cart page for viewing and managing cart items.
+ * Shopping cart page for viewing and managing cart items (products and services).
  * Allows quantity updates, item removal, and proceeding to checkout.
  */
 const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
@@ -22,6 +23,43 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
 
     const handleQuantityChange = (itemId: number, newQuantity: number) => {
         setUpdatingItem(itemId);
+    };
+
+    const isProduct = (item: any) => {
+        return item.sellable_type === 'App\\Models\\ProductVariant' || item.product_variant_id;
+    };
+
+    const isService = (item: any) => {
+        return item.sellable_type === 'App\\Models\\ServiceVariant';
+    };
+
+    const getItemName = (item: any) => {
+        if (isProduct(item)) {
+            return item.productVariant?.product?.name || 'Product';
+        } else if (isService(item)) {
+            return item.sellable?.service?.name || 'Service';
+        }
+        return 'Item';
+    };
+
+    const getItemImage = (item: any) => {
+        if (isProduct(item)) {
+            return item.productVariant?.product?.image;
+        } else if (isService(item)) {
+            return item.sellable?.service?.image_url;
+        }
+        return null;
+    };
+
+    const getMaterialOptionLabel = (option: string) => {
+        switch (option) {
+            case 'customer_materials':
+                return 'Customer Materials';
+            case 'shop_materials':
+                return 'Shop Materials';
+            default:
+                return null;
+        }
     };
 
     return (
@@ -41,13 +79,20 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                         <EmptyState
                             icon={<ShoppingCart />}
                             title="Your cart is empty"
-                            description="Add some products to get started"
+                            description="Add some products or book a service to get started"
                             action={
-                                <Link href={StorefrontController.products.url({ shop: shop.slug })}>
-                                    <Button variant="primary">
-                                        Browse Products
-                                    </Button>
-                                </Link>
+                                <div className="flex gap-3">
+                                    <Link href={StorefrontController.products.url({ shop: shop.slug })}>
+                                        <Button variant="primary">
+                                            Browse Products
+                                        </Button>
+                                    </Link>
+                                    <Link href={StorefrontController.services.url({ shop: shop.slug })}>
+                                        <Button variant="outline">
+                                            Browse Services
+                                        </Button>
+                                    </Link>
+                                </div>
                             }
                         />
                     </Card>
@@ -57,16 +102,21 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                             {cart.items?.map((item) => (
                                 <Card key={item.id} className="p-6">
                                     <div className="flex gap-6">
+                                        {/* Item Image */}
                                         <div className="w-24 h-24 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-                                            {item.productVariant?.product?.image ? (
+                                            {getItemImage(item) ? (
                                                 <img
-                                                    src={item.productVariant.product.image}
-                                                    alt={item.productVariant.product.name}
+                                                    src={getItemImage(item)}
+                                                    alt={getItemName(item)}
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                                    <ShoppingCart className="w-8 h-8" />
+                                                    {isService(item) ? (
+                                                        <Briefcase className="w-8 h-8" />
+                                                    ) : (
+                                                        <Package className="w-8 h-8" />
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -74,19 +124,58 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
-                                                    <h3 className="font-semibold text-gray-900">
-                                                        {item.productVariant?.product?.name}
-                                                    </h3>
-                                                    <p className="text-sm text-gray-600">
-                                                        SKU: {item.productVariant?.sku}
-                                                    </p>
-                                                    {item.packagingType && (
-                                                        <p className="text-sm text-gray-600">
-                                                            Packaging: {item.packagingType.name}
-                                                        </p>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <h3 className="font-semibold text-gray-900">
+                                                            {getItemName(item)}
+                                                        </h3>
+                                                        {isService(item) && (
+                                                            <Badge color="info" size="sm">Service</Badge>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Product-specific details */}
+                                                    {isProduct(item) && (
+                                                        <>
+                                                            <p className="text-sm text-gray-600">
+                                                                SKU: {item.productVariant?.sku}
+                                                            </p>
+                                                            {item.packagingType && (
+                                                                <p className="text-sm text-gray-600">
+                                                                    Packaging: {item.packagingType.name}
+                                                                </p>
+                                                            )}
+                                                        </>
+                                                    )}
+
+                                                    {/* Service-specific details */}
+                                                    {isService(item) && (
+                                                        <>
+                                                            <p className="text-sm text-gray-600">
+                                                                {item.sellable?.name}
+                                                            </p>
+                                                            {item.material_option && getMaterialOptionLabel(item.material_option) && (
+                                                                <p className="text-sm text-gray-600">
+                                                                    <Badge color="warning" size="sm" className="mt-1">
+                                                                        {getMaterialOptionLabel(item.material_option)}
+                                                                    </Badge>
+                                                                </p>
+                                                            )}
+                                                            {item.selected_addons && item.selected_addons.length > 0 && (
+                                                                <div className="mt-2">
+                                                                    <p className="text-xs text-gray-500">Add-ons:</p>
+                                                                    {item.selected_addons.map((addon: any, idx: number) => (
+                                                                        <p key={idx} className="text-sm text-gray-600">
+                                                                            • {addon.name || `Addon #${addon.addon_id}`}
+                                                                            {addon.quantity > 1 && ` (×${addon.quantity})`}
+                                                                        </p>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
 
+                                                {/* Remove button */}
                                                 <Form
                                                     action={CartController.destroy.url({
                                                         shop: shop.slug,
@@ -108,6 +197,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                             </div>
 
                                             <div className="flex justify-between items-center mt-4">
+                                                {/* Quantity selector */}
                                                 <Form
                                                     action={CartController.update.url({
                                                         shop: shop.slug,
@@ -124,7 +214,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                                     handleQuantityChange(item.id, newQuantity);
                                                                 }}
                                                                 min={1}
-                                                                max={item.productVariant?.available_stock || 999}
+                                                                max={isProduct(item) ? (item.productVariant?.available_stock || 999) : 999}
                                                                 disabled={processing}
                                                             />
                                                             <input type="hidden" name="quantity" value={item.quantity} />
@@ -144,7 +234,13 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                     )}
                                                 </Form>
 
+                                                {/* Price */}
                                                 <div className="text-right">
+                                                    {isService(item) && item.base_price && (
+                                                        <p className="text-xs text-gray-500">
+                                                            Base: {shop.currency_symbol}{item.base_price.toFixed(2)}
+                                                        </p>
+                                                    )}
                                                     <p className="text-sm text-gray-600">
                                                         {shop.currency_symbol}{item.price.toFixed(2)} each
                                                     </p>
@@ -154,7 +250,8 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                 </div>
                                             </div>
 
-                                            {item.productVariant && item.quantity > item.productVariant.available_stock && (
+                                            {/* Stock warning for products only */}
+                                            {isProduct(item) && item.productVariant && item.quantity > item.productVariant.available_stock && (
                                                 <p className="text-sm text-error-600 mt-2">
                                                     Only {item.productVariant.available_stock} available in stock
                                                 </p>
@@ -173,6 +270,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                             </div>
                         </div>
 
+                        {/* Order Summary */}
                         <div className="lg:col-span-1">
                             <Card className="p-6 sticky top-20">
                                 <OrderSummary

@@ -10,8 +10,10 @@ import Select from '@/components/form/Select';
 import Checkbox from '@/components/form/input/Checkbox';
 import Label from '@/components/form/Label';
 import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
 import { Clock, Plus, ShoppingCart } from 'lucide-react';
 import { MaterialOption } from '@/types/service';
+import { Form } from '@inertiajs/react';
 
 /**
  * Individual service detail page.
@@ -309,14 +311,35 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
 
                             {/* Add to Cart Button */}
                             {selectedVariant && (
-                                <Button
-                                    variant="primary"
-                                    size="lg"
-                                    fullWidth
-                                    startIcon={<ShoppingCart />}
+                                <Form
+                                    action={CartController.storeService.url({ shop: shop.slug })}
+                                    method="post"
+                                    transform={(data) => ({
+                                        service_variant_id: selectedVariantId,
+                                        quantity: 1,
+                                        material_option: service.has_material_options ? materialOption : null,
+                                        selected_addons: Object.entries(selectedAddons)
+                                            .filter(([_, qty]) => qty > 0)
+                                            .map(([addonId, quantity]) => ({
+                                                addon_id: parseInt(addonId),
+                                                quantity: quantity,
+                                            })),
+                                    })}
                                 >
-                                    Book Service - {shop.currency_symbol}{totalPrice.toFixed(2)}
-                                </Button>
+                                    {({ processing }) => (
+                                        <Button
+                                            type="submit"
+                                            variant="primary"
+                                            size="lg"
+                                            fullWidth
+                                            startIcon={<ShoppingCart />}
+                                            disabled={processing}
+                                            loading={processing}
+                                        >
+                                            {processing ? 'Adding to Cart...' : `Book Service - ${shop.currency_symbol}${totalPrice.toFixed(2)}`}
+                                        </Button>
+                                    )}
+                                </Form>
                             )}
                         </Card>
                     </div>

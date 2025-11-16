@@ -26,6 +26,7 @@ Route::prefix('store/{shop:slug}')->name('storefront.')->group(function () {
 
     Route::get('/cart', [CartController::class, 'index'])->name('cart');
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
+    Route::post('/cart/service', [CartController::class, 'storeService'])->name('cart.store-service');
     Route::patch('/cart/{item}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{item}', [CartController::class, 'destroy'])->name('cart.destroy');
 
