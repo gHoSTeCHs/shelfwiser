@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { Upload, X } from 'lucide-react';
 import Button from '@/components/ui/button/Button';
 import { Image } from '@/types/image';
+import { router } from '@inertiajs/react';
 
 interface ImageUploaderProps {
     modelType: 'Product' | 'ProductVariant' | 'Service';
@@ -102,7 +103,7 @@ export default function ImageUploader({
                 onUploadSuccess(data.images);
             }
 
-            window.location.reload();
+            router.reload();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Upload failed');
         } finally {

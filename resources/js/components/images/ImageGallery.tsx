@@ -47,7 +47,7 @@ export default function ImageGallery({
                 },
             });
 
-            window.location.reload();
+            router.reload();
         } catch (err) {
             console.error('Failed to delete image:', err);
             alert('Failed to delete image');
@@ -70,7 +70,7 @@ export default function ImageGallery({
                 },
             });
 
-            window.location.reload();
+            router.reload();
         } catch (err) {
             console.error('Failed to set primary image:', err);
             alert('Failed to set primary image');
@@ -108,7 +108,7 @@ export default function ImageGallery({
                 }),
             });
 
-            window.location.reload();
+            router.reload();
         } catch (err) {
             console.error('Failed to reorder images:', err);
             alert('Failed to reorder images');
