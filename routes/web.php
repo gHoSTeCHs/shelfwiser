@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ImageController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
@@ -64,6 +65,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('categories', ProductCategoryController::class);
 
     Route::resource('products', ProductController::class);
+
+    // Image Management Routes
+    Route::prefix('images')->name('images.')->group(function () {
+        Route::post('/upload', [ImageController::class, 'upload'])->name('upload');
+        Route::put('/{image}', [ImageController::class, 'update'])->name('update');
+        Route::delete('/{image}', [ImageController::class, 'destroy'])->name('destroy');
+        Route::post('/{image}/set-primary', [ImageController::class, 'setPrimary'])->name('set-primary');
+        Route::post('/reorder', [ImageController::class, 'reorder'])->name('reorder');
+    });
 
     // Service Management Routes
     Route::resource('service-categories', ServiceCategoryController::class);
