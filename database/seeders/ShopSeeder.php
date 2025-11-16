@@ -43,6 +43,7 @@ class ShopSeeder extends Seeder
                     'phone' => '+234-802-111-0001',
                     'email' => 'island@sunshine-retail.com',
                     'allow_retail_sales' => true,
+                    'shop_offering_type' => 'both', // Products + Phone/Laptop Repair Services
                     'inventory_model' => InventoryModel::SIMPLE_RETAIL,
                     'config' => [],
                     'is_active' => true,
@@ -58,6 +59,7 @@ class ShopSeeder extends Seeder
                     'phone' => '+234-802-111-0002',
                     'email' => 'ikeja@sunshine-retail.com',
                     'allow_retail_sales' => true,
+                    'shop_offering_type' => 'products', // Products only
                     'inventory_model' => InventoryModel::HYBRID,
                     'config' => [],
                     'is_active' => true,
@@ -73,6 +75,7 @@ class ShopSeeder extends Seeder
                     'phone' => '+234-802-111-0003',
                     'email' => 'vi@sunshine-retail.com',
                     'allow_retail_sales' => false,
+                    'shop_offering_type' => 'services', // Tailoring/Alteration Services only
                     'inventory_model' => InventoryModel::SIMPLE_RETAIL,
                     'config' => [],
                     'is_active' => true,
@@ -88,6 +91,7 @@ class ShopSeeder extends Seeder
                     'phone' => '+234-802-111-0004',
                     'email' => 'lekki@sunshine-retail.com',
                     'allow_retail_sales' => true,
+                    'shop_offering_type' => 'both', // Products + Health Consulting Services
                     'inventory_model' => InventoryModel::SIMPLE_RETAIL,
                     'config' => [],
                     'is_active' => true,
@@ -108,6 +112,7 @@ class ShopSeeder extends Seeder
                     'phone' => '+234-803-222-0001',
                     'email' => 'ikeja@freshmart.ng',
                     'allow_retail_sales' => false,
+                    'shop_offering_type' => 'products', // Products only (B2B)
                     'inventory_model' => InventoryModel::HYBRID,
                     'config' => [],
                     'is_active' => true,
@@ -123,6 +128,7 @@ class ShopSeeder extends Seeder
                     'phone' => '+234-803-222-0002',
                     'email' => 'surulere@freshmart.ng',
                     'allow_retail_sales' => true,
+                    'shop_offering_type' => 'both', // Products + Delivery Services
                     'inventory_model' => InventoryModel::SIMPLE_RETAIL,
                     'config' => [],
                     'is_active' => true,
@@ -138,6 +144,7 @@ class ShopSeeder extends Seeder
                     'phone' => '+234-803-222-0003',
                     'email' => 'warehouse@freshmart.ng',
                     'allow_retail_sales' => true,
+                    'shop_offering_type' => 'products', // Products only (Wholesale)
                     'inventory_model' => InventoryModel::WHOLESALE_ONLY,
                     'config' => [],
                     'is_active' => true,
@@ -153,6 +160,7 @@ class ShopSeeder extends Seeder
                     'phone' => '+234-803-222-0004',
                     'email' => 'cafe@freshmart.ng',
                     'allow_retail_sales' => false,
+                    'shop_offering_type' => 'services', // Dining/Catering Services only
                     'inventory_model' => InventoryModel::SIMPLE_RETAIL,
                     'config' => [],
                     'is_active' => true,
@@ -168,6 +176,7 @@ class ShopSeeder extends Seeder
                     'phone' => '+234-803-222-0005',
                     'email' => 'produce@freshmart.ng',
                     'allow_retail_sales' => true,
+                    'shop_offering_type' => 'products', // Products only
                     'inventory_model' => InventoryModel::HYBRID,
                     'config' => [],
                     'is_active' => true,
@@ -188,6 +197,7 @@ class ShopSeeder extends Seeder
                     'phone' => '+234-805-333-0001',
                     'email' => 'ikoyi@quickstop.com.ng',
                     'allow_retail_sales' => true,
+                    'shop_offering_type' => 'both', // Products + Printing Services
                     'inventory_model' => InventoryModel::SIMPLE_RETAIL,
                     'config' => [],
                     'is_active' => true,
@@ -203,6 +213,7 @@ class ShopSeeder extends Seeder
                     'phone' => '+234-805-333-0002',
                     'email' => 'lekki1@quickstop.com.ng',
                     'allow_retail_sales' => false,
+                    'shop_offering_type' => 'products', // Products only (B2B)
                     'inventory_model' => InventoryModel::SIMPLE_RETAIL,
                     'config' => [],
                     'is_active' => true,
@@ -218,6 +229,7 @@ class ShopSeeder extends Seeder
                     'phone' => '+234-805-333-0003',
                     'email' => 'vi@quickstop.com.ng',
                     'allow_retail_sales' => true,
+                    'shop_offering_type' => 'both', // Products + Cleaning Services
                     'inventory_model' => InventoryModel::SIMPLE_RETAIL,
                     'config' => [],
                     'is_active' => true,

@@ -18,8 +18,8 @@ class ServiceSeeder extends Seeder
         $shops = Shop::with('tenant')->get();
 
         foreach ($shops as $shop) {
-            // Only seed services for shops that have service offerings enabled
-            if ($shop->service_offerings_enabled) {
+            // Only seed services for shops that offer services or both
+            if (in_array($shop->shop_offering_type, ['services', 'both'])) {
                 $this->categoryCache[$shop->tenant_id] = ServiceCategory::query()
                     ->where('tenant_id', $shop->tenant_id)
                     ->pluck('id', 'slug')
