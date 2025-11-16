@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Image;
 use App\Models\Service;
 use App\Models\ServiceAddon;
 use App\Models\ServiceCategory;
@@ -57,6 +58,35 @@ class ServiceSeeder extends Seeder
 
             $this->createVariantsForService($service, $template);
             $this->createAddonsForService($service, $template);
+            $this->createImagesForService($service);
+        }
+    }
+
+    /**
+     * Create placeholder images for a service
+     */
+    protected function createImagesForService(Service $service): void
+    {
+        $imageCount = rand(1, 3);
+
+        for ($i = 0; $i < $imageCount; $i++) {
+            Image::create([
+                'tenant_id' => $service->tenant_id,
+                'imageable_type' => Service::class,
+                'imageable_id' => $service->id,
+                'filename' => 'placeholder.jpg',
+                'path' => 'https://placehold.co/600x400',
+                'disk' => 'public',
+                'mime_type' => 'image/jpeg',
+                'size' => 0,
+                'width' => 600,
+                'height' => 400,
+                'alt_text' => $service->name,
+                'title' => $service->name,
+                'caption' => $service->description,
+                'is_primary' => $i === 0,
+                'sort_order' => $i,
+            ]);
         }
     }
 
