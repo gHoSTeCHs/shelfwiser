@@ -32,7 +32,9 @@ class ServiceController extends Controller
 
         return Inertia::render('Services/Index', [
             'services' => Service::where('tenant_id', $tenantId)
-                ->with(['category', 'shop', 'variants'])
+                ->with(['category', 'shop', 'variants', 'images' => function ($query) {
+                    $query->ordered();
+                }])
                 ->withCount('variants')
                 ->latest()
                 ->paginate(20),
@@ -95,6 +97,9 @@ class ServiceController extends Controller
             'shop',
             'variants' => fn($q) => $q->orderBy('sort_order'),
             'addons' => fn($q) => $q->where('is_active', true)->orderBy('sort_order'),
+            'images' => function ($query) {
+                $query->ordered();
+            },
         ]);
 
         // Get category-wide addons if service has a category
@@ -125,6 +130,9 @@ class ServiceController extends Controller
             'category',
             'variants' => fn($q) => $q->orderBy('sort_order'),
             'addons' => fn($q) => $q->orderBy('sort_order'),
+            'images' => function ($query) {
+                $query->ordered();
+            },
         ]);
 
         $tenantId = auth()->user()->tenant_id;
