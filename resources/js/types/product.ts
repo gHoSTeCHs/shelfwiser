@@ -1,6 +1,7 @@
 import { Shop } from '@/types/shop.ts';
 import { SchemaProperty } from '@/types/index';
 import { ProductVariant } from '@/types/stockMovement';
+import { Image } from '@/types/image';
 
 export interface ProductType {
     id: number;
@@ -36,6 +37,7 @@ export interface Product {
     shop: Shop;
     variants: ProductVariant[];
     variants_count: number;
+    images?: Image[];
     created_at: string;
 }
 

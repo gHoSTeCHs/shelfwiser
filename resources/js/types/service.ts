@@ -1,4 +1,5 @@
 import { Shop } from '@/types/shop';
+import { Image } from '@/types/image';
 
 export type MaterialOption = 'customer_materials' | 'shop_materials' | 'none';
 
@@ -73,6 +74,7 @@ export interface Service {
     variants?: ServiceVariant[];
     addons?: ServiceAddon[];
     variants_count?: number;
+    images?: Image[];
 }
 
 export interface ServiceListResponse {

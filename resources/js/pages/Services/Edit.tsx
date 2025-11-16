@@ -9,11 +9,13 @@ import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import ImageGallery from '@/components/images/ImageGallery';
+import ImageUploader from '@/components/images/ImageUploader';
 import AppLayout from '@/layouts/AppLayout';
 import { flattenCategories } from '@/lib/utils';
 import { Service, ServiceCategory } from '@/types/service';
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, Save } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -229,6 +231,39 @@ export default function Edit({ service, categories }: Props) {
                                             Active
                                         </Label>
                                     </div>
+                                </div>
+                            </Card>
+
+                            {/* Service Images */}
+                            <Card>
+                                <div className="mb-6 flex items-center gap-3 border-b border-gray-200 pb-4 dark:border-gray-700">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/20">
+                                        <ImageIcon className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                            Service Images
+                                        </h2>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            Manage service images
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <ImageGallery
+                                        images={service.images || []}
+                                        modelType="Service"
+                                        modelId={service.id}
+                                        canManage={true}
+                                        showPlaceholder={true}
+                                    />
+
+                                    <ImageUploader
+                                        modelType="Service"
+                                        modelId={service.id}
+                                        maxFiles={10}
+                                    />
                                 </div>
                             </Card>
 
