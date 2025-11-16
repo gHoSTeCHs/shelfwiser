@@ -9,16 +9,30 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            // System/Configuration
             ShopTypeSeeder::class,
             ProductTypeSeeder::class,
+
+            // Core Multi-Tenancy
             TenantSeeder::class,
             UserSeeder::class,
             ShopSeeder::class,
             ShopUserSeeder::class,
+
+            // Product System
             ProductCategorySeeder::class,
             ProductSeeder::class,
             ProductPackagingTypeSeeder::class,
             InventoryLocationSeeder::class,
+
+            // Service System
+            ServiceCategorySeeder::class,
+            ServiceSeeder::class,
+
+            // E-commerce
+            CustomerSeeder::class,
+
+            // Operations
             OrderSeeder::class,
             StockMovementSeeder::class,
 

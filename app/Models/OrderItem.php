@@ -129,16 +129,28 @@ class OrderItem extends Model
 
     public function getProductNameAttribute(): string
     {
-        return $this->productVariant->product->name ?? 'Unknown Product';
+        if ($this->isService()) {
+            return $this->sellable?->service?->name ?? 'Unknown Service';
+        }
+
+        return $this->productVariant?->product?->name ?? 'Unknown Product';
     }
 
     public function getVariantNameAttribute(): string
     {
-        return $this->productVariant->name ?? 'Default Variant';
+        if ($this->isService()) {
+            return $this->sellable?->name ?? 'Default Variant';
+        }
+
+        return $this->productVariant?->name ?? 'Default Variant';
     }
 
     public function getSkuAttribute(): string
     {
-        return $this->productVariant->sku ?? '';
+        if ($this->isService()) {
+            return 'SVC-' . $this->sellable_id;
+        }
+
+        return $this->productVariant?->sku ?? '';
     }
 }

@@ -3,7 +3,7 @@ import { ProductCategory } from './product';
 import { Shop } from './shop';
 import { User } from './index';
 import { ProductVariant, ProductPackagingType } from './stockMovement';
-import { Service, ServiceCategory } from './service';
+import { Service, ServiceCategory, ServiceVariant, MaterialOption } from './service';
 
 export interface Customer {
     id: number;
@@ -50,17 +50,42 @@ export interface Order {
 export interface OrderItem {
     id: number;
     order_id: number;
-    product_variant_id: number;
-    product_packaging_type_id: number | null;
+
+    // Legacy product fields (backward compatible)
+    product_variant_id?: number | null;
+    product_packaging_type_id?: number | null;
+
+    // Polymorphic fields
+    sellable_type: string; // 'App\\Models\\ProductVariant' | 'App\\Models\\ServiceVariant'
+    sellable_id: number;
+
     quantity: number;
     unit_price: number;
     total_amount: number;
+
+    // Service metadata
+    metadata?: {
+        material_option?: string;
+        selected_addons?: Array<{
+            addon_id: number;
+            name?: string;
+            quantity: number;
+            price?: number;
+        }>;
+        base_price?: number;
+    };
+
     created_at: string;
     updated_at: string;
+
+    // Relationships
     productVariant?: ProductVariant & {
         product?: Product;
     };
     packagingType?: ProductPackagingType;
+    sellable?: ServiceVariant & {
+        service?: Service;
+    };
 }
 
 // Cart Types
@@ -78,16 +103,39 @@ export interface Cart {
 export interface CartItem {
     id: number;
     cart_id: number;
-    product_variant_id: number;
-    product_packaging_type_id: number | null;
+
+    // Legacy product fields (backward compatible)
+    product_variant_id?: number | null;
+    product_packaging_type_id?: number | null;
+
+    // Polymorphic fields
+    sellable_type: string; // 'App\\Models\\ProductVariant' | 'App\\Models\\ServiceVariant'
+    sellable_id: number;
+
     quantity: number;
     price: number;
+
+    // Service-specific fields
+    material_option?: MaterialOption;
+    selected_addons?: Array<{
+        addon_id: number;
+        name?: string;
+        quantity: number;
+        price?: number;
+    }>;
+    base_price?: number;
+
     created_at: string;
     updated_at: string;
+
+    // Relationships
     productVariant?: ProductVariant & {
         product?: Product;
     };
     packagingType?: ProductPackagingType;
+    sellable?: ServiceVariant & {
+        service?: Service;
+    };
     subtotal?: number;
 }
 
