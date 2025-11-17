@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Storefront;
 
+use App\Enums\MaterialOption;
 use App\Http\Controllers\Controller;
 use App\Models\CartItem;
 use App\Models\Shop;
@@ -27,13 +28,17 @@ class CartController extends Controller
 
         return Inertia::render('Storefront/Cart', [
             'shop' => $shop,
-            'cart' => $cart->load(['items.productVariant.product', 'items.packagingType']),
+            'cart' => $cart->load([
+                'items.productVariant.product',
+                'items.packagingType',
+                'items.sellable.service', // For service variants
+            ]),
             'cartSummary' => $cartSummary,
         ]);
     }
 
     /**
-     * Add item to cart.
+     * Add product item to cart.
      */
     public function store(Request $request, Shop $shop): RedirectResponse
     {
@@ -54,6 +59,45 @@ class CartController extends Controller
             );
 
             return redirect()->back()->with('success', 'Item added to cart successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Add service item to cart.
+     */
+    public function storeService(Request $request, Shop $shop): RedirectResponse
+    {
+        $validated = $request->validate([
+            'service_variant_id' => ['required', 'integer', 'exists:service_variants,id'],
+            'quantity' => ['required', 'integer', 'min:1'],
+            'material_option' => ['nullable', 'string', 'in:customer_materials,shop_materials,none'],
+            'selected_addons' => ['nullable', 'array'],
+            'selected_addons.*.addon_id' => ['required', 'integer', 'exists:service_addons,id'],
+            'selected_addons.*.quantity' => ['required', 'integer', 'min:1'],
+        ]);
+
+        try {
+            $cart = $this->cartService->getCart($shop, auth()->id());
+
+            // Convert material option string to enum
+            $materialOption = isset($validated['material_option'])
+                ? MaterialOption::from($validated['material_option'])
+                : null;
+
+            // Format selected addons for CartService
+            $selectedAddons = $validated['selected_addons'] ?? [];
+
+            $this->cartService->addServiceItem(
+                $cart,
+                $validated['service_variant_id'],
+                $validated['quantity'],
+                $materialOption,
+                $selectedAddons
+            );
+
+            return redirect()->back()->with('success', 'Service added to cart successfully');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }

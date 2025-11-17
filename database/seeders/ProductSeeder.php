@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Image;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductType;
@@ -60,6 +61,35 @@ class ProductSeeder extends Seeder
             ]);
 
             $this->createVariantsForProduct($product, $template);
+            $this->createImagesForProduct($product);
+        }
+    }
+
+    /**
+     * Create placeholder images for a product
+     */
+    protected function createImagesForProduct(Product $product): void
+    {
+        $imageCount = rand(1, 3);
+
+        for ($i = 0; $i < $imageCount; $i++) {
+            Image::create([
+                'tenant_id' => $product->tenant_id,
+                'imageable_type' => Product::class,
+                'imageable_id' => $product->id,
+                'filename' => 'placeholder.jpg',
+                'path' => 'https://placehold.co/600x400',
+                'disk' => 'public',
+                'mime_type' => 'image/jpeg',
+                'size' => 0,
+                'width' => 600,
+                'height' => 400,
+                'alt_text' => $product->name,
+                'title' => $product->name,
+                'caption' => $product->description,
+                'is_primary' => $i === 0,
+                'sort_order' => $i,
+            ]);
         }
     }
 

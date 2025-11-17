@@ -1,13 +1,13 @@
 import { useSidebar } from '@/context/SidebarContext';
 import { Link, usePage } from '@inertiajs/react';
 import {
-    ArrowRightLeft,
+    BarChart3,
+    Box,
     FileUser,
-    ShoppingCart,
-    SquareChartGantt,
-    Store,
     Network,
-    FileText,
+    ShoppingBag,
+    Store,
+    Wrench,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDownIcon, GridIcon, HorizontaLDots } from '../icons';
@@ -26,34 +26,44 @@ const navItems: NavItem[] = [
         path: '/dashboard',
     },
     {
-        icon: <FileUser />,
-        name: 'Staff Management',
-        path: '/staff',
+        icon: <Box />,
+        name: 'Inventory',
+        subItems: [
+            { name: 'Products', path: '/products' },
+            { name: 'Categories', path: '/categories' },
+            { name: 'Stock Movements', path: '/stock-movements' },
+        ],
     },
     {
-        icon: <SquareChartGantt />,
-        name: 'Product Management',
-        path: '/products',
+        icon: <Wrench />,
+        name: 'Services',
+        subItems: [
+            { name: 'All Services', path: '/services' },
+            { name: 'Service Categories', path: '/service-categories' },
+        ],
     },
     {
-        icon: <ShoppingCart />,
-        name: 'Orders',
-        path: '/orders',
+        icon: <ShoppingBag />,
+        name: 'Sales & Orders',
+        subItems: [
+            { name: 'Orders', path: '/orders' },
+            { name: 'Purchase Orders', path: '/purchase-orders' },
+        ],
     },
     {
-        icon: <ArrowRightLeft />,
-        name: 'Stock Movements',
-        path: '/stock-movements',
-    },
-    {
-        icon: <Store />,
-        name: 'Shop Management',
-        path: '/shops',
-    },
-    {
-        icon: <FileText />,
-        name: 'Purchase Orders',
-        path: '/purchase-orders',
+        icon: <BarChart3 />,
+        name: 'Reports & Analytics',
+        subItems: [
+            { name: 'Sales Report', path: '/reports/sales' },
+            { name: 'Inventory Report', path: '/reports/inventory' },
+            { name: 'Suppliers Report', path: '/reports/suppliers' },
+            { name: 'Financials', path: '/reports/financials' },
+            { name: 'Customer Analytics', path: '/reports/customer-analytics' },
+            {
+                name: 'Product Profitability',
+                path: '/reports/product-profitability',
+            },
+        ],
     },
     {
         icon: <Network />,
@@ -64,6 +74,16 @@ const navItems: NavItem[] = [
             { name: 'Connections', path: '/supplier/connections' },
             { name: 'Incoming Orders', path: '/purchase-orders/supplier' },
         ],
+    },
+    {
+        icon: <Store />,
+        name: 'Shop Management',
+        path: '/shops',
+    },
+    {
+        icon: <FileUser />,
+        name: 'Staff Management',
+        path: '/staff',
     },
 ];
 

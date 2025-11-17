@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\MaterialOption;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class CartItem extends Model
 {
@@ -16,8 +18,13 @@ class CartItem extends Model
         'cart_id',
         'product_variant_id',
         'product_packaging_type_id',
+        'sellable_type',
+        'sellable_id',
         'quantity',
         'price',
+        'material_option',
+        'selected_addons',
+        'base_price',
     ];
 
     /**
@@ -28,10 +35,13 @@ class CartItem extends Model
     protected $casts = [
         'quantity' => 'integer',
         'price' => 'decimal:2',
+        'base_price' => 'decimal:2',
+        'selected_addons' => 'array',
+        'material_option' => MaterialOption::class,
     ];
 
     /**
-     * Get the cart that owns the cart item.
+     * Get the cart that owns the cart item
      */
     public function cart(): BelongsTo
     {
@@ -39,7 +49,15 @@ class CartItem extends Model
     }
 
     /**
-     * Get the product variant for the cart item.
+     * Get the sellable item (ProductVariant or ServiceVariant)
+     */
+    public function sellable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * Get the product variant for the cart item (backward compatible)
      */
     public function productVariant(): BelongsTo
     {
@@ -47,7 +65,7 @@ class CartItem extends Model
     }
 
     /**
-     * Get the packaging type for the cart item.
+     * Get the packaging type for the cart item
      */
     public function packagingType(): BelongsTo
     {
@@ -55,7 +73,23 @@ class CartItem extends Model
     }
 
     /**
-     * Get the subtotal for this cart item.
+     * Check if item is a product
+     */
+    public function isProduct(): bool
+    {
+        return $this->sellable_type === ProductVariant::class;
+    }
+
+    /**
+     * Check if item is a service
+     */
+    public function isService(): bool
+    {
+        return $this->sellable_type === ServiceVariant::class;
+    }
+
+    /**
+     * Get the subtotal for this cart item
      */
     public function getSubtotalAttribute(): float
     {

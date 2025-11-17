@@ -86,3 +86,4 @@ export const formatDate = (dateString: string): string => {
         minute: '2-digit',
     });
 };
+

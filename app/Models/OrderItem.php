@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class OrderItem extends Model
 {
@@ -14,12 +15,15 @@ class OrderItem extends Model
         'order_id',
         'product_variant_id',
         'product_packaging_type_id',
+        'sellable_type',
+        'sellable_id',
         'packaging_description',
         'quantity',
         'unit_price',
         'discount_amount',
         'tax_amount',
         'total_amount',
+        'metadata',
     ];
 
     protected $casts = [
@@ -28,6 +32,7 @@ class OrderItem extends Model
         'discount_amount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'metadata' => 'array',
     ];
 
     protected static function boot()
@@ -52,6 +57,30 @@ class OrderItem extends Model
     public function packagingType(): BelongsTo
     {
         return $this->belongsTo(ProductPackagingType::class, 'product_packaging_type_id');
+    }
+
+    /**
+     * Polymorphic relationship to either ProductVariant or ServiceVariant
+     */
+    public function sellable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * Check if this order item is for a product
+     */
+    public function isProduct(): bool
+    {
+        return $this->sellable_type === ProductVariant::class;
+    }
+
+    /**
+     * Check if this order item is for a service
+     */
+    public function isService(): bool
+    {
+        return $this->sellable_type === ServiceVariant::class;
     }
 
     public function calculateTotal(): void
@@ -100,16 +129,28 @@ class OrderItem extends Model
 
     public function getProductNameAttribute(): string
     {
-        return $this->productVariant->product->name ?? 'Unknown Product';
+        if ($this->isService()) {
+            return $this->sellable?->service?->name ?? 'Unknown Service';
+        }
+
+        return $this->productVariant?->product?->name ?? 'Unknown Product';
     }
 
     public function getVariantNameAttribute(): string
     {
-        return $this->productVariant->name ?? 'Default Variant';
+        if ($this->isService()) {
+            return $this->sellable?->name ?? 'Default Variant';
+        }
+
+        return $this->productVariant?->name ?? 'Default Variant';
     }
 
     public function getSkuAttribute(): string
     {
-        return $this->productVariant->sku ?? '';
+        if ($this->isService()) {
+            return 'SVC-' . $this->sellable_id;
+        }
+
+        return $this->productVariant?->sku ?? '';
     }
 }

@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\MaterialOption;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\ProductVariant;
+use App\Models\ServiceVariant;
 use App\Models\Shop;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
@@ -91,6 +93,46 @@ class CartService
     }
 
     /**
+     * Add a service item to the cart.
+     */
+    public function addServiceItem(
+        Cart $cart,
+        int $serviceVariantId,
+        int $quantity = 1,
+        ?MaterialOption $materialOption = null,
+        array $selectedAddons = []
+    ): CartItem {
+        $variant = ServiceVariant::with('service')->findOrFail($serviceVariantId);
+
+        // Check if service is available online
+        if (!$variant->service->is_available_online || !$variant->is_active) {
+            throw new \Exception('This service is not available for online booking.');
+        }
+
+        return DB::transaction(function () use ($cart, $variant, $quantity, $materialOption, $selectedAddons) {
+            // Calculate prices
+            $basePrice = $variant->getPriceForMaterialOption($materialOption);
+            $totalPrice = $variant->calculateTotalPrice($materialOption, $selectedAddons);
+
+            // For services, we create a new cart item each time (no merging by default)
+            // Services might have different add-ons or material options
+            $cartItem = CartItem::create([
+                'cart_id' => $cart->id,
+                'sellable_type' => ServiceVariant::class,
+                'sellable_id' => $variant->id,
+                'quantity' => $quantity,
+                'price' => $totalPrice,
+                'base_price' => $basePrice,
+                'material_option' => $materialOption,
+                'selected_addons' => $selectedAddons,
+            ]);
+
+            $cart->touch();
+            return $cartItem->fresh(['sellable']);
+        });
+    }
+
+    /**
      * Update cart item quantity.
      */
     public function updateQuantity(CartItem $item, int $quantity): ?CartItem
@@ -101,15 +143,22 @@ class CartService
             return null;
         }
 
-        // Check stock availability
-        if (!$this->checkStockAvailability($item->productVariant, $quantity)) {
-            throw new \Exception('Insufficient stock available. Only ' . $item->productVariant->available_stock . ' units in stock.');
+        // Check stock availability for products only
+        if ($item->isProduct()) {
+            if (!$this->checkStockAvailability($item->productVariant, $quantity)) {
+                throw new \Exception('Insufficient stock available. Only ' . $item->productVariant->available_stock . ' units in stock.');
+            }
         }
 
         $item->update(['quantity' => $quantity]);
         $item->cart->touch();
 
-        return $item->fresh(['productVariant.product', 'packagingType']);
+        // Load appropriate relationships based on item type
+        if ($item->isProduct()) {
+            return $item->fresh(['productVariant.product', 'packagingType']);
+        } else {
+            return $item->fresh(['sellable']);
+        }
     }
 
     /**
@@ -136,10 +185,19 @@ class CartService
      */
     public function getCartSummary(Cart $cart): array
     {
-        $items = $cart->items()->with(['productVariant.product', 'packagingType'])->get();
+        $items = $cart->items()->with([
+            'productVariant.product',
+            'packagingType',
+            'sellable',
+        ])->get();
 
         $subtotal = $items->sum(fn($item) => $item->price * $item->quantity);
-        $shippingFee = $this->calculateShipping($cart, $subtotal);
+
+        // Calculate shipping only for products (services don't have shipping)
+        $productSubtotal = $items->filter(fn($item) => $item->isProduct())
+            ->sum(fn($item) => $item->price * $item->quantity);
+        $shippingFee = $this->calculateShipping($cart, $productSubtotal);
+
         $tax = $this->calculateTax($cart, $subtotal);
         $total = $subtotal + $shippingFee + $tax;
 
@@ -173,18 +231,24 @@ class CartService
 
             // Merge items
             foreach ($guestCart->items as $guestItem) {
-                $existingItem = CartItem::where([
-                    'cart_id' => $customerCart->id,
-                    'product_variant_id' => $guestItem->product_variant_id,
-                    'product_packaging_type_id' => $guestItem->product_packaging_type_id,
-                ])->first();
+                if ($guestItem->isProduct()) {
+                    // Handle product items
+                    $existingItem = CartItem::where([
+                        'cart_id' => $customerCart->id,
+                        'product_variant_id' => $guestItem->product_variant_id,
+                        'product_packaging_type_id' => $guestItem->product_packaging_type_id,
+                    ])->first();
 
-                if ($existingItem) {
-                    // Merge quantities
-                    $newQuantity = $existingItem->quantity + $guestItem->quantity;
-                    $existingItem->update(['quantity' => $newQuantity]);
+                    if ($existingItem) {
+                        // Merge quantities
+                        $newQuantity = $existingItem->quantity + $guestItem->quantity;
+                        $existingItem->update(['quantity' => $newQuantity]);
+                    } else {
+                        // Move item to customer cart
+                        $guestItem->update(['cart_id' => $customerCart->id]);
+                    }
                 } else {
-                    // Move item to customer cart
+                    // For services, always move to customer cart (no merging due to unique configurations)
                     $guestItem->update(['cart_id' => $customerCart->id]);
                 }
             }
@@ -192,7 +256,11 @@ class CartService
             // Delete guest cart
             $guestCart->delete();
 
-            return $customerCart->fresh(['items.productVariant.product', 'items.packagingType']);
+            return $customerCart->fresh([
+                'items.productVariant.product',
+                'items.packagingType',
+                'items.sellable',
+            ]);
         });
     }
 
