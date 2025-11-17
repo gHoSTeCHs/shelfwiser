@@ -81,7 +81,7 @@ class CheckoutService
                 'shipping_address' => json_encode($shippingAddress),
                 'billing_address' => json_encode($billingAddress),
                 'customer_notes' => $customerNotes,
-                'created_by' => $customer->id,
+                'created_by' => null, // E-commerce orders have no staff creator
             ]);
 
             foreach ($cartSummary['items'] as $cartItem) {

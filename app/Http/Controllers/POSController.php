@@ -92,6 +92,7 @@ class POSController extends Controller
             'payment_method' => ['required', 'string', 'in:cash,card,mobile_money,bank_transfer'],
             'amount_tendered' => ['nullable', 'numeric', 'min:0'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'reference_number' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -104,6 +105,7 @@ class POSController extends Controller
                 amountTendered: $validated['amount_tendered'] ?? 0,
                 options: [
                     'discount_amount' => $validated['discount_amount'] ?? 0,
+                    'reference_number' => $validated['reference_number'] ?? null,
                     'notes' => $validated['notes'] ?? null,
                 ]
             );

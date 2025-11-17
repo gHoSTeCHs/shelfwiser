@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderPayment;
 use App\Models\ProductVariant;
 use App\Models\Shop;
 use Illuminate\Support\Facades\DB;
@@ -113,11 +114,29 @@ class POSService
                 'paid_amount' => $totalAmount,
             ]);
 
+            // Create payment record for audit trail
+            $paymentNotes = null;
             if ($paymentMethod === 'cash' && $amountTendered > 0) {
+                $change = $amountTendered - $totalAmount;
+                $paymentNotes = "Cash tendered: {$shop->currency_symbol}" . number_format($amountTendered, 2) .
+                               ", Change: {$shop->currency_symbol}" . number_format($change, 2);
+
                 $order->update([
-                    'internal_notes' => "Cash tendered: {$shop->currency_symbol}{$amountTendered}, Change: {$shop->currency_symbol}" . ($amountTendered - $totalAmount)
+                    'internal_notes' => $paymentNotes
                 ]);
             }
+
+            OrderPayment::create([
+                'order_id' => $order->id,
+                'tenant_id' => $order->tenant_id,
+                'shop_id' => $order->shop_id,
+                'amount' => $totalAmount,
+                'payment_method' => $paymentMethod,
+                'payment_date' => now(),
+                'reference_number' => $options['reference_number'] ?? null,
+                'notes' => $paymentNotes ?? "POS payment via {$paymentMethod}",
+                'recorded_by' => auth()->id(),
+            ]);
 
             return $order->load(['items.productVariant.product', 'customer', 'shop']);
         });
