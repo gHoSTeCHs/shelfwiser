@@ -13,6 +13,12 @@ class DatabaseSeeder extends Seeder
             ShopTypeSeeder::class,
             ProductTypeSeeder::class,
 
+            // Tax System
+            TaxJurisdictionSeeder::class,
+            TaxBracketSeeder::class,
+            CorporateTaxRateSeeder::class,
+            TaxReliefSeeder::class,
+
             // Core Multi-Tenancy
             TenantSeeder::class,
             UserSeeder::class,
