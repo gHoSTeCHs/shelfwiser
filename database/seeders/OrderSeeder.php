@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductPackagingType;
@@ -34,6 +35,7 @@ class OrderSeeder extends Seeder
         $status = $this->getRandomStatus();
         $paymentStatus = $this->getRandomPaymentStatus($status);
         $createdBy = $this->getRandomStaff($shop);
+        $customer = $this->getRandomCustomer($shop);
 
         $createdAt = now()->subDays(rand(1, 90));
         $dateKey = $createdAt->format('Y-m-d');
@@ -50,7 +52,7 @@ class OrderSeeder extends Seeder
         $order = Order::create([
             'tenant_id' => $shop->tenant_id,
             'shop_id' => $shop->id,
-            'customer_id' => null,
+            'customer_id' => $customer?->id,
             'order_number' => $orderNumber,
             'status' => $status,
             'payment_status' => $paymentStatus,
@@ -192,6 +194,23 @@ class OrderSeeder extends Seeder
             ->get();
 
         return $users->isNotEmpty() ? $users->random() : null;
+    }
+
+    /**
+     * Get a random customer for the shop's tenant (70% chance) or null for walk-in customer (30% chance)
+     */
+    protected function getRandomCustomer(Shop $shop): ?Customer
+    {
+        if (rand(1, 100) <= 30) {
+            return null;
+        }
+
+        $customers = Customer::query()
+            ->where('tenant_id', $shop->tenant_id)
+            ->where('is_active', true)
+            ->get();
+
+        return $customers->isNotEmpty() ? $customers->random() : null;
     }
 
     protected function determineQuantity(ProductPackagingType $packaging): int
