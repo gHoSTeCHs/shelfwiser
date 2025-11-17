@@ -125,4 +125,14 @@ class User extends Authenticatable
             ->ofType('billing');
     }
 
+    public function employeePayrollDetail(): HasOne
+    {
+        return $this->hasOne(EmployeePayrollDetail::class);
+    }
+
+    public function customDeductions(): HasMany
+    {
+        return $this->hasMany(EmployeeCustomDeduction::class);
+    }
+
 }

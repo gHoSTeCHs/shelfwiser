@@ -16,6 +16,8 @@ use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\SupplierCatalogController;
 use App\Http\Controllers\SupplierConnectionController;
 use App\Http\Controllers\SupplierProfileController;
+use App\Http\Controllers\ShopSettingsController;
+use App\Http\Controllers\StaffPayrollController;
 use App\Http\Controllers\Web\StaffManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -53,6 +55,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{staff}/edit', [StaffManagementController::class, 'edit'])->name('edit');
         Route::put('/{staff}', [StaffManagementController::class, 'update'])->name('update');
         Route::delete('/{staff}', [StaffManagementController::class, 'destroy'])->name('destroy');
+
+        Route::post('/{employee}/payroll', [StaffPayrollController::class, 'store'])->name('payroll.store');
+        Route::patch('/{employee}/payroll/deductions', [StaffPayrollController::class, 'updateDeductions'])->name('payroll.deductions.update');
+        Route::patch('/{employee}/payroll/tax-settings', [StaffPayrollController::class, 'updateTaxSettings'])->name('payroll.tax-settings.update');
     });
 
     Route::resource('shops', ShopController::class);
@@ -60,6 +66,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('shops/{shop}/storefront-settings')->name('shops.storefront-settings.')->group(function () {
         Route::get('/', [ShopController::class, 'editStorefrontSettings'])->name('edit');
         Route::patch('/', [ShopController::class, 'updateStorefrontSettings'])->name('update');
+    });
+
+    Route::prefix('shops/{shop}/tax-settings')->name('shops.tax-settings.')->group(function () {
+        Route::get('/', [ShopSettingsController::class, 'show'])->name('show');
+        Route::patch('/', [ShopSettingsController::class, 'update'])->name('update');
     });
 
     Route::resource('categories', ProductCategoryController::class);
