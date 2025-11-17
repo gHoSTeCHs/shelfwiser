@@ -18,6 +18,7 @@ use App\Http\Controllers\SupplierConnectionController;
 use App\Http\Controllers\SupplierProfileController;
 use App\Http\Controllers\ShopSettingsController;
 use App\Http\Controllers\StaffPayrollController;
+use App\Http\Controllers\TimesheetController;
 use App\Http\Controllers\Web\StaffManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -59,6 +60,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{employee}/payroll', [StaffPayrollController::class, 'store'])->name('payroll.store');
         Route::patch('/{employee}/payroll/deductions', [StaffPayrollController::class, 'updateDeductions'])->name('payroll.deductions.update');
         Route::patch('/{employee}/payroll/tax-settings', [StaffPayrollController::class, 'updateTaxSettings'])->name('payroll.tax-settings.update');
+    });
+
+    Route::prefix('timesheets')->name('timesheets.')->group(function () {
+        Route::get('/', [TimesheetController::class, 'index'])->name('index');
+        Route::get('/approval-queue', [TimesheetController::class, 'approvalQueue'])->name('approval-queue');
+        Route::get('/{timesheet}', [TimesheetController::class, 'show'])->name('show');
+
+        Route::post('/clock-in', [TimesheetController::class, 'clockIn'])->name('clock-in');
+        Route::post('/{timesheet}/clock-out', [TimesheetController::class, 'clockOut'])->name('clock-out');
+        Route::post('/{timesheet}/start-break', [TimesheetController::class, 'startBreak'])->name('start-break');
+        Route::post('/{timesheet}/end-break', [TimesheetController::class, 'endBreak'])->name('end-break');
+
+        Route::patch('/{timesheet}', [TimesheetController::class, 'update'])->name('update');
+        Route::post('/{timesheet}/submit', [TimesheetController::class, 'submit'])->name('submit');
+        Route::post('/{timesheet}/approve', [TimesheetController::class, 'approve'])->name('approve');
+        Route::post('/{timesheet}/reject', [TimesheetController::class, 'reject'])->name('reject');
+
+        Route::delete('/{timesheet}', [TimesheetController::class, 'destroy'])->name('destroy');
     });
 
     Route::resource('shops', ShopController::class);
