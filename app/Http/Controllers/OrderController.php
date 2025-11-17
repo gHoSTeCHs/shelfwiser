@@ -135,7 +135,8 @@ class OrderController extends Controller
             'items.productVariant.product',
             'items.productVariant.inventoryLocations.location',
             'items.packagingType',
-            'createdBy'
+            'createdBy',
+            'payments.recordedBy'
         ]);
 
         return Inertia::render('Orders/Show', [

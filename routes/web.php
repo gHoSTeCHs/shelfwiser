@@ -5,6 +5,7 @@ use App\Http\Controllers\FundRequestController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderPaymentController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
@@ -199,6 +200,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');
         Route::post('/{order}/payment', [OrderController::class, 'updatePaymentStatus'])->name('update-payment');
+        Route::post('/{order}/payments', [OrderPaymentController::class, 'store'])->name('payments.store');
+        Route::delete('/payments/{orderPayment}', [OrderPaymentController::class, 'destroy'])->name('payments.destroy');
     });
 
     Route::prefix('stock-movements')->name('stock-movements.')->group(function () {
