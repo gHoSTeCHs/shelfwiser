@@ -150,4 +150,9 @@ class User extends Authenticatable
         return $this->hasMany(WageAdvance::class);
     }
 
+    public function payslips(): HasMany
+    {
+        return $this->hasMany(Payslip::class);
+    }
+
 }

@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FundRequestController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseOrderController;
@@ -113,6 +114,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{wageAdvance}/cancel', [WageAdvanceController::class, 'cancel'])->name('cancel');
 
         Route::delete('/{wageAdvance}', [WageAdvanceController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('payroll')->name('payroll.')->group(function () {
+        Route::get('/', [PayrollController::class, 'index'])->name('index');
+        Route::get('/create', [PayrollController::class, 'create'])->name('create');
+        Route::post('/', [PayrollController::class, 'store'])->name('store');
+        Route::get('/my-payslips', [PayrollController::class, 'myPayslips'])->name('my-payslips');
+        Route::get('/payslip/{payslip}', [PayrollController::class, 'showPayslip'])->name('show-payslip');
+        Route::get('/{payrollPeriod}', [PayrollController::class, 'show'])->name('show');
+
+        Route::post('/{payrollPeriod}/process', [PayrollController::class, 'process'])->name('process');
+        Route::post('/{payrollPeriod}/approve', [PayrollController::class, 'approve'])->name('approve');
+        Route::post('/{payrollPeriod}/mark-as-paid', [PayrollController::class, 'markAsPaid'])->name('mark-as-paid');
+        Route::post('/{payrollPeriod}/cancel', [PayrollController::class, 'cancel'])->name('cancel');
+
+        Route::delete('/{payrollPeriod}', [PayrollController::class, 'destroy'])->name('destroy');
     });
 
     Route::resource('shops', ShopController::class);

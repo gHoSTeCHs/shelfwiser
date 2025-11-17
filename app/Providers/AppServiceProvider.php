@@ -3,12 +3,14 @@
 namespace App\Providers;
 
 use App\Models\FundRequest;
+use App\Models\PayrollPeriod;
 use App\Models\Service;
 use App\Models\Shop;
 use App\Models\Timesheet;
 use App\Models\User;
 use App\Models\WageAdvance;
 use App\Policies\FundRequestPolicy;
+use App\Policies\PayrollPolicy;
 use App\Policies\ServicePolicy;
 use App\Policies\StaffPolicy;
 use App\Policies\StorefrontPolicy;
@@ -38,5 +40,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Timesheet::class, TimesheetPolicy::class);
         Gate::policy(FundRequest::class, FundRequestPolicy::class);
         Gate::policy(WageAdvance::class, WageAdvancePolicy::class);
+        Gate::policy(PayrollPeriod::class, PayrollPolicy::class);
     }
 }

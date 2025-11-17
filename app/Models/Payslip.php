@@ -1,0 +1,135 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Payslip extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'payroll_period_id',
+        'user_id',
+        'tenant_id',
+        'shop_id',
+        'base_salary',
+        'regular_hours',
+        'regular_pay',
+        'overtime_hours',
+        'overtime_pay',
+        'bonus',
+        'commission',
+        'gross_pay',
+        'income_tax',
+        'pension_employee',
+        'pension_employer',
+        'nhf',
+        'nhis',
+        'wage_advance_deduction',
+        'other_deductions',
+        'total_deductions',
+        'net_pay',
+        'earnings_breakdown',
+        'deductions_breakdown',
+        'tax_breakdown',
+        'notes',
+    ];
+
+    protected $casts = [
+        'base_salary' => 'decimal:2',
+        'regular_hours' => 'decimal:2',
+        'regular_pay' => 'decimal:2',
+        'overtime_hours' => 'decimal:2',
+        'overtime_pay' => 'decimal:2',
+        'bonus' => 'decimal:2',
+        'commission' => 'decimal:2',
+        'gross_pay' => 'decimal:2',
+        'income_tax' => 'decimal:2',
+        'pension_employee' => 'decimal:2',
+        'pension_employer' => 'decimal:2',
+        'nhf' => 'decimal:2',
+        'nhis' => 'decimal:2',
+        'wage_advance_deduction' => 'decimal:2',
+        'other_deductions' => 'decimal:2',
+        'total_deductions' => 'decimal:2',
+        'net_pay' => 'decimal:2',
+        'earnings_breakdown' => 'array',
+        'deductions_breakdown' => 'array',
+        'tax_breakdown' => 'array',
+    ];
+
+    /**
+     * Payroll period this payslip belongs to
+     */
+    public function payrollPeriod(): BelongsTo
+    {
+        return $this->belongsTo(PayrollPeriod::class);
+    }
+
+    /**
+     * Employee this payslip is for
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Tenant that owns this payslip
+     */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * Shop this payslip is for
+     */
+    public function shop(): BelongsTo
+    {
+        return $this->belongsTo(Shop::class);
+    }
+
+    /**
+     * Get total earnings
+     */
+    public function getTotalEarnings(): float
+    {
+        return (float) $this->gross_pay;
+    }
+
+    /**
+     * Get employer contributions
+     */
+    public function getEmployerContributions(): float
+    {
+        return (float) $this->pension_employer;
+    }
+
+    /**
+     * Scope to filter by tenant
+     */
+    public function scopeForTenant($query, int $tenantId)
+    {
+        return $query->where('tenant_id', $tenantId);
+    }
+
+    /**
+     * Scope to filter by user
+     */
+    public function scopeForUser($query, int $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+
+    /**
+     * Scope to filter by payroll period
+     */
+    public function scopeForPeriod($query, int $periodId)
+    {
+        return $query->where('payroll_period_id', $periodId);
+    }
+}
