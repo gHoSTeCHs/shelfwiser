@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\DB;
 
 class FundRequestService
 {
+    public function __construct(
+        private NotificationService $notificationService
+    ) {}
+
     /**
      * Create a new fund request
      */
@@ -33,7 +37,11 @@ class FundRequestService
 
             $this->clearCache($user->tenant_id);
 
-            return $fundRequest->fresh(['user', 'shop']);
+            $freshRequest = $fundRequest->fresh(['user', 'shop']);
+
+            $this->notificationService->notifyFundRequestSubmitted($freshRequest);
+
+            return $freshRequest;
         });
     }
 
@@ -57,7 +65,11 @@ class FundRequestService
 
             $this->clearCache($fundRequest->tenant_id);
 
-            return $fundRequest->fresh(['user', 'shop', 'approvedBy']);
+            $freshRequest = $fundRequest->fresh(['user', 'shop', 'approvedBy']);
+
+            $this->notificationService->notifyFundRequestApproved($freshRequest, $approver);
+
+            return $freshRequest;
         });
     }
 
@@ -80,7 +92,11 @@ class FundRequestService
 
             $this->clearCache($fundRequest->tenant_id);
 
-            return $fundRequest->fresh(['user', 'shop', 'approvedBy']);
+            $freshRequest = $fundRequest->fresh(['user', 'shop', 'approvedBy']);
+
+            $this->notificationService->notifyFundRequestRejected($freshRequest, $rejector, $reason);
+
+            return $freshRequest;
         });
     }
 
@@ -103,7 +119,11 @@ class FundRequestService
 
             $this->clearCache($fundRequest->tenant_id);
 
-            return $fundRequest->fresh(['user', 'shop', 'approvedBy', 'disbursedBy']);
+            $freshRequest = $fundRequest->fresh(['user', 'shop', 'approvedBy', 'disbursedBy']);
+
+            $this->notificationService->notifyFundRequestDisbursed($freshRequest, $disburser);
+
+            return $freshRequest;
         });
     }
 

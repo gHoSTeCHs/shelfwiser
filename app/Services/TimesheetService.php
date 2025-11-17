@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 class TimesheetService
 {
+    public function __construct(
+        private NotificationService $notificationService
+    ) {}
+
     /**
      * Clock in an employee for a shift
      */
@@ -207,7 +211,11 @@ class TimesheetService
 
             $this->clearTimesheetCache($timesheet->tenant_id);
 
-            return $timesheet->fresh();
+            $freshTimesheet = $timesheet->fresh(['user']);
+
+            $this->notificationService->notifyTimesheetSubmitted($freshTimesheet);
+
+            return $freshTimesheet;
         });
     }
 
@@ -230,7 +238,11 @@ class TimesheetService
 
             $this->clearTimesheetCache($timesheet->tenant_id);
 
-            return $timesheet->fresh();
+            $freshTimesheet = $timesheet->fresh(['user']);
+
+            $this->notificationService->notifyTimesheetApproved($freshTimesheet, $approver);
+
+            return $freshTimesheet;
         });
     }
 
@@ -253,7 +265,11 @@ class TimesheetService
 
             $this->clearTimesheetCache($timesheet->tenant_id);
 
-            return $timesheet->fresh();
+            $freshTimesheet = $timesheet->fresh(['user']);
+
+            $this->notificationService->notifyTimesheetRejected($freshTimesheet, $approver, $reason);
+
+            return $freshTimesheet;
         });
     }
 

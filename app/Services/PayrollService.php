@@ -20,7 +20,8 @@ class PayrollService
     public function __construct(
         private TimesheetService $timesheetService,
         private WageAdvanceService $wageAdvanceService,
-        private TaxService $taxService
+        private TaxService $taxService,
+        private NotificationService $notificationService
     ) {}
 
     /**
@@ -100,7 +101,11 @@ class PayrollService
 
             $this->clearCache($payrollPeriod->tenant_id);
 
-            return $payrollPeriod->fresh(['payslips.user', 'processedBy']);
+            $freshPayroll = $payrollPeriod->fresh(['payslips.user', 'processedBy']);
+
+            $this->notificationService->notifyPayrollProcessed($freshPayroll, $processor);
+
+            return $freshPayroll;
         });
     }
 
@@ -323,7 +328,11 @@ class PayrollService
 
             $this->clearCache($payrollPeriod->tenant_id);
 
-            return $payrollPeriod->fresh(['payslips', 'approvedBy']);
+            $freshPayroll = $payrollPeriod->fresh(['payslips', 'approvedBy']);
+
+            $this->notificationService->notifyPayrollApproved($freshPayroll, $approver);
+
+            return $freshPayroll;
         });
     }
 
@@ -355,7 +364,11 @@ class PayrollService
 
             $this->clearCache($payrollPeriod->tenant_id);
 
-            return $payrollPeriod->fresh();
+            $freshPayroll = $payrollPeriod->fresh(['payslips.user']);
+
+            $this->notificationService->notifyPayrollPaid($freshPayroll);
+
+            return $freshPayroll;
         });
     }
 

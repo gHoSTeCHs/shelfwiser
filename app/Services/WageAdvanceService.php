@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\DB;
 class WageAdvanceService
 {
     public function __construct(
-        private EmployeePayrollService $payrollService
+        private EmployeePayrollService $payrollService,
+        private NotificationService $notificationService
     ) {}
 
     /**
@@ -91,7 +92,11 @@ class WageAdvanceService
 
             $this->clearCache($user->tenant_id);
 
-            return $wageAdvance->fresh(['user', 'shop']);
+            $freshAdvance = $wageAdvance->fresh(['user', 'shop']);
+
+            $this->notificationService->notifyWageAdvanceRequested($freshAdvance);
+
+            return $freshAdvance;
         });
     }
 
@@ -129,7 +134,11 @@ class WageAdvanceService
 
             $this->clearCache($wageAdvance->tenant_id);
 
-            return $wageAdvance->fresh(['user', 'shop', 'approvedBy']);
+            $freshAdvance = $wageAdvance->fresh(['user', 'shop', 'approvedBy']);
+
+            $this->notificationService->notifyWageAdvanceApproved($freshAdvance, $approver);
+
+            return $freshAdvance;
         });
     }
 
@@ -152,7 +161,11 @@ class WageAdvanceService
 
             $this->clearCache($wageAdvance->tenant_id);
 
-            return $wageAdvance->fresh(['user', 'shop', 'approvedBy']);
+            $freshAdvance = $wageAdvance->fresh(['user', 'shop', 'approvedBy']);
+
+            $this->notificationService->notifyWageAdvanceRejected($freshAdvance, $rejector, $reason);
+
+            return $freshAdvance;
         });
     }
 
@@ -180,7 +193,11 @@ class WageAdvanceService
 
             $this->clearCache($wageAdvance->tenant_id);
 
-            return $wageAdvance->fresh(['user', 'shop', 'approvedBy', 'disbursedBy']);
+            $freshAdvance = $wageAdvance->fresh(['user', 'shop', 'approvedBy', 'disbursedBy']);
+
+            $this->notificationService->notifyWageAdvanceDisbursed($freshAdvance);
+
+            return $freshAdvance;
         });
     }
 

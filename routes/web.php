@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FundRequestController;
 use App\Http\Controllers\ImageController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\ProductCategoryController;
@@ -130,6 +131,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{payrollPeriod}/cancel', [PayrollController::class, 'cancel'])->name('cancel');
 
         Route::delete('/{payrollPeriod}', [PayrollController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
+        Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-as-read');
+        Route::post('/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('mark-as-read');
+        Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
+        Route::delete('/read/all', [NotificationController::class, 'deleteAllRead'])->name('delete-all-read');
     });
 
     Route::resource('shops', ShopController::class);
