@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\PayrollStatus;
+use App\Enums\UserRole;
 use App\Models\PayrollPeriod;
 use App\Models\Shop;
 use App\Models\Tenant;
@@ -29,7 +30,7 @@ class PayrollPeriodSeeder extends Seeder
             }
 
             $processor = User::where('tenant_id', $tenant->id)
-                ->whereIn('role', ['owner', 'general_manager'])
+                ->whereIn('role', [UserRole::OWNER, UserRole::GENERAL_MANAGER])
                 ->first();
 
             if (!$processor) {

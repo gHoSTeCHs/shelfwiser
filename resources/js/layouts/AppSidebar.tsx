@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     BarChart3,
     Box,
+    Briefcase,
     FileUser,
     Network,
     ShoppingBag,
@@ -47,6 +48,7 @@ const navItems: NavItem[] = [
         name: 'Sales & Orders',
         subItems: [
             { name: 'Orders', path: '/orders' },
+            { name: 'Receipts', path: '/receipts' },
             { name: 'Purchase Orders', path: '/purchase-orders' },
         ],
     },
@@ -84,6 +86,16 @@ const navItems: NavItem[] = [
         icon: <FileUser />,
         name: 'Staff Management',
         path: '/staff',
+    },
+    {
+        icon: <Briefcase />,
+        name: 'HR & Payroll',
+        subItems: [
+            { name: 'Payroll', path: '/payroll' },
+            { name: 'Timesheets', path: '/timesheets' },
+            { name: 'Fund Requests', path: '/fund-requests' },
+            { name: 'Wage Advances', path: '/wage-advances' },
+        ],
     },
 ];
 
