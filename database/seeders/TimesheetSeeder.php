@@ -46,56 +46,56 @@ class TimesheetSeeder extends Seeder
                 'date' => Carbon::now()->subDays(15)->toDateString(),
                 'clock_in' => Carbon::now()->subDays(15)->setTime(8, 0),
                 'clock_out' => Carbon::now()->subDays(15)->setTime(17, 0),
-                'break_minutes' => 60,
+                'break_duration_minutes' => 60,
                 'status' => TimesheetStatus::PAID,
             ],
             [
                 'date' => Carbon::now()->subDays(14)->toDateString(),
                 'clock_in' => Carbon::now()->subDays(14)->setTime(8, 0),
                 'clock_out' => Carbon::now()->subDays(14)->setTime(18, 30),
-                'break_minutes' => 60,
+                'break_duration_minutes' => 60,
                 'status' => TimesheetStatus::PAID,
             ],
             [
                 'date' => Carbon::now()->subDays(13)->toDateString(),
                 'clock_in' => Carbon::now()->subDays(13)->setTime(9, 0),
                 'clock_out' => Carbon::now()->subDays(13)->setTime(17, 0),
-                'break_minutes' => 30,
+                'break_duration_minutes' => 30,
                 'status' => TimesheetStatus::PAID,
             ],
             [
                 'date' => Carbon::now()->subDays(5)->toDateString(),
                 'clock_in' => Carbon::now()->subDays(5)->setTime(8, 0),
                 'clock_out' => Carbon::now()->subDays(5)->setTime(17, 0),
-                'break_minutes' => 60,
+                'break_duration_minutes' => 60,
                 'status' => TimesheetStatus::APPROVED,
             ],
             [
                 'date' => Carbon::now()->subDays(4)->toDateString(),
                 'clock_in' => Carbon::now()->subDays(4)->setTime(8, 0),
                 'clock_out' => Carbon::now()->subDays(4)->setTime(19, 0),
-                'break_minutes' => 60,
+                'break_duration_minutes' => 60,
                 'status' => TimesheetStatus::APPROVED,
             ],
             [
                 'date' => Carbon::now()->subDays(2)->toDateString(),
                 'clock_in' => Carbon::now()->subDays(2)->setTime(8, 30),
                 'clock_out' => Carbon::now()->subDays(2)->setTime(17, 30),
-                'break_minutes' => 60,
+                'break_duration_minutes' => 60,
                 'status' => TimesheetStatus::SUBMITTED,
             ],
             [
                 'date' => Carbon::now()->subDay()->toDateString(),
                 'clock_in' => Carbon::now()->subDay()->setTime(8, 0),
                 'clock_out' => Carbon::now()->subDay()->setTime(17, 0),
-                'break_minutes' => 60,
+                'break_duration_minutes' => 60,
                 'status' => TimesheetStatus::SUBMITTED,
             ],
             [
                 'date' => Carbon::now()->toDateString(),
                 'clock_in' => Carbon::now()->setTime(8, 0),
                 'clock_out' => null,
-                'break_minutes' => 0,
+                'break_duration_minutes' => 0,
                 'status' => TimesheetStatus::DRAFT,
             ],
         ];
@@ -103,14 +103,14 @@ class TimesheetSeeder extends Seeder
         foreach ($timesheets as $timesheetData) {
             $clockIn = $timesheetData['clock_in'];
             $clockOut = $timesheetData['clock_out'];
-            $breakMinutes = $timesheetData['break_minutes'];
+            $breakDurationMinutes = $timesheetData['break_duration_minutes'];
 
             $totalHours = 0;
             $regularHours = 0;
             $overtimeHours = 0;
 
             if ($clockOut) {
-                $totalMinutes = $clockIn->diffInMinutes($clockOut) - $breakMinutes;
+                $totalMinutes = $clockIn->diffInMinutes($clockOut) - $breakDurationMinutes;
                 $totalHours = $totalMinutes / 60;
 
                 if ($totalHours > $overtimeThreshold) {
@@ -130,8 +130,8 @@ class TimesheetSeeder extends Seeder
                 'clock_in' => $clockIn,
                 'clock_out' => $clockOut,
                 'break_start' => $clockOut ? $clockIn->copy()->addHours(4) : null,
-                'break_end' => $clockOut ? $clockIn->copy()->addHours(4)->addMinutes($breakMinutes) : null,
-                'break_minutes' => $breakMinutes,
+                'break_end' => $clockOut ? $clockIn->copy()->addHours(4)->addMinutes($breakDurationMinutes) : null,
+                'break_duration_minutes' => $breakDurationMinutes,
                 'total_hours' => $totalHours,
                 'regular_hours' => $regularHours,
                 'overtime_hours' => $overtimeHours,
