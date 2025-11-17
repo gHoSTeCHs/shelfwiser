@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
 
             // Operations
             OrderSeeder::class,
+            OrderPaymentSeeder::class,
             StockMovementSeeder::class,
 
             // Supplier/Procurement System

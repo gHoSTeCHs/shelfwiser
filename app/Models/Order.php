@@ -28,6 +28,7 @@ class Order extends Model
         'discount_amount',
         'shipping_cost',
         'total_amount',
+        'paid_amount',
         'customer_notes',
         'internal_notes',
         'shipping_address',
@@ -50,6 +51,7 @@ class Order extends Model
         'discount_amount' => 'decimal:2',
         'shipping_cost' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
         'confirmed_at' => 'datetime',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
@@ -101,6 +103,11 @@ class Order extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(OrderPayment::class);
     }
 
     public function scopeForTenant($query, int $tenantId)
@@ -176,5 +183,36 @@ class Order extends Model
         $sequenceCache[$cacheKey]++;
 
         return sprintf('%s-%s-%04d', $prefix, $date, $sequenceCache[$cacheKey]);
+    }
+
+    /**
+     * Get the remaining balance to be paid on this order
+     */
+    public function remainingBalance(): float
+    {
+        return max(0, (float) $this->total_amount - (float) $this->paid_amount);
+    }
+
+    /**
+     * Check if order is fully paid
+     */
+    public function isFullyPaid(): bool
+    {
+        return (float) $this->paid_amount >= (float) $this->total_amount;
+    }
+
+    /**
+     * Update payment status based on paid_amount
+     * Called automatically by OrderPayment model events
+     */
+    public function updatePaymentStatus(): void
+    {
+        if ($this->paid_amount >= $this->total_amount) {
+            $this->payment_status = PaymentStatus::PAID;
+        } elseif ($this->paid_amount > 0) {
+            $this->payment_status = PaymentStatus::PARTIAL;
+        } else {
+            $this->payment_status = PaymentStatus::UNPAID;
+        }
     }
 }
