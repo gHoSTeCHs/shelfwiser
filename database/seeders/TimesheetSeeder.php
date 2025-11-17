@@ -39,7 +39,6 @@ class TimesheetSeeder extends Seeder
     protected function createTimesheetsForUser(User $user, Shop $shop): void
     {
         $overtimeThreshold = 8.0;
-        $overtimeMultiplier = 1.5;
 
         $timesheets = [
             [
@@ -135,8 +134,6 @@ class TimesheetSeeder extends Seeder
                 'total_hours' => $totalHours,
                 'regular_hours' => $regularHours,
                 'overtime_hours' => $overtimeHours,
-                'overtime_threshold' => $overtimeThreshold,
-                'overtime_multiplier' => $overtimeMultiplier,
                 'status' => $timesheetData['status'],
                 'notes' => $timesheetData['status'] === TimesheetStatus::APPROVED ? 'Approved by manager' : null,
             ]);
