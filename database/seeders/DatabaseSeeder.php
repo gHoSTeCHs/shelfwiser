@@ -47,6 +47,13 @@ class DatabaseSeeder extends Seeder
             SupplierCatalogSeeder::class,
             SupplierConnectionSeeder::class,
             PurchaseOrderSeeder::class,
+
+            // Employee Payroll & HR System
+            EmployeePayrollDetailSeeder::class,
+            TimesheetSeeder::class,
+            FundRequestSeeder::class,
+            WageAdvanceSeeder::class,
+            PayrollPeriodSeeder::class,
         ]);
     }
 }
