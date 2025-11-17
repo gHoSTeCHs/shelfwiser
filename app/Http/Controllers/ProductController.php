@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductType;
 use App\Models\Shop;
+use App\Models\StockMovement;
 use App\Services\ProductService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -76,7 +77,7 @@ class ProductController extends Controller
         );
 
         return Redirect::route('products.index')
-            ->with('success', "Product '{$product->name}' created successfully.");
+            ->with('success', "Product '$product->name' created successfully.");
     }
 
     public function show(Product $product): Response
@@ -99,14 +100,14 @@ class ProductController extends Controller
 
         $tenantId = auth()->user()->tenant_id;
 
-        $availableShops = \App\Models\Shop::where('tenant_id', $tenantId)
+        $availableShops = Shop::where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->get(['id', 'name']);
 
         $variantIds = $product->variants->pluck('id');
 
-        $recentMovements = \App\Models\StockMovement::whereIn('product_variant_id', $variantIds)
-            ->with(['productVariant', 'fromLocation.location', 'toLocation.location', 'createdByUser'])
+        $recentMovements = StockMovement::whereIn('product_variant_id', $variantIds)
+            ->with(['productVariant', 'fromLocation.location', 'toLocation.location'])
             ->latest()
             ->limit(10)
             ->get();
@@ -159,7 +160,7 @@ class ProductController extends Controller
         $this->productService->update($product, $request->validated());
 
         return Redirect::route('products.show', $product)
-            ->with('success', "Product '{$product->name}' updated successfully.");
+            ->with('success', "Product '$product->name' updated successfully.");
     }
 
     public function destroy(Product $product): RedirectResponse

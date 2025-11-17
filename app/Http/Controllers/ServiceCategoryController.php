@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateServiceCategoryRequest;
 use App\Http\Requests\UpdateServiceCategoryRequest;
+use App\Models\Service;
 use App\Models\ServiceCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -18,12 +19,12 @@ class ServiceCategoryController extends Controller
      */
     public function index(): Response
     {
-        Gate::authorize('create', \App\Models\Service::class);
+        Gate::authorize('create', Service::class);
 
         $tenantId = auth()->user()->tenant_id;
 
         return Inertia::render('ServiceCategories/Index', [
-            'categories' => ServiceCategory::where('tenant_id', $tenantId)
+            'categories' => ServiceCategory::query()->where('tenant_id', $tenantId)
                 ->whereNull('parent_id')
                 ->with(['children' => fn($q) => $q->orderBy('sort_order')])
                 ->withCount('services')
@@ -37,7 +38,7 @@ class ServiceCategoryController extends Controller
      */
     public function create(): Response
     {
-        Gate::authorize('create', \App\Models\Service::class);
+        Gate::authorize('create', Service::class);
 
         $tenantId = auth()->user()->tenant_id;
 
@@ -56,13 +57,13 @@ class ServiceCategoryController extends Controller
      */
     public function store(CreateServiceCategoryRequest $request): RedirectResponse
     {
-        $category = ServiceCategory::create([
+        $category = ServiceCategory::query()->create([
             'tenant_id' => $request->user()->tenant_id,
             ...$request->validated(),
         ]);
 
         return Redirect::route('service-categories.index')
-            ->with('success', "Category '{$category->name}' created successfully.");
+            ->with('success', "Category '$category->name' created successfully.");
     }
 
     /**
@@ -70,7 +71,7 @@ class ServiceCategoryController extends Controller
      */
     public function edit(ServiceCategory $category): Response
     {
-        Gate::authorize('create', \App\Models\Service::class);
+        Gate::authorize('create', Service::class);
 
         // Ensure category belongs to user's tenant
         if ($category->tenant_id !== auth()->user()->tenant_id) {
@@ -79,7 +80,7 @@ class ServiceCategoryController extends Controller
 
         $tenantId = auth()->user()->tenant_id;
 
-        $parentCategories = ServiceCategory::where('tenant_id', $tenantId)
+        $parentCategories = ServiceCategory::query()->where('tenant_id', $tenantId)
             ->whereNull('parent_id')
             ->where('id', '!=', $category->id) // Don't allow selecting self as parent
             ->orderBy('sort_order')
@@ -104,7 +105,7 @@ class ServiceCategoryController extends Controller
         $category->update($request->validated());
 
         return Redirect::route('service-categories.index')
-            ->with('success', "Category '{$category->name}' updated successfully.");
+            ->with('success', "Category '$category->name' updated successfully.");
     }
 
     /**
@@ -112,7 +113,7 @@ class ServiceCategoryController extends Controller
      */
     public function destroy(ServiceCategory $category): RedirectResponse
     {
-        Gate::authorize('create', \App\Models\Service::class);
+        Gate::authorize('create', Service::class);
 
         // Ensure category belongs to user's tenant
         if ($category->tenant_id !== auth()->user()->tenant_id) {
@@ -123,6 +124,6 @@ class ServiceCategoryController extends Controller
         $category->delete();
 
         return Redirect::route('service-categories.index')
-            ->with('success', "Category '{$categoryName}' deleted successfully.");
+            ->with('success', "Category '$categoryName' deleted successfully.");
     }
 }

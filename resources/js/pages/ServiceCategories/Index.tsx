@@ -57,13 +57,13 @@ export default function Index({ categories }: Props) {
                                     {/* Category Header */}
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-start gap-3">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/20">
+                                            <div className="bg-primary-100 dark:bg-primary-900/20 flex h-10 w-10 items-center justify-center rounded-lg">
                                                 {category.icon ? (
                                                     <span className="text-xl">
                                                         {category.icon}
                                                     </span>
                                                 ) : (
-                                                    <Folder className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                                                    <Folder className="text-primary-600 dark:text-primary-400 h-5 w-5" />
                                                 )}
                                             </div>
                                             <div>
@@ -121,7 +121,8 @@ export default function Index({ categories }: Props) {
                                             <Form
                                                 action={ServiceCategoryController.destroy.url(
                                                     {
-                                                        category: category.id,
+                                                        service_category:
+                                                            category.id,
                                                     },
                                                 )}
                                                 method="delete"
@@ -195,7 +196,7 @@ export default function Index({ categories }: Props) {
                                                                 <Form
                                                                     action={ServiceCategoryController.destroy.url(
                                                                         {
-                                                                            category:
+                                                                            service_category:
                                                                                 child.id,
                                                                         },
                                                                     )}

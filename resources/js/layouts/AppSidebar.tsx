@@ -1,16 +1,11 @@
 import { useSidebar } from '@/context/SidebarContext';
 import { Link, usePage } from '@inertiajs/react';
 import {
-    ArrowRightLeft,
     BarChart3,
     Box,
-    FileText,
     FileUser,
-    Grid3X3,
     Network,
-    Package,
     ShoppingBag,
-    ShoppingCart,
     Store,
     Wrench,
 } from 'lucide-react';
@@ -64,7 +59,10 @@ const navItems: NavItem[] = [
             { name: 'Suppliers Report', path: '/reports/suppliers' },
             { name: 'Financials', path: '/reports/financials' },
             { name: 'Customer Analytics', path: '/reports/customer-analytics' },
-            { name: 'Product Profitability', path: '/reports/product-profitability' },
+            {
+                name: 'Product Profitability',
+                path: '/reports/product-profitability',
+            },
         ],
     },
     {
