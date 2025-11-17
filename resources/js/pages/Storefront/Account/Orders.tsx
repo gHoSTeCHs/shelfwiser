@@ -7,6 +7,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
+import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 
 /**
  * Customer order history page with pagination.
@@ -36,7 +37,7 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
                             <p className="text-gray-600 mb-6">
                                 Start shopping to see your orders here
                             </p>
-                            <Link href={`/store/${shop.slug}/products`}>
+                            <Link href={StorefrontController.products.url({ shop: shop.slug })}>
                                 <Button variant="primary">
                                     Browse Products
                                 </Button>

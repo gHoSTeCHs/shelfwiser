@@ -50,6 +50,7 @@ export interface Shop {
     id: number;
     name: string;
     slug: string;
+    description?: string;
     inventory_model: InventoryModelType;
     address?: string;
     city?: string;
