@@ -9,6 +9,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderPaymentController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\ProductCategoryController;
+use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ReportsController;
@@ -211,6 +212,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/credit/{customer}/payment', [CustomerCreditController::class, 'createPayment'])->name('credit.payment.create');
         Route::post('/credit/{customer}/payment', [CustomerCreditController::class, 'storePayment'])->name('credit.payment.store');
         Route::get('/credit/{customer}/transactions', [CustomerCreditController::class, 'transactions'])->name('credit.transactions');
+    });
+
+    Route::prefix('receipts')->name('receipts.')->group(function () {
+        Route::get('/', [ReceiptController::class, 'index'])->name('index');
+        Route::get('/{receipt}', [ReceiptController::class, 'show'])->name('show');
+        Route::post('/{receipt}/email', [ReceiptController::class, 'emailReceipt'])->name('email');
+        Route::get('/orders/{order}/view', [ReceiptController::class, 'viewOrderReceipt'])->name('orders.view');
+        Route::get('/orders/{order}/download', [ReceiptController::class, 'downloadOrderReceipt'])->name('orders.download');
+        Route::get('/payments/{payment}/view', [ReceiptController::class, 'viewPaymentReceipt'])->name('payments.view');
+        Route::get('/payments/{payment}/download', [ReceiptController::class, 'downloadPaymentReceipt'])->name('payments.download');
     });
 
     Route::prefix('stock-movements')->name('stock-movements.')->group(function () {
