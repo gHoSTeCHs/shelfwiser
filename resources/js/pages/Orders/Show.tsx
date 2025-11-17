@@ -1,4 +1,5 @@
 import OrderController from '@/actions/App/Http/Controllers/OrderController';
+import ReceiptController from '@/actions/App/Http/Controllers/ReceiptController';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
@@ -17,6 +18,8 @@ import {
     Calendar,
     CheckCircle,
     CreditCard,
+    Download,
+    FileText,
     Package,
     Truck,
     User,
@@ -157,40 +160,62 @@ export default function Show({
                         </div>
                     </div>
 
-                    {can_manage && (
-                        <div className="flex gap-2">
-                            {order.status !== 'cancelled' &&
-                                order.status !== 'delivered' && (
-                                    <>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={statusModal.openModal}
-                                        >
-                                            <CheckCircle className="mr-2 h-4 w-4" />
-                                            Update Status
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={paymentModal.openModal}
-                                        >
-                                            <CreditCard className="mr-2 h-4 w-4" />
-                                            Update Payment
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={cancelModal.openModal}
-                                            className="text-error-600 hover:text-error-700"
-                                        >
-                                            <XCircle className="mr-2 h-4 w-4" />
-                                            Cancel Order
-                                        </Button>
-                                    </>
-                                )}
-                        </div>
-                    )}
+                    <div className="flex gap-2">
+                        <a
+                            href={ReceiptController.orders.view.url({ order: order.id })}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <Button variant="outline" size="sm">
+                                <FileText className="mr-2 h-4 w-4" />
+                                View Receipt
+                            </Button>
+                        </a>
+                        <a
+                            href={ReceiptController.orders.download.url({ order: order.id })}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <Button variant="outline" size="sm">
+                                <Download className="mr-2 h-4 w-4" />
+                                Download Receipt
+                            </Button>
+                        </a>
+                        {can_manage && (
+                            <>
+                                {order.status !== 'cancelled' &&
+                                    order.status !== 'delivered' && (
+                                        <>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={statusModal.openModal}
+                                            >
+                                                <CheckCircle className="mr-2 h-4 w-4" />
+                                                Update Status
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={paymentModal.openModal}
+                                            >
+                                                <CreditCard className="mr-2 h-4 w-4" />
+                                                Update Payment
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={cancelModal.openModal}
+                                                className="text-error-600 hover:text-error-700"
+                                            >
+                                                <XCircle className="mr-2 h-4 w-4" />
+                                                Cancel Order
+                                            </Button>
+                                        </>
+                                    )}
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-3">
