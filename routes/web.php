@@ -8,6 +8,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderPaymentController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\POSController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\ProductController;
@@ -222,6 +223,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/orders/{order}/download', [ReceiptController::class, 'downloadOrderReceipt'])->name('orders.download');
         Route::get('/payments/{payment}/view', [ReceiptController::class, 'viewPaymentReceipt'])->name('payments.view');
         Route::get('/payments/{payment}/download', [ReceiptController::class, 'downloadPaymentReceipt'])->name('payments.download');
+    });
+
+    Route::prefix('pos/{shop}')->name('pos.')->group(function () {
+        Route::get('/', [POSController::class, 'index'])->name('index');
+        Route::get('/search/products', [POSController::class, 'searchProducts'])->name('search.products');
+        Route::get('/search/customers', [POSController::class, 'searchCustomers'])->name('search.customers');
+        Route::post('/complete', [POSController::class, 'completeSale'])->name('complete');
+        Route::get('/session-summary', [POSController::class, 'sessionSummary'])->name('session-summary');
+        Route::post('/hold', [POSController::class, 'holdSale'])->name('hold');
+        Route::get('/held-sales', [POSController::class, 'heldSales'])->name('held-sales');
+        Route::get('/held-sales/{holdId}', [POSController::class, 'retrieveHeldSale'])->name('retrieve-held-sale');
     });
 
     Route::prefix('stock-movements')->name('stock-movements.')->group(function () {
