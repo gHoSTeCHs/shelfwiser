@@ -8,37 +8,42 @@ use App\Enums\TaxHandling;
 use App\Enums\UserRole;
 use App\Models\PayrollPeriod;
 use App\Models\Payslip;
-use App\Models\Shop;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
+use Throwable;
 
-class PayrollService
+readonly class PayrollService
 {
     public function __construct(
-        private TimesheetService $timesheetService,
-        private WageAdvanceService $wageAdvanceService,
-        private TaxService $taxService,
+        private TimesheetService    $timesheetService,
+        private WageAdvanceService  $wageAdvanceService,
+        private TaxService          $taxService,
         private NotificationService $notificationService
-    ) {}
+    )
+    {
+    }
 
     /**
      * Create a new payroll period
+     * @throws Throwable
      */
     public function createPayrollPeriod(
-        int $tenantId,
-        ?int $shopId,
-        Carbon $startDate,
-        Carbon $endDate,
-        Carbon $paymentDate,
+        int     $tenantId,
+        ?int    $shopId,
+        Carbon  $startDate,
+        Carbon  $endDate,
+        Carbon  $paymentDate,
         ?string $periodName = null
-    ): PayrollPeriod {
+    ): PayrollPeriod
+    {
         return DB::transaction(function () use ($tenantId, $shopId, $startDate, $endDate, $paymentDate, $periodName) {
             $name = $periodName ?? $startDate->format('F Y');
 
-            $payrollPeriod = PayrollPeriod::create([
+            $payrollPeriod = PayrollPeriod::query()->create([
                 'tenant_id' => $tenantId,
                 'shop_id' => $shopId,
                 'period_name' => $name,
@@ -56,11 +61,12 @@ class PayrollService
 
     /**
      * Process payroll for a period
+     * @throws Throwable
      */
     public function processPayroll(PayrollPeriod $payrollPeriod, User $processor): PayrollPeriod
     {
         if (!$payrollPeriod->status->canProcess()) {
-            throw new \RuntimeException('Payroll cannot be processed in current status');
+            throw new RuntimeException('Payroll cannot be processed in current status');
         }
 
         return DB::transaction(function () use ($payrollPeriod, $processor) {
@@ -78,9 +84,9 @@ class PayrollService
             foreach ($employees as $employee) {
                 $payslip = $this->generatePayslip($payrollPeriod, $employee);
 
-                $totalGrossPay += (float) $payslip->gross_pay;
-                $totalDeductions += (float) $payslip->total_deductions;
-                $totalNetPay += (float) $payslip->net_pay;
+                $totalGrossPay += (float)$payslip->gross_pay;
+                $totalDeductions += (float)$payslip->total_deductions;
+                $totalNetPay += (float)$payslip->net_pay;
 
                 if ($employee->role === UserRole::GENERAL_MANAGER) {
                     $includesGM = true;
@@ -117,7 +123,7 @@ class PayrollService
         $payrollDetail = $employee->payrollDetail;
 
         if (!$payrollDetail) {
-            throw new \RuntimeException("Employee {$employee->name} has no payroll details configured");
+            throw new RuntimeException("Employee $employee->name has no payroll details configured");
         }
 
         $shop = $payrollDetail->shop ?? $employee->shops()->first();
@@ -130,7 +136,7 @@ class PayrollService
 
         $netPay = $grossPay - $deductions['total_deductions'];
 
-        return Payslip::create([
+        return Payslip::query()->create([
             'payroll_period_id' => $payrollPeriod->id,
             'user_id' => $employee->id,
             'tenant_id' => $employee->tenant_id,
@@ -164,7 +170,7 @@ class PayrollService
     protected function calculateEarnings(User $employee, PayrollPeriod $payrollPeriod): array
     {
         $payrollDetail = $employee->payrollDetail;
-        $shop = $payrollDetail->shop ?? $employee->shops()->first();
+//        $shop = $payrollDetail->shop ?? $employee->shops()->first();
 
         $timesheetSummary = $this->timesheetService->getTimesheetSummary(
             $employee,
@@ -182,20 +188,20 @@ class PayrollService
 
         switch ($payrollDetail->pay_type) {
             case PayType::SALARY:
-                $baseSalary = (float) $payrollDetail->pay_amount;
+                $baseSalary = (float)$payrollDetail->pay_amount;
                 $regularPay = $baseSalary;
                 $hourlyRate = $baseSalary / 160;
                 $overtimePay = $overtimeHours * $hourlyRate * $overtimeMultiplier;
                 break;
 
             case PayType::HOURLY:
-                $hourlyRate = (float) $payrollDetail->pay_amount;
+                $hourlyRate = (float)$payrollDetail->pay_amount;
                 $regularPay = $regularHours * $hourlyRate;
                 $overtimePay = $overtimeHours * $hourlyRate * $overtimeMultiplier;
                 break;
 
             case PayType::DAILY:
-                $dailyRate = (float) $payrollDetail->pay_amount;
+                $dailyRate = (float)$payrollDetail->pay_amount;
                 $hoursPerDay = 8;
                 $regularPay = ($regularHours / $hoursPerDay) * $dailyRate;
                 $overtimePay = ($overtimeHours / $hoursPerDay) * $dailyRate * $overtimeMultiplier;
@@ -259,7 +265,7 @@ class PayrollService
 
         $nhis = 0;
         if ($payrollDetail->nhis_enabled && $payrollDetail->nhis_amount) {
-            $nhis = (float) $payrollDetail->nhis_amount;
+            $nhis = (float)$payrollDetail->nhis_amount;
         }
 
         $wageAdvanceDeduction = 0;
@@ -312,11 +318,12 @@ class PayrollService
 
     /**
      * Approve payroll
+     * @throws Throwable
      */
     public function approvePayroll(PayrollPeriod $payrollPeriod, User $approver): PayrollPeriod
     {
         if (!$payrollPeriod->status->canApprove()) {
-            throw new \RuntimeException('Payroll cannot be approved in current status');
+            throw new RuntimeException('Payroll cannot be approved in current status');
         }
 
         return DB::transaction(function () use ($payrollPeriod, $approver) {
@@ -338,11 +345,12 @@ class PayrollService
 
     /**
      * Mark payroll as paid
+     * @throws Throwable
      */
     public function markAsPaid(PayrollPeriod $payrollPeriod): PayrollPeriod
     {
         if (!$payrollPeriod->status->canPay()) {
-            throw new \RuntimeException('Payroll cannot be marked as paid in current status');
+            throw new RuntimeException('Payroll cannot be marked as paid in current status');
         }
 
         return DB::transaction(function () use ($payrollPeriod) {
@@ -374,11 +382,12 @@ class PayrollService
 
     /**
      * Cancel payroll
+     * @throws Throwable
      */
     public function cancelPayroll(PayrollPeriod $payrollPeriod, string $reason): PayrollPeriod
     {
         if (!$payrollPeriod->status->canCancel()) {
-            throw new \RuntimeException('Payroll cannot be cancelled in current status');
+            throw new RuntimeException('Payroll cannot be cancelled in current status');
         }
 
         return DB::transaction(function () use ($payrollPeriod, $reason) {
@@ -387,7 +396,7 @@ class PayrollService
             $payrollPeriod->update([
                 'status' => PayrollStatus::CANCELLED,
                 'notes' => ($payrollPeriod->notes ? $payrollPeriod->notes . "\n\n" : '') .
-                          "Cancelled: {$reason}",
+                    "Cancelled: $reason",
             ]);
 
             $this->clearCache($payrollPeriod->tenant_id);
@@ -400,11 +409,12 @@ class PayrollService
      * Get payroll periods for tenant
      */
     public function getPayrollPeriods(
-        int $tenantId,
-        ?int $shopId = null,
+        int            $tenantId,
+        ?int           $shopId = null,
         ?PayrollStatus $status = null
-    ): Collection {
-        $query = PayrollPeriod::where('tenant_id', $tenantId)
+    ): Collection
+    {
+        $query = PayrollPeriod::query()->where('tenant_id', $tenantId)
             ->with(['shop', 'processedBy', 'approvedBy']);
 
         if ($shopId) {
@@ -435,8 +445,8 @@ class PayrollService
     protected function clearCache(int $tenantId): void
     {
         Cache::tags([
-            "tenant:{$tenantId}:payroll",
-            "tenant:{$tenantId}:statistics",
+            "tenant:$tenantId:payroll",
+            "tenant:$tenantId:statistics",
         ])->flush();
     }
 }

@@ -22,7 +22,7 @@ class EmployeePayrollDetailSeeder extends Seeder
             ->with('tenant')
             ->get();
 
-        $nigeriaJurisdiction = TaxJurisdiction::where('code', 'NG-FED')->first();
+        $nigeriaJurisdiction = TaxJurisdiction::query()->where('code', 'NG-FED')->first();
 
         foreach ($users as $user) {
             $shop = Shop::where('tenant_id', $user->tenant_id)->first();
@@ -33,7 +33,7 @@ class EmployeePayrollDetailSeeder extends Seeder
 
             $payrollData = $this->getPayrollDataForUser($user, $shop, $nigeriaJurisdiction);
 
-            EmployeePayrollDetail::create($payrollData);
+            EmployeePayrollDetail::query()->create($payrollData);
         }
     }
 
