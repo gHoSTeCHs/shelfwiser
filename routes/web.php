@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CustomerCreditController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FundRequestController;
 use App\Http\Controllers\ImageController;
@@ -202,6 +203,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{order}/payment', [OrderController::class, 'updatePaymentStatus'])->name('update-payment');
         Route::post('/{order}/payments', [OrderPaymentController::class, 'store'])->name('payments.store');
         Route::delete('/payments/{orderPayment}', [OrderPaymentController::class, 'destroy'])->name('payments.destroy');
+    });
+
+    Route::prefix('customers/{shop}')->name('customers.')->group(function () {
+        Route::get('/credit', [CustomerCreditController::class, 'index'])->name('credit.index');
+        Route::get('/credit/{customer}', [CustomerCreditController::class, 'show'])->name('credit.show');
+        Route::get('/credit/{customer}/payment', [CustomerCreditController::class, 'createPayment'])->name('credit.payment.create');
+        Route::post('/credit/{customer}/payment', [CustomerCreditController::class, 'storePayment'])->name('credit.payment.store');
+        Route::get('/credit/{customer}/transactions', [CustomerCreditController::class, 'transactions'])->name('credit.transactions');
     });
 
     Route::prefix('stock-movements')->name('stock-movements.')->group(function () {

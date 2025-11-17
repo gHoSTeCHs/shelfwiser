@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Customer;
 use App\Models\FundRequest;
 use App\Models\Notification;
 use App\Models\PayrollPeriod;
@@ -10,6 +11,7 @@ use App\Models\Shop;
 use App\Models\Timesheet;
 use App\Models\User;
 use App\Models\WageAdvance;
+use App\Policies\CustomerPolicy;
 use App\Policies\FundRequestPolicy;
 use App\Policies\NotificationPolicy;
 use App\Policies\PayrollPolicy;
@@ -39,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, StaffPolicy::class);
         Gate::policy(Shop::class, StorefrontPolicy::class);
         Gate::policy(Service::class, ServicePolicy::class);
+        Gate::policy(Customer::class, CustomerPolicy::class);
         Gate::policy(Timesheet::class, TimesheetPolicy::class);
         Gate::policy(FundRequest::class, FundRequestPolicy::class);
         Gate::policy(WageAdvance::class, WageAdvancePolicy::class);

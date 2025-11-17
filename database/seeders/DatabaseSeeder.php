@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
 
             // E-commerce
             CustomerSeeder::class,
+            CustomerCreditSeeder::class,
 
             // Operations
             OrderSeeder::class,
