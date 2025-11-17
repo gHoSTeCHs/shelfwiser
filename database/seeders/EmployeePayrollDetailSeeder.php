@@ -44,11 +44,11 @@ class EmployeePayrollDetailSeeder extends Seeder
     {
         $baseData = [
             'user_id' => $user->id,
-            'shop_id' => $shop->id,
+//            'shop_id' => $shop->id,
             'tenant_id' => $user->tenant_id,
             'enable_tax_calculations' => true,
             'tax_handling' => TaxHandling::SHOP_CALCULATES,
-            'tax_jurisdiction_id' => $jurisdiction?->id,
+//            'tax_jurisdiction_id' => $jurisdiction?->id,
             'pension_enabled' => true,
             'pension_employee_rate' => 8.0,
             'pension_employer_rate' => 10.0,

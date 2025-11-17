@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         Schema::create('corporate_tax_rates', function (Blueprint $table) {
@@ -19,7 +18,7 @@ return new class extends Migration
             $table->date('effective_to')->nullable();
             $table->timestamps();
 
-            $table->index(['tax_jurisdiction_id', 'effective_from', 'effective_to']);
+            $table->index(['tax_jurisdiction_id', 'effective_from', 'effective_to'], 'corp_tax_jur_efct_index');
             $table->index('company_size_category');
         });
     }
