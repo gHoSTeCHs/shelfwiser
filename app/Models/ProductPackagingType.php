@@ -68,14 +68,17 @@ class ProductPackagingType extends Model
 
     /**
      * Check if this packaging offers a discount compared to base unit
+     * Note: Use eager loading with 'productVariant.packagingTypes' to avoid N+1 queries
      */
     public function getHasDiscountAttribute(): bool
     {
-        $baseUnit = $this->productVariant->packagingTypes()
-            ->where('is_base_unit', true)
-            ->first();
+        if ($this->is_base_unit) {
+            return false;
+        }
 
-        if (!$baseUnit || $this->is_base_unit) {
+        $baseUnit = $this->getBaseUnit();
+
+        if (!$baseUnit) {
             return false;
         }
 
@@ -85,14 +88,17 @@ class ProductPackagingType extends Model
 
     /**
      * Get the discount percentage compared to base unit
+     * Note: Use eager loading with 'productVariant.packagingTypes' to avoid N+1 queries
      */
     public function getDiscountPercentageAttribute(): float
     {
-        $baseUnit = $this->productVariant->packagingTypes()
-            ->where('is_base_unit', true)
-            ->first();
+        if ($this->is_base_unit) {
+            return 0;
+        }
 
-        if (!$baseUnit || $this->is_base_unit) {
+        $baseUnit = $this->getBaseUnit();
+
+        if (!$baseUnit) {
             return 0;
         }
 
@@ -104,5 +110,20 @@ class ProductPackagingType extends Model
 
         $discount = (($equivalentBasePrice - $this->price) / $equivalentBasePrice) * 100;
         return round(max(0, $discount), 2);
+    }
+
+    /**
+     * Get the base unit packaging type efficiently
+     * Uses eager loaded data if available to avoid N+1 queries
+     */
+    protected function getBaseUnit(): ?self
+    {
+        if ($this->relationLoaded('productVariant') && $this->productVariant->relationLoaded('packagingTypes')) {
+            return $this->productVariant->packagingTypes->firstWhere('is_base_unit', true);
+        }
+
+        return $this->productVariant->packagingTypes()
+            ->where('is_base_unit', true)
+            ->first();
     }
 }

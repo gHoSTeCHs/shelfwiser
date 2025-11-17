@@ -1,8 +1,8 @@
 # CLAUDE.md - ShelfWiser Development Guide
 
-> **Version:** 1.1.0 | **Updated:** 2025-11-15
+> **Version:** 1.2.0 | **Updated:** 2025-11-17
 > **Project:** ShelfWiser - Multi-Tenant Inventory Management SaaS
-> **Status:** Beta (Advanced Stage)
+> **Status:** Production-Ready
 
 ---
 
@@ -13,12 +13,16 @@
 - ✅ Product catalog (variants, packaging, dynamic schemas)
 - ✅ Stock movements with full audit trails
 - ✅ Order processing & lifecycle management
+- ✅ **POS/Quick Sale system** (retail checkout)
+- ✅ **Receipt generation** (PDF receipts, email delivery)
+- ✅ **Customer credit/tab system** (credit management)
 - ✅ **Supplier/procurement system** (B2B marketplace)
 - ✅ **E-commerce frontend** (shopping cart, customer accounts)
-- ✅ **Advanced reports** (sales, inventory, suppliers, financials, profitability)
+- ✅ **Advanced reports** (sales, inventory, suppliers, financials)
+- ✅ **Employee payroll** (salary management, deductions)
 - ✅ 7-level role hierarchy with permissions
 
-**Current Architecture:** 25 models • 18 services • 10 policies • 10 enums • 45+ migrations
+**Current Architecture:** 30+ models • 22+ services • 12+ policies • 10+ enums • 50+ migrations
 
 ---
 
@@ -109,7 +113,12 @@ if ($targetUser->role->level() >= $currentUser->role->level()) {
 
 ```
 Tenant (root)
-├── User (7 roles) → ShopUser (pivot) → Shop
+├── User (7 roles) → ShopUser (pivot) → Shop  [Staff/Employees]
+├── Customer (separate from User) [E-commerce customers]
+│   ├── CustomerAddress
+│   ├── CustomerCreditTransaction
+│   ├── Cart → CartItem
+│   └── Order → OrderItem
 ├── Shop
 │   ├── Product
 │   │   ├── ProductCategory (hierarchical)
@@ -118,16 +127,20 @@ Tenant (root)
 │   │       ├── InventoryLocation (polymorphic)
 │   │       ├── ProductPackagingType
 │   │       └── StockMovement (audit trail)
-│   ├── Order → OrderItem
-│   └── PurchaseOrder → PurchaseOrderItem
+│   ├── Order → OrderItem → OrderPayment
+│   ├── PurchaseOrder → PurchaseOrderItem
+│   ├── Receipt (order/payment PDFs)
+│   └── EmployeePayroll (salary, deductions)
 ├── SupplierProfile (B2B marketplace)
 │   ├── SupplierConnection (tenant-to-tenant)
 │   ├── SupplierCatalogItem
 │   └── SupplierPricingTier
-└── Cart → CartItem (e-commerce)
+└── Service (sellable services, polymorphic with Product)
 ```
 
 **Key Enums:** UserRole • OrderStatus • PaymentStatus • StockMovementType • PurchaseOrderStatus • ConnectionStatus • InventoryModel
+
+**Important:** Customer and User are separate tables. Customer = e-commerce customers, User = staff/employees.
 
 ---
 
@@ -363,12 +376,17 @@ router.visit(OrderController.edit.url({ order: order.id }));
 | Multi-Tenancy | ✅ Production | `Tenant.php`, `TenantService.php` | Row-level isolation |
 | Products/Inventory | ✅ Production | `Product.php`, `ProductService.php` | Variants, packaging, categories |
 | Stock Movements | ✅ Production | `StockMovementService.php` | 5 types, full audit trail |
-| Orders | ✅ Production | `OrderController.php`, `OrderService.php` | Full lifecycle |
-| **Supplier System** | ✅ **Beta** | `SupplierService.php`, `PurchaseOrderService.php` | B2B marketplace, PO workflow |
-| **E-Commerce** | 🔶 **Alpha** | `CartService.php`, `StorefrontService.php` | Cart, catalog, customer accounts |
-| **Reports** | ✅ **Beta** | `ReportService.php`, `ExportService.php` | 6 report types with exports |
+| Orders | ✅ Production | `OrderController.php`, `OrderService.php` | Full lifecycle, payment tracking |
+| **POS System** | ✅ **Production** | `POSController.php`, `POSService.php` | Quick sales, cash handling, held sales |
+| **Receipts** | ✅ **Production** | `ReceiptController.php`, `ReceiptService.php` | PDF generation, email delivery |
+| **Customer Credit** | ✅ **Production** | `CustomerCreditService.php` | Credit limits, payment tracking |
+| **Supplier System** | ✅ Production | `SupplierService.php`, `PurchaseOrderService.php` | B2B marketplace, PO workflow |
+| **E-Commerce** | ✅ Production | `CartService.php`, `StorefrontService.php` | Cart, catalog, customer accounts |
+| **Employee Payroll** | ✅ Production | `EmployeePayrollService.php` | Salary, deductions, pay periods |
+| **Services (sellable)** | ✅ Production | `ServiceController.php` | Service catalog with polymorphism |
+| **Reports** | ✅ Production | `ReportService.php`, `ExportService.php` | 6 report types with exports |
 | Staff Management | ✅ Production | `StaffManagementService.php` | 7-level hierarchy |
-| Dashboard | ✅ Production | `DashboardService.php` | Permission-filtered metrics |
+| Dashboard | ✅ Production | `DashboardService.php` | Permission-filtered metrics, caching |
 | API | 🔶 Minimal | `routes/api.php` | Sanctum setup |
 | Testing | 🚧 Basic | `tests/` (15 files) | Needs expansion |
 | Payment Gateway | ❌ Not Started | - | Stripe/PayPal planned |
@@ -500,30 +518,39 @@ docs: Update CLAUDE.md feature status
 ```
 # Backend Core
 app/Models/Tenant.php                           # Tenant root
+app/Models/User.php                             # Staff/employees
+app/Models/Customer.php                         # E-commerce customers (separate!)
 app/Services/ProductService.php                 # Product CRUD
 app/Services/StockMovementService.php           # Inventory operations
 app/Services/OrderService.php                   # Order lifecycle
+app/Services/POSService.php                     # Point of sale
+app/Services/ReceiptService.php                 # PDF receipt generation
+app/Services/CustomerCreditService.php          # Customer credit/tab management
 app/Services/SupplierService.php                # Supplier B2B
 app/Services/PurchaseOrderService.php           # PO workflow
 app/Services/CartService.php                    # E-commerce cart
+app/Services/EmployeePayrollService.php         # Payroll management
 app/Enums/UserRole.php                          # 7-level roles
 
 # Policies
 app/Policies/ProductPolicy.php
 app/Policies/OrderPolicy.php
+app/Policies/CustomerPolicy.php
+app/Policies/ReceiptPolicy.php
 app/Policies/SupplierPolicy.php
 app/Policies/PurchaseOrderPolicy.php
 
 # Frontend
 resources/js/app.tsx                            # Inertia entry
 resources/js/layouts/AppLayout.tsx              # Main layout
-resources/js/pages/Products/Create.tsx          # Example form
+resources/js/pages/POS/Index.tsx                # POS interface
+resources/js/pages/Receipts/Show.tsx            # Receipt management
 resources/js/components/ui/                     # UI components
 resources/js/components/form/                   # Form components
 resources/js/types/index.ts                     # TypeScript types
 
 # Routes
-routes/web.php                                  # Main routes
+routes/web.php                                  # Main routes (POS, receipts, etc.)
 routes/storefront.php                           # E-commerce routes
 routes/auth.php                                 # Auth routes
 
@@ -650,13 +677,14 @@ it('prevents unauthorized access', function () {
 
 ## 🎯 Next Priorities
 
-1. **Expand Testing** - Supplier system, PO workflow, e-commerce
-2. **Complete E-Commerce** - Checkout, payment gateway (Stripe/PayPal)
-3. **Production Readiness** - Performance, security audit, monitoring
-4. **Documentation** - API docs, deployment guide
+1. **Payment Gateway Integration** - Stripe/PayPal for e-commerce checkout
+2. **Shipping Integration** - Carrier APIs (FedEx, UPS, DHL)
+3. **Expand Testing** - POS system, receipts, customer credit, payroll
+4. **Production Deployment** - Performance monitoring, error tracking, backups
+5. **API Documentation** - OpenAPI/Swagger docs for external integrations
 
 ---
 
 **Maintained by:** ShelfWiser Development Team
-**Last Analysis:** 2025-11-15
+**Last Updated:** 2025-11-17
 **This guide reflects the actual codebase state, not aspirational goals.**

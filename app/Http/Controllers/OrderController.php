@@ -8,6 +8,7 @@ use App\Http\Requests\CreateOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Http\Requests\UpdatePaymentStatusRequest;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\Shop;
@@ -97,7 +98,7 @@ class OrderController extends Controller
         try {
             $shop = Shop::query()->findOrFail($request->input('shop_id'));
             $customer = $request->input('customer_id')
-                ? User::query()->findOrFail($request->input('customer_id'))
+                ? Customer::query()->findOrFail($request->input('customer_id'))
                 : null;
 
             $order = $this->orderService->createOrder(

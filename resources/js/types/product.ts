@@ -32,6 +32,11 @@ export interface Product {
     description: string | null;
     has_variants: boolean;
     is_active: boolean;
+    is_featured: boolean;
+    display_order: number;
+    seo_title: string | null;
+    seo_description: string | null;
+    seo_keywords: string | null;
     type: ProductType;
     category: ProductCategory | null;
     shop: Shop;

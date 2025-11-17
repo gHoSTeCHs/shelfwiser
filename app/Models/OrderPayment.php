@@ -77,5 +77,12 @@ class OrderPayment extends Model
             $order->updatePaymentStatus();
             $order->save();
         });
+
+        static::restored(function (OrderPayment $payment) {
+            $order = $payment->order;
+            $order->paid_amount = $order->payments()->sum('amount');
+            $order->updatePaymentStatus();
+            $order->save();
+        });
     }
 }
