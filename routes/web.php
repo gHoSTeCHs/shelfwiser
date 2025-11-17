@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FundRequestController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductCategoryController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\SupplierProfileController;
 use App\Http\Controllers\ShopSettingsController;
 use App\Http\Controllers\StaffPayrollController;
 use App\Http\Controllers\TimesheetController;
+use App\Http\Controllers\WageAdvanceController;
 use App\Http\Controllers\Web\StaffManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -78,6 +80,39 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{timesheet}/reject', [TimesheetController::class, 'reject'])->name('reject');
 
         Route::delete('/{timesheet}', [TimesheetController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('fund-requests')->name('fund-requests.')->group(function () {
+        Route::get('/', [FundRequestController::class, 'index'])->name('index');
+        Route::get('/approval-queue', [FundRequestController::class, 'approvalQueue'])->name('approval-queue');
+        Route::get('/create', [FundRequestController::class, 'create'])->name('create');
+        Route::post('/', [FundRequestController::class, 'store'])->name('store');
+        Route::get('/{fundRequest}', [FundRequestController::class, 'show'])->name('show');
+
+        Route::patch('/{fundRequest}', [FundRequestController::class, 'update'])->name('update');
+        Route::post('/{fundRequest}/approve', [FundRequestController::class, 'approve'])->name('approve');
+        Route::post('/{fundRequest}/reject', [FundRequestController::class, 'reject'])->name('reject');
+        Route::post('/{fundRequest}/disburse', [FundRequestController::class, 'disburse'])->name('disburse');
+        Route::post('/{fundRequest}/cancel', [FundRequestController::class, 'cancel'])->name('cancel');
+
+        Route::delete('/{fundRequest}', [FundRequestController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('wage-advances')->name('wage-advances.')->group(function () {
+        Route::get('/', [WageAdvanceController::class, 'index'])->name('index');
+        Route::get('/approval-queue', [WageAdvanceController::class, 'approvalQueue'])->name('approval-queue');
+        Route::get('/create', [WageAdvanceController::class, 'create'])->name('create');
+        Route::post('/', [WageAdvanceController::class, 'store'])->name('store');
+        Route::get('/{wageAdvance}', [WageAdvanceController::class, 'show'])->name('show');
+
+        Route::patch('/{wageAdvance}', [WageAdvanceController::class, 'update'])->name('update');
+        Route::post('/{wageAdvance}/approve', [WageAdvanceController::class, 'approve'])->name('approve');
+        Route::post('/{wageAdvance}/reject', [WageAdvanceController::class, 'reject'])->name('reject');
+        Route::post('/{wageAdvance}/disburse', [WageAdvanceController::class, 'disburse'])->name('disburse');
+        Route::post('/{wageAdvance}/record-repayment', [WageAdvanceController::class, 'recordRepayment'])->name('record-repayment');
+        Route::post('/{wageAdvance}/cancel', [WageAdvanceController::class, 'cancel'])->name('cancel');
+
+        Route::delete('/{wageAdvance}', [WageAdvanceController::class, 'destroy'])->name('destroy');
     });
 
     Route::resource('shops', ShopController::class);

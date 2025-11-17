@@ -135,4 +135,19 @@ class User extends Authenticatable
         return $this->hasMany(EmployeeCustomDeduction::class);
     }
 
+    public function timesheets(): HasMany
+    {
+        return $this->hasMany(Timesheet::class);
+    }
+
+    public function fundRequests(): HasMany
+    {
+        return $this->hasMany(FundRequest::class);
+    }
+
+    public function wageAdvances(): HasMany
+    {
+        return $this->hasMany(WageAdvance::class);
+    }
+
 }
