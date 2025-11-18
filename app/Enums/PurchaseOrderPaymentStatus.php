@@ -17,7 +17,7 @@ enum PurchaseOrderPaymentStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PENDING => 'Pending Payment',
             self::PARTIAL => 'Partially Paid',
             self::PAID => 'Paid',
@@ -28,7 +28,7 @@ enum PurchaseOrderPaymentStatus: string
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PENDING => 'yellow',
             self::PARTIAL => 'blue',
             self::PAID => 'green',
@@ -40,7 +40,7 @@ enum PurchaseOrderPaymentStatus: string
     public static function forSelect(): array
     {
         return collect(self::cases())
-            ->mapWithKeys(fn($status) => [$status->value => $status->label()])
+            ->mapWithKeys(fn ($status) => [$status->value => $status->label()])
             ->toArray();
     }
 }

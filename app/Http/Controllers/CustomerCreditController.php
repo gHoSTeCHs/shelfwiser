@@ -42,7 +42,7 @@ class CustomerCreditController extends Controller
 
         return Inertia::render('Customers/Credit/RecordPayment', [
             'shop' => $shop,
-            'customer' => $customer->load('creditTransactions' => fn($q) => $q->latest()->limit(5)),
+            'customer' => $customer->load(['creditTransactions' => fn ($q) => $q->latest()->limit(5)]),
         ]);
     }
 
@@ -83,7 +83,7 @@ class CustomerCreditController extends Controller
 
         $transactions = $customer->creditTransactions()
             ->with(['order', 'recordedBy'])
-            ->when($request->type, fn($q, $type) => $q->where('type', $type))
+            ->when($request->type, fn ($q, $type) => $q->where('type', $type))
             ->latest()
             ->paginate(20);
 
@@ -108,15 +108,15 @@ class CustomerCreditController extends Controller
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('first_name', 'like', "%{$search}%")
-                      ->orWhere('last_name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
                 });
             })
-            ->when($request->sort === 'balance_high', fn($q) => $q->orderBy('account_balance', 'desc'))
-            ->when($request->sort === 'balance_low', fn($q) => $q->orderBy('account_balance', 'asc'))
-            ->when($request->sort === 'limit_high', fn($q) => $q->orderBy('credit_limit', 'desc'))
-            ->when($request->sort === 'limit_low', fn($q) => $q->orderBy('credit_limit', 'asc'))
-            ->when(!$request->sort, fn($q) => $q->orderBy('account_balance', 'desc'))
+            ->when($request->sort === 'balance_high', fn ($q) => $q->orderBy('account_balance', 'desc'))
+            ->when($request->sort === 'balance_low', fn ($q) => $q->orderBy('account_balance', 'asc'))
+            ->when($request->sort === 'limit_high', fn ($q) => $q->orderBy('credit_limit', 'desc'))
+            ->when($request->sort === 'limit_low', fn ($q) => $q->orderBy('credit_limit', 'asc'))
+            ->when(! $request->sort, fn ($q) => $q->orderBy('account_balance', 'desc'))
             ->paginate(20)
             ->withQueryString();
 

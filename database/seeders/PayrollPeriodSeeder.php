@@ -25,7 +25,7 @@ class PayrollPeriodSeeder extends Seeder
         foreach ($tenants as $tenant) {
             $shop = Shop::where('tenant_id', $tenant->id)->first();
 
-            if (!$shop) {
+            if (! $shop) {
                 continue;
             }
 
@@ -33,7 +33,7 @@ class PayrollPeriodSeeder extends Seeder
                 ->whereIn('role', [UserRole::OWNER, UserRole::GENERAL_MANAGER])
                 ->first();
 
-            if (!$processor) {
+            if (! $processor) {
                 continue;
             }
 

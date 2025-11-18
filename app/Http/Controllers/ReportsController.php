@@ -6,10 +6,8 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PurchaseOrderPaymentStatus;
 use App\Enums\PurchaseOrderStatus;
-use App\Enums\StockMovementType;
 use App\Models\ProductCategory;
 use App\Models\Shop;
-use App\Models\Tenant;
 use App\Policies\DashboardPolicy;
 use App\Services\DashboardService;
 use App\Services\ExportService;
@@ -17,7 +15,6 @@ use App\Services\ReportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -25,12 +22,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ReportsController extends Controller
 {
     public function __construct(
-        protected ReportService     $reportService,
-        protected DashboardService  $dashboardService,
-        protected ExportService     $exportService
-    )
-    {
-    }
+        protected ReportService $reportService,
+        protected DashboardService $dashboardService,
+        protected ExportService $exportService
+    ) {}
 
     /**
      * Sales Report
@@ -40,7 +35,7 @@ class ReportsController extends Controller
         $user = $request->user();
 
         // Check permission
-        if (!$user->role->hasPermission('view_reports')) {
+        if (! $user->role->hasPermission('view_reports')) {
             abort(403, 'You do not have permission to view reports');
         }
 
@@ -51,8 +46,8 @@ class ReportsController extends Controller
             'category' => ['nullable', 'integer', 'exists:product_categories,id'],
             'product' => ['nullable', 'integer', 'exists:products,id'],
             'customer' => ['nullable', 'integer', 'exists:users,id'],
-            'status' => ['nullable', 'in:' . implode(',', array_column(OrderStatus::cases(), 'value'))],
-            'payment_status' => ['nullable', 'in:' . implode(',', array_column(PaymentStatus::cases(), 'value'))],
+            'status' => ['nullable', 'in:'.implode(',', array_column(OrderStatus::cases(), 'value'))],
+            'payment_status' => ['nullable', 'in:'.implode(',', array_column(PaymentStatus::cases(), 'value'))],
             'group_by' => ['nullable', 'in:order,product,customer,shop,day'],
             'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
         ]);
@@ -109,7 +104,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->role->hasPermission('view_reports')) {
+        if (! $user->role->hasPermission('view_reports')) {
             abort(403, 'You do not have permission to view reports');
         }
 
@@ -120,8 +115,8 @@ class ReportsController extends Controller
             'category' => ['nullable', 'integer', 'exists:product_categories,id'],
             'product' => ['nullable', 'integer', 'exists:products,id'],
             'customer' => ['nullable', 'integer', 'exists:users,id'],
-            'status' => ['nullable', 'in:' . implode(',', array_column(OrderStatus::cases(), 'value'))],
-            'payment_status' => ['nullable', 'in:' . implode(',', array_column(PaymentStatus::cases(), 'value'))],
+            'status' => ['nullable', 'in:'.implode(',', array_column(OrderStatus::cases(), 'value'))],
+            'payment_status' => ['nullable', 'in:'.implode(',', array_column(PaymentStatus::cases(), 'value'))],
             'group_by' => ['nullable', 'in:order,product,customer,shop,day'],
             'format' => ['nullable', 'in:csv,excel,pdf'],
         ]);
@@ -149,7 +144,7 @@ class ReportsController extends Controller
 
         $timestamp = now()->format('Y-m-d-His');
 
-        return match($format) {
+        return match ($format) {
             'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "sales-report-{$timestamp}.xlsx"),
             'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "sales-report-{$timestamp}.pdf", 'Sales Report'),
             default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "sales-report-{$timestamp}.csv"),
@@ -163,7 +158,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->role->hasPermission('view_reports')) {
+        if (! $user->role->hasPermission('view_reports')) {
             abort(403, 'You do not have permission to view reports');
         }
 
@@ -211,7 +206,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->role->hasPermission('view_reports')) {
+        if (! $user->role->hasPermission('view_reports')) {
             abort(403, 'You do not have permission to view reports');
         }
 
@@ -238,7 +233,7 @@ class ReportsController extends Controller
 
         $timestamp = now()->format('Y-m-d-His');
 
-        return match($format) {
+        return match ($format) {
             'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "inventory-report-{$timestamp}.xlsx"),
             'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "inventory-report-{$timestamp}.pdf", 'Inventory Report'),
             default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "inventory-report-{$timestamp}.csv"),
@@ -252,7 +247,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->role->hasPermission('view_reports')) {
+        if (! $user->role->hasPermission('view_reports')) {
             abort(403, 'You do not have permission to view reports');
         }
 
@@ -261,8 +256,8 @@ class ReportsController extends Controller
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
             'supplier' => ['nullable', 'integer', 'exists:tenants,id'],
-            'status' => ['nullable', 'in:' . implode(',', array_column(PurchaseOrderStatus::cases(), 'value'))],
-            'payment_status' => ['nullable', 'in:' . implode(',', array_column(PurchaseOrderPaymentStatus::cases(), 'value'))],
+            'status' => ['nullable', 'in:'.implode(',', array_column(PurchaseOrderStatus::cases(), 'value'))],
+            'payment_status' => ['nullable', 'in:'.implode(',', array_column(PurchaseOrderPaymentStatus::cases(), 'value'))],
             'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
         ]);
 
@@ -315,7 +310,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->role->hasPermission('view_reports')) {
+        if (! $user->role->hasPermission('view_reports')) {
             abort(403, 'You do not have permission to view reports');
         }
 
@@ -324,8 +319,8 @@ class ReportsController extends Controller
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
             'supplier' => ['nullable', 'integer', 'exists:tenants,id'],
-            'status' => ['nullable', 'in:' . implode(',', array_column(PurchaseOrderStatus::cases(), 'value'))],
-            'payment_status' => ['nullable', 'in:' . implode(',', array_column(PurchaseOrderPaymentStatus::cases(), 'value'))],
+            'status' => ['nullable', 'in:'.implode(',', array_column(PurchaseOrderStatus::cases(), 'value'))],
+            'payment_status' => ['nullable', 'in:'.implode(',', array_column(PurchaseOrderPaymentStatus::cases(), 'value'))],
             'format' => ['nullable', 'in:csv,excel,pdf'],
         ]);
 
@@ -350,7 +345,7 @@ class ReportsController extends Controller
 
         $timestamp = now()->format('Y-m-d-His');
 
-        return match($format) {
+        return match ($format) {
             'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "supplier-report-{$timestamp}.xlsx"),
             'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "supplier-report-{$timestamp}.pdf", 'Supplier Report'),
             default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "supplier-report-{$timestamp}.csv"),
@@ -364,7 +359,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->can('viewFinancials', DashboardPolicy::class)) {
+        if (! $user->can('viewFinancials', DashboardPolicy::class)) {
             abort(403, 'You do not have permission to view financial reports');
         }
 
@@ -400,7 +395,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->can('viewFinancials', DashboardPolicy::class)) {
+        if (! $user->can('viewFinancials', DashboardPolicy::class)) {
             abort(403, 'You do not have permission to view financial reports');
         }
 
@@ -427,7 +422,7 @@ class ReportsController extends Controller
 
         $timestamp = now()->format('Y-m-d-His');
 
-        return match($format) {
+        return match ($format) {
             'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "financial-report-{$timestamp}.xlsx"),
             'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "financial-report-{$timestamp}.pdf", 'Financial Report'),
             default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "financial-report-{$timestamp}.csv"),
@@ -441,7 +436,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->role->hasPermission('view_reports')) {
+        if (! $user->role->hasPermission('view_reports')) {
             abort(403, 'You do not have permission to view reports');
         }
 
@@ -492,7 +487,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->role->hasPermission('view_reports')) {
+        if (! $user->role->hasPermission('view_reports')) {
             abort(403, 'You do not have permission to view reports');
         }
 
@@ -524,7 +519,7 @@ class ReportsController extends Controller
 
         $timestamp = now()->format('Y-m-d-His');
 
-        return match($format) {
+        return match ($format) {
             'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "customer-analytics-{$timestamp}.xlsx"),
             'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "customer-analytics-{$timestamp}.pdf", 'Customer Analytics'),
             default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "customer-analytics-{$timestamp}.csv"),
@@ -538,7 +533,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->can('viewFinancials', DashboardPolicy::class)) {
+        if (! $user->can('viewFinancials', DashboardPolicy::class)) {
             abort(403, 'You do not have permission to view product profitability');
         }
 
@@ -594,7 +589,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->can('viewFinancials', DashboardPolicy::class)) {
+        if (! $user->can('viewFinancials', DashboardPolicy::class)) {
             abort(403, 'You do not have permission to view product profitability');
         }
 
@@ -628,7 +623,7 @@ class ReportsController extends Controller
 
         $timestamp = now()->format('Y-m-d-His');
 
-        return match($format) {
+        return match ($format) {
             'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "product-profitability-{$timestamp}.xlsx"),
             'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "product-profitability-{$timestamp}.pdf", 'Product Profitability'),
             default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "product-profitability-{$timestamp}.csv"),
@@ -673,9 +668,10 @@ class ReportsController extends Controller
         $assignedShopIds = $user->shops()->pluck('shops.id');
 
         if ($shopId) {
-            if (!$assignedShopIds->contains($shopId)) {
+            if (! $assignedShopIds->contains($shopId)) {
                 abort(403, 'You do not have access to this shop');
             }
+
             return collect([$shopId]);
         }
 

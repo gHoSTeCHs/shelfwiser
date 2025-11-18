@@ -19,27 +19,25 @@ use Throwable;
 readonly class PayrollService
 {
     public function __construct(
-        private TimesheetService    $timesheetService,
-        private WageAdvanceService  $wageAdvanceService,
-        private TaxService          $taxService,
+        private TimesheetService $timesheetService,
+        private WageAdvanceService $wageAdvanceService,
+        private TaxService $taxService,
         private NotificationService $notificationService
-    )
-    {
-    }
+    ) {}
 
     /**
      * Create a new payroll period
+     *
      * @throws Throwable
      */
     public function createPayrollPeriod(
-        int     $tenantId,
-        ?int    $shopId,
-        Carbon  $startDate,
-        Carbon  $endDate,
-        Carbon  $paymentDate,
+        int $tenantId,
+        ?int $shopId,
+        Carbon $startDate,
+        Carbon $endDate,
+        Carbon $paymentDate,
         ?string $periodName = null
-    ): PayrollPeriod
-    {
+    ): PayrollPeriod {
         return DB::transaction(function () use ($tenantId, $shopId, $startDate, $endDate, $paymentDate, $periodName) {
             $name = $periodName ?? $startDate->format('F Y');
 
@@ -61,11 +59,12 @@ readonly class PayrollService
 
     /**
      * Process payroll for a period
+     *
      * @throws Throwable
      */
     public function processPayroll(PayrollPeriod $payrollPeriod, User $processor): PayrollPeriod
     {
-        if (!$payrollPeriod->status->canProcess()) {
+        if (! $payrollPeriod->status->canProcess()) {
             throw new RuntimeException('Payroll cannot be processed in current status');
         }
 
@@ -84,9 +83,9 @@ readonly class PayrollService
             foreach ($employees as $employee) {
                 $payslip = $this->generatePayslip($payrollPeriod, $employee);
 
-                $totalGrossPay += (float)$payslip->gross_pay;
-                $totalDeductions += (float)$payslip->total_deductions;
-                $totalNetPay += (float)$payslip->net_pay;
+                $totalGrossPay += (float) $payslip->gross_pay;
+                $totalDeductions += (float) $payslip->total_deductions;
+                $totalNetPay += (float) $payslip->net_pay;
 
                 if ($employee->role === UserRole::GENERAL_MANAGER) {
                     $includesGM = true;
@@ -122,7 +121,7 @@ readonly class PayrollService
     {
         $payrollDetail = $employee->payrollDetail;
 
-        if (!$payrollDetail) {
+        if (! $payrollDetail) {
             throw new RuntimeException("Employee $employee->name has no payroll details configured");
         }
 
@@ -170,7 +169,7 @@ readonly class PayrollService
     protected function calculateEarnings(User $employee, PayrollPeriod $payrollPeriod): array
     {
         $payrollDetail = $employee->payrollDetail;
-//        $shop = $payrollDetail->shop ?? $employee->shops()->first();
+        //        $shop = $payrollDetail->shop ?? $employee->shops()->first();
 
         $timesheetSummary = $this->timesheetService->getTimesheetSummary(
             $employee,
@@ -188,20 +187,20 @@ readonly class PayrollService
 
         switch ($payrollDetail->pay_type) {
             case PayType::SALARY:
-                $baseSalary = (float)$payrollDetail->pay_amount;
+                $baseSalary = (float) $payrollDetail->pay_amount;
                 $regularPay = $baseSalary;
                 $hourlyRate = $baseSalary / 160;
                 $overtimePay = $overtimeHours * $hourlyRate * $overtimeMultiplier;
                 break;
 
             case PayType::HOURLY:
-                $hourlyRate = (float)$payrollDetail->pay_amount;
+                $hourlyRate = (float) $payrollDetail->pay_amount;
                 $regularPay = $regularHours * $hourlyRate;
                 $overtimePay = $overtimeHours * $hourlyRate * $overtimeMultiplier;
                 break;
 
             case PayType::DAILY:
-                $dailyRate = (float)$payrollDetail->pay_amount;
+                $dailyRate = (float) $payrollDetail->pay_amount;
                 $hoursPerDay = 8;
                 $regularPay = ($regularHours / $hoursPerDay) * $dailyRate;
                 $overtimePay = ($overtimeHours / $hoursPerDay) * $dailyRate * $overtimeMultiplier;
@@ -265,7 +264,7 @@ readonly class PayrollService
 
         $nhis = 0;
         if ($payrollDetail->nhis_enabled && $payrollDetail->nhis_amount) {
-            $nhis = (float)$payrollDetail->nhis_amount;
+            $nhis = (float) $payrollDetail->nhis_amount;
         }
 
         $wageAdvanceDeduction = 0;
@@ -318,11 +317,12 @@ readonly class PayrollService
 
     /**
      * Approve payroll
+     *
      * @throws Throwable
      */
     public function approvePayroll(PayrollPeriod $payrollPeriod, User $approver): PayrollPeriod
     {
-        if (!$payrollPeriod->status->canApprove()) {
+        if (! $payrollPeriod->status->canApprove()) {
             throw new RuntimeException('Payroll cannot be approved in current status');
         }
 
@@ -345,11 +345,12 @@ readonly class PayrollService
 
     /**
      * Mark payroll as paid
+     *
      * @throws Throwable
      */
     public function markAsPaid(PayrollPeriod $payrollPeriod): PayrollPeriod
     {
-        if (!$payrollPeriod->status->canPay()) {
+        if (! $payrollPeriod->status->canPay()) {
             throw new RuntimeException('Payroll cannot be marked as paid in current status');
         }
 
@@ -382,11 +383,12 @@ readonly class PayrollService
 
     /**
      * Cancel payroll
+     *
      * @throws Throwable
      */
     public function cancelPayroll(PayrollPeriod $payrollPeriod, string $reason): PayrollPeriod
     {
-        if (!$payrollPeriod->status->canCancel()) {
+        if (! $payrollPeriod->status->canCancel()) {
             throw new RuntimeException('Payroll cannot be cancelled in current status');
         }
 
@@ -395,7 +397,7 @@ readonly class PayrollService
 
             $payrollPeriod->update([
                 'status' => PayrollStatus::CANCELLED,
-                'notes' => ($payrollPeriod->notes ? $payrollPeriod->notes . "\n\n" : '') .
+                'notes' => ($payrollPeriod->notes ? $payrollPeriod->notes."\n\n" : '').
                     "Cancelled: $reason",
             ]);
 
@@ -409,11 +411,10 @@ readonly class PayrollService
      * Get payroll periods for tenant
      */
     public function getPayrollPeriods(
-        int            $tenantId,
-        ?int           $shopId = null,
+        int $tenantId,
+        ?int $shopId = null,
         ?PayrollStatus $status = null
-    ): Collection
-    {
+    ): Collection {
         $query = PayrollPeriod::query()->where('tenant_id', $tenantId)
             ->with(['shop', 'processedBy', 'approvedBy']);
 

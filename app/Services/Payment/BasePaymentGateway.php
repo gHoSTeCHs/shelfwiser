@@ -24,7 +24,7 @@ abstract class BasePaymentGateway implements PaymentGatewayInterface
 
     public function isAvailable(): bool
     {
-        return !empty($this->config['secret_key']);
+        return ! empty($this->config['secret_key']);
     }
 
     public function supportsInlinePayment(): bool
@@ -52,7 +52,7 @@ abstract class BasePaymentGateway implements PaymentGatewayInterface
 
     public function getWebhookUrl(): string
     {
-        return route('webhooks.' . $this->getIdentifier());
+        return route('webhooks.'.$this->getIdentifier());
     }
 
     public function generateReference(Order $order): string
@@ -123,10 +123,10 @@ abstract class BasePaymentGateway implements PaymentGatewayInterface
         array $headers = []
     ): array {
         $baseUrl = $this->config['base_url'] ?? $this->config['payment_url'] ?? '';
-        $url = rtrim($baseUrl, '/') . '/' . ltrim($endpoint, '/');
+        $url = rtrim($baseUrl, '/').'/'.ltrim($endpoint, '/');
 
         $defaultHeaders = [
-            'Authorization' => 'Bearer ' . ($this->config['secret_key'] ?? ''),
+            'Authorization' => 'Bearer '.($this->config['secret_key'] ?? ''),
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
         ];
@@ -140,8 +140,8 @@ abstract class BasePaymentGateway implements PaymentGatewayInterface
 
             $responseData = $response->json() ?? [];
 
-            if (!$response->successful()) {
-                Log::error("Payment gateway request failed", [
+            if (! $response->successful()) {
+                Log::error('Payment gateway request failed', [
                     'gateway' => $this->getIdentifier(),
                     'endpoint' => $endpoint,
                     'status' => $response->status(),
@@ -155,7 +155,7 @@ abstract class BasePaymentGateway implements PaymentGatewayInterface
                 'data' => $responseData,
             ];
         } catch (\Exception $e) {
-            Log::error("Payment gateway request exception", [
+            Log::error('Payment gateway request exception', [
                 'gateway' => $this->getIdentifier(),
                 'endpoint' => $endpoint,
                 'error' => $e->getMessage(),
@@ -224,6 +224,7 @@ abstract class BasePaymentGateway implements PaymentGatewayInterface
 
         if (count($parts) >= 2) {
             $orderNumber = $parts[1];
+
             return Order::where('order_number', $orderNumber)->first();
         }
 

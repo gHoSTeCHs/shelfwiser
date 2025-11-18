@@ -69,11 +69,11 @@ class FundRequestController extends Controller
                 'end_date' => $endDate->toDateString(),
             ],
             'shops' => $user->shops,
-            'statusOptions' => collect(FundRequestStatus::cases())->map(fn($case) => [
+            'statusOptions' => collect(FundRequestStatus::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
-            'typeOptions' => collect(FundRequestType::cases())->map(fn($case) => [
+            'typeOptions' => collect(FundRequestType::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
@@ -110,7 +110,7 @@ class FundRequestController extends Controller
 
         return Inertia::render('FundRequests/Create', [
             'shops' => auth()->user()->shops,
-            'requestTypes' => collect(FundRequestType::cases())->map(fn($case) => [
+            'requestTypes' => collect(FundRequestType::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'label' => $case->label(),
                 'description' => $case->description(),

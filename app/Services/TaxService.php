@@ -17,10 +17,10 @@ class TaxService
     /**
      * Calculate personal income tax (PAYE) for an employee
      *
-     * @param float $grossIncome The gross income for the period
-     * @param int|null $taxJurisdictionId The tax jurisdiction ID
-     * @param Carbon $taxDate The date for which to calculate tax (determines which tax law applies)
-     * @param array $reliefs Additional reliefs to apply (e.g., ['rent_paid' => 500000])
+     * @param  float  $grossIncome  The gross income for the period
+     * @param  int|null  $taxJurisdictionId  The tax jurisdiction ID
+     * @param  Carbon  $taxDate  The date for which to calculate tax (determines which tax law applies)
+     * @param  array  $reliefs  Additional reliefs to apply (e.g., ['rent_paid' => 500000])
      * @return array Tax calculation breakdown including total tax, brackets applied, and reliefs
      */
     public function calculatePersonalIncomeTax(
@@ -29,7 +29,7 @@ class TaxService
         Carbon $taxDate,
         array $reliefs = []
     ): array {
-        if (!$taxJurisdictionId || $grossIncome <= 0) {
+        if (! $taxJurisdictionId || $grossIncome <= 0) {
             return [
                 'gross_income' => $grossIncome,
                 'total_reliefs' => 0,
@@ -92,10 +92,10 @@ class TaxService
     /**
      * Calculate corporate income tax (CIT) for a shop/business
      *
-     * @param float $annualTurnover The total annual revenue
-     * @param float $taxableProfit The profit after deductions
-     * @param int|null $taxJurisdictionId The tax jurisdiction ID
-     * @param Carbon $taxYear The tax year
+     * @param  float  $annualTurnover  The total annual revenue
+     * @param  float  $taxableProfit  The profit after deductions
+     * @param  int|null  $taxJurisdictionId  The tax jurisdiction ID
+     * @param  Carbon  $taxYear  The tax year
      * @return array Tax calculation breakdown
      */
     public function calculateCorporateTax(
@@ -104,7 +104,7 @@ class TaxService
         ?int $taxJurisdictionId,
         Carbon $taxYear
     ): array {
-        if (!$taxJurisdictionId || $taxableProfit <= 0) {
+        if (! $taxJurisdictionId || $taxableProfit <= 0) {
             return [
                 'annual_turnover' => $annualTurnover,
                 'taxable_profit' => $taxableProfit,
@@ -137,10 +137,6 @@ class TaxService
 
     /**
      * Get tax brackets for a jurisdiction on a specific date
-     *
-     * @param int $jurisdictionId
-     * @param Carbon $date
-     * @return Collection
      */
     public function getTaxBrackets(int $jurisdictionId, Carbon $date): Collection
     {
@@ -152,7 +148,7 @@ class TaxService
                     ->where('effective_from', '<=', $date)
                     ->where(function ($q) use ($date) {
                         $q->whereNull('effective_to')
-                          ->orWhere('effective_to', '>=', $date);
+                            ->orWhere('effective_to', '>=', $date);
                     })
                     ->orderBy('bracket_order')
                     ->get();
@@ -161,10 +157,6 @@ class TaxService
 
     /**
      * Get tax reliefs for a jurisdiction on a specific date
-     *
-     * @param int $jurisdictionId
-     * @param Carbon $date
-     * @return Collection
      */
     public function getTaxReliefs(int $jurisdictionId, Carbon $date): Collection
     {
@@ -176,7 +168,7 @@ class TaxService
                     ->where('effective_from', '<=', $date)
                     ->where(function ($q) use ($date) {
                         $q->whereNull('effective_to')
-                          ->orWhere('effective_to', '>=', $date);
+                            ->orWhere('effective_to', '>=', $date);
                     })
                     ->get();
             });
@@ -185,9 +177,6 @@ class TaxService
     /**
      * Get corporate tax rate for a jurisdiction based on turnover
      *
-     * @param int $jurisdictionId
-     * @param float $annualTurnover
-     * @param Carbon $taxYear
      * @return float The tax rate percentage
      */
     public function getCorporateTaxRate(int $jurisdictionId, float $annualTurnover, Carbon $taxYear): float
@@ -200,7 +189,7 @@ class TaxService
                     ->where('effective_from', '<=', $taxYear)
                     ->where(function ($q) use ($taxYear) {
                         $q->whereNull('effective_to')
-                          ->orWhere('effective_to', '>=', $taxYear);
+                            ->orWhere('effective_to', '>=', $taxYear);
                     })
                     ->orderBy('turnover_from')
                     ->get();
@@ -220,11 +209,6 @@ class TaxService
 
     /**
      * Calculate total tax reliefs to apply
-     *
-     * @param float $grossIncome
-     * @param Collection $taxReliefs
-     * @param array $additionalReliefs
-     * @return float
      */
     protected function calculateTotalReliefs(float $grossIncome, Collection $taxReliefs, array $additionalReliefs): float
     {
@@ -255,10 +239,6 @@ class TaxService
 
     /**
      * Calculate Consolidated Relief Allowance (Nigerian tax law pre-2026)
-     *
-     * @param float $grossIncome
-     * @param TaxRelief $relief
-     * @return float
      */
     protected function calculateCRA(float $grossIncome, TaxRelief $relief): float
     {
@@ -270,10 +250,6 @@ class TaxService
 
     /**
      * Calculate Rent Relief (Nigerian tax law from 2026)
-     *
-     * @param float $annualRentPaid
-     * @param TaxRelief $relief
-     * @return float
      */
     protected function calculateRentRelief(float $annualRentPaid, TaxRelief $relief): float
     {
@@ -284,15 +260,12 @@ class TaxService
 
     /**
      * Get tax jurisdiction for a shop
-     *
-     * @param Shop $shop
-     * @return TaxJurisdiction|null
      */
     public function getShopTaxJurisdiction(Shop $shop): ?TaxJurisdiction
     {
         $taxSettings = $shop->taxSettings;
 
-        if (!$taxSettings || !$taxSettings->tax_jurisdiction_id) {
+        if (! $taxSettings || ! $taxSettings->tax_jurisdiction_id) {
             return null;
         }
 
@@ -301,12 +274,6 @@ class TaxService
 
     /**
      * Calculate taxable income after applying all reliefs
-     *
-     * @param float $grossIncome
-     * @param array $reliefs
-     * @param int $jurisdictionId
-     * @param Carbon $date
-     * @return float
      */
     public function calculateTaxableIncome(
         float $grossIncome,

@@ -2,14 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Services\Payment\PaymentGatewayManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class PaymentController extends Controller
 {
@@ -25,7 +22,7 @@ class PaymentController extends Controller
         $gateway = $this->gatewayManager->gateway($gatewayName);
         $reference = $request->get('reference') ?? $request->get('tx_ref') ?? $order->payment_reference;
 
-        if (!$reference) {
+        if (! $reference) {
             return redirect()
                 ->route('orders.show', $order)
                 ->with('error', 'Payment reference not found');
@@ -36,7 +33,7 @@ class PaymentController extends Controller
         if ($result->isSuccessful()) {
             $existingPayment = OrderPayment::where('reference_number', $reference)->first();
 
-            if (!$existingPayment) {
+            if (! $existingPayment) {
                 OrderPayment::create([
                     'order_id' => $order->id,
                     'tenant_id' => $order->tenant_id,
@@ -84,10 +81,11 @@ class PaymentController extends Controller
 
         $gateway = $this->gatewayManager->gateway($validated['gateway']);
 
-        if (!$gateway->isAvailable()) {
+        if (! $gateway->isAvailable()) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Payment gateway not available'], 400);
             }
+
             return back()->with('error', 'Payment gateway not available');
         }
 
@@ -98,10 +96,11 @@ class PaymentController extends Controller
             ]),
         ]);
 
-        if (!$result->success) {
+        if (! $result->success) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => $result->message], 400);
             }
+
             return back()->with('error', $result->message ?? 'Failed to initialize payment');
         }
 
@@ -136,7 +135,7 @@ class PaymentController extends Controller
     {
         $reference = $request->get('reference') ?? $order->payment_reference;
 
-        if (!$reference || !$order->payment_gateway) {
+        if (! $reference || ! $order->payment_gateway) {
             return response()->json(['error' => 'No payment to verify'], 400);
         }
 

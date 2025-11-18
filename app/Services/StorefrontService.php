@@ -20,7 +20,7 @@ class StorefrontService
         return Product::where('shop_id', $shop->id)
             ->where('is_active', true)
             ->where('is_featured', true)
-            ->with(['variants' => fn($q) => $q->where('is_available_online', true)->where('is_active', true)])
+            ->with(['variants' => fn ($q) => $q->where('is_available_online', true)->where('is_active', true)])
             ->orderBy('display_order')
             ->orderBy('name')
             ->limit($limit)
@@ -40,16 +40,16 @@ class StorefrontService
         $query = Product::where('shop_id', $shop->id)
             ->where('is_active', true)
             ->with([
-                'variants' => fn($q) => $q->where('is_available_online', true)->where('is_active', true),
-                'category'
+                'variants' => fn ($q) => $q->where('is_available_online', true)->where('is_active', true),
+                'category',
             ]);
 
         // Search filter
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('seo_keywords', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('seo_keywords', 'like', "%{$search}%");
             });
         }
 
@@ -59,7 +59,7 @@ class StorefrontService
         }
 
         // Sorting
-        match($sortBy) {
+        match ($sortBy) {
             'price_low' => $query->join('product_variants', 'products.id', '=', 'product_variants.product_id')
                 ->where('product_variants.is_available_online', true)
                 ->orderBy('product_variants.price', 'asc')
@@ -85,11 +85,11 @@ class StorefrontService
             ->where('slug', $slug)
             ->where('is_active', true)
             ->with([
-                'variants' => fn($q) => $q->where('is_available_online', true)
+                'variants' => fn ($q) => $q->where('is_available_online', true)
                     ->where('is_active', true)
                     ->with('packagingTypes'),
                 'category',
-                'type'
+                'type',
             ])
             ->first();
     }
@@ -103,7 +103,7 @@ class StorefrontService
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
-            ->with(['variants' => fn($q) => $q->where('is_available_online', true)->where('is_active', true)])
+            ->with(['variants' => fn ($q) => $q->where('is_available_online', true)->where('is_active', true)])
             ->limit($limit)
             ->get();
     }
@@ -115,7 +115,7 @@ class StorefrontService
     {
         return ProductCategory::where('tenant_id', $shop->tenant_id)
             ->whereNull('parent_id')
-            ->withCount(['products' => fn($q) => $q->where('shop_id', $shop->id)->where('is_active', true)])
+            ->withCount(['products' => fn ($q) => $q->where('shop_id', $shop->id)->where('is_active', true)])
             ->orderBy('name')
             ->get();
     }
@@ -146,15 +146,15 @@ class StorefrontService
             ->where('is_active', true)
             ->where('is_available_online', true)
             ->with([
-                'variants' => fn($q) => $q->where('is_active', true)->orderBy('sort_order'),
-                'category'
+                'variants' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
+                'category',
             ]);
 
         // Search filter
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -164,7 +164,7 @@ class StorefrontService
         }
 
         // Sorting
-        match($sortBy) {
+        match ($sortBy) {
             'price_low' => $query->join('service_variants', 'services.id', '=', 'service_variants.service_id')
                 ->where('service_variants.is_active', true)
                 ->orderBy('service_variants.base_price', 'asc')
@@ -187,7 +187,7 @@ class StorefrontService
     {
         return ServiceCategory::where('tenant_id', $shop->tenant_id)
             ->whereNull('parent_id')
-            ->withCount(['services' => fn($q) => $q->where('shop_id', $shop->id)
+            ->withCount(['services' => fn ($q) => $q->where('shop_id', $shop->id)
                 ->where('is_active', true)
                 ->where('is_available_online', true)])
             ->where('is_active', true)
@@ -206,7 +206,7 @@ class StorefrontService
             ->where('id', '!=', $service->id)
             ->where('is_active', true)
             ->where('is_available_online', true)
-            ->with(['variants' => fn($q) => $q->where('is_active', true)->orderBy('sort_order')])
+            ->with(['variants' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
             ->limit($limit)
             ->get();
     }

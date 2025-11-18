@@ -44,8 +44,8 @@ class PaymentGatewayManager
     /**
      * Get a gateway instance by identifier.
      *
-     * @param string $identifier Gateway identifier
-     * @return PaymentGatewayInterface
+     * @param  string  $identifier  Gateway identifier
+     *
      * @throws InvalidPaymentGatewayException
      */
     public function gateway(string $identifier): PaymentGatewayInterface
@@ -54,7 +54,7 @@ class PaymentGatewayManager
             return $this->resolved[$identifier];
         }
 
-        if (!isset($this->gateways[$identifier])) {
+        if (! isset($this->gateways[$identifier])) {
             throw new InvalidPaymentGatewayException(
                 "Payment gateway [{$identifier}] is not registered."
             );
@@ -62,7 +62,7 @@ class PaymentGatewayManager
 
         $gatewayClass = $this->gateways[$identifier];
 
-        if (!class_exists($gatewayClass)) {
+        if (! class_exists($gatewayClass)) {
             throw new InvalidPaymentGatewayException(
                 "Payment gateway class [{$gatewayClass}] does not exist."
             );
@@ -70,7 +70,7 @@ class PaymentGatewayManager
 
         $gateway = App::make($gatewayClass);
 
-        if (!$gateway instanceof PaymentGatewayInterface) {
+        if (! $gateway instanceof PaymentGatewayInterface) {
             throw new InvalidPaymentGatewayException(
                 "Gateway [{$identifier}] must implement PaymentGatewayInterface."
             );
@@ -83,20 +83,19 @@ class PaymentGatewayManager
 
     /**
      * Get the default payment gateway.
-     *
-     * @return PaymentGatewayInterface
      */
     public function getDefault(): PaymentGatewayInterface
     {
         $default = config('payment.default', 'paystack');
+
         return $this->gateway($default);
     }
 
     /**
      * Register a custom gateway.
      *
-     * @param string $identifier Gateway identifier
-     * @param string $gatewayClass Fully qualified class name
+     * @param  string  $identifier  Gateway identifier
+     * @param  string  $gatewayClass  Fully qualified class name
      */
     public function register(string $identifier, string $gatewayClass): void
     {
@@ -107,8 +106,7 @@ class PaymentGatewayManager
     /**
      * Check if a gateway is registered.
      *
-     * @param string $identifier Gateway identifier
-     * @return bool
+     * @param  string  $identifier  Gateway identifier
      */
     public function has(string $identifier): bool
     {
@@ -151,7 +149,7 @@ class PaymentGatewayManager
     /**
      * Get gateway options for select dropdowns.
      *
-     * @param bool $onlyAvailable Only include available gateways
+     * @param  bool  $onlyAvailable  Only include available gateways
      * @return array<string, string>
      */
     public function getSelectOptions(bool $onlyAvailable = true): array
@@ -188,9 +186,6 @@ class PaymentGatewayManager
 
     /**
      * Find gateway by webhook URL or other identifier.
-     *
-     * @param string $identifier
-     * @return PaymentGatewayInterface|null
      */
     public function findByIdentifier(string $identifier): ?PaymentGatewayInterface
     {

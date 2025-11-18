@@ -37,6 +37,7 @@ class FundRequestPolicy
 
         if ($user->role->level() >= UserRole::ASSISTANT_MANAGER->level()) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($fundRequest->shop_id);
         }
 
@@ -80,7 +81,7 @@ class FundRequestPolicy
             return false;
         }
 
-        if (!$fundRequest->status->canApprove()) {
+        if (! $fundRequest->status->canApprove()) {
             return false;
         }
 
@@ -95,6 +96,7 @@ class FundRequestPolicy
         if ($user->role->level() >= UserRole::ASSISTANT_MANAGER->level() &&
             $user->role->level() > $fundRequest->user->role->level()) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($fundRequest->shop_id);
         }
 
@@ -118,7 +120,7 @@ class FundRequestPolicy
             return false;
         }
 
-        if (!$fundRequest->status->canDisburse()) {
+        if (! $fundRequest->status->canDisburse()) {
             return false;
         }
 
@@ -128,6 +130,7 @@ class FundRequestPolicy
 
         if ($user->role === UserRole::STORE_MANAGER) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($fundRequest->shop_id);
         }
 
@@ -143,7 +146,7 @@ class FundRequestPolicy
             return false;
         }
 
-        if (!$fundRequest->status->canCancel()) {
+        if (! $fundRequest->status->canCancel()) {
             return false;
         }
 
@@ -157,6 +160,7 @@ class FundRequestPolicy
 
         if ($user->role === UserRole::STORE_MANAGER) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($fundRequest->shop_id);
         }
 

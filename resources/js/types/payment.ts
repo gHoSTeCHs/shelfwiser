@@ -5,6 +5,8 @@
  * Paystack, OPay, Flutterwave, and cryptocurrency payments.
  */
 
+import type { ReactNode } from 'react';
+
 export interface PaymentGateway {
     identifier: string;
     name: string;
@@ -85,7 +87,7 @@ export interface PaymentOption {
     id: PaymentMethod;
     name: string;
     description: string;
-    icon: React.ReactNode;
+    icon: ReactNode;
     isOnline: boolean;
     gateway?: string;
 }

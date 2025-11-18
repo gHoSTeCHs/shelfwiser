@@ -35,12 +35,12 @@ class ShopSettingsController extends Controller
             'shop' => $shop,
             'taxSettings' => $shop->taxSettings,
             'taxJurisdictions' => $taxJurisdictions,
-            'taxHandlingOptions' => collect(TaxHandling::cases())->map(fn($case) => [
+            'taxHandlingOptions' => collect(TaxHandling::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'label' => $case->label(),
                 'description' => $case->description(),
             ]),
-            'payFrequencyOptions' => collect(PayFrequency::cases())->map(fn($case) => [
+            'payFrequencyOptions' => collect(PayFrequency::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),

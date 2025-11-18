@@ -18,8 +18,7 @@ class ServiceController extends Controller
 {
     public function __construct(
         private readonly ServiceManagementService $serviceManagementService
-    ) {
-    }
+    ) {}
 
     /**
      * Display a listing of services
@@ -95,8 +94,8 @@ class ServiceController extends Controller
         $service->load([
             'category',
             'shop',
-            'variants' => fn($q) => $q->orderBy('sort_order'),
-            'addons' => fn($q) => $q->where('is_active', true)->orderBy('sort_order'),
+            'variants' => fn ($q) => $q->orderBy('sort_order'),
+            'addons' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
             'images' => function ($query) {
                 $query->ordered();
             },
@@ -128,8 +127,8 @@ class ServiceController extends Controller
 
         $service->load([
             'category',
-            'variants' => fn($q) => $q->orderBy('sort_order'),
-            'addons' => fn($q) => $q->orderBy('sort_order'),
+            'variants' => fn ($q) => $q->orderBy('sort_order'),
+            'addons' => fn ($q) => $q->orderBy('sort_order'),
             'images' => function ($query) {
                 $query->ordered();
             },

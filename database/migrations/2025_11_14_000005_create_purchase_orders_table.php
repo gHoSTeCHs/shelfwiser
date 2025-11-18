@@ -22,7 +22,7 @@ return new class extends Migration
                 'shipped',
                 'received',
                 'completed',
-                'cancelled'
+                'cancelled',
             ])->default('draft');
             $table->decimal('subtotal', 15, 2)->default(0);
             $table->decimal('tax_amount', 15, 2)->default(0);
@@ -38,7 +38,7 @@ return new class extends Migration
                 'partial',
                 'paid',
                 'overdue',
-                'cancelled'
+                'cancelled',
             ])->default('pending');
             $table->decimal('paid_amount', 15, 2)->default(0);
             $table->date('payment_due_date')->nullable();

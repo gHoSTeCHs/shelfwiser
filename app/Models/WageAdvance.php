@@ -93,6 +93,7 @@ class WageAdvance extends Model
     {
         $approved = (float) ($this->amount_approved ?? $this->amount_requested);
         $repaid = (float) $this->amount_repaid;
+
         return max(0, $approved - $repaid);
     }
 
@@ -105,6 +106,7 @@ class WageAdvance extends Model
             return 0;
         }
         $approved = (float) ($this->amount_approved ?? $this->amount_requested);
+
         return $approved / $this->repayment_installments;
     }
 

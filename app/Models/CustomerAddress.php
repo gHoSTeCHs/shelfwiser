@@ -59,7 +59,7 @@ class CustomerAddress extends Model
     {
         return $query->where(function ($q) use ($type) {
             $q->where('type', $type)
-              ->orWhere('type', 'both');
+                ->orWhere('type', 'both');
         });
     }
 

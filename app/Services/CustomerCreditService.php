@@ -16,12 +16,12 @@ class CustomerCreditService
      */
     public function chargeOrder(Customer $customer, Order $order): CustomerCreditTransaction
     {
-        if (!$customer->canPurchaseOnCredit($order->total_amount)) {
+        if (! $customer->canPurchaseOnCredit($order->total_amount)) {
             $available = $customer->availableCredit();
             throw new \Exception(
-                $available !== null 
-                    ? "Credit limit exceeded. Available credit: ₦" . number_format($available, 2)
-                    : "Cannot charge order to credit"
+                $available !== null
+                    ? 'Credit limit exceeded. Available credit: ₦'.number_format($available, 2)
+                    : 'Cannot charge order to credit'
             );
         }
 
@@ -92,7 +92,9 @@ class CustomerCreditService
         $remainingAmount = $amount;
 
         foreach ($unpaidOrders as $order) {
-            if ($remainingAmount <= 0) break;
+            if ($remainingAmount <= 0) {
+                break;
+            }
 
             $orderBalance = $order->remainingBalance();
             $paymentAmount = min($remainingAmount, $orderBalance);
@@ -120,7 +122,7 @@ class CustomerCreditService
     public function getCreditSummary(Customer $customer): array
     {
         $unpaidOrders = $customer->unpaidOrders()->with('payments')->get();
-        $totalOwed = $unpaidOrders->sum(fn($order) => $order->remainingBalance());
+        $totalOwed = $unpaidOrders->sum(fn ($order) => $order->remainingBalance());
 
         return [
             'account_balance' => $customer->account_balance,
@@ -130,7 +132,7 @@ class CustomerCreditService
             'last_purchase_at' => $customer->last_purchase_at,
             'unpaid_order_count' => $unpaidOrders->count(),
             'total_owed' => $totalOwed,
-            'unpaid_orders' => $unpaidOrders->map(fn($order) => [
+            'unpaid_orders' => $unpaidOrders->map(fn ($order) => [
                 'id' => $order->id,
                 'order_number' => $order->order_number,
                 'date' => $order->created_at->format('Y-m-d'),
@@ -145,14 +147,14 @@ class CustomerCreditService
                 ->limit(10)
                 ->with('recordedBy')
                 ->get()
-                ->map(fn($txn) => [
+                ->map(fn ($txn) => [
                     'id' => $txn->id,
                     'date' => $txn->created_at->format('Y-m-d H:i'),
                     'type' => $txn->type,
                     'amount' => $txn->amount,
                     'balance_after' => $txn->balance_after,
                     'description' => $txn->description,
-                    'recorded_by' => $txn->recordedBy?->first_name . ' ' . $txn->recordedBy?->last_name,
+                    'recorded_by' => $txn->recordedBy?->first_name.' '.$txn->recordedBy?->last_name,
                 ]),
         ];
     }

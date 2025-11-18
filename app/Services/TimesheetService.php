@@ -65,7 +65,7 @@ class TimesheetService
     {
         $dateTime = $dateTime ?? now();
 
-        if (!$timesheet->isClockedIn()) {
+        if (! $timesheet->isClockedIn()) {
             throw new \RuntimeException('Employee is not currently clocked in');
         }
 
@@ -97,7 +97,7 @@ class TimesheetService
     {
         $dateTime = $dateTime ?? now();
 
-        if (!$timesheet->isClockedIn()) {
+        if (! $timesheet->isClockedIn()) {
             throw new \RuntimeException('Employee must be clocked in to start a break');
         }
 
@@ -124,7 +124,7 @@ class TimesheetService
     {
         $dateTime = $dateTime ?? now();
 
-        if (!$timesheet->isOnBreak()) {
+        if (! $timesheet->isOnBreak()) {
             throw new \RuntimeException('Employee is not currently on break');
         }
 
@@ -147,7 +147,7 @@ class TimesheetService
      */
     public function calculateHours(Timesheet $timesheet): array
     {
-        if (!$timesheet->clock_in || !$timesheet->clock_out) {
+        if (! $timesheet->clock_in || ! $timesheet->clock_out) {
             return [
                 'regular' => 0,
                 'overtime' => 0,
@@ -162,7 +162,7 @@ class TimesheetService
         $shop = $timesheet->shop;
         $taxSettings = $shop->taxSettings;
 
-        if (!$taxSettings) {
+        if (! $taxSettings) {
             return [
                 'regular' => $workHours,
                 'overtime' => 0,
@@ -195,11 +195,11 @@ class TimesheetService
      */
     public function submitTimesheet(Timesheet $timesheet, ?string $notes = null): Timesheet
     {
-        if (!$timesheet->status->canSubmit()) {
+        if (! $timesheet->status->canSubmit()) {
             throw new \RuntimeException('Timesheet cannot be submitted in current status');
         }
 
-        if (!$timesheet->clock_in || !$timesheet->clock_out) {
+        if (! $timesheet->clock_in || ! $timesheet->clock_out) {
             throw new \RuntimeException('Timesheet must have clock in and clock out times before submission');
         }
 
@@ -224,7 +224,7 @@ class TimesheetService
      */
     public function approveTimesheet(Timesheet $timesheet, User $approver): Timesheet
     {
-        if (!$timesheet->status->canApprove()) {
+        if (! $timesheet->status->canApprove()) {
             throw new \RuntimeException('Timesheet cannot be approved in current status');
         }
 
@@ -251,7 +251,7 @@ class TimesheetService
      */
     public function rejectTimesheet(Timesheet $timesheet, User $approver, string $reason): Timesheet
     {
-        if (!$timesheet->status->canApprove()) {
+        if (! $timesheet->status->canApprove()) {
             throw new \RuntimeException('Timesheet cannot be rejected in current status');
         }
 
@@ -284,7 +284,7 @@ class TimesheetService
 
         if ($shop) {
             $query->where('shop_id', $shop->id);
-        } elseif (!$manager->is_tenant_owner) {
+        } elseif (! $manager->is_tenant_owner) {
             $managerShopIds = $manager->shops()->pluck('shops.id');
             $query->whereIn('shop_id', $managerShopIds);
         }

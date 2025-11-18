@@ -17,6 +17,7 @@ class StaffManagementService
 {
     /**
      * Create a new staff member.
+     *
      * @throws Throwable
      */
     public function create(array $data, Tenant $tenant, User $creator): User
@@ -28,7 +29,7 @@ class StaffManagementService
         ]);
 
         try {
-            return DB::transaction(function () use ($data, $tenant, $creator) {
+            return DB::transaction(function () use ($data, $tenant) {
                 $staff = User::query()->create([
                     'tenant_id' => $tenant->id,
                     'first_name' => $data['first_name'],
@@ -39,7 +40,7 @@ class StaffManagementService
                     'is_tenant_owner' => false,
                 ]);
 
-                if (!empty($data['shop_ids'])) {
+                if (! empty($data['shop_ids'])) {
                     $this->assignShops($staff, $data['shop_ids'], $tenant);
                 }
 
@@ -70,6 +71,7 @@ class StaffManagementService
 
     /**
      * Update an existing staff member.
+     *
      * @throws Throwable
      */
     public function update(User $staff, array $data, User $updater): User
@@ -80,13 +82,13 @@ class StaffManagementService
         ]);
 
         try {
-            return DB::transaction(function () use ($staff, $data, $updater) {
+            return DB::transaction(function () use ($staff, $data) {
                 $updateData = array_filter([
                     'first_name' => $data['first_name'] ?? null,
                     'last_name' => $data['last_name'] ?? null,
                     'email' => $data['email'] ?? null,
                     'role' => isset($data['role']) ? $this->normalizeRole($data['role']) : null,
-                ], fn($value) => $value !== null);
+                ], fn ($value) => $value !== null);
 
                 if (isset($data['is_active'])) {
                     $updateData['is_active'] = $data['is_active'];
@@ -122,15 +124,15 @@ class StaffManagementService
     {
         $query = User::query()
             ->where('tenant_id', $tenant->id)
-            ->with(['shops' => fn($q) => $q->select('shops.id', 'shops.name', 'shops.slug')])
+            ->with(['shops' => fn ($q) => $q->select('shops.id', 'shops.name', 'shops.slug')])
             ->orderBy('created_at', 'desc');
 
-        if (!empty($filters['role'])) {
+        if (! empty($filters['role'])) {
             $query->where('role', $filters['role']);
         }
 
-        if (!empty($filters['shop_id'])) {
-            $query->whereHas('shops', fn($q) => $q->where('shops.id', $filters['shop_id']));
+        if (! empty($filters['shop_id'])) {
+            $query->whereHas('shops', fn ($q) => $q->where('shops.id', $filters['shop_id']));
         }
 
         if (isset($filters['is_active'])) {
@@ -139,7 +141,7 @@ class StaffManagementService
 
         if ($requester->role->value === UserRole::STORE_MANAGER->value) {
             $shopIds = $requester->shops()->pluck('shops.id');
-            $query->whereHas('shops', fn($q) => $q->whereIn('shops.id', $shopIds));
+            $query->whereHas('shops', fn ($q) => $q->whereIn('shops.id', $shopIds));
         }
 
         return $query->get();

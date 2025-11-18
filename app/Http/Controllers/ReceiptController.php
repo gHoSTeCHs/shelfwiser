@@ -27,15 +27,15 @@ class ReceiptController extends Controller
         $receipts = Receipt::query()
             ->where('tenant_id', auth()->user()->tenant_id)
             ->with(['order', 'orderPayment', 'customer', 'shop', 'generatedBy'])
-            ->when($request->type, fn($q, $type) => $q->where('type', $type))
+            ->when($request->type, fn ($q, $type) => $q->where('type', $type))
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('receipt_number', 'like', "%{$search}%")
-                      ->orWhereHas('customer', function ($q) use ($search) {
-                          $q->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
-                      });
+                        ->orWhereHas('customer', function ($q) use ($search) {
+                            $q->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        });
                 });
             })
             ->latest()
@@ -64,7 +64,7 @@ class ReceiptController extends Controller
             ->where('type', 'order')
             ->first();
 
-        if (!$receipt) {
+        if (! $receipt) {
             $receipt = $this->receiptService->generateOrderReceipt($order);
         }
 
@@ -82,7 +82,7 @@ class ReceiptController extends Controller
             ->where('type', 'order')
             ->first();
 
-        if (!$receipt) {
+        if (! $receipt) {
             $receipt = $this->receiptService->generateOrderReceipt($order, true);
         }
 
@@ -102,7 +102,7 @@ class ReceiptController extends Controller
             ->where('type', 'payment')
             ->first();
 
-        if (!$receipt) {
+        if (! $receipt) {
             $receipt = $this->receiptService->generatePaymentReceipt($payment);
         }
 
@@ -120,7 +120,7 @@ class ReceiptController extends Controller
             ->where('type', 'payment')
             ->first();
 
-        if (!$receipt) {
+        if (! $receipt) {
             $receipt = $this->receiptService->generatePaymentReceipt($payment, true);
         }
 

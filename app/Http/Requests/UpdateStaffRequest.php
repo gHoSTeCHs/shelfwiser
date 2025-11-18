@@ -12,6 +12,7 @@ class UpdateStaffRequest extends FormRequest
     public function authorize(): bool
     {
         $staff = $this->route('staff');
+
         return Gate::allows('update', $staff);
     }
 
@@ -20,8 +21,8 @@ class UpdateStaffRequest extends FormRequest
         $staff = $this->route('staff');
 
         $roles = collect(UserRole::cases())
-            ->filter(fn($role) => $role !== UserRole::OWNER)
-            ->map(fn($role) => $role->value)
+            ->filter(fn ($role) => $role !== UserRole::OWNER)
+            ->map(fn ($role) => $role->value)
             ->toArray();
 
         return [
@@ -43,7 +44,7 @@ class UpdateStaffRequest extends FormRequest
                 Rule::in($roles),
                 function ($attribute, $value, $fail) {
                     $targetRole = UserRole::from($value);
-                    if (!Gate::forUser($this->user())->allows('assignRole', [\App\Models\User::class, $targetRole])) {
+                    if (! Gate::forUser($this->user())->allows('assignRole', [\App\Models\User::class, $targetRole])) {
                         $fail("You don't have permission to assign the {$targetRole->label()} role.");
                     }
                 },

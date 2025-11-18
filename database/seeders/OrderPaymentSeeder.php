@@ -28,7 +28,7 @@ class OrderPaymentSeeder extends Seeder
         foreach ($orders as $order) {
             $staffMember = $this->getRandomStaff($order);
 
-            if (!$staffMember) {
+            if (! $staffMember) {
                 continue;
             }
 
@@ -71,7 +71,7 @@ class OrderPaymentSeeder extends Seeder
             'gateway_fee' => $gateway ? round($order->total_amount * 0.015, 2) : 0,
             'payment_method' => $paymentMethod,
             'gateway' => $gateway,
-            'gateway_reference' => $gateway ? 'GTW-' . strtoupper(substr(md5(rand()), 0, 10)) : null,
+            'gateway_reference' => $gateway ? 'GTW-'.strtoupper(substr(md5(rand()), 0, 10)) : null,
             'gateway_status' => $gateway ? 'success' : null,
             'verified_at' => $gateway ? ($order->confirmed_at ?? $order->created_at) : null,
             'payment_date' => $order->confirmed_at ?? $order->created_at,
@@ -102,7 +102,7 @@ class OrderPaymentSeeder extends Seeder
             'gateway_fee' => round($firstPaymentAmount * 0.015, 2),
             'payment_method' => 'bank_transfer',
             'gateway' => 'paystack',
-            'gateway_reference' => 'GTW-' . strtoupper(substr(md5(rand()), 0, 10)),
+            'gateway_reference' => 'GTW-'.strtoupper(substr(md5(rand()), 0, 10)),
             'gateway_status' => 'success',
             'verified_at' => $paymentDate,
             'payment_date' => $paymentDate,
@@ -150,7 +150,7 @@ class OrderPaymentSeeder extends Seeder
             'gateway_fee' => $gateway ? round($paidAmount * 0.015, 2) : 0,
             'payment_method' => $paymentMethod,
             'gateway' => $gateway,
-            'gateway_reference' => $gateway ? 'GTW-' . strtoupper(substr(md5(rand()), 0, 10)) : null,
+            'gateway_reference' => $gateway ? 'GTW-'.strtoupper(substr(md5(rand()), 0, 10)) : null,
             'gateway_status' => $gateway ? 'success' : null,
             'verified_at' => $gateway ? ($order->confirmed_at ?? $order->created_at) : null,
             'payment_date' => $order->confirmed_at ?? $order->created_at,
@@ -166,6 +166,7 @@ class OrderPaymentSeeder extends Seeder
     protected function getRandomPaymentMethod(): string
     {
         $methods = ['cash', 'card', 'bank_transfer', 'mobile_money'];
+
         return $methods[array_rand($methods)];
     }
 
@@ -188,7 +189,7 @@ class OrderPaymentSeeder extends Seeder
      */
     protected function generateReferenceNumber(): ?string
     {
-        return rand(0, 1) ? 'TRF-' . strtoupper(substr(md5(rand()), 0, 12)) : null;
+        return rand(0, 1) ? 'TRF-'.strtoupper(substr(md5(rand()), 0, 12)) : null;
     }
 
     /**

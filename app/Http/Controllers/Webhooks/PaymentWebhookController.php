@@ -25,17 +25,19 @@ class PaymentWebhookController extends Controller
             $paymentGateway = $this->gatewayManager->gateway($gateway);
         } catch (\Exception $e) {
             Log::error("Unknown payment gateway webhook: {$gateway}");
+
             return response('Unknown gateway', 400);
         }
 
-        if (!$paymentGateway->validateWebhook($request)) {
+        if (! $paymentGateway->validateWebhook($request)) {
             Log::warning("Invalid webhook signature for {$gateway}");
+
             return response('Invalid signature', 401);
         }
 
         $event = $paymentGateway->parseWebhook($request);
 
-        Log::info("Payment webhook received", [
+        Log::info('Payment webhook received', [
             'gateway' => $gateway,
             'type' => $event->type,
             'reference' => $event->reference,
@@ -66,16 +68,18 @@ class PaymentWebhookController extends Controller
                     'verified_at' => now(),
                 ]);
             }
+
             return;
         }
 
         $order = $this->findOrderByReference($event->reference);
 
-        if (!$order) {
-            Log::warning("Order not found for webhook", [
+        if (! $order) {
+            Log::warning('Order not found for webhook', [
                 'gateway' => $gateway,
                 'reference' => $event->reference,
             ]);
+
             return;
         }
 
@@ -94,7 +98,7 @@ class PaymentWebhookController extends Controller
             'verified_at' => now(),
             'payment_date' => $event->paidAt ? date('Y-m-d', strtotime($event->paidAt)) : now(),
             'reference_number' => $event->reference,
-            'notes' => "Webhook payment confirmation",
+            'notes' => 'Webhook payment confirmation',
             'recorded_by' => null,
         ]);
     }
@@ -116,7 +120,7 @@ class PaymentWebhookController extends Controller
         $order = $this->findOrderByReference($event->reference);
 
         if ($order && $order->payment_reference === $event->reference) {
-            Log::info("Payment failed for order", [
+            Log::info('Payment failed for order', [
                 'order_id' => $order->id,
                 'reference' => $event->reference,
             ]);

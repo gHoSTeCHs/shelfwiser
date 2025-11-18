@@ -52,7 +52,7 @@ class ShopCreationService
                     $shop->users()->attach($creator->id, ['tenant_id' => $tenant->id]);
                 }
 
-//            event(new \App\Events\ShopCreated($shop, $creator));
+                //            event(new \App\Events\ShopCreated($shop, $creator));
 
                 Cache::tags(["tenant:$tenant->id:shops"])->flush();
 

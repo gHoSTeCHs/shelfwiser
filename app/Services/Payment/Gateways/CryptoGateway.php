@@ -41,7 +41,7 @@ class CryptoGateway extends BasePaymentGateway
 
     public function initializePayment(Order $order, array $options = []): PaymentInitiationResult
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return PaymentInitiationResult::failed('Crypto payments are not configured');
         }
 
@@ -62,8 +62,9 @@ class CryptoGateway extends BasePaymentGateway
             'x-api-key' => $this->config['api_key'] ?? '',
         ]);
 
-        if (!$response['success']) {
+        if (! $response['success']) {
             $message = $response['data']['message'] ?? 'Failed to create crypto payment';
+
             return PaymentInitiationResult::failed($message, $reference);
         }
 
@@ -93,7 +94,7 @@ class CryptoGateway extends BasePaymentGateway
 
     public function verifyPayment(string $reference): PaymentVerificationResult
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return PaymentVerificationResult::failed($reference, 'Crypto payments are not configured');
         }
 
@@ -101,7 +102,7 @@ class CryptoGateway extends BasePaymentGateway
             'x-api-key' => $this->config['api_key'] ?? '',
         ]);
 
-        if (!$response['success']) {
+        if (! $response['success']) {
             return PaymentVerificationResult::failed(
                 $reference,
                 $response['data']['message'] ?? 'Verification request failed',
@@ -118,7 +119,7 @@ class CryptoGateway extends BasePaymentGateway
                 amount: (float) ($data['price_amount'] ?? 0),
                 currency: strtoupper($data['price_currency'] ?? 'USD'),
                 gatewayReference: $data['payment_id'] ?? $reference,
-                paymentMethod: 'crypto_' . ($data['pay_currency'] ?? 'btc'),
+                paymentMethod: 'crypto_'.($data['pay_currency'] ?? 'btc'),
                 rawResponse: $data
             );
         }
@@ -151,7 +152,7 @@ class CryptoGateway extends BasePaymentGateway
         $signature = $request->header('x-nowpayments-sig');
         $ipnSecret = $this->config['ipn_secret'] ?? $this->config['webhook_secret'] ?? null;
 
-        if (!$signature || !$ipnSecret) {
+        if (! $signature || ! $ipnSecret) {
             return false;
         }
 
@@ -174,7 +175,7 @@ class CryptoGateway extends BasePaymentGateway
         };
 
         return new WebhookEvent(
-            type: 'payment.' . $status,
+            type: 'payment.'.$status,
             reference: $payload['order_id'] ?? '',
             status: $status,
             amount: (float) ($payload['price_amount'] ?? 0),

@@ -19,9 +19,7 @@ class StaffManagementController extends Controller
 {
     public function __construct(
         protected StaffManagementService $staffService
-    )
-    {
-    }
+    ) {}
 
     /**
      * Display a listing of staff members.
@@ -158,7 +156,7 @@ class StaffManagementController extends Controller
                 return $role !== UserRole::OWNER
                     && $currentUser->role->level() > $role->level();
             })
-            ->map(fn($role) => [
+            ->map(fn ($role) => [
                 'value' => $role->value,
                 'label' => $role->label(),
                 'description' => $role->description(),

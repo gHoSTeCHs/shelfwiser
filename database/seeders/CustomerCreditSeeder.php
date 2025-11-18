@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Customer;
 use App\Models\CustomerCreditTransaction;
-use App\Models\Order;
 use App\Models\Shop;
 use App\Models\Tenant;
 use App\Models\User;
@@ -21,8 +20,9 @@ class CustomerCreditSeeder extends Seeder
         $shop = Shop::where('tenant_id', $tenant->id)->first();
         $user = User::where('tenant_id', $tenant->id)->first();
 
-        if (!$tenant || !$shop || !$user) {
+        if (! $tenant || ! $shop || ! $user) {
             $this->command->warn('Skipping CustomerCreditSeeder: Required data not found');
+
             return;
         }
 
@@ -205,7 +205,7 @@ class CustomerCreditSeeder extends Seeder
                         'amount' => $charge,
                         'balance_before' => $balance,
                         'balance_after' => $balance + $charge,
-                        'description' => "Order charged to account",
+                        'description' => 'Order charged to account',
                         'recorded_by' => $user->id,
                     ]);
                     $balance += $charge;

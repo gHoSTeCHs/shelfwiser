@@ -88,7 +88,7 @@ enum StockMovementType: string
     public static function forSelect(): array
     {
         return collect(self::cases())
-            ->mapWithKeys(fn($type) => [$type->value => $type->label()])
+            ->mapWithKeys(fn ($type) => [$type->value => $type->label()])
             ->toArray();
     }
 

@@ -133,7 +133,7 @@ class PurchaseOrderSeeder extends Seeder
 
             $variant = $catalogItem->product->variants->first();
 
-            if (!$variant) {
+            if (! $variant) {
                 continue;
             }
 
@@ -283,31 +283,34 @@ class PurchaseOrderSeeder extends Seeder
 
     protected function getApprovedBy(?PurchaseOrderStatus $status, SupplierConnection $connection): ?int
     {
-        if (!in_array($status, [PurchaseOrderStatus::APPROVED, PurchaseOrderStatus::PROCESSING, PurchaseOrderStatus::SHIPPED, PurchaseOrderStatus::RECEIVED, PurchaseOrderStatus::COMPLETED])) {
+        if (! in_array($status, [PurchaseOrderStatus::APPROVED, PurchaseOrderStatus::PROCESSING, PurchaseOrderStatus::SHIPPED, PurchaseOrderStatus::RECEIVED, PurchaseOrderStatus::COMPLETED])) {
             return null;
         }
 
         $user = $this->getRandomSupplierStaff($connection->supplier_tenant_id);
+
         return $user?->id;
     }
 
     protected function getShippedBy(?PurchaseOrderStatus $status, SupplierConnection $connection): ?int
     {
-        if (!in_array($status, [PurchaseOrderStatus::SHIPPED, PurchaseOrderStatus::RECEIVED, PurchaseOrderStatus::COMPLETED])) {
+        if (! in_array($status, [PurchaseOrderStatus::SHIPPED, PurchaseOrderStatus::RECEIVED, PurchaseOrderStatus::COMPLETED])) {
             return null;
         }
 
         $user = $this->getRandomSupplierStaff($connection->supplier_tenant_id);
+
         return $user?->id;
     }
 
     protected function getReceivedBy(?PurchaseOrderStatus $status, SupplierConnection $connection): ?int
     {
-        if (!in_array($status, [PurchaseOrderStatus::RECEIVED, PurchaseOrderStatus::COMPLETED])) {
+        if (! in_array($status, [PurchaseOrderStatus::RECEIVED, PurchaseOrderStatus::COMPLETED])) {
             return null;
         }
 
         $user = $this->getRandomBuyerStaff($connection->buyer_tenant_id);
+
         return $user?->id;
     }
 
@@ -316,7 +319,8 @@ class PurchaseOrderSeeder extends Seeder
         $paymentTerms = $connection->payment_terms_override ?? $connection->supplierTenant->supplierProfile->payment_terms;
 
         if (str_contains($paymentTerms, 'Net')) {
-            $days = (int)filter_var($paymentTerms, FILTER_SANITIZE_NUMBER_INT);
+            $days = (int) filter_var($paymentTerms, FILTER_SANITIZE_NUMBER_INT);
+
             return $createdAt->copy()->addDays($days);
         }
 
@@ -352,6 +356,7 @@ class PurchaseOrderSeeder extends Seeder
                 'Buyer requested cancellation due to budget constraints.',
                 'Duplicate order - cancelled.',
             ];
+
             return $notes[array_rand($notes)];
         }
 
@@ -370,6 +375,7 @@ class PurchaseOrderSeeder extends Seeder
     protected function getRandomPaymentMethod(): string
     {
         $methods = ['bank_transfer', 'check', 'cash', 'mobile_money', 'card'];
+
         return $methods[array_rand($methods)];
     }
 

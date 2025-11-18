@@ -88,7 +88,7 @@ class CategoryService
 
     public function getCategoryTree(int $tenantId, ?int $parentId = null): array
     {
-        $cacheKey = "tenant:$tenantId:category_tree:" . ($parentId ?? 'root');
+        $cacheKey = "tenant:$tenantId:category_tree:".($parentId ?? 'root');
 
         return Cache::tags(["tenant:$tenantId:categories"])
             ->remember($cacheKey, 3600, function () use ($tenantId, $parentId) {
@@ -139,7 +139,7 @@ class CategoryService
         $counter = 1;
 
         while ($this->slugExists($slug, $tenantId, $excludeId)) {
-            $slug = $originalSlug . '-' . $counter;
+            $slug = $originalSlug.'-'.$counter;
             $counter++;
         }
 
@@ -160,7 +160,7 @@ class CategoryService
 
     protected function wouldCreateCircularReference(ProductCategory $category, ?int $newParentId): bool
     {
-        if (!$newParentId) {
+        if (! $newParentId) {
             return false;
         }
 

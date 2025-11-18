@@ -78,11 +78,12 @@ class ProductPackagingType extends Model
 
         $baseUnit = $this->getBaseUnit();
 
-        if (!$baseUnit) {
+        if (! $baseUnit) {
             return false;
         }
 
         $equivalentBasePrice = $baseUnit->price * $this->units_per_package;
+
         return $this->price < $equivalentBasePrice;
     }
 
@@ -98,7 +99,7 @@ class ProductPackagingType extends Model
 
         $baseUnit = $this->getBaseUnit();
 
-        if (!$baseUnit) {
+        if (! $baseUnit) {
             return 0;
         }
 
@@ -109,6 +110,7 @@ class ProductPackagingType extends Model
         }
 
         $discount = (($equivalentBasePrice - $this->price) / $equivalentBasePrice) * 100;
+
         return round(max(0, $discount), 2);
     }
 

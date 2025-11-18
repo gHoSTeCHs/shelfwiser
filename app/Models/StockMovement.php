@@ -87,7 +87,7 @@ class StockMovement extends Model
      */
     public function getPackageDescriptionAttribute(): string
     {
-        if (!$this->product_packaging_type_id || !$this->package_quantity) {
+        if (! $this->product_packaging_type_id || ! $this->package_quantity) {
             return "{$this->quantity} {$this->productVariant->base_unit_name}(s)";
         }
 

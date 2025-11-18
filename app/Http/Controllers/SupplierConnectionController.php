@@ -17,9 +17,7 @@ use Inertia\Response;
 
 class SupplierConnectionController extends Controller
 {
-    public function __construct(private readonly SupplierConnectionService $connectionService)
-    {
-    }
+    public function __construct(private readonly SupplierConnectionService $connectionService) {}
 
     /**
      * @throws AuthorizationException

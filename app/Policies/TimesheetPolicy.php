@@ -36,6 +36,7 @@ class TimesheetPolicy
 
         if ($user->role->level() > $timesheet->user->role->level()) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($timesheet->shop_id);
         }
 
@@ -71,6 +72,7 @@ class TimesheetPolicy
             && $user->role->level() > $timesheet->user->role->level()
             && $timesheet->status === TimesheetStatus::DRAFT) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($timesheet->shop_id);
         }
 
@@ -105,6 +107,7 @@ class TimesheetPolicy
         if ($user->role->level() >= UserRole::ASSISTANT_MANAGER->level()
             && $user->role->level() > $timesheet->user->role->level()) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($timesheet->shop_id);
         }
 
@@ -140,7 +143,7 @@ class TimesheetPolicy
             return false;
         }
 
-        if (!$timesheet->status->canApprove()) {
+        if (! $timesheet->status->canApprove()) {
             return false;
         }
 
@@ -155,6 +158,7 @@ class TimesheetPolicy
         if ($user->role->level() >= UserRole::ASSISTANT_MANAGER->level()
             && $user->role->level() > $timesheet->user->role->level()) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($timesheet->shop_id);
         }
 
@@ -193,6 +197,7 @@ class TimesheetPolicy
         if ($user->role->level() >= UserRole::STORE_MANAGER->level()
             && $user->role->level() > $timesheet->user->role->level()) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($timesheet->shop_id);
         }
 

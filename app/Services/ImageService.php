@@ -22,16 +22,16 @@ class ImageService
         return DB::transaction(function () use ($model, $file, $additionalData) {
             $tenantId = $model->tenant_id ?? auth()->user()->tenant_id;
 
-            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
             $modelType = class_basename($model);
-            $path = "tenants/{$tenantId}/" . Str::plural(strtolower($modelType)) . "/{$model->id}/{$filename}";
+            $path = "tenants/{$tenantId}/".Str::plural(strtolower($modelType))."/{$model->id}/{$filename}";
 
             $disk = config('images.disk', 'public');
             Storage::disk($disk)->put($path, file_get_contents($file));
 
             $dimensions = $this->getImageDimensions($file);
 
-            $isPrimary = $additionalData['is_primary'] ?? !$model->images()->exists();
+            $isPrimary = $additionalData['is_primary'] ?? ! $model->images()->exists();
 
             if ($isPrimary) {
                 $model->images()->update(['is_primary' => false]);
@@ -198,7 +198,7 @@ class ImageService
     /**
      * Get image URL or fallback to placeholder
      */
-    public function getImageUrl(Model $model, string $placeholder = null): string
+    public function getImageUrl(Model $model, ?string $placeholder = null): string
     {
         $primaryImage = $this->getPrimaryImage($model);
 

@@ -157,7 +157,7 @@ class Order extends Model
 
     public function calculateTotals(): void
     {
-        $this->subtotal = $this->items->sum(fn($item) => $item->unit_price * $item->quantity);
+        $this->subtotal = $this->items->sum(fn ($item) => $item->unit_price * $item->quantity);
         $this->tax_amount = $this->items->sum('tax_amount');
         $this->discount_amount = $this->items->sum('discount_amount');
         $this->total_amount = $this->subtotal + $this->tax_amount - $this->discount_amount + $this->shipping_cost;
@@ -170,9 +170,9 @@ class Order extends Model
         $creationDate = $createdAt ? Carbon::parse($createdAt) : now();
         $prefix = 'ORD';
         $date = $creationDate->format('Ymd');
-        $cacheKey = $tenantId . '-' . $date;
+        $cacheKey = $tenantId.'-'.$date;
 
-        if (!isset($sequenceCache[$cacheKey])) {
+        if (! isset($sequenceCache[$cacheKey])) {
             $lastOrder = self::where('tenant_id', $tenantId)
                 ->whereDate('created_at', $creationDate)
                 ->latest('id')

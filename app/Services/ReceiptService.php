@@ -68,7 +68,7 @@ class ReceiptService
     /**
      * Generate PDF for order receipt
      */
-    public function generateOrderPdf(Order $order, Receipt $receipt = null)
+    public function generateOrderPdf(Order $order, ?Receipt $receipt = null)
     {
         $order->load([
             'shop',
@@ -76,7 +76,7 @@ class ReceiptService
             'items.productVariant.product',
             'items.sellable',
             'items.packagingType',
-            'payments'
+            'payments',
         ]);
 
         $data = [
@@ -99,13 +99,13 @@ class ReceiptService
     /**
      * Generate PDF for payment receipt
      */
-    public function generatePaymentPdf(OrderPayment $payment, Receipt $receipt = null)
+    public function generatePaymentPdf(OrderPayment $payment, ?Receipt $receipt = null)
     {
         $payment->load([
             'order.shop',
             'order.customer',
             'order.items.productVariant.product',
-            'recordedBy'
+            'recordedBy',
         ]);
 
         $data = [

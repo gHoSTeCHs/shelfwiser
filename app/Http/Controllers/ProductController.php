@@ -18,9 +18,7 @@ use Inertia\Response;
 
 class ProductController extends Controller
 {
-    public function __construct(private readonly ProductService $productService)
-    {
-    }
+    public function __construct(private readonly ProductService $productService) {}
 
     public function index(): Response
     {
@@ -95,7 +93,7 @@ class ProductController extends Controller
             },
             'variants.images' => function ($query) {
                 $query->ordered();
-            }
+            },
         ]);
 
         $tenantId = auth()->user()->tenant_id;
@@ -133,7 +131,7 @@ class ProductController extends Controller
             },
             'variants.images' => function ($query) {
                 $query->ordered();
-            }
+            },
         ]);
 
         $tenantId = auth()->user()->tenant_id;

@@ -21,7 +21,7 @@ class CreateCategoryRequest extends FormRequest
             'parent_id' => [
                 'nullable',
                 'integer',
-                'exists:product_categories,id,tenant_id,' . $tenantId,
+                'exists:product_categories,id,tenant_id,'.$tenantId,
             ],
             'is_active' => ['boolean'],
         ];

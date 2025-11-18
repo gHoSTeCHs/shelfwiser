@@ -1,6 +1,7 @@
 <?php
 
 // app/Policies/ShopPolicy.php
+
 namespace App\Policies;
 
 use App\Enums\UserRole;
@@ -39,5 +40,3 @@ class ShopPolicy
         return $user->role->value === UserRole::OWNER->value;
     }
 }
-
-

@@ -27,6 +27,7 @@ class EmployeePayrollPolicy
         if ($user->role->level() > $employee->role->level()) {
             $userShops = $user->shops()->pluck('shops.id');
             $employeeShops = $employee->shops()->pluck('shops.id');
+
             return $userShops->intersect($employeeShops)->isNotEmpty();
         }
 

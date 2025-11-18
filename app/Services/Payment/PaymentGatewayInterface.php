@@ -70,8 +70,8 @@ interface PaymentGatewayInterface
     /**
      * Initialize a payment transaction.
      *
-     * @param Order $order The order to be paid
-     * @param array $options Additional options (callback_url, metadata, etc.)
+     * @param  Order  $order  The order to be paid
+     * @param  array  $options  Additional options (callback_url, metadata, etc.)
      * @return PaymentInitiationResult Result containing authorization URL or inline data
      */
     public function initializePayment(Order $order, array $options = []): PaymentInitiationResult;
@@ -79,7 +79,7 @@ interface PaymentGatewayInterface
     /**
      * Verify a payment transaction.
      *
-     * @param string $reference The payment reference to verify
+     * @param  string  $reference  The payment reference to verify
      * @return PaymentVerificationResult Verification result with transaction details
      */
     public function verifyPayment(string $reference): PaymentVerificationResult;
@@ -87,9 +87,9 @@ interface PaymentGatewayInterface
     /**
      * Process a refund for a completed payment.
      *
-     * @param OrderPayment $payment The payment to refund
-     * @param float|null $amount Amount to refund (null for full refund)
-     * @param string|null $reason Reason for the refund
+     * @param  OrderPayment  $payment  The payment to refund
+     * @param  float|null  $amount  Amount to refund (null for full refund)
+     * @param  string|null  $reason  Reason for the refund
      * @return RefundResult Refund processing result
      */
     public function refund(OrderPayment $payment, ?float $amount = null, ?string $reason = null): RefundResult;
@@ -97,7 +97,7 @@ interface PaymentGatewayInterface
     /**
      * Validate and parse a webhook request.
      *
-     * @param Request $request The incoming webhook request
+     * @param  Request  $request  The incoming webhook request
      * @return bool True if webhook signature is valid
      */
     public function validateWebhook(Request $request): bool;
@@ -105,7 +105,7 @@ interface PaymentGatewayInterface
     /**
      * Parse a webhook payload into a structured event.
      *
-     * @param Request $request The webhook request
+     * @param  Request  $request  The webhook request
      * @return WebhookEvent Parsed webhook event
      */
     public function parseWebhook(Request $request): WebhookEvent;
@@ -113,7 +113,7 @@ interface PaymentGatewayInterface
     /**
      * Get the callback URL for payment redirects.
      *
-     * @param Order $order The order being paid
+     * @param  Order  $order  The order being paid
      * @return string The callback URL
      */
     public function getCallbackUrl(Order $order): string;
@@ -128,7 +128,7 @@ interface PaymentGatewayInterface
     /**
      * Generate a unique payment reference.
      *
-     * @param Order $order The order
+     * @param  Order  $order  The order
      * @return string Unique reference string
      */
     public function generateReference(Order $order): string;
@@ -136,7 +136,7 @@ interface PaymentGatewayInterface
     /**
      * Get minimum transaction amount in the base currency.
      *
-     * @param string $currency Currency code
+     * @param  string  $currency  Currency code
      * @return float Minimum amount
      */
     public function getMinimumAmount(string $currency = 'NGN'): float;
@@ -144,7 +144,7 @@ interface PaymentGatewayInterface
     /**
      * Get maximum transaction amount in the base currency.
      *
-     * @param string $currency Currency code
+     * @param  string  $currency  Currency code
      * @return float|null Maximum amount or null if no limit
      */
     public function getMaximumAmount(string $currency = 'NGN'): ?float;

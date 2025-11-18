@@ -87,11 +87,12 @@ class Timesheet extends Model
      */
     public function getDurationMinutes(): int
     {
-        if (!$this->clock_in || !$this->clock_out) {
+        if (! $this->clock_in || ! $this->clock_out) {
             return 0;
         }
 
         $totalMinutes = $this->clock_out->diffInMinutes($this->clock_in);
+
         return max(0, $totalMinutes - $this->break_duration_minutes);
     }
 }

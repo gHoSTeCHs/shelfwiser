@@ -14,8 +14,7 @@ class ServiceVariantController extends Controller
 {
     public function __construct(
         private readonly ServiceManagementService $serviceManagementService
-    ) {
-    }
+    ) {}
 
     /**
      * Store a newly created variant
@@ -53,7 +52,7 @@ class ServiceVariantController extends Controller
         }
 
         // Check authorization
-        if (!auth()->user()->can('manage', $service)) {
+        if (! auth()->user()->can('manage', $service)) {
             abort(403);
         }
 

@@ -26,7 +26,7 @@ class OrderPaymentController extends Controller
 
         if ($validated['amount'] > $order->remainingBalance()) {
             return back()->withErrors([
-                'amount' => 'Payment amount cannot exceed remaining balance of ₦' . number_format($order->remainingBalance(), 2)
+                'amount' => 'Payment amount cannot exceed remaining balance of ₦'.number_format($order->remainingBalance(), 2),
             ]);
         }
 
@@ -42,7 +42,7 @@ class OrderPaymentController extends Controller
             'recorded_by' => auth()->id(),
         ]);
 
-        return back()->with('success', 'Payment of ₦' . number_format($validated['amount'], 2) . ' recorded successfully');
+        return back()->with('success', 'Payment of ₦'.number_format($validated['amount'], 2).' recorded successfully');
     }
 
     /**
@@ -55,6 +55,6 @@ class OrderPaymentController extends Controller
         $amount = $orderPayment->amount;
         $orderPayment->delete();
 
-        return back()->with('success', 'Payment of ₦' . number_format($amount, 2) . ' deleted successfully');
+        return back()->with('success', 'Payment of ₦'.number_format($amount, 2).' deleted successfully');
     }
 }

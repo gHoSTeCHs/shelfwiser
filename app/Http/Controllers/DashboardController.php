@@ -17,15 +17,11 @@ class DashboardController extends Controller
 {
     public function __construct(
         protected DashboardService $dashboardService
-    )
-    {
-    }
+    ) {}
 
-    /**
-     */
     public function index(Request $request): Response
     {
-//        Gate::authorize('view', DashboardPolicy::class);
+        //        Gate::authorize('view', DashboardPolicy::class);
 
         $user = $request->user();
 
@@ -115,7 +111,7 @@ class DashboardController extends Controller
     protected function getFinancialsTabData($user, Collection $shopIds, array $dateRange): array
     {
         // Only allow users with financial permissions to access this tab
-        if (!$user->can('viewFinancials', DashboardPolicy::class)) {
+        if (! $user->can('viewFinancials', DashboardPolicy::class)) {
             abort(403, 'You do not have permission to view financial data');
         }
 
@@ -175,9 +171,10 @@ class DashboardController extends Controller
         $assignedShopIds = $user->shops()->pluck('shops.id');
 
         if ($shopId) {
-            if (!$assignedShopIds->contains($shopId)) {
+            if (! $assignedShopIds->contains($shopId)) {
                 abort(403, 'You do not have access to this shop');
             }
+
             return collect([$shopId]);
         }
 
@@ -188,10 +185,11 @@ class DashboardController extends Controller
     {
         $filtered = $metrics;
 
-        if (!$user->role->hasPermission('view_profits')) {
+        if (! $user->role->hasPermission('view_profits')) {
             if (isset($filtered['top_products'])) {
                 $filtered['top_products'] = array_map(function ($product) {
                     unset($product['profit'], $product['margin_percentage']);
+
                     return $product;
                 }, $filtered['top_products']);
             }
@@ -199,11 +197,11 @@ class DashboardController extends Controller
             unset($filtered['profit']);
         }
 
-        if (!$user->role->hasPermission('view_costs') && isset($filtered['profit'])) {
+        if (! $user->role->hasPermission('view_costs') && isset($filtered['profit'])) {
             unset($filtered['profit']['cogs']);
         }
 
-        if (!$user->role->hasPermission('view_financials')) {
+        if (! $user->role->hasPermission('view_financials')) {
             unset($filtered['inventory_valuation']);
         }
 

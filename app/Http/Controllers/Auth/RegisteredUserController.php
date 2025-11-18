@@ -17,10 +17,7 @@ use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
-    public function __construct(private readonly TenantService $tenantService)
-    {
-
-    }
+    public function __construct(private readonly TenantService $tenantService) {}
 
     /**
      * Show the registration page.
@@ -32,14 +29,13 @@ class RegisteredUserController extends Controller
 
     /**
      * Handle an incoming registration request.
-     *
      */
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'fname' => 'required|string|max:255',
             'lname' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
+            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'company_name' => 'required|string|max:255',
         ]);
@@ -69,6 +65,7 @@ class RegisteredUserController extends Controller
 
         } catch (Exception $e) {
             Log::error('Registration failed', ['exception' => $e]);
+
             return back()->withErrors([
                 'email' => 'Registration failed. Please try again.',
             ])->withInput();

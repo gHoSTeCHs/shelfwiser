@@ -11,7 +11,6 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -49,7 +48,7 @@ class PayrollController extends Controller
             'shops' => $user->is_tenant_owner
                 ? Shop::where('tenant_id', $user->tenant_id)->get()
                 : $user->shops,
-            'statusOptions' => collect(PayrollStatus::cases())->map(fn($case) => [
+            'statusOptions' => collect(PayrollStatus::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
@@ -239,7 +238,7 @@ class PayrollController extends Controller
     {
         $user = auth()->user();
 
-        if ($payslip->user_id !== $user->id && !Gate::allows('view', $payslip->payrollPeriod)) {
+        if ($payslip->user_id !== $user->id && ! Gate::allows('view', $payslip->payrollPeriod)) {
             abort(403);
         }
 

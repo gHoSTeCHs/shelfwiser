@@ -22,9 +22,9 @@ class CurrencyHelper
     /**
      * Format a price value according to shop's currency settings.
      *
-     * @param float|int|string $amount The amount to format
-     * @param Shop $shop The shop whose currency settings to use
-     * @param bool $includeSymbol Whether to include the currency symbol
+     * @param  float|int|string  $amount  The amount to format
+     * @param  Shop  $shop  The shop whose currency settings to use
+     * @param  bool  $includeSymbol  Whether to include the currency symbol
      * @return string Formatted price
      */
     public static function format($amount, Shop $shop, bool $includeSymbol = true): string
@@ -34,7 +34,8 @@ class CurrencyHelper
 
         if ($includeSymbol) {
             $symbol = $shop->currency_symbol ?? self::getDefaultSymbol($shop->currency);
-            return $symbol . $formatted;
+
+            return $symbol.$formatted;
         }
 
         return $formatted;
@@ -43,11 +44,11 @@ class CurrencyHelper
     /**
      * Format a price value with explicit currency settings.
      *
-     * @param float|int|string $amount The amount to format
-     * @param string $currencyCode The currency code (e.g., 'NGN', 'USD')
-     * @param string|null $symbol Custom currency symbol (optional)
-     * @param int $decimals Number of decimal places
-     * @param bool $includeSymbol Whether to include the currency symbol
+     * @param  float|int|string  $amount  The amount to format
+     * @param  string  $currencyCode  The currency code (e.g., 'NGN', 'USD')
+     * @param  string|null  $symbol  Custom currency symbol (optional)
+     * @param  int  $decimals  Number of decimal places
+     * @param  bool  $includeSymbol  Whether to include the currency symbol
      * @return string Formatted price
      */
     public static function formatWithCurrency(
@@ -61,7 +62,8 @@ class CurrencyHelper
 
         if ($includeSymbol) {
             $currencySymbol = $symbol ?? self::getDefaultSymbol($currencyCode);
-            return $currencySymbol . $formatted;
+
+            return $currencySymbol.$formatted;
         }
 
         return $formatted;
@@ -70,7 +72,7 @@ class CurrencyHelper
     /**
      * Parse a formatted currency string to a float value.
      *
-     * @param string $formattedAmount The formatted amount string
+     * @param  string  $formattedAmount  The formatted amount string
      * @return float The parsed amount
      */
     public static function parse(string $formattedAmount): float
@@ -84,18 +86,18 @@ class CurrencyHelper
     /**
      * Get the default symbol for a currency code.
      *
-     * @param string $currencyCode The currency code
+     * @param  string  $currencyCode  The currency code
      * @return string The currency symbol
      */
     public static function getDefaultSymbol(string $currencyCode): string
     {
-        return self::CURRENCIES[strtoupper($currencyCode)]['symbol'] ?? $currencyCode . ' ';
+        return self::CURRENCIES[strtoupper($currencyCode)]['symbol'] ?? $currencyCode.' ';
     }
 
     /**
      * Get the default decimal places for a currency code.
      *
-     * @param string $currencyCode The currency code
+     * @param  string  $currencyCode  The currency code
      * @return int The number of decimal places
      */
     public static function getDefaultDecimals(string $currencyCode): int
@@ -106,7 +108,7 @@ class CurrencyHelper
     /**
      * Get the display name for a currency code.
      *
-     * @param string $currencyCode The currency code
+     * @param  string  $currencyCode  The currency code
      * @return string The currency name
      */
     public static function getCurrencyName(string $currencyCode): string
@@ -132,7 +134,7 @@ class CurrencyHelper
     /**
      * Check if a currency code is supported.
      *
-     * @param string $currencyCode The currency code to check
+     * @param  string  $currencyCode  The currency code to check
      * @return bool Whether the currency is supported
      */
     public static function isSupported(string $currencyCode): bool
@@ -144,8 +146,8 @@ class CurrencyHelper
      * Convert amount to smallest currency unit (e.g., cents for USD).
      * Useful for payment gateway integration.
      *
-     * @param float|int|string $amount The amount in major units
-     * @param Shop $shop The shop whose currency settings to use
+     * @param  float|int|string  $amount  The amount in major units
+     * @param  Shop  $shop  The shop whose currency settings to use
      * @return int The amount in smallest units
      */
     public static function toSmallestUnit($amount, Shop $shop): int
@@ -159,8 +161,8 @@ class CurrencyHelper
     /**
      * Convert amount from smallest currency unit to major units.
      *
-     * @param int $amount The amount in smallest units
-     * @param Shop $shop The shop whose currency settings to use
+     * @param  int  $amount  The amount in smallest units
+     * @param  Shop  $shop  The shop whose currency settings to use
      * @return float The amount in major units
      */
     public static function fromSmallestUnit(int $amount, Shop $shop): float
@@ -174,9 +176,9 @@ class CurrencyHelper
     /**
      * Format a price range.
      *
-     * @param float|int $min Minimum price
-     * @param float|int $max Maximum price
-     * @param Shop $shop The shop whose currency settings to use
+     * @param  float|int  $min  Minimum price
+     * @param  float|int  $max  Maximum price
+     * @param  Shop  $shop  The shop whose currency settings to use
      * @return string Formatted price range
      */
     public static function formatRange($min, $max, Shop $shop): string
@@ -190,13 +192,13 @@ class CurrencyHelper
     /**
      * Calculate tax amount based on shop settings.
      *
-     * @param float|int $amount The base amount
-     * @param Shop $shop The shop whose tax settings to use
+     * @param  float|int  $amount  The base amount
+     * @param  Shop  $shop  The shop whose tax settings to use
      * @return float The tax amount
      */
     public static function calculateTax($amount, Shop $shop): float
     {
-        if (!$shop->vat_enabled) {
+        if (! $shop->vat_enabled) {
             return 0;
         }
 
@@ -214,30 +216,31 @@ class CurrencyHelper
     /**
      * Get the price excluding tax.
      *
-     * @param float|int $amount The amount (may include tax)
-     * @param Shop $shop The shop whose tax settings to use
+     * @param  float|int  $amount  The amount (may include tax)
+     * @param  Shop  $shop  The shop whose tax settings to use
      * @return float The amount excluding tax
      */
     public static function getAmountExcludingTax($amount, Shop $shop): float
     {
-        if (!$shop->vat_enabled || !$shop->vat_inclusive) {
+        if (! $shop->vat_enabled || ! $shop->vat_inclusive) {
             return (float) $amount;
         }
 
         $rate = $shop->vat_rate / 100;
+
         return $amount / (1 + $rate);
     }
 
     /**
      * Get the price including tax.
      *
-     * @param float|int $amount The base amount
-     * @param Shop $shop The shop whose tax settings to use
+     * @param  float|int  $amount  The base amount
+     * @param  Shop  $shop  The shop whose tax settings to use
      * @return float The amount including tax
      */
     public static function getAmountIncludingTax($amount, Shop $shop): float
     {
-        if (!$shop->vat_enabled) {
+        if (! $shop->vat_enabled) {
             return (float) $amount;
         }
 
@@ -246,6 +249,7 @@ class CurrencyHelper
         }
 
         $rate = $shop->vat_rate / 100;
+
         return $amount * (1 + $rate);
     }
 }

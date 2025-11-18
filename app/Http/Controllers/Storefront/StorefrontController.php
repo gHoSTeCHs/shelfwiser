@@ -25,7 +25,7 @@ class StorefrontController extends Controller
     public function index(Shop $shop): Response
     {
         // Check if storefront is enabled
-        if (!$shop->storefront_enabled) {
+        if (! $shop->storefront_enabled) {
             abort(404, 'Storefront not available for this shop');
         }
 
@@ -85,16 +85,16 @@ class StorefrontController extends Controller
     public function show(Shop $shop, Product $product): Response
     {
         // Ensure product belongs to the shop
-        if ($product->shop_id !== $shop->id || !$product->is_active) {
+        if ($product->shop_id !== $shop->id || ! $product->is_active) {
             abort(404);
         }
 
         $product->load([
-            'variants' => fn($q) => $q->where('is_available_online', true)
+            'variants' => fn ($q) => $q->where('is_available_online', true)
                 ->where('is_active', true)
                 ->with('packagingTypes'),
             'category',
-            'type'
+            'type',
         ]);
 
         $relatedProducts = $this->storefrontService->getRelatedProducts($product);
@@ -152,15 +152,15 @@ class StorefrontController extends Controller
     public function showService(Shop $shop, Service $service): Response
     {
         // Ensure service belongs to the shop
-        if ($service->shop_id !== $shop->id || !$service->is_active) {
+        if ($service->shop_id !== $shop->id || ! $service->is_active) {
             abort(404);
         }
 
         $service->load([
-            'variants' => fn($q) => $q->where('is_active', true)
+            'variants' => fn ($q) => $q->where('is_active', true)
                 ->orderBy('sort_order'),
             'category',
-            'addons' => fn($q) => $q->where('is_active', true)->orderBy('sort_order'),
+            'addons' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
         ]);
 
         // Get category-wide addons if service has a category

@@ -193,7 +193,7 @@ class NotificationService
                 user: $payslip->user,
                 type: NotificationType::PAYROLL_PAID,
                 title: 'Payment Processed',
-                message: "Your payment for '{$payrollPeriod->period_name}' has been processed. Net pay: ₦" . number_format($payslip->net_pay, 2),
+                message: "Your payment for '{$payrollPeriod->period_name}' has been processed. Net pay: ₦".number_format($payslip->net_pay, 2),
                 actionUrl: route('payroll.show-payslip', $payslip),
                 notifiable: $payslip,
                 data: [
@@ -284,7 +284,7 @@ class NotificationService
                 tenantId: $fundRequest->tenant_id,
                 type: NotificationType::FUND_REQUEST_SUBMITTED,
                 title: 'Fund Request Submitted',
-                message: "{$fundRequest->user->name} has submitted a {$fundRequest->request_type->label()} request for ₦" . number_format($fundRequest->amount, 2),
+                message: "{$fundRequest->user->name} has submitted a {$fundRequest->request_type->label()} request for ₦".number_format($fundRequest->amount, 2),
                 minimumRoleLevel: $minimumLevel,
                 shopId: $fundRequest->shop_id,
                 actionUrl: route('fund-requests.show', $fundRequest),
@@ -307,7 +307,7 @@ class NotificationService
             user: $fundRequest->user,
             type: NotificationType::FUND_REQUEST_APPROVED,
             title: 'Fund Request Approved',
-            message: "Your {$fundRequest->request_type->label()} request for ₦" . number_format($fundRequest->amount, 2) . " has been approved by {$approver->name}.",
+            message: "Your {$fundRequest->request_type->label()} request for ₦".number_format($fundRequest->amount, 2)." has been approved by {$approver->name}.",
             actionUrl: route('fund-requests.show', $fundRequest),
             notifiable: $fundRequest,
             data: [
@@ -350,7 +350,7 @@ class NotificationService
             user: $fundRequest->user,
             type: NotificationType::FUND_REQUEST_DISBURSED,
             title: 'Funds Disbursed',
-            message: "Your {$fundRequest->request_type->label()} request for ₦" . number_format($fundRequest->amount, 2) . " has been disbursed.",
+            message: "Your {$fundRequest->request_type->label()} request for ₦".number_format($fundRequest->amount, 2).' has been disbursed.',
             actionUrl: route('fund-requests.show', $fundRequest),
             notifiable: $fundRequest,
             data: [
@@ -372,7 +372,7 @@ class NotificationService
                 tenantId: $wageAdvance->tenant_id,
                 type: NotificationType::WAGE_ADVANCE_REQUESTED,
                 title: 'Wage Advance Requested',
-                message: "{$wageAdvance->user->name} has requested a wage advance of ₦" . number_format($wageAdvance->amount_requested, 2),
+                message: "{$wageAdvance->user->name} has requested a wage advance of ₦".number_format($wageAdvance->amount_requested, 2),
                 minimumRoleLevel: $minimumLevel,
                 shopId: $wageAdvance->shop_id,
                 actionUrl: route('wage-advances.show', $wageAdvance),
@@ -394,7 +394,7 @@ class NotificationService
             user: $wageAdvance->user,
             type: NotificationType::WAGE_ADVANCE_APPROVED,
             title: 'Wage Advance Approved',
-            message: "Your wage advance request for ₦" . number_format($wageAdvance->amount_approved, 2) . " has been approved by {$approver->name}.",
+            message: 'Your wage advance request for ₦'.number_format($wageAdvance->amount_approved, 2)." has been approved by {$approver->name}.",
             actionUrl: route('wage-advances.show', $wageAdvance),
             notifiable: $wageAdvance,
             data: [
@@ -437,7 +437,7 @@ class NotificationService
             user: $wageAdvance->user,
             type: NotificationType::WAGE_ADVANCE_DISBURSED,
             title: 'Wage Advance Disbursed',
-            message: "Your wage advance of ₦" . number_format($wageAdvance->amount_approved, 2) . " has been disbursed.",
+            message: 'Your wage advance of ₦'.number_format($wageAdvance->amount_approved, 2).' has been disbursed.',
             actionUrl: route('wage-advances.show', $wageAdvance),
             notifiable: $wageAdvance,
             data: [

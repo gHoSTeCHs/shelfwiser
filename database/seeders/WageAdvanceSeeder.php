@@ -25,7 +25,7 @@ class WageAdvanceSeeder extends Seeder
         foreach ($users as $user) {
             $shop = Shop::where('tenant_id', $user->tenant_id)->first();
 
-            if (!$shop) {
+            if (! $shop) {
                 continue;
             }
 

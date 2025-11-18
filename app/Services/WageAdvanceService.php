@@ -26,7 +26,7 @@ class WageAdvanceService
     {
         $payrollDetail = $employee->payrollDetail;
 
-        if (!$payrollDetail) {
+        if (! $payrollDetail) {
             return [
                 'eligible' => false,
                 'reason' => 'No payroll details configured',
@@ -70,7 +70,7 @@ class WageAdvanceService
     {
         $eligibility = $this->calculateEligibility($user, $shop);
 
-        if (!$eligibility['eligible']) {
+        if (! $eligibility['eligible']) {
             throw new \RuntimeException($eligibility['reason']);
         }
 
@@ -110,7 +110,7 @@ class WageAdvanceService
         ?int $installments = null,
         ?string $notes = null
     ): WageAdvance {
-        if (!$wageAdvance->status->canApprove()) {
+        if (! $wageAdvance->status->canApprove()) {
             throw new \RuntimeException('Wage advance cannot be approved in current status');
         }
 
@@ -118,7 +118,7 @@ class WageAdvanceService
 
         $eligibility = $this->calculateEligibility($wageAdvance->user, $wageAdvance->shop);
         if ($approvedAmount > $eligibility['available_amount']) {
-            throw new \RuntimeException("Approved amount exceeds available limit");
+            throw new \RuntimeException('Approved amount exceeds available limit');
         }
 
         return DB::transaction(function () use ($wageAdvance, $approver, $approvedAmount, $installments, $notes) {
@@ -147,7 +147,7 @@ class WageAdvanceService
      */
     public function reject(WageAdvance $wageAdvance, User $rejector, string $reason): WageAdvance
     {
-        if (!$wageAdvance->status->canReject()) {
+        if (! $wageAdvance->status->canReject()) {
             throw new \RuntimeException('Wage advance cannot be rejected in current status');
         }
 
@@ -178,7 +178,7 @@ class WageAdvanceService
         ?Carbon $repaymentStartDate = null,
         ?string $notes = null
     ): WageAdvance {
-        if (!$wageAdvance->status->canDisburse()) {
+        if (! $wageAdvance->status->canDisburse()) {
             throw new \RuntimeException('Wage advance cannot be disbursed in current status');
         }
 
@@ -206,7 +206,7 @@ class WageAdvanceService
      */
     public function recordRepayment(WageAdvance $wageAdvance, float $amount): WageAdvance
     {
-        if (!$wageAdvance->status->canRecordRepayment()) {
+        if (! $wageAdvance->status->canRecordRepayment()) {
             throw new \RuntimeException('Cannot record repayment for this wage advance');
         }
 
@@ -233,7 +233,7 @@ class WageAdvanceService
      */
     public function cancel(WageAdvance $wageAdvance, User $user, string $reason): WageAdvance
     {
-        if (!$wageAdvance->status->canCancel()) {
+        if (! $wageAdvance->status->canCancel()) {
             throw new \RuntimeException('Wage advance cannot be cancelled in current status');
         }
 
@@ -241,7 +241,7 @@ class WageAdvanceService
             $wageAdvance->update([
                 'status' => WageAdvanceStatus::CANCELLED,
                 'rejection_reason' => $reason,
-                'notes' => ($wageAdvance->notes ? $wageAdvance->notes . "\n\n" : '') .
+                'notes' => ($wageAdvance->notes ? $wageAdvance->notes."\n\n" : '').
                           "Cancelled by {$user->name}: {$reason}",
             ]);
 
@@ -262,7 +262,7 @@ class WageAdvanceService
 
         if ($shop) {
             $query->where('shop_id', $shop->id);
-        } elseif (!$manager->is_tenant_owner) {
+        } elseif (! $manager->is_tenant_owner) {
             $managerShopIds = $manager->shops()->pluck('shops.id');
             $query->whereIn('shop_id', $managerShopIds);
         }
@@ -355,11 +355,11 @@ class WageAdvanceService
                 WageAdvanceStatus::DISBURSED,
                 WageAdvanceStatus::REPAYING,
                 WageAdvanceStatus::REPAID,
-            ])->sum(fn($advance) => $advance->amount_approved ?? $advance->amount_requested),
+            ])->sum(fn ($advance) => $advance->amount_approved ?? $advance->amount_requested),
             'total_amount_outstanding' => $all->whereIn('status', [
                 WageAdvanceStatus::DISBURSED,
                 WageAdvanceStatus::REPAYING,
-            ])->sum(fn($advance) => $advance->getRemainingBalance()),
+            ])->sum(fn ($advance) => $advance->getRemainingBalance()),
         ];
     }
 

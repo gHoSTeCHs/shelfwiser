@@ -14,13 +14,11 @@ use Inertia\Response;
 
 class SupplierProfileController extends Controller
 {
-    public function __construct(private readonly SupplierService $supplierService)
-    {
-    }
+    public function __construct(private readonly SupplierService $supplierService) {}
 
     public function index(): Response
     {
-//        Gate::authorize('viewAny', SupplierProfile::class);
+        //        Gate::authorize('viewAny', SupplierProfile::class);
 
         $tenant = auth()->user()->tenant;
         $profile = $tenant->supplierProfile;

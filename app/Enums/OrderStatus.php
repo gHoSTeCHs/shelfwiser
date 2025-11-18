@@ -80,13 +80,13 @@ enum OrderStatus: string
 
     public function canCancel(): bool
     {
-        return !in_array($this, [self::DELIVERED, self::CANCELLED, self::REFUNDED]);
+        return ! in_array($this, [self::DELIVERED, self::CANCELLED, self::REFUNDED]);
     }
 
     public static function forSelect(): array
     {
         return collect(self::cases())
-            ->mapWithKeys(fn($status) => [$status->value => $status->label()])
+            ->mapWithKeys(fn ($status) => [$status->value => $status->label()])
             ->toArray();
     }
 

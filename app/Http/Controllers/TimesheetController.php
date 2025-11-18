@@ -5,13 +5,11 @@ namespace App\Http\Controllers;
 use App\Enums\TimesheetStatus;
 use App\Models\Shop;
 use App\Models\Timesheet;
-use App\Models\User;
 use App\Services\TimesheetService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -57,7 +55,7 @@ class TimesheetController extends Controller
                 'end_date' => $endDate->toDateString(),
             ],
             'shops' => $user->shops,
-            'statusOptions' => collect(TimesheetStatus::cases())->map(fn($case) => [
+            'statusOptions' => collect(TimesheetStatus::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),

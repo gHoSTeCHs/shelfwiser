@@ -19,9 +19,7 @@ use Inertia\Response;
 
 class ShopController extends Controller
 {
-    public function __construct(private readonly ShopCreationService $creationService)
-    {
-    }
+    public function __construct(private readonly ShopCreationService $creationService) {}
 
     /**
      * Show list of shops (Inertia page)
@@ -66,6 +64,7 @@ class ShopController extends Controller
 
     /**
      * Store new shop (Inertia POST)
+     *
      * @throws \Throwable
      */
     public function store(CreateShopRequest $request): RedirectResponse

@@ -32,7 +32,7 @@ enum ConnectionStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PENDING => 'Pending Approval',
             self::APPROVED => 'Approved',
             self::ACTIVE => 'Active',
@@ -43,7 +43,7 @@ enum ConnectionStatus: string
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PENDING => 'yellow',
             self::APPROVED => 'blue',
             self::ACTIVE => 'green',
@@ -55,7 +55,7 @@ enum ConnectionStatus: string
     public static function forSelect(): array
     {
         return collect(self::cases())
-            ->mapWithKeys(fn($status) => [$status->value => $status->label()])
+            ->mapWithKeys(fn ($status) => [$status->value => $status->label()])
             ->toArray();
     }
 }

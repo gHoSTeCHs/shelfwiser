@@ -143,7 +143,7 @@ class Customer extends Authenticatable
      */
     public function hasVerifiedEmail(): bool
     {
-        return !is_null($this->email_verified_at);
+        return ! is_null($this->email_verified_at);
     }
 
     /**
@@ -169,7 +169,7 @@ class Customer extends Authenticatable
      */
     public function availableCredit(): ?float
     {
-        if (!$this->credit_limit) {
+        if (! $this->credit_limit) {
             return null;
         }
 
@@ -181,7 +181,7 @@ class Customer extends Authenticatable
      */
     public function canPurchaseOnCredit(float $amount): bool
     {
-        if (!$this->credit_limit) {
+        if (! $this->credit_limit) {
             return true;
         }
 

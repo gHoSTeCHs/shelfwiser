@@ -19,7 +19,7 @@ class ImageController extends Controller
      */
     public function upload(UploadImageRequest $request)
     {
-        $modelClass = 'App\\Models\\' . $request->input('model_type');
+        $modelClass = 'App\\Models\\'.$request->input('model_type');
         $model = $modelClass::findOrFail($request->input('model_id'));
 
         Gate::authorize('update', $model);
@@ -117,7 +117,7 @@ class ImageController extends Controller
             'image_ids.*' => 'required|integer|exists:images,id',
         ]);
 
-        $modelClass = 'App\\Models\\' . $validated['model_type'];
+        $modelClass = 'App\\Models\\'.$validated['model_type'];
         $model = $modelClass::findOrFail($validated['model_id']);
 
         Gate::authorize('update', $model);

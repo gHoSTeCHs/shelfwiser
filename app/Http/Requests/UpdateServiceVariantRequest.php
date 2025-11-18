@@ -13,6 +13,7 @@ class UpdateServiceVariantRequest extends FormRequest
     {
         $variant = $this->route('variant');
         $service = $variant->service;
+
         return $this->user()->can('manage', $service);
     }
 

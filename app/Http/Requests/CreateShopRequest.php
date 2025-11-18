@@ -33,8 +33,8 @@ class CreateShopRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:255'],
             'config' => ['required', 'array', function ($attribute, $value, $fail) use ($shopType) {
                 $handler = ShopConfigHandlerFactory::make($shopType);
-                if (!$handler->validate($value)) {
-                    $fail('Configuration validation failed for shop type: ' . $shopType->label);
+                if (! $handler->validate($value)) {
+                    $fail('Configuration validation failed for shop type: '.$shopType->label);
                 }
             }],
             'is_active' => ['sometimes', 'boolean'],

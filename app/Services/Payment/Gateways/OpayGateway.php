@@ -36,7 +36,7 @@ class OpayGateway extends BasePaymentGateway
 
     public function initializePayment(Order $order, array $options = []): PaymentInitiationResult
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return PaymentInitiationResult::failed('OPay is not configured');
         }
 
@@ -59,8 +59,9 @@ class OpayGateway extends BasePaymentGateway
 
         $response = $this->makeRequest('POST', '/api/v3/cashier/initialize', $payload);
 
-        if (!$response['success'] || ($response['data']['code'] ?? '') !== '00000') {
+        if (! $response['success'] || ($response['data']['code'] ?? '') !== '00000') {
             $message = $response['data']['message'] ?? 'Failed to initialize OPay payment';
+
             return PaymentInitiationResult::failed($message, $reference);
         }
 
@@ -80,7 +81,7 @@ class OpayGateway extends BasePaymentGateway
 
     public function verifyPayment(string $reference): PaymentVerificationResult
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return PaymentVerificationResult::failed($reference, 'OPay is not configured');
         }
 
@@ -90,7 +91,7 @@ class OpayGateway extends BasePaymentGateway
 
         $response = $this->makeRequest('POST', '/api/v3/cashier/status', $payload);
 
-        if (!$response['success']) {
+        if (! $response['success']) {
             return PaymentVerificationResult::failed(
                 $reference,
                 $response['data']['message'] ?? 'Verification request failed',
@@ -136,7 +137,7 @@ class OpayGateway extends BasePaymentGateway
         $signature = $request->header('Authorization');
         $webhookSecret = $this->config['webhook_secret'] ?? null;
 
-        if (!$signature || !$webhookSecret) {
+        if (! $signature || ! $webhookSecret) {
             return false;
         }
 
@@ -157,7 +158,7 @@ class OpayGateway extends BasePaymentGateway
         };
 
         return new WebhookEvent(
-            type: 'payment.' . $status,
+            type: 'payment.'.$status,
             reference: $data['reference'] ?? '',
             status: $status,
             amount: isset($data['amount']) ? $this->fromSmallestUnit((int) $data['amount'], 'NGN') : null,

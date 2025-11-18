@@ -228,7 +228,7 @@ class AdminTenantController extends Controller
      */
     public function toggleActive(Tenant $tenant): RedirectResponse
     {
-        $tenant->update(['is_active' => !$tenant->is_active]);
+        $tenant->update(['is_active' => ! $tenant->is_active]);
 
         $status = $tenant->is_active ? 'activated' : 'deactivated';
 

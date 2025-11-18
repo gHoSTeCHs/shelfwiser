@@ -1,6 +1,6 @@
 # CLAUDE.md - ShelfWiser Development Guide
 
-> **Version:** 1.2.0 | **Updated:** 2025-11-17
+> **Version:** 1.3.0 | **Updated:** 2025-11-18
 > **Project:** ShelfWiser - Multi-Tenant Inventory Management SaaS
 > **Status:** Production-Ready
 
@@ -20,9 +20,12 @@
 - ✅ **E-commerce frontend** (shopping cart, customer accounts)
 - ✅ **Advanced reports** (sales, inventory, suppliers, financials)
 - ✅ **Employee payroll** (salary management, deductions)
-- ✅ 7-level role hierarchy with permissions
+- ✅ **Super Admin system** (platform management)
+- ✅ **Payment gateway integration** (Paystack, OPay, Flutterwave, Crypto)
+- ✅ **PWA support** (offline mode, background sync)
+- ✅ 8-level role hierarchy with permissions
 
-**Current Architecture:** 30+ models • 22+ services • 12+ policies • 10+ enums • 50+ migrations
+**Current Architecture:** 35+ models • 25+ services • 12+ policies • 10+ enums • 55+ migrations
 
 ---
 
@@ -90,7 +93,7 @@ public function create(array $data): Product
 
 ### Authorization
 
-**7-Level Hierarchy:** Owner (100) → General Manager (80) → Store Manager (60) → Assistant Manager (50) → Sales Rep (40) → Inventory Clerk (30) → Cashier (30)
+**8-Level Hierarchy:** Super Admin (999) → Owner (100) → General Manager (80) → Store Manager (60) → Assistant Manager (50) → Sales Rep (40) → Inventory Clerk (30) → Cashier (30)
 
 ```php
 // Use policies
@@ -371,26 +374,27 @@ router.visit(OrderController.edit.url({ order: order.id }));
 
 ## 📋 Feature Status
 
-| Feature | Status | Files | Notes |
-|---------|--------|-------|-------|
-| Multi-Tenancy | ✅ Production | `Tenant.php`, `TenantService.php` | Row-level isolation |
-| Products/Inventory | ✅ Production | `Product.php`, `ProductService.php` | Variants, packaging, categories |
-| Stock Movements | ✅ Production | `StockMovementService.php` | 5 types, full audit trail |
-| Orders | ✅ Production | `OrderController.php`, `OrderService.php` | Full lifecycle, payment tracking |
-| **POS System** | ✅ **Production** | `POSController.php`, `POSService.php` | Quick sales, cash handling, held sales |
-| **Receipts** | ✅ **Production** | `ReceiptController.php`, `ReceiptService.php` | PDF generation, email delivery |
-| **Customer Credit** | ✅ **Production** | `CustomerCreditService.php` | Credit limits, payment tracking |
-| **Supplier System** | ✅ Production | `SupplierService.php`, `PurchaseOrderService.php` | B2B marketplace, PO workflow |
-| **E-Commerce** | ✅ Production | `CartService.php`, `StorefrontService.php` | Cart, catalog, customer accounts |
-| **Employee Payroll** | ✅ Production | `EmployeePayrollService.php` | Salary, deductions, pay periods |
-| **Services (sellable)** | ✅ Production | `ServiceController.php` | Service catalog with polymorphism |
-| **Reports** | ✅ Production | `ReportService.php`, `ExportService.php` | 6 report types with exports |
-| Staff Management | ✅ Production | `StaffManagementService.php` | 7-level hierarchy |
-| Dashboard | ✅ Production | `DashboardService.php` | Permission-filtered metrics, caching |
-| API | 🔶 Minimal | `routes/api.php` | Sanctum setup |
-| Testing | 🚧 Basic | `tests/` (15 files) | Needs expansion |
-| Payment Gateway | ❌ Not Started | - | Stripe/PayPal planned |
-| Shipping/Delivery | ❌ Not Started | - | Carrier integration planned |
+| Feature | Status | Key Files | Notes |
+|---------|--------|-----------|-------|
+| Multi-Tenancy | ✅ | `Tenant.php`, `TenantService.php` | Row-level isolation |
+| Products/Inventory | ✅ | `ProductService.php` | Variants, packaging, categories |
+| Stock Movements | ✅ | `StockMovementService.php` | 5 types, full audit trail |
+| Orders | ✅ | `OrderService.php` | Full lifecycle, payment tracking |
+| POS System | ✅ | `POSService.php` | Quick sales, cash handling |
+| Receipts | ✅ | `ReceiptService.php` | PDF generation, email delivery |
+| Customer Credit | ✅ | `CustomerCreditService.php` | Credit limits, payment tracking |
+| Supplier System | ✅ | `PurchaseOrderService.php` | B2B marketplace, PO workflow |
+| E-Commerce | ✅ | `CartService.php`, `StorefrontService.php` | Cart, catalog, accounts |
+| Employee Payroll | ✅ | `EmployeePayrollService.php` | Salary, deductions, pay periods |
+| Services (sellable) | ✅ | `ServiceController.php` | Service catalog with polymorphism |
+| Reports | ✅ | `ReportService.php` | 6 report types with exports |
+| Staff Management | ✅ | `StaffManagementService.php` | 8-level hierarchy |
+| **Super Admin** | ✅ | `AdminTenantController.php` | Platform management, subscriptions |
+| **Payment Gateway** | ✅ | `PaymentGatewayManager.php` | Paystack, OPay, Flutterwave, Crypto |
+| **PWA/Offline** | ✅ | `sw.js`, `indexeddb.ts`, `sync.ts` | Service worker, IndexedDB, sync |
+| API | 🔶 | `routes/api.php` | Sanctum setup, webhooks |
+| Testing | 🚧 | `tests/` | Needs expansion |
+| Shipping/Delivery | ❌ | - | Carrier integration planned |
 
 ---
 
@@ -518,45 +522,49 @@ docs: Update CLAUDE.md feature status
 ```
 # Backend Core
 app/Models/Tenant.php                           # Tenant root
-app/Models/User.php                             # Staff/employees
+app/Models/User.php                             # Staff/employees (8 roles)
 app/Models/Customer.php                         # E-commerce customers (separate!)
 app/Services/ProductService.php                 # Product CRUD
 app/Services/StockMovementService.php           # Inventory operations
 app/Services/OrderService.php                   # Order lifecycle
 app/Services/POSService.php                     # Point of sale
-app/Services/ReceiptService.php                 # PDF receipt generation
-app/Services/CustomerCreditService.php          # Customer credit/tab management
-app/Services/SupplierService.php                # Supplier B2B
-app/Services/PurchaseOrderService.php           # PO workflow
 app/Services/CartService.php                    # E-commerce cart
 app/Services/EmployeePayrollService.php         # Payroll management
-app/Enums/UserRole.php                          # 7-level roles
+app/Enums/UserRole.php                          # 8-level roles
 
-# Policies
-app/Policies/ProductPolicy.php
-app/Policies/OrderPolicy.php
-app/Policies/CustomerPolicy.php
-app/Policies/ReceiptPolicy.php
-app/Policies/SupplierPolicy.php
-app/Policies/PurchaseOrderPolicy.php
+# Payment System
+app/Services/Payment/PaymentGatewayManager.php  # Gateway factory
+app/Services/Payment/PaymentGatewayInterface.php # Gateway contract
+app/Services/Payment/Gateways/PaystackGateway.php
+app/Http/Controllers/PaymentController.php      # Callbacks
+app/Http/Controllers/Webhooks/PaymentWebhookController.php
+
+# Admin System
+app/Http/Controllers/Admin/AdminTenantController.php
+app/Http/Middleware/EnsureSuperAdmin.php
+
+# PWA/Offline
+public/sw.js                                    # Service worker
+public/manifest.json                            # PWA manifest
+resources/js/lib/indexeddb.ts                   # IndexedDB utilities
+resources/js/lib/sync.ts                        # Sync mechanism
+resources/js/hooks/usePWA.ts                    # PWA hook
 
 # Frontend
 resources/js/app.tsx                            # Inertia entry
 resources/js/layouts/AppLayout.tsx              # Main layout
-resources/js/pages/POS/Index.tsx                # POS interface
-resources/js/pages/Receipts/Show.tsx            # Receipt management
+resources/js/components/payment/                # Payment components
 resources/js/components/ui/                     # UI components
 resources/js/components/form/                   # Form components
-resources/js/types/index.ts                     # TypeScript types
 
 # Routes
-routes/web.php                                  # Main routes (POS, receipts, etc.)
+routes/web.php                                  # Main routes
+routes/api.php                                  # API + webhooks
 routes/storefront.php                           # E-commerce routes
-routes/auth.php                                 # Auth routes
 
 # Config
-vite.config.ts                                  # Wayfinder + Vite
-config/fortify.php                              # Auth config
+config/payment.php                              # Gateway configuration
+config/services.php                             # API keys
 ```
 
 ---
@@ -677,14 +685,12 @@ it('prevents unauthorized access', function () {
 
 ## 🎯 Next Priorities
 
-1. **Payment Gateway Integration** - Stripe/PayPal for e-commerce checkout
-2. **Shipping Integration** - Carrier APIs (FedEx, UPS, DHL)
-3. **Expand Testing** - POS system, receipts, customer credit, payroll
-4. **Production Deployment** - Performance monitoring, error tracking, backups
-5. **API Documentation** - OpenAPI/Swagger docs for external integrations
+1. **Shipping Integration** - Carrier APIs (FedEx, UPS, DHL)
+2. **Expand Testing** - POS system, receipts, customer credit, payroll
+3. **Production Deployment** - Performance monitoring, error tracking, backups
+4. **API Documentation** - OpenAPI/Swagger docs for external integrations
+5. **Mobile Apps** - Native iOS/Android apps using the existing PWA foundation
 
 ---
 
-**Maintained by:** ShelfWiser Development Team
-**Last Updated:** 2025-11-17
-**This guide reflects the actual codebase state, not aspirational goals.**
+**Last Updated:** 2025-11-18

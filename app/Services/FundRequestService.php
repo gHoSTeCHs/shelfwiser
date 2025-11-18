@@ -50,7 +50,7 @@ class FundRequestService
      */
     public function approve(FundRequest $fundRequest, User $approver, ?string $notes = null): FundRequest
     {
-        if (!$fundRequest->status->canApprove()) {
+        if (! $fundRequest->status->canApprove()) {
             throw new \RuntimeException('Fund request cannot be approved in current status');
         }
 
@@ -78,7 +78,7 @@ class FundRequestService
      */
     public function reject(FundRequest $fundRequest, User $rejector, string $reason): FundRequest
     {
-        if (!$fundRequest->status->canReject()) {
+        if (! $fundRequest->status->canReject()) {
             throw new \RuntimeException('Fund request cannot be rejected in current status');
         }
 
@@ -105,7 +105,7 @@ class FundRequestService
      */
     public function disburse(FundRequest $fundRequest, User $disburser, ?string $notes = null): FundRequest
     {
-        if (!$fundRequest->status->canDisburse()) {
+        if (! $fundRequest->status->canDisburse()) {
             throw new \RuntimeException('Fund request cannot be disbursed in current status');
         }
 
@@ -132,7 +132,7 @@ class FundRequestService
      */
     public function cancel(FundRequest $fundRequest, User $user, string $reason): FundRequest
     {
-        if (!$fundRequest->status->canCancel()) {
+        if (! $fundRequest->status->canCancel()) {
             throw new \RuntimeException('Fund request cannot be cancelled in current status');
         }
 
@@ -140,7 +140,7 @@ class FundRequestService
             $fundRequest->update([
                 'status' => FundRequestStatus::CANCELLED,
                 'rejection_reason' => $reason,
-                'notes' => ($fundRequest->notes ? $fundRequest->notes . "\n\n" : '') .
+                'notes' => ($fundRequest->notes ? $fundRequest->notes."\n\n" : '').
                           "Cancelled by {$user->name}: {$reason}",
             ]);
 
@@ -173,7 +173,7 @@ class FundRequestService
 
         if ($shop) {
             $query->where('shop_id', $shop->id);
-        } elseif (!$manager->is_tenant_owner) {
+        } elseif (! $manager->is_tenant_owner) {
             $managerShopIds = $manager->shops()->pluck('shops.id');
             $query->whereIn('shop_id', $managerShopIds);
         }
@@ -292,7 +292,7 @@ class FundRequestService
                 FundRequestStatus::DISBURSED,
             ])->sum('amount'),
             'total_amount_disbursed' => $all->where('status', FundRequestStatus::DISBURSED)->sum('amount'),
-            'by_type' => $all->groupBy('request_type')->map(fn($items) => [
+            'by_type' => $all->groupBy('request_type')->map(fn ($items) => [
                 'count' => $items->count(),
                 'total_amount' => $items->sum('amount'),
             ])->toArray(),

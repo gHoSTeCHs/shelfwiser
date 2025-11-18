@@ -20,14 +20,14 @@ class POSService
         return ProductVariant::query()
             ->whereHas('product', function ($q) use ($shop) {
                 $q->where('tenant_id', auth()->user()->tenant_id)
-                  ->where('shop_id', $shop->id);
+                    ->where('shop_id', $shop->id);
             })
             ->where(function ($q) use ($query) {
                 $q->where('sku', 'like', "%{$query}%")
-                  ->orWhere('barcode', 'like', "%{$query}%")
-                  ->orWhereHas('product', function ($q) use ($query) {
-                      $q->where('name', 'like', "%{$query}%");
-                  });
+                    ->orWhere('barcode', 'like', "%{$query}%")
+                    ->orWhereHas('product', function ($q) use ($query) {
+                        $q->where('name', 'like', "%{$query}%");
+                    });
             })
             ->with(['product', 'packagingTypes'])
             ->limit($limit)
@@ -118,11 +118,11 @@ class POSService
             $paymentNotes = null;
             if ($paymentMethod === 'cash' && $amountTendered > 0) {
                 $change = $amountTendered - $totalAmount;
-                $paymentNotes = "Cash tendered: {$shop->currency_symbol}" . number_format($amountTendered, 2) .
-                               ", Change: {$shop->currency_symbol}" . number_format($change, 2);
+                $paymentNotes = "Cash tendered: {$shop->currency_symbol}".number_format($amountTendered, 2).
+                               ", Change: {$shop->currency_symbol}".number_format($change, 2);
 
                 $order->update([
-                    'internal_notes' => $paymentNotes
+                    'internal_notes' => $paymentNotes,
                 ]);
             }
 
@@ -150,9 +150,9 @@ class POSService
         return Customer::where('tenant_id', auth()->user()->tenant_id)
             ->where(function ($q) use ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
-                  ->orWhere('last_name', 'like', "%{$query}%")
-                  ->orWhere('email', 'like', "%{$query}%")
-                  ->orWhere('phone', 'like', "%{$query}%");
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhere('email', 'like', "%{$query}%")
+                    ->orWhere('phone', 'like', "%{$query}%");
             })
             ->limit($limit)
             ->get(['id', 'first_name', 'last_name', 'email', 'phone']);

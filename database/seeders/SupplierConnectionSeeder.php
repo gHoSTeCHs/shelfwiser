@@ -5,8 +5,8 @@ namespace Database\Seeders;
 use App\Enums\ConnectionStatus;
 use App\Enums\UserRole;
 use App\Models\SupplierConnection;
-use App\Models\SupplierProfile;
 use App\Models\SupplierPricingTier;
+use App\Models\SupplierProfile;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -137,6 +137,7 @@ class SupplierConnectionSeeder extends Seeder
         }
 
         $limits = [500000, 1000000, 2000000, 5000000, 10000000];
+
         return $limits[array_rand($limits)];
     }
 
@@ -148,6 +149,7 @@ class SupplierConnectionSeeder extends Seeder
         }
 
         $terms = ['Net 7', 'Net 10', 'Net 15', 'Net 30', 'Net 45', 'Net 60', 'COD', 'Prepaid'];
+
         return $terms[array_rand($terms)];
     }
 
@@ -174,6 +176,7 @@ class SupplierConnectionSeeder extends Seeder
                 'Incomplete business documentation.',
                 'Outside delivery zone.',
             ];
+
             return $notes[array_rand($notes)];
         }
 
@@ -183,6 +186,7 @@ class SupplierConnectionSeeder extends Seeder
                 'Multiple late payments - temporarily suspended.',
                 'Under review for reactivation.',
             ];
+
             return $notes[array_rand($notes)];
         }
 
@@ -211,7 +215,7 @@ class SupplierConnectionSeeder extends Seeder
             // Get the base tier pricing
             $baseTier = $catalogItem->pricingTiers()->whereNull('connection_id')->first();
 
-            if (!$baseTier) {
+            if (! $baseTier) {
                 continue;
             }
 

@@ -92,7 +92,7 @@ class StorefrontPolicy
         }
 
         // Must have manage_products permission
-        if (!$user->role->hasPermission('manage_products')) {
+        if (! $user->role->hasPermission('manage_products')) {
             return false;
         }
 
@@ -117,7 +117,7 @@ class StorefrontPolicy
         }
 
         // Shop must be wholesale_only to toggle retail sales
-        if (!$shop->wholesale_only) {
+        if (! $shop->wholesale_only) {
             return false;
         }
 
@@ -139,7 +139,7 @@ class StorefrontPolicy
         }
 
         // Must have process_orders permission
-        if (!$user->role->hasPermission('process_orders')) {
+        if (! $user->role->hasPermission('process_orders')) {
             return false;
         }
 
@@ -163,7 +163,7 @@ class StorefrontPolicy
         }
 
         // Must have manage_customers permission
-        if (!$user->role->hasPermission('manage_customers')) {
+        if (! $user->role->hasPermission('manage_customers')) {
             return false;
         }
 

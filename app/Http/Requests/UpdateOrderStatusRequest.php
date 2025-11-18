@@ -17,7 +17,7 @@ class UpdateOrderStatusRequest extends FormRequest
     {
         return [
             'status' => ['required', Rule::enum(OrderStatus::class)],
-            'reason' => ['nullable', 'string', 'required_if:status,' . OrderStatus::CANCELLED->value],
+            'reason' => ['nullable', 'string', 'required_if:status,'.OrderStatus::CANCELLED->value],
         ];
     }
 

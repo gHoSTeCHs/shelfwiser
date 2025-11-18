@@ -36,6 +36,7 @@ class WageAdvancePolicy
 
         if ($user->role->level() >= UserRole::STORE_MANAGER->level()) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($wageAdvance->shop_id);
         }
 
@@ -79,7 +80,7 @@ class WageAdvancePolicy
             return false;
         }
 
-        if (!$wageAdvance->status->canApprove()) {
+        if (! $wageAdvance->status->canApprove()) {
             return false;
         }
 
@@ -94,6 +95,7 @@ class WageAdvancePolicy
         if ($user->role->level() >= UserRole::STORE_MANAGER->level() &&
             $user->role->level() > $wageAdvance->user->role->level()) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($wageAdvance->shop_id);
         }
 
@@ -117,7 +119,7 @@ class WageAdvancePolicy
             return false;
         }
 
-        if (!$wageAdvance->status->canDisburse()) {
+        if (! $wageAdvance->status->canDisburse()) {
             return false;
         }
 
@@ -127,6 +129,7 @@ class WageAdvancePolicy
 
         if ($user->role === UserRole::STORE_MANAGER) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($wageAdvance->shop_id);
         }
 
@@ -142,7 +145,7 @@ class WageAdvancePolicy
             return false;
         }
 
-        if (!$wageAdvance->status->canCancel()) {
+        if (! $wageAdvance->status->canCancel()) {
             return false;
         }
 
@@ -156,6 +159,7 @@ class WageAdvancePolicy
 
         if ($user->role === UserRole::STORE_MANAGER) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($wageAdvance->shop_id);
         }
 
@@ -171,7 +175,7 @@ class WageAdvancePolicy
             return false;
         }
 
-        if (!$wageAdvance->status->canRecordRepayment()) {
+        if (! $wageAdvance->status->canRecordRepayment()) {
             return false;
         }
 

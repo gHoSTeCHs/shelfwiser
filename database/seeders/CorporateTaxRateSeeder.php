@@ -14,7 +14,7 @@ class CorporateTaxRateSeeder extends Seeder
     {
         $nigeriaFederal = TaxJurisdiction::where('code', 'NG-FED')->first();
 
-        if (!$nigeriaFederal) {
+        if (! $nigeriaFederal) {
             return;
         }
 

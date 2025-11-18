@@ -76,6 +76,7 @@ class ProductVariant extends Model
         if ($this->relationLoaded('inventoryLocations')) {
             return $this->inventoryLocations->sum('quantity');
         }
+
         return $this->inventoryLocations()->sum('quantity');
     }
 
@@ -86,8 +87,9 @@ class ProductVariant extends Model
     public function getAvailableStockAttribute(): int
     {
         if ($this->relationLoaded('inventoryLocations')) {
-            return $this->inventoryLocations->sum(fn($loc) => $loc->quantity - $loc->reserved_quantity);
+            return $this->inventoryLocations->sum(fn ($loc) => $loc->quantity - $loc->reserved_quantity);
         }
+
         return $this->inventoryLocations()->sum(\DB::raw('quantity - reserved_quantity'));
     }
 

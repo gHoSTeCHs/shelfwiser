@@ -94,12 +94,12 @@ class OrderItem extends Model
      */
     public function getPackageQuantityAttribute(): ?int
     {
-        if (!$this->product_packaging_type_id) {
+        if (! $this->product_packaging_type_id) {
             return null;
         }
 
         $packagingType = $this->packagingType;
-        if (!$packagingType) {
+        if (! $packagingType) {
             return null;
         }
 
@@ -112,6 +112,7 @@ class OrderItem extends Model
     public function getProfitAttribute(): float
     {
         $cost = $this->quantity * ($this->productVariant->cost_price ?? 0);
+
         return $this->total_amount - $cost;
     }
 
@@ -148,7 +149,7 @@ class OrderItem extends Model
     public function getSkuAttribute(): string
     {
         if ($this->isService()) {
-            return 'SVC-' . $this->sellable_id;
+            return 'SVC-'.$this->sellable_id;
         }
 
         return $this->productVariant?->sku ?? '';

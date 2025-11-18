@@ -22,13 +22,14 @@ class CheckoutService
     /**
      * Create order from cart with stock reservation.
      *
-     * @param Cart $cart The shopping cart
-     * @param Customer $customer The customer placing the order
-     * @param array $shippingAddress Shipping address details
-     * @param array $billingAddress Billing address details
-     * @param string $paymentMethod Payment method (default: cash_on_delivery)
-     * @param string|null $customerNotes Optional customer notes
+     * @param  Cart  $cart  The shopping cart
+     * @param  Customer  $customer  The customer placing the order
+     * @param  array  $shippingAddress  Shipping address details
+     * @param  array  $billingAddress  Billing address details
+     * @param  string  $paymentMethod  Payment method (default: cash_on_delivery)
+     * @param  string|null  $customerNotes  Optional customer notes
      * @return Order The created order with loaded relationships
+     *
      * @throws \Exception If cart is empty or stock is insufficient
      */
     public function createOrderFromCart(
@@ -58,7 +59,7 @@ class CheckoutService
                 if ($item->isProduct()) {
                     if ($item->productVariant->available_stock < $item->quantity) {
                         throw new \Exception(
-                            "Insufficient stock for {$item->productVariant->product->name}. " .
+                            "Insufficient stock for {$item->productVariant->product->name}. ".
                             "Only {$item->productVariant->available_stock} available."
                         );
                     }
@@ -114,7 +115,7 @@ class CheckoutService
                     if ($cartItem->base_price) {
                         $metadata['base_price'] = $cartItem->base_price;
                     }
-                    if (!empty($metadata)) {
+                    if (! empty($metadata)) {
                         $orderItemData['metadata'] = $metadata;
                     }
                 }
@@ -156,6 +157,6 @@ class CheckoutService
      */
     protected function generateOrderNumber(): string
     {
-        return 'ORD-' . strtoupper(uniqid());
+        return 'ORD-'.strtoupper(uniqid());
     }
 }

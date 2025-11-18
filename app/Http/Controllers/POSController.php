@@ -176,7 +176,7 @@ class POSController extends Controller
     {
         $heldSale = session()->get("pos_hold_{$holdId}");
 
-        if (!$heldSale) {
+        if (! $heldSale) {
             return response()->json([
                 'error' => 'Held sale not found',
             ], 404);

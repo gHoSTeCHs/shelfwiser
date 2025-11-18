@@ -125,7 +125,7 @@ enum NotificationType: string
      */
     public function minimumRoleLevel(): ?int
     {
-        if (!$this->isManagementOnly()) {
+        if (! $this->isManagementOnly()) {
             return null;
         }
 

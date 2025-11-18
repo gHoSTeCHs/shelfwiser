@@ -44,7 +44,7 @@ class SupplierCatalogSeeder extends Seeder
     {
         $variant = $product->variants->first();
 
-        if (!$variant) {
+        if (! $variant) {
             return;
         }
 

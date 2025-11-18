@@ -59,7 +59,7 @@ class WageAdvanceController extends Controller
                 'start_date' => $startDate->toDateString(),
                 'end_date' => $endDate->toDateString(),
             ],
-            'statusOptions' => collect(WageAdvanceStatus::cases())->map(fn($case) => [
+            'statusOptions' => collect(WageAdvanceStatus::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
@@ -97,7 +97,7 @@ class WageAdvanceController extends Controller
         $user = auth()->user();
         $shop = $user->shops()->first();
 
-        if (!$shop) {
+        if (! $shop) {
             abort(403, 'You must be assigned to a shop to request a wage advance');
         }
 

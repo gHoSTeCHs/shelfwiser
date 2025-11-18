@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\EmployeePayrollDetail;
-use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -59,7 +58,7 @@ class EmployeePayrollService
         return DB::transaction(function () use ($employee, $data) {
             $payrollDetail = $employee->employeePayrollDetail;
 
-            if (!$payrollDetail) {
+            if (! $payrollDetail) {
                 return $this->createEmployeePayroll($employee, $data);
             }
 
@@ -78,7 +77,7 @@ class EmployeePayrollService
     {
         $payrollDetail = $employee->employeePayrollDetail;
 
-        if (!$payrollDetail) {
+        if (! $payrollDetail) {
             return ['has_payroll' => false];
         }
 
@@ -100,7 +99,7 @@ class EmployeePayrollService
             'pension_enabled' => $payrollDetail->pension_enabled,
             'nhf_enabled' => $payrollDetail->nhf_enabled,
             'nhis_enabled' => $payrollDetail->nhis_enabled,
-            'has_bank_account' => !empty($payrollDetail->bank_account_number),
+            'has_bank_account' => ! empty($payrollDetail->bank_account_number),
             'bank_name' => $payrollDetail->bank_name,
             'position_title' => $payrollDetail->position_title,
             'department' => $payrollDetail->department,
@@ -129,7 +128,7 @@ class EmployeePayrollService
     {
         $payrollDetail = $employee->employeePayrollDetail;
 
-        if (!$payrollDetail) {
+        if (! $payrollDetail) {
             return [
                 'eligible' => false,
                 'reason' => 'No payroll details configured',
@@ -138,7 +137,7 @@ class EmployeePayrollService
 
         $shop = $employee->shops()->first();
 
-        if (!$shop || !$shop->taxSettings) {
+        if (! $shop || ! $shop->taxSettings) {
             return [
                 'eligible' => false,
                 'reason' => 'No shop tax settings configured',
@@ -169,7 +168,7 @@ class EmployeePayrollService
     {
         $payrollDetail = $employee->employeePayrollDetail;
 
-        if (!$payrollDetail || !$payrollDetail->enable_tax_calculations) {
+        if (! $payrollDetail || ! $payrollDetail->enable_tax_calculations) {
             return [
                 'has_tax_data' => false,
                 'year' => $year,

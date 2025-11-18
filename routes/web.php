@@ -3,31 +3,31 @@
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminTenantController;
 use App\Http\Controllers\CustomerCreditController;
-use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FundRequestController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderPaymentController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\POSController;
 use App\Http\Controllers\ProductCategoryController;
-use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\ServiceAddonController;
 use App\Http\Controllers\ServiceCategoryController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceVariantController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\ShopSettingsController;
+use App\Http\Controllers\StaffPayrollController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\SupplierCatalogController;
 use App\Http\Controllers\SupplierConnectionController;
 use App\Http\Controllers\SupplierProfileController;
-use App\Http\Controllers\ShopSettingsController;
-use App\Http\Controllers\StaffPayrollController;
 use App\Http\Controllers\TimesheetController;
 use App\Http\Controllers\WageAdvanceController;
 use App\Http\Controllers\Web\StaffManagementController;
@@ -317,9 +317,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{purchaseOrder}/payment', [PurchaseOrderController::class, 'recordPayment'])->name('record-payment');
     });
 
-
 });
 
-
-require __DIR__ . '/settings.php';
-require __DIR__ . '/auth.php';
+require __DIR__.'/settings.php';
+require __DIR__.'/auth.php';

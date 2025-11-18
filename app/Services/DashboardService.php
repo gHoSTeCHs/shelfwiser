@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\ConnectionStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PurchaseOrderPaymentStatus;
@@ -24,13 +23,12 @@ use Illuminate\Support\Facades\DB;
 class DashboardService
 {
     public function getDashboardMetrics(
-        User    $user,
-        ?int    $shopId = null,
-        string  $period = 'today',
+        User $user,
+        ?int $shopId = null,
+        string $period = 'today',
         ?string $startDate = null,
         ?string $endDate = null
-    ): array
-    {
+    ): array {
         $shopIds = $this->getAccessibleShopIds($user, $shopId);
         $dateRange = $this->getDateRange($period, $startDate, $endDate);
 
@@ -59,9 +57,10 @@ class DashboardService
         $assignedShopIds = $user->shops()->pluck('shops.id');
 
         if ($shopId) {
-            if (!$assignedShopIds->contains($shopId)) {
+            if (! $assignedShopIds->contains($shopId)) {
                 abort(403, 'You do not have access to this shop');
             }
+
             return collect([$shopId]);
         }
 
@@ -126,12 +125,12 @@ class DashboardService
             }
 
             return [
-                'total_revenue' => (float)($metrics->total_revenue ?? 0),
-                'subtotal' => (float)($metrics->subtotal ?? 0),
-                'tax_amount' => (float)($metrics->tax_amount ?? 0),
-                'discount_amount' => (float)($metrics->discount_amount ?? 0),
-                'shipping_cost' => (float)($metrics->shipping_cost ?? 0),
-                'avg_order_value' => (float)($metrics->avg_order_value ?? 0),
+                'total_revenue' => (float) ($metrics->total_revenue ?? 0),
+                'subtotal' => (float) ($metrics->subtotal ?? 0),
+                'tax_amount' => (float) ($metrics->tax_amount ?? 0),
+                'discount_amount' => (float) ($metrics->discount_amount ?? 0),
+                'shipping_cost' => (float) ($metrics->shipping_cost ?? 0),
+                'avg_order_value' => (float) ($metrics->avg_order_value ?? 0),
                 'trend' => round($trend, 2),
             ];
         });
@@ -164,14 +163,14 @@ class DashboardService
                 ->first();
 
             return [
-                'total_count' => (int)($orders->total_count ?? 0),
-                'pending_count' => (int)($orders->pending_count ?? 0),
-                'confirmed_count' => (int)($orders->confirmed_count ?? 0),
-                'processing_count' => (int)($orders->processing_count ?? 0),
-                'delivered_count' => (int)($orders->delivered_count ?? 0),
-                'cancelled_count' => (int)($orders->cancelled_count ?? 0),
-                'paid_count' => (int)($orders->paid_count ?? 0),
-                'unpaid_count' => (int)($orders->unpaid_count ?? 0),
+                'total_count' => (int) ($orders->total_count ?? 0),
+                'pending_count' => (int) ($orders->pending_count ?? 0),
+                'confirmed_count' => (int) ($orders->confirmed_count ?? 0),
+                'processing_count' => (int) ($orders->processing_count ?? 0),
+                'delivered_count' => (int) ($orders->delivered_count ?? 0),
+                'cancelled_count' => (int) ($orders->cancelled_count ?? 0),
+                'paid_count' => (int) ($orders->paid_count ?? 0),
+                'unpaid_count' => (int) ($orders->unpaid_count ?? 0),
             ];
         });
     }
@@ -203,9 +202,9 @@ class DashboardService
                         'name' => $item->productVariant?->product?->name ?? 'Unknown',
                         'variant_name' => $item->productVariant?->name ?? '',
                         'sku' => $item->productVariant?->sku ?? '',
-                        'total_quantity' => (int)$item->total_quantity,
-                        'total_revenue' => (float)$item->total_revenue,
-                        'order_count' => (int)$item->order_count,
+                        'total_quantity' => (int) $item->total_quantity,
+                        'total_revenue' => (float) $item->total_revenue,
+                        'order_count' => (int) $item->order_count,
                     ];
                 })
                 ->toArray();
@@ -227,7 +226,7 @@ class DashboardService
                         ? "{$order->customer->first_name} {$order->customer->last_name}"
                         : 'Walk-in',
                     'shop_name' => $order->shop?->name ?? 'Unknown',
-                    'total_amount' => (float)$order->total_amount,
+                    'total_amount' => (float) $order->total_amount,
                     'status' => $order->status->value,
                     'payment_status' => $order->payment_status->value,
                     'created_at' => $order->created_at->toIso8601String(),
@@ -286,7 +285,7 @@ class DashboardService
                 ->sum('total_amount');
 
             $days[] = $date->format('M d');
-            $revenues[] = (float)$revenue;
+            $revenues[] = (float) $revenue;
         }
 
         return [
@@ -311,10 +310,11 @@ class DashboardService
                 ->get()
                 ->sum(function ($variant) {
                     $totalStock = $variant->inventoryLocations->sum('quantity');
+
                     return $totalStock * ($variant->cost_price ?? 0);
                 });
 
-            return (float)$valuation;
+            return (float) $valuation;
         });
     }
 
@@ -340,10 +340,10 @@ class DashboardService
             $margin = $totalRevenue > 0 ? ($profit / $totalRevenue) * 100 : 0;
 
             return [
-                'profit' => (float)$profit,
+                'profit' => (float) $profit,
                 'margin' => round($margin, 2),
-                'revenue' => (float)$totalRevenue,
-                'cogs' => (float)$totalCost,
+                'revenue' => (float) $totalRevenue,
+                'cogs' => (float) $totalCost,
             ];
         });
     }
@@ -645,6 +645,7 @@ class DashboardService
             ->get()
             ->sum(function ($variant) {
                 $totalStock = $variant->inventoryLocations->sum('quantity');
+
                 return $totalStock * ($variant->cost_price ?? 0);
             });
 
@@ -711,6 +712,7 @@ class DashboardService
                 ->get()
                 ->sum(function ($variant) {
                     $totalStock = $variant->inventoryLocations->sum('quantity');
+
                     return $totalStock * ($variant->cost_price ?? 0);
                 });
 
@@ -775,10 +777,10 @@ class DashboardService
             return $item->quantity * ($item->productVariant?->cost_price ?? 0);
         });
 
-        $totalRevenue = (float)($revenue->total_revenue ?? 0);
-        $collectedRevenue = (float)($revenue->collected_revenue ?? 0);
-        $totalExpenses = (float)($expenses->total_expenses ?? 0);
-        $paidExpenses = (float)($expenses->paid_expenses ?? 0);
+        $totalRevenue = (float) ($revenue->total_revenue ?? 0);
+        $collectedRevenue = (float) ($revenue->collected_revenue ?? 0);
+        $totalExpenses = (float) ($expenses->total_expenses ?? 0);
+        $paidExpenses = (float) ($expenses->paid_expenses ?? 0);
         $grossProfit = $totalRevenue - $cogs;
         $netProfit = $grossProfit - $paidExpenses;
         $profitMargin = $totalRevenue > 0 ? ($grossProfit / $totalRevenue) * 100 : 0;
@@ -791,11 +793,11 @@ class DashboardService
             'collected_revenue' => $collectedRevenue,
             'total_expenses' => $totalExpenses,
             'paid_expenses' => $paidExpenses,
-            'gross_profit' => (float)$grossProfit,
-            'net_profit' => (float)$netProfit,
+            'gross_profit' => (float) $grossProfit,
+            'net_profit' => (float) $netProfit,
             'profit_margin' => round($profitMargin, 2),
-            'cogs' => (float)$cogs,
-            'cash_flow' => (float)$cashFlow,
+            'cogs' => (float) $cogs,
+            'cash_flow' => (float) $cashFlow,
         ];
     }
 
@@ -836,14 +838,14 @@ class DashboardService
         ];
 
         return [
-            'total_count' => (int)($unpaidOrders->count ?? 0),
-            'total_amount' => (float)($unpaidOrders->total_amount ?? 0),
-            'overdue_amount' => (float)($unpaidOrders->overdue_amount ?? 0),
+            'total_count' => (int) ($unpaidOrders->count ?? 0),
+            'total_amount' => (float) ($unpaidOrders->total_amount ?? 0),
+            'overdue_amount' => (float) ($unpaidOrders->overdue_amount ?? 0),
             'aging' => [
-                'current' => (float)$aging['current'],
-                '30_60_days' => (float)$aging['30_60_days'],
-                '60_90_days' => (float)$aging['60_90_days'],
-                'over_90_days' => (float)$aging['over_90_days'],
+                'current' => (float) $aging['current'],
+                '30_60_days' => (float) $aging['30_60_days'],
+                '60_90_days' => (float) $aging['60_90_days'],
+                'over_90_days' => (float) $aging['over_90_days'],
             ],
         ];
     }
@@ -885,14 +887,14 @@ class DashboardService
         ];
 
         return [
-            'total_count' => (int)($unpaidPOs->count ?? 0),
-            'total_amount' => (float)($unpaidPOs->total_amount ?? 0),
-            'overdue_amount' => (float)($unpaidPOs->overdue_amount ?? 0),
+            'total_count' => (int) ($unpaidPOs->count ?? 0),
+            'total_amount' => (float) ($unpaidPOs->total_amount ?? 0),
+            'overdue_amount' => (float) ($unpaidPOs->overdue_amount ?? 0),
             'aging' => [
-                'current' => (float)$aging['current'],
-                '30_60_days' => (float)$aging['30_60_days'],
-                '60_90_days' => (float)$aging['60_90_days'],
-                'over_90_days' => (float)$aging['over_90_days'],
+                'current' => (float) $aging['current'],
+                '30_60_days' => (float) $aging['30_60_days'],
+                '60_90_days' => (float) $aging['60_90_days'],
+                'over_90_days' => (float) $aging['over_90_days'],
             ],
         ];
     }
@@ -922,9 +924,9 @@ class DashboardService
                 ->sum('paid_amount');
 
             $labels[] = $date->format('M d');
-            $inflow[] = (float)$cashIn;
-            $outflow[] = (float)$cashOut;
-            $netFlow[] = (float)($cashIn - $cashOut);
+            $inflow[] = (float) $cashIn;
+            $outflow[] = (float) $cashOut;
+            $netFlow[] = (float) ($cashIn - $cashOut);
         }
 
         return [
@@ -949,7 +951,7 @@ class DashboardService
             ->map(function ($item) {
                 return [
                     'category' => $item->supplierTenant?->name ?? 'Unknown Supplier',
-                    'amount' => (float)$item->total,
+                    'amount' => (float) $item->total,
                 ];
             })
             ->sortByDesc('amount')
@@ -994,9 +996,9 @@ class DashboardService
             return [
                 'shop_id' => $shopId,
                 'shop_name' => $shop?->name ?? 'Unknown',
-                'revenue' => (float)$revenue,
-                'gross_profit' => (float)$grossProfit,
-                'net_profit' => (float)$netProfit,
+                'revenue' => (float) $revenue,
+                'gross_profit' => (float) $grossProfit,
+                'net_profit' => (float) $netProfit,
             ];
         })->toArray();
     }

@@ -149,7 +149,7 @@ class Tenant extends Model
     {
         $endDate = $this->isOnTrial() ? $this->trial_ends_at : $this->subscription_ends_at;
 
-        if (!$endDate) {
+        if (! $endDate) {
             return 0;
         }
 

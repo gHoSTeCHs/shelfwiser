@@ -38,7 +38,7 @@ class OrderPaymentPolicy
      */
     public function create(User $user, ?Order $order = null): bool
     {
-        if (!$user->role->hasPermission('manage_orders')) {
+        if (! $user->role->hasPermission('manage_orders')) {
             return false;
         }
 
@@ -46,7 +46,7 @@ class OrderPaymentPolicy
             return false;
         }
 
-        if ($order && !in_array($user->role->value, [UserRole::OWNER->value, UserRole::GENERAL_MANAGER->value])) {
+        if ($order && ! in_array($user->role->value, [UserRole::OWNER->value, UserRole::GENERAL_MANAGER->value])) {
             return $user->shops()->where('shops.id', $order->shop_id)->exists();
         }
 

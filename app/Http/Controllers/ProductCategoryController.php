@@ -14,9 +14,7 @@ use Inertia\Response;
 
 class ProductCategoryController extends Controller
 {
-    public function __construct(private readonly CategoryService $categoryService)
-    {
-    }
+    public function __construct(private readonly CategoryService $categoryService) {}
 
     public function index(): Response
     {

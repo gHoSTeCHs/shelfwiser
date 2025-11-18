@@ -6,7 +6,7 @@ use Exception;
 
 class TenantLimitExceededException extends Exception
 {
-    public function __construct(string $message = "Tenant limit exceeded")
+    public function __construct(string $message = 'Tenant limit exceeded')
     {
         parent::__construct($message, 422);
     }

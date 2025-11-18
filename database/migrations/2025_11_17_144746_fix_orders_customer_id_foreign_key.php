@@ -24,9 +24,9 @@ return new class extends Migration
             $table->dropForeign('orders_customer_id_foreign');
 
             $table->foreign('customer_id')
-                  ->references('id')
-                  ->on('customers')
-                  ->onDelete('set null');
+                ->references('id')
+                ->on('customers')
+                ->onDelete('set null');
         });
     }
 
@@ -39,9 +39,9 @@ return new class extends Migration
             $table->dropForeign('orders_customer_id_foreign');
 
             $table->foreign('customer_id')
-                  ->references('id')
-                  ->on('users')
-                  ->onDelete('set null');
+                ->references('id')
+                ->on('users')
+                ->onDelete('set null');
         });
     }
 };

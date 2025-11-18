@@ -20,7 +20,7 @@ class EnsureSuperAdmin
     {
         $user = $request->user();
 
-        if (!$user || !$user->isSuperAdmin()) {
+        if (! $user || ! $user->isSuperAdmin()) {
             abort(403, 'Access denied. Super admin privileges required.');
         }
 

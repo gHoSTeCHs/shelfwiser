@@ -3,11 +3,11 @@
 namespace App\Services;
 
 use App\Models\Service;
-use App\Models\ServiceVariant;
 use App\Models\ServiceAddon;
 use App\Models\ServiceCategory;
-use App\Models\Tenant;
+use App\Models\ServiceVariant;
 use App\Models\Shop;
+use App\Models\Tenant;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -379,7 +379,7 @@ class ServiceManagementService
         $counter = 1;
 
         while ($this->slugExists($slug, $shop, $excludeId)) {
-            $slug = $originalSlug . '-' . $counter;
+            $slug = $originalSlug.'-'.$counter;
             $counter++;
         }
 

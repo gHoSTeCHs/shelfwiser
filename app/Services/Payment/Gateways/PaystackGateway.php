@@ -41,7 +41,7 @@ class PaystackGateway extends BasePaymentGateway
 
     public function initializePayment(Order $order, array $options = []): PaymentInitiationResult
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return PaymentInitiationResult::failed('Paystack is not configured');
         }
 
@@ -77,8 +77,9 @@ class PaystackGateway extends BasePaymentGateway
 
         $response = $this->makeRequest('POST', '/transaction/initialize', $payload);
 
-        if (!$response['success'] || !($response['data']['status'] ?? false)) {
+        if (! $response['success'] || ! ($response['data']['status'] ?? false)) {
             $message = $response['data']['message'] ?? 'Failed to initialize payment';
+
             return PaymentInitiationResult::failed($message, $reference);
         }
 
@@ -109,13 +110,13 @@ class PaystackGateway extends BasePaymentGateway
 
     public function verifyPayment(string $reference): PaymentVerificationResult
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return PaymentVerificationResult::failed($reference, 'Paystack is not configured');
         }
 
         $response = $this->makeRequest('GET', "/transaction/verify/{$reference}");
 
-        if (!$response['success']) {
+        if (! $response['success']) {
             return PaymentVerificationResult::failed(
                 $reference,
                 $response['data']['message'] ?? 'Verification request failed',
@@ -159,14 +160,14 @@ class PaystackGateway extends BasePaymentGateway
 
     public function refund(OrderPayment $payment, ?float $amount = null, ?string $reason = null): RefundResult
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return RefundResult::failed($payment->reference_number, 'Paystack is not configured');
         }
 
         $paymentData = json_decode($payment->notes, true) ?? [];
         $gatewayReference = $paymentData['gateway_reference'] ?? null;
 
-        if (!$gatewayReference) {
+        if (! $gatewayReference) {
             return RefundResult::failed(
                 $payment->reference_number,
                 'Gateway reference not found for this payment'
@@ -184,7 +185,7 @@ class PaystackGateway extends BasePaymentGateway
 
         $response = $this->makeRequest('POST', '/refund', $payload);
 
-        if (!$response['success'] || !($response['data']['status'] ?? false)) {
+        if (! $response['success'] || ! ($response['data']['status'] ?? false)) {
             return RefundResult::failed(
                 $payment->reference_number,
                 $response['data']['message'] ?? 'Refund request failed',
@@ -209,7 +210,7 @@ class PaystackGateway extends BasePaymentGateway
         $signature = $request->header('x-paystack-signature');
         $webhookSecret = $this->config['webhook_secret'] ?? null;
 
-        if (!$signature || !$webhookSecret) {
+        if (! $signature || ! $webhookSecret) {
             return false;
         }
 

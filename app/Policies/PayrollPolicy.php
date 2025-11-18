@@ -31,6 +31,7 @@ class PayrollPolicy
 
         if ($payrollPeriod->shop_id) {
             $userShops = $user->shops()->pluck('shops.id');
+
             return $userShops->contains($payrollPeriod->shop_id);
         }
 
@@ -54,7 +55,7 @@ class PayrollPolicy
             return false;
         }
 
-        if (!$payrollPeriod->status->canProcess()) {
+        if (! $payrollPeriod->status->canProcess()) {
             return false;
         }
 
@@ -74,7 +75,7 @@ class PayrollPolicy
             return false;
         }
 
-        if (!$payrollPeriod->status->canApprove()) {
+        if (! $payrollPeriod->status->canApprove()) {
             return false;
         }
 
@@ -98,7 +99,7 @@ class PayrollPolicy
             return false;
         }
 
-        if (!$payrollPeriod->status->canPay()) {
+        if (! $payrollPeriod->status->canPay()) {
             return false;
         }
 
@@ -114,7 +115,7 @@ class PayrollPolicy
             return false;
         }
 
-        if (!$payrollPeriod->status->canCancel()) {
+        if (! $payrollPeriod->status->canCancel()) {
             return false;
         }
 

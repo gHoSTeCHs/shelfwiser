@@ -40,7 +40,7 @@ class OrderSeeder extends Seeder
         $createdAt = now()->subDays(rand(1, 90));
         $dateKey = $createdAt->format('Y-m-d');
 
-        if (!isset($this->dailyCounters[$dateKey])) {
+        if (! isset($this->dailyCounters[$dateKey])) {
             $lastOrder = Order::whereDate('created_at', $createdAt)->latest('id')->first();
             $this->dailyCounters[$dateKey] = $lastOrder ? (int) substr($lastOrder->order_number, -4) : 0;
         }
@@ -174,12 +174,14 @@ class OrderSeeder extends Seeder
         }
 
         $statuses = [PaymentStatus::UNPAID, PaymentStatus::PARTIAL, PaymentStatus::PAID];
+
         return $statuses[array_rand($statuses)];
     }
 
     protected function getRandomPaymentMethod(): string
     {
         $methods = ['cash', 'card', 'bank_transfer', 'mobile_money'];
+
         return $methods[array_rand($methods)];
     }
 
@@ -230,7 +232,7 @@ class OrderSeeder extends Seeder
     {
         $shouldApplyDiscount = rand(1, 100) <= 20;
 
-        if (!$shouldApplyDiscount) {
+        if (! $shouldApplyDiscount) {
             return 0;
         }
 
@@ -244,7 +246,7 @@ class OrderSeeder extends Seeder
     {
         $shouldApplyTax = rand(1, 100) <= 30;
 
-        if (!$shouldApplyTax) {
+        if (! $shouldApplyTax) {
             return 0;
         }
 

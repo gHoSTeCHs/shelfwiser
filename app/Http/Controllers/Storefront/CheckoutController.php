@@ -26,7 +26,7 @@ class CheckoutController extends Controller
     {
         $customer = auth('customer')->user();
 
-        if (!$customer) {
+        if (! $customer) {
             return redirect()
                 ->route('storefront.login', $shop->slug)
                 ->with('info', 'Please login to continue with checkout');
@@ -63,7 +63,7 @@ class CheckoutController extends Controller
     {
         $customer = auth('customer')->user();
 
-        if (!$customer) {
+        if (! $customer) {
             return redirect()->route('storefront.login', $shop->slug);
         }
 
@@ -106,7 +106,7 @@ class CheckoutController extends Controller
             if ($validated['save_addresses'] ?? false) {
                 $this->saveCustomerAddress($customer, $validated['shipping_address'], 'shipping');
 
-                if (!$validated['billing_same_as_shipping']) {
+                if (! $validated['billing_same_as_shipping']) {
                     $this->saveCustomerAddress($customer, $billingAddress, 'billing');
                 }
             }
@@ -147,9 +147,8 @@ class CheckoutController extends Controller
     /**
      * Save customer address for future use.
      *
-     * @param \App\Models\Customer $customer
-     * @param array $addressData
-     * @param string $type Address type (shipping, billing, both)
+     * @param  \App\Models\Customer  $customer
+     * @param  string  $type  Address type (shipping, billing, both)
      */
     protected function saveCustomerAddress($customer, array $addressData, string $type): void
     {

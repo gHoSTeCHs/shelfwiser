@@ -16,13 +16,11 @@ use Inertia\Response;
 
 class SupplierCatalogController extends Controller
 {
-    public function __construct(private readonly SupplierService $supplierService)
-    {
-    }
+    public function __construct(private readonly SupplierService $supplierService) {}
 
     public function index(): Response
     {
-//        Gate::authorize('manageCatalog', auth()->user()->tenant);
+        //        Gate::authorize('manageCatalog', auth()->user()->tenant);
 
         $tenantId = auth()->user()->tenant_id;
 

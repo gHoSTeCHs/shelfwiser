@@ -41,7 +41,7 @@ class FlutterwaveGateway extends BasePaymentGateway
 
     public function initializePayment(Order $order, array $options = []): PaymentInitiationResult
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return PaymentInitiationResult::failed('Flutterwave is not configured');
         }
 
@@ -72,8 +72,9 @@ class FlutterwaveGateway extends BasePaymentGateway
 
         $response = $this->makeRequest('POST', '/payments', $payload);
 
-        if (!$response['success'] || ($response['data']['status'] ?? '') !== 'success') {
+        if (! $response['success'] || ($response['data']['status'] ?? '') !== 'success') {
             $message = $response['data']['message'] ?? 'Failed to initialize payment';
+
             return PaymentInitiationResult::failed($message, $reference);
         }
 
@@ -103,13 +104,13 @@ class FlutterwaveGateway extends BasePaymentGateway
 
     public function verifyPayment(string $reference): PaymentVerificationResult
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return PaymentVerificationResult::failed($reference, 'Flutterwave is not configured');
         }
 
         $response = $this->makeRequest('GET', "/transactions/verify_by_reference?tx_ref={$reference}");
 
-        if (!$response['success'] || ($response['data']['status'] ?? '') !== 'success') {
+        if (! $response['success'] || ($response['data']['status'] ?? '') !== 'success') {
             return PaymentVerificationResult::failed(
                 $reference,
                 $response['data']['message'] ?? 'Verification failed',
@@ -147,14 +148,14 @@ class FlutterwaveGateway extends BasePaymentGateway
 
     public function refund(OrderPayment $payment, ?float $amount = null, ?string $reason = null): RefundResult
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return RefundResult::failed($payment->reference_number, 'Flutterwave is not configured');
         }
 
         $paymentData = json_decode($payment->notes, true) ?? [];
         $transactionId = $paymentData['gateway_reference'] ?? null;
 
-        if (!$transactionId) {
+        if (! $transactionId) {
             return RefundResult::failed(
                 $payment->reference_number,
                 'Transaction ID not found for this payment'
@@ -167,7 +168,7 @@ class FlutterwaveGateway extends BasePaymentGateway
 
         $response = $this->makeRequest('POST', "/transactions/{$transactionId}/refund", $payload);
 
-        if (!$response['success'] || ($response['data']['status'] ?? '') !== 'success') {
+        if (! $response['success'] || ($response['data']['status'] ?? '') !== 'success') {
             return RefundResult::failed(
                 $payment->reference_number,
                 $response['data']['message'] ?? 'Refund failed',
@@ -191,7 +192,7 @@ class FlutterwaveGateway extends BasePaymentGateway
         $signature = $request->header('verif-hash');
         $webhookSecret = $this->config['webhook_secret'] ?? null;
 
-        if (!$signature || !$webhookSecret) {
+        if (! $signature || ! $webhookSecret) {
             return false;
         }
 
