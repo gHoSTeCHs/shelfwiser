@@ -7,6 +7,7 @@ import TextArea from '@/components/form/input/TextArea';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
+import SearchableTemplateSelector from '@/components/products/SearchableTemplateSelector';
 import DynamicSchemaField from '@/components/shops/DynamicSchemaField';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
@@ -320,7 +321,7 @@ export default function Create({ shops, productTypes, categories, templates = []
                 <div className="flex items-center justify-between">
                     <div>
                         <Link
-                            href={'/products'}
+                            href={ProductController.index.url()}
                             className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -440,20 +441,10 @@ export default function Create({ shops, productTypes, categories, templates = []
                                                     Quick Start from Template
                                                 </span>
                                             </div>
-                                            <Select
-                                                options={[
-                                                    {
-                                                        value: '',
-                                                        label: 'Select a template to auto-fill...',
-                                                    },
-                                                    ...templates.map((template) => ({
-                                                        value: template.id.toString(),
-                                                        label: `${template.name}${template.product_type ? ` (${template.product_type.label})` : ''}`,
-                                                    })),
-                                                ]}
-                                                placeholder="Select template"
-                                                onChange={handleTemplateSelect}
-                                                defaultValue=""
+                                            <SearchableTemplateSelector
+                                                templates={templates}
+                                                onSelect={handleTemplateSelect}
+                                                selectedTemplateId={selectedTemplateId}
                                             />
                                             <p className="mt-2 text-xs text-primary-700 dark:text-primary-300">
                                                 Selecting a template will pre-fill the product details. You only need to add prices and SKUs.
@@ -1462,7 +1453,7 @@ export default function Create({ shops, productTypes, categories, templates = []
                             )}
 
                             <div className="flex gap-4">
-                                <Link href={'/products'} className="flex-1">
+                                <Link href={ProductController.index.url()} className="flex-1">
                                     <Button
                                         variant="outline"
                                         className="w-full"
