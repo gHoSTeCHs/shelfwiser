@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/AppLayout';
+import AdminProductTemplateController from '@/actions/App/Http/Controllers/Admin/AdminProductTemplateController';
 import { Head, Link, router } from '@inertiajs/react';
 import { Card } from '@/components/ui/card';
 import Badge from '@/components/ui/badge/Badge';
@@ -73,7 +74,7 @@ export default function Show({ template, usageCount }: Props) {
             return;
         }
         if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
-            router.delete(`/admin/product-templates/${template.id}`);
+            router.delete(AdminProductTemplateController.destroy.url({ product_template: template.id }));
         }
     };
 
@@ -84,7 +85,7 @@ export default function Show({ template, usageCount }: Props) {
             <div className="space-y-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
-                        <Link href="/admin/product-templates">
+                        <Link href={AdminProductTemplateController.index.url()}>
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="h-4 w-4" />
                             </Button>
@@ -99,7 +100,7 @@ export default function Show({ template, usageCount }: Props) {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <Link href={`/admin/product-templates/${template.id}/edit`}>
+                        <Link href={AdminProductTemplateController.edit.url({ product_template: template.id })}>
                             <Button variant="outline" startIcon={<Edit className="h-4 w-4" />}>
                                 Edit
                             </Button>

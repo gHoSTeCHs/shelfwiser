@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/AppLayout';
+import AdminProductTemplateController from '@/actions/App/Http/Controllers/Admin/AdminProductTemplateController';
 import { Head, Link, router } from '@inertiajs/react';
 import { Card } from '@/components/ui/card';
 import Badge from '@/components/ui/badge/Badge';
@@ -66,13 +67,13 @@ export default function Index({ templates, productTypes, categories, filters, st
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/admin/product-templates', { ...filters, search }, { preserveState: true });
+        router.get(AdminProductTemplateController.index.url(), { ...filters, search }, { preserveState: true });
     };
 
     const handleFilterChange = (key: string, value: string) => {
         const newFilters = { ...filters, [key]: value };
         if (!value) delete newFilters[key as keyof typeof newFilters];
-        router.get('/admin/product-templates', newFilters, { preserveState: true });
+        router.get(AdminProductTemplateController.index.url(), newFilters, { preserveState: true });
     };
 
     const handleDelete = (template: ProductTemplate) => {
@@ -81,7 +82,7 @@ export default function Index({ templates, productTypes, categories, filters, st
             return;
         }
         if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
-            router.delete(`/admin/product-templates/${template.id}`);
+            router.delete(AdminProductTemplateController.destroy.url({ product_template: template.id }));
         }
     };
 
@@ -99,7 +100,7 @@ export default function Index({ templates, productTypes, categories, filters, st
                             Manage system-wide product templates for quick product creation
                         </p>
                     </div>
-                    <Link href="/admin/product-templates/create">
+                    <Link href={AdminProductTemplateController.create.url()}>
                         <Button startIcon={<Plus className="h-4 w-4" />}>
                             Create Template
                         </Button>
@@ -190,7 +191,7 @@ export default function Index({ templates, productTypes, categories, filters, st
                         title="No templates found"
                         description="Get started by creating your first product template."
                         action={
-                            <Link href="/admin/product-templates/create">
+                            <Link href={AdminProductTemplateController.create.url()}>
                                 <Button startIcon={<Plus className="h-4 w-4" />}>
                                     Create Template
                                 </Button>
@@ -232,7 +233,7 @@ export default function Index({ templates, productTypes, categories, filters, st
                                             <td className="px-4 py-3">
                                                 <div>
                                                     <Link
-                                                        href={`/admin/product-templates/${template.id}`}
+                                                        href={AdminProductTemplateController.show.url({ product_template: template.id })}
                                                         className="font-medium text-gray-900 hover:text-primary-600 dark:text-white dark:hover:text-primary-400"
                                                     >
                                                         {template.name}
@@ -263,12 +264,12 @@ export default function Index({ templates, productTypes, categories, filters, st
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Link href={`/admin/product-templates/${template.id}`}>
+                                                    <Link href={AdminProductTemplateController.show.url({ product_template: template.id })}>
                                                         <Button variant="ghost" size="sm">
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
-                                                    <Link href={`/admin/product-templates/${template.id}/edit`}>
+                                                    <Link href={AdminProductTemplateController.edit.url({ product_template: template.id })}>
                                                         <Button variant="ghost" size="sm">
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
