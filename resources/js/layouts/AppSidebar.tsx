@@ -7,6 +7,7 @@ import {
     Briefcase,
     Building2,
     FileUser,
+    LayoutTemplate,
     Network,
     Settings,
     ShoppingBag,
@@ -95,6 +96,7 @@ const navItems: NavItem[] = [
         name: 'HR & Payroll',
         subItems: [
             { name: 'Payroll', path: '/payroll' },
+            { name: 'My Payslips', path: '/payroll/my-payslips' },
             { name: 'Timesheets', path: '/timesheets' },
             { name: 'Fund Requests', path: '/fund-requests' },
             { name: 'Wage Advances', path: '/wage-advances' },
@@ -114,6 +116,11 @@ const adminItems: NavItem[] = [
         icon: <Building2 />,
         name: 'Tenants',
         path: '/admin/tenants',
+    },
+    {
+        icon: <LayoutTemplate />,
+        name: 'Product Templates',
+        path: '/admin/product-templates',
     },
     {
         icon: <Settings />,
