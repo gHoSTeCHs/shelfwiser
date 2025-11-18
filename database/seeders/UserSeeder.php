@@ -12,6 +12,22 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        /**
+         * Create Super Admin user (not tied to any tenant)
+         * This user has platform-wide access for administration
+         */
+        User::create([
+            'first_name' => 'Super',
+            'last_name' => 'Admin',
+            'email' => 'superadmin@shelfwiser.com',
+            'password' => Hash::make('password'),
+            'role' => UserRole::SUPER_ADMIN,
+            'is_super_admin' => true,
+            'is_tenant_owner' => false,
+            'is_active' => true,
+            'tenant_id' => null,
+        ]);
+
         $tenants = Tenant::all();
 
         foreach ($tenants as $tenant) {

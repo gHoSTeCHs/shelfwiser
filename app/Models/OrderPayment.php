@@ -15,7 +15,14 @@ class OrderPayment extends Model
         'tenant_id',
         'shop_id',
         'amount',
+        'currency',
+        'gateway_fee',
         'payment_method',
+        'gateway',
+        'gateway_reference',
+        'gateway_status',
+        'gateway_response',
+        'verified_at',
         'payment_date',
         'reference_number',
         'notes',
@@ -24,7 +31,10 @@ class OrderPayment extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'gateway_fee' => 'decimal:2',
+        'gateway_response' => 'array',
         'payment_date' => 'date',
+        'verified_at' => 'datetime',
     ];
 
     /**

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminTenantController;
 use App\Http\Controllers\CustomerCreditController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FundRequestController;
 use App\Http\Controllers\ImageController;
@@ -37,6 +38,10 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+Route::get('/offline', function () {
+    return view('offline');
+})->name('offline');
+
 Route::middleware(['auth', 'super_admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
@@ -49,7 +54,15 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->name('admin.')->gro
     });
 });
 
+Route::get('/payment/callback/{gateway}/{order}', [PaymentController::class, 'callback'])
+    ->name('payment.callback');
+
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::prefix('payment')->name('payment.')->group(function () {
+        Route::post('/orders/{order}/initialize', [PaymentController::class, 'initialize'])->name('initialize');
+        Route::get('/orders/{order}/verify', [PaymentController::class, 'verify'])->name('verify');
+    });
+
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('dashboard/refresh', [DashboardController::class, 'refresh'])->name('dashboard.refresh');
 

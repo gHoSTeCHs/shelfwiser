@@ -258,12 +258,23 @@ export interface AuthRegisterProps {
     shop: Shop;
 }
 
+export interface PaymentGatewayInfo {
+    identifier: string;
+    name: string;
+    isAvailable: boolean;
+    supportedCurrencies: string[];
+    supportsInline: boolean;
+    supportsRefunds: boolean;
+    publicKey?: string;
+}
+
 export interface CheckoutProps {
     shop: Shop;
     cart: Cart;
     cartSummary: CartSummary;
     addresses: CustomerAddress[];
     customer: Customer;
+    availableGateways?: PaymentGatewayInfo[];
 }
 
 export interface CheckoutSuccessProps {

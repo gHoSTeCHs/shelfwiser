@@ -59,12 +59,21 @@ class OrderPaymentSeeder extends Seeder
      */
     protected function createFullPayment(Order $order, User $staffMember): void
     {
+        $paymentMethod = $this->getRandomPaymentMethod();
+        $gateway = $this->getGatewayForMethod($paymentMethod);
+
         OrderPayment::create([
             'order_id' => $order->id,
             'tenant_id' => $order->tenant_id,
             'shop_id' => $order->shop_id,
             'amount' => $order->total_amount,
-            'payment_method' => $this->getRandomPaymentMethod(),
+            'currency' => 'NGN',
+            'gateway_fee' => $gateway ? round($order->total_amount * 0.015, 2) : 0,
+            'payment_method' => $paymentMethod,
+            'gateway' => $gateway,
+            'gateway_reference' => $gateway ? 'GTW-' . strtoupper(substr(md5(rand()), 0, 10)) : null,
+            'gateway_status' => $gateway ? 'success' : null,
+            'verified_at' => $gateway ? ($order->confirmed_at ?? $order->created_at) : null,
             'payment_date' => $order->confirmed_at ?? $order->created_at,
             'reference_number' => $this->generateReferenceNumber(),
             'recorded_by' => $staffMember->id,
@@ -89,7 +98,13 @@ class OrderPaymentSeeder extends Seeder
             'tenant_id' => $order->tenant_id,
             'shop_id' => $order->shop_id,
             'amount' => $firstPaymentAmount,
+            'currency' => 'NGN',
+            'gateway_fee' => round($firstPaymentAmount * 0.015, 2),
             'payment_method' => 'bank_transfer',
+            'gateway' => 'paystack',
+            'gateway_reference' => 'GTW-' . strtoupper(substr(md5(rand()), 0, 10)),
+            'gateway_status' => 'success',
+            'verified_at' => $paymentDate,
             'payment_date' => $paymentDate,
             'reference_number' => $this->generateReferenceNumber(),
             'notes' => 'First payment (bank transfer)',
@@ -101,7 +116,13 @@ class OrderPaymentSeeder extends Seeder
             'tenant_id' => $order->tenant_id,
             'shop_id' => $order->shop_id,
             'amount' => $secondPaymentAmount,
+            'currency' => 'NGN',
+            'gateway_fee' => 0,
             'payment_method' => 'cash',
+            'gateway' => null,
+            'gateway_reference' => null,
+            'gateway_status' => null,
+            'verified_at' => null,
             'payment_date' => $paymentDate->copy()->addMinutes(rand(5, 30)),
             'reference_number' => null,
             'notes' => 'Balance payment (cash)',
@@ -117,13 +138,21 @@ class OrderPaymentSeeder extends Seeder
         $totalAmount = (float) $order->total_amount;
         $paidPercentage = rand(30, 80) / 100;
         $paidAmount = round($totalAmount * $paidPercentage, 2);
+        $paymentMethod = $this->getRandomPaymentMethod();
+        $gateway = $this->getGatewayForMethod($paymentMethod);
 
         OrderPayment::create([
             'order_id' => $order->id,
             'tenant_id' => $order->tenant_id,
             'shop_id' => $order->shop_id,
             'amount' => $paidAmount,
-            'payment_method' => $this->getRandomPaymentMethod(),
+            'currency' => 'NGN',
+            'gateway_fee' => $gateway ? round($paidAmount * 0.015, 2) : 0,
+            'payment_method' => $paymentMethod,
+            'gateway' => $gateway,
+            'gateway_reference' => $gateway ? 'GTW-' . strtoupper(substr(md5(rand()), 0, 10)) : null,
+            'gateway_status' => $gateway ? 'success' : null,
+            'verified_at' => $gateway ? ($order->confirmed_at ?? $order->created_at) : null,
             'payment_date' => $order->confirmed_at ?? $order->created_at,
             'reference_number' => $this->generateReferenceNumber(),
             'notes' => 'Partial payment - balance to be paid later',
@@ -138,6 +167,20 @@ class OrderPaymentSeeder extends Seeder
     {
         $methods = ['cash', 'card', 'bank_transfer', 'mobile_money'];
         return $methods[array_rand($methods)];
+    }
+
+    /**
+     * Get the gateway identifier for a payment method
+     * Returns null for manual/offline payment methods
+     */
+    protected function getGatewayForMethod(string $method): ?string
+    {
+        return match ($method) {
+            'card' => 'paystack',
+            'bank_transfer' => rand(0, 1) ? 'paystack' : 'opay',
+            'mobile_money' => 'opay',
+            default => null,
+        };
     }
 
     /**
