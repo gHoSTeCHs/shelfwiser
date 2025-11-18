@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminTenantController;
 use App\Http\Controllers\CustomerCreditController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FundRequestController;
@@ -35,6 +37,17 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+Route::middleware(['auth', 'super_admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    Route::resource('tenants', AdminTenantController::class);
+
+    Route::prefix('tenants/{tenant}')->name('tenants.')->group(function () {
+        Route::post('/toggle-active', [AdminTenantController::class, 'toggleActive'])->name('toggle-active');
+        Route::post('/extend-subscription', [AdminTenantController::class, 'extendSubscription'])->name('extend-subscription');
+        Route::patch('/update-limits', [AdminTenantController::class, 'updateLimits'])->name('update-limits');
+    });
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');

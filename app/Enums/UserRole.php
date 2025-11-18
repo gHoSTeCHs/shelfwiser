@@ -4,6 +4,7 @@ namespace App\Enums;
 
 enum UserRole: string
 {
+    case SUPER_ADMIN = 'super_admin';
     case OWNER = 'owner';
     case GENERAL_MANAGER = 'general_manager';
     case STORE_MANAGER = 'store_manager';
@@ -15,6 +16,7 @@ enum UserRole: string
     public function label(): string
     {
         return match ($this) {
+            self::SUPER_ADMIN => 'Super Admin',
             self::OWNER => 'Owner',
             self::GENERAL_MANAGER => 'General Manager',
             self::STORE_MANAGER => 'Store Manager',
@@ -31,6 +33,7 @@ enum UserRole: string
     public function description(): string
     {
         return match ($this) {
+            self::SUPER_ADMIN => 'Platform administrator with full system access. Manages all tenants, subscriptions, platform settings, and has complete visibility across the entire platform.',
             self::OWNER => 'Full system access. Manages tenant settings, all stores, users, billing, and has complete visibility across the entire organization.',
             self::GENERAL_MANAGER => 'Manages multiple stores, oversees store managers, handles cross-store reporting, inventory, and user management within the tenant.',
             self::STORE_MANAGER => 'Manages a single store location, including staff, inventory, products, orders, and customer relationships for that store.',
@@ -44,6 +47,7 @@ enum UserRole: string
     public function level(): int
     {
         return match ($this) {
+            self::SUPER_ADMIN => 999,
             self::OWNER => 100,
             self::GENERAL_MANAGER => 80,
             self::STORE_MANAGER => 60,
@@ -56,6 +60,36 @@ enum UserRole: string
     public function permissions(): array
     {
         return match ($this) {
+            self::SUPER_ADMIN => [
+                'platform_admin',
+                'manage_all_tenants',
+                'manage_subscriptions',
+                'manage_platform_settings',
+                'view_platform_analytics',
+                'manage_api_access',
+                'manage_marketplace',
+                'impersonate_users',
+                'manage_tenant',
+                'manage_stores',
+                'manage_users',
+                'view_all_reports',
+                'manage_inventory',
+                'manage_products',
+                'manage_orders',
+                'process_orders',
+                'manage_customers',
+                'manage_settings',
+                'view_financials',
+                'view_profits',
+                'view_costs',
+                'manage_supplier_profile',
+                'manage_supplier_catalog',
+                'approve_supplier_connections',
+                'manage_purchase_orders',
+                'process_supplier_orders',
+                'receive_stock',
+                'view_supplier_analytics',
+            ],
             self::OWNER => [
                 'manage_tenant',
                 'manage_stores',
@@ -145,11 +179,30 @@ enum UserRole: string
     public function canAccessMultipleStores(): bool
     {
         return match ($this) {
-            self::OWNER, self::GENERAL_MANAGER => true,
+            self::SUPER_ADMIN, self::OWNER, self::GENERAL_MANAGER => true,
             default => false,
         };
     }
 
+    /**
+     * Check if this role is a super admin role.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this === self::SUPER_ADMIN;
+    }
+
+    /**
+     * Check if this role can manage the platform (super admin only).
+     */
+    public function canManagePlatform(): bool
+    {
+        return $this === self::SUPER_ADMIN;
+    }
+
+    /**
+     * Get roles that have management capabilities within a tenant.
+     */
     public static function managementRoles(): array
     {
         return [
@@ -160,10 +213,35 @@ enum UserRole: string
         ];
     }
 
+    /**
+     * Get roles available for tenant user selection (excludes super admin).
+     */
     public static function forSelect(): array
     {
         return collect(self::cases())
+            ->filter(fn($role) => $role !== self::SUPER_ADMIN)
             ->mapWithKeys(fn($role) => [$role->value => $role->label()])
+            ->toArray();
+    }
+
+    /**
+     * Get all roles including super admin (for platform admin use).
+     */
+    public static function allForSelect(): array
+    {
+        return collect(self::cases())
+            ->mapWithKeys(fn($role) => [$role->value => $role->label()])
+            ->toArray();
+    }
+
+    /**
+     * Get tenant-scoped roles (all except super admin).
+     */
+    public static function tenantRoles(): array
+    {
+        return collect(self::cases())
+            ->filter(fn($role) => $role !== self::SUPER_ADMIN)
+            ->values()
             ->toArray();
     }
 }

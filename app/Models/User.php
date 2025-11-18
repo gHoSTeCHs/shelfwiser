@@ -30,6 +30,7 @@ class User extends Authenticatable
         'email',
         'tenant_id',
         'is_tenant_owner',
+        'is_super_admin',
         'role',
         'is_active',
         'is_customer',
@@ -59,6 +60,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'is_tenant_owner' => 'boolean',
+            'is_super_admin' => 'boolean',
             'is_active' => 'boolean',
             'is_customer' => 'boolean',
             'marketing_opt_in' => 'boolean',
@@ -76,6 +78,42 @@ class User extends Authenticatable
     public function isTenantOwner(): bool
     {
         return $this->is_tenant_owner;
+    }
+
+    /**
+     * Check if the user is a super admin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->is_super_admin || $this->role === UserRole::SUPER_ADMIN;
+    }
+
+    /**
+     * Check if the user belongs to a tenant.
+     */
+    public function hasTenant(): bool
+    {
+        return $this->tenant_id !== null;
+    }
+
+    /**
+     * Check if the user can access a specific tenant.
+     */
+    public function canAccessTenant(?int $tenantId): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return $this->tenant_id === $tenantId;
+    }
+
+    /**
+     * Check if the user has a specific permission.
+     */
+    public function hasPermission(string $permission): bool
+    {
+        return $this->role->hasPermission($permission);
     }
 
     public function tenant(): BelongsTo
