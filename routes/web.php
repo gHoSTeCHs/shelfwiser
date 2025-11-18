@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminProductTemplateController;
 use App\Http\Controllers\Admin\AdminTenantController;
 use App\Http\Controllers\CustomerCreditController;
 use App\Http\Controllers\DashboardController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\POSController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductTemplateController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\ReportsController;
@@ -52,6 +54,8 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->name('admin.')->gro
         Route::post('/extend-subscription', [AdminTenantController::class, 'extendSubscription'])->name('extend-subscription');
         Route::patch('/update-limits', [AdminTenantController::class, 'updateLimits'])->name('update-limits');
     });
+
+    Route::resource('product-templates', AdminProductTemplateController::class);
 });
 
 Route::get('/payment/callback/{gateway}/{order}', [PaymentController::class, 'callback'])
@@ -187,6 +191,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('categories', ProductCategoryController::class);
 
     Route::resource('products', ProductController::class);
+
+    // Product Templates (for tenants)
+    Route::prefix('product-templates')->name('product-templates.')->group(function () {
+        Route::get('/available', [ProductTemplateController::class, 'available'])->name('available');
+        Route::get('/{productTemplate}', [ProductTemplateController::class, 'show'])->name('show');
+        Route::post('/{productTemplate}/shops/{shop}/create-product', [ProductTemplateController::class, 'createProduct'])->name('create-product');
+        Route::post('/save', [ProductTemplateController::class, 'saveAsTemplate'])->name('save');
+    });
 
     // Image Management Routes
     Route::prefix('images')->name('images.')->group(function () {

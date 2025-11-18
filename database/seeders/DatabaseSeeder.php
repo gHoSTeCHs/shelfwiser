@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
 
             // Product System
             ProductCategorySeeder::class,
+            ProductTemplateSeeder::class,
             ProductSeeder::class,
             ProductPackagingTypeSeeder::class,
             InventoryLocationSeeder::class,

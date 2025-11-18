@@ -6,10 +6,12 @@ use App\Http\Requests\CreateProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductTemplate;
 use App\Models\ProductType;
 use App\Models\Shop;
 use App\Models\StockMovement;
 use App\Services\ProductService;
+use App\Services\ProductTemplateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
@@ -18,7 +20,10 @@ use Inertia\Response;
 
 class ProductController extends Controller
 {
-    public function __construct(private readonly ProductService $productService) {}
+    public function __construct(
+        private readonly ProductService $productService,
+        private readonly ProductTemplateService $templateService
+    ) {}
 
     public function index(): Response
     {
@@ -57,10 +62,18 @@ class ProductController extends Controller
             ->with('children')
             ->get(['id', 'name', 'slug']);
 
+        // Get available product templates for this tenant
+        $templates = ProductTemplate::availableFor($tenantId)
+            ->active()
+            ->with(['productType', 'category'])
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('Products/Create', [
             'shops' => $shops,
             'productTypes' => $productTypes,
             'categories' => $categories,
+            'templates' => $templates,
         ]);
     }
 

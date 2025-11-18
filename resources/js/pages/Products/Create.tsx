@@ -16,18 +16,46 @@ import { ProductCategory, ProductType, ProductVariant } from '@/types/product.ts
 import { Shop } from '@/types/shop.ts';
 import { ProductPackagingType } from '@/types/stockMovement';
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Box, Minus, Package, Plus, Save, Tag } from 'lucide-react';
+import { ArrowLeft, Box, LayoutTemplate, Minus, Package, Plus, Save, Tag } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { flattenCategories } from '@/lib/utils.ts';
+
+interface ProductTemplate {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    product_type_id: number;
+    category_id: number | null;
+    custom_attributes: Record<string, any> | null;
+    template_structure: {
+        variants: Array<{
+            name: string;
+            attributes: Record<string, string>;
+            packaging_types: Array<{
+                name: string;
+                display_name: string;
+                units_per_package: number;
+                is_base_unit: boolean;
+                can_break_down: boolean;
+            }>;
+        }>;
+    };
+    has_variants: boolean;
+    is_active: boolean;
+    product_type: ProductType | null;
+    category: ProductCategory | null;
+}
 
 interface Props {
     shops: Shop[];
     productTypes: ProductType[];
     categories: ProductCategory[];
+    templates?: ProductTemplate[];
 }
 
 
-export default function Create({ shops, productTypes, categories }: Props) {
+export default function Create({ shops, productTypes, categories, templates = [] }: Props) {
     const [selectedTypeSlug, setSelectedTypeSlug] = useState<string>('');
     const [shopId, setShopId] = useState<number | ''>('');
     const [categoryId, setCategoryId] = useState<number | ''>('');
@@ -38,6 +66,63 @@ export default function Create({ shops, productTypes, categories }: Props) {
     >({});
     const [hasVariants, setHasVariants] = useState<boolean>(false);
     const [isActive, setIsActive] = useState<boolean>(true);
+    const [selectedTemplateId, setSelectedTemplateId] = useState<number | ''>('');
+
+    // Handle template selection
+    const handleTemplateSelect = (templateId: string) => {
+        const id = templateId ? parseInt(templateId) : '';
+        setSelectedTemplateId(id);
+
+        if (!id) return;
+
+        const template = templates.find(t => t.id === id);
+        if (!template) return;
+
+        // Pre-fill basic information
+        setProductName(template.name);
+        setDescription(template.description || '');
+        setHasVariants(template.has_variants);
+        setCustomAttributes(template.custom_attributes || {});
+
+        // Set product type
+        if (template.product_type) {
+            setSelectedTypeSlug(template.product_type.slug);
+        }
+
+        // Set category
+        if (template.category_id) {
+            setCategoryId(template.category_id);
+        }
+
+        // Set variants from template structure
+        if (template.template_structure.variants && template.template_structure.variants.length > 0) {
+            const newVariants: ProductVariant[] = template.template_structure.variants.map((v, index) => ({
+                id: crypto.randomUUID(),
+                sku: '', // User must fill this
+                name: v.name,
+                price: '',
+                cost_price: '',
+                barcode: '',
+                base_unit_name: 'Unit',
+                attributes: v.attributes,
+                packaging_types: v.packaging_types?.map(pt => ({
+                    id: crypto.randomUUID() as any,
+                    name: pt.name,
+                    display_name: pt.display_name,
+                    units_per_package: pt.units_per_package,
+                    is_sealed_package: false,
+                    price: 0, // User must fill this
+                    cost_price: null,
+                    is_base_unit: pt.is_base_unit,
+                    can_break_down: pt.can_break_down,
+                    min_order_quantity: 1,
+                    display_order: index,
+                    is_active: true,
+                })) || [],
+            }));
+            setVariants(newVariants);
+        }
+    };
 
     const [simpleSku, setSimpleSku] = useState<string>('');
     const [simplePrice, setSimplePrice] = useState<string>('');
@@ -346,6 +431,35 @@ export default function Create({ shops, productTypes, categories }: Props) {
                                         />
                                         <InputError message={errors.shop_id} />
                                     </div>
+
+                                    {templates.length > 0 && (
+                                        <div className="rounded-lg border border-primary-200 bg-primary-50 p-4 dark:border-primary-800 dark:bg-primary-900/20">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <LayoutTemplate className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                                                <span className="text-sm font-medium text-primary-900 dark:text-primary-100">
+                                                    Quick Start from Template
+                                                </span>
+                                            </div>
+                                            <Select
+                                                options={[
+                                                    {
+                                                        value: '',
+                                                        label: 'Select a template to auto-fill...',
+                                                    },
+                                                    ...templates.map((template) => ({
+                                                        value: template.id.toString(),
+                                                        label: `${template.name}${template.product_type ? ` (${template.product_type.label})` : ''}`,
+                                                    })),
+                                                ]}
+                                                placeholder="Select template"
+                                                onChange={handleTemplateSelect}
+                                                defaultValue=""
+                                            />
+                                            <p className="mt-2 text-xs text-primary-700 dark:text-primary-300">
+                                                Selecting a template will pre-fill the product details. You only need to add prices and SKUs.
+                                            </p>
+                                        </div>
+                                    )}
 
                                     <div>
                                         <Label htmlFor="name">
