@@ -1,6 +1,6 @@
 # CLAUDE.md - ShelfWiser Development Guide
 
-> **Version:** 1.3.0 | **Updated:** 2025-11-18
+> **Version:** 1.4.0 | **Updated:** 2025-11-18
 > **Project:** ShelfWiser - Multi-Tenant Inventory Management SaaS
 > **Status:** Production-Ready
 
@@ -11,6 +11,7 @@
 **ShelfWiser** is a feature-complete, multi-tenant SaaS for inventory management with:
 - ✅ Multi-store operations with tenant isolation
 - ✅ Product catalog (variants, packaging, dynamic schemas)
+- ✅ **Product templates** (quick product creation from blueprints)
 - ✅ Stock movements with full audit trails
 - ✅ Order processing & lifecycle management
 - ✅ **POS/Quick Sale system** (retail checkout)
@@ -25,7 +26,7 @@
 - ✅ **PWA support** (offline mode, background sync)
 - ✅ 8-level role hierarchy with permissions
 
-**Current Architecture:** 35+ models • 25+ services • 12+ policies • 10+ enums • 55+ migrations
+**Current Architecture:** 36+ models • 26+ services • 13+ policies • 10+ enums • 56+ migrations
 
 ---
 
@@ -144,6 +145,58 @@ Tenant (root)
 **Key Enums:** UserRole • OrderStatus • PaymentStatus • StockMovementType • PurchaseOrderStatus • ConnectionStatus • InventoryModel
 
 **Important:** Customer and User are separate tables. Customer = e-commerce customers, User = staff/employees.
+
+---
+
+## 📦 Product Templates
+
+Product templates are reusable blueprints for quick product creation.
+
+### Types
+- **System templates** (`is_system=true`, `tenant_id=null`) - Created by Super Admin, available to all tenants
+- **Tenant templates** - Created by shop owners for their own use
+
+### Key Files
+- `ProductTemplate.php` - Model with `availableFor()` scope
+- `ProductTemplateService.php` - CRUD and product creation
+- `ProductTemplateController.php` - Tenant API endpoints
+- `AdminProductTemplateController.php` - Super Admin CRUD
+- `SearchableTemplateSelector.tsx` - Frontend search component
+
+### API Endpoints (Tenant)
+```php
+GET  /product-templates/available?search=milk&product_type_id=1  // Search templates
+GET  /product-templates/{id}                                      // Get template
+POST /product-templates/{id}/shops/{shop}/create-product          // Create product
+POST /product-templates/save                                      // Save as template
+```
+
+### Template Structure
+```php
+'template_structure' => [
+    'variants' => [
+        [
+            'name' => '150g Sachet',
+            'attributes' => ['size' => '150g'],
+            'packaging_types' => [
+                ['name' => 'Piece', 'units_per_package' => 1, 'is_base_unit' => true],
+                ['name' => 'Carton', 'units_per_package' => 48, 'can_break_down' => true],
+            ]
+        ]
+    ]
+]
+```
+
+### Usage in Frontend
+```tsx
+import SearchableTemplateSelector from '@/components/products/SearchableTemplateSelector';
+
+<SearchableTemplateSelector
+    templates={templates}
+    onSelect={handleTemplateSelect}
+    selectedTemplateId={selectedTemplateId}
+/>
+```
 
 ---
 
@@ -378,6 +431,7 @@ router.visit(OrderController.edit.url({ order: order.id }));
 |---------|--------|-----------|-------|
 | Multi-Tenancy | ✅ | `Tenant.php`, `TenantService.php` | Row-level isolation |
 | Products/Inventory | ✅ | `ProductService.php` | Variants, packaging, categories |
+| **Product Templates** | ✅ | `ProductTemplateService.php` | System/tenant blueprints, searchable selector |
 | Stock Movements | ✅ | `StockMovementService.php` | 5 types, full audit trail |
 | Orders | ✅ | `OrderService.php` | Full lifecycle, payment tracking |
 | POS System | ✅ | `POSService.php` | Quick sales, cash handling |
