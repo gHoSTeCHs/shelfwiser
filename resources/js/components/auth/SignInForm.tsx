@@ -1,4 +1,4 @@
-import AuthenticatedSessionController from '@/actions/App/Http/Controllers/Auth/AuthenticatedSessionController';
+import AuthenticatedSessionController from '@/actions/App/Http/Controllers/Auth/AuthenticatedSessionController.ts';
 import { Form, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from '../../icons';

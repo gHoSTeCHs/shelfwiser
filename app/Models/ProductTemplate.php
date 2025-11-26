@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class ProductTemplate extends Model
 {
-    use HasFactory;
+//    use HasFactory;
 
     protected $fillable = [
         'tenant_id',

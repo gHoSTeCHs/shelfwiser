@@ -162,7 +162,9 @@ export default function Show({
 
                     <div className="flex gap-2">
                         <a
-                            href={ReceiptController.orders.view.url({ order: order.id })}
+                            href={ReceiptController.viewOrderReceipt.url({
+                                order: order.id,
+                            })}
                             target="_blank"
                             rel="noopener noreferrer"
                         >
@@ -172,7 +174,9 @@ export default function Show({
                             </Button>
                         </a>
                         <a
-                            href={ReceiptController.orders.download.url({ order: order.id })}
+                            href={ReceiptController.downloadOrderReceipt.url({
+                                order: order.id,
+                            })}
                             target="_blank"
                             rel="noopener noreferrer"
                         >
@@ -277,14 +281,41 @@ export default function Show({
                                                     {item.packaging_type ? (
                                                         <div>
                                                             <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                                {item.package_quantity}{' '}
-                                                                {item.packaging_description || item.packaging_type.display_name || item.packaging_type.name}
-                                                                {item.package_quantity && item.package_quantity > 1 ? 's' : ''}
+                                                                {
+                                                                    item.package_quantity
+                                                                }{' '}
+                                                                {item.packaging_description ||
+                                                                    item
+                                                                        .packaging_type
+                                                                        .display_name ||
+                                                                    item
+                                                                        .packaging_type
+                                                                        .name}
+                                                                {item.package_quantity &&
+                                                                item.package_quantity >
+                                                                    1
+                                                                    ? 's'
+                                                                    : ''}
                                                             </p>
                                                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                                ({item.packaging_type.units_per_package}{' '}
-                                                                {item.product_variant?.base_unit_name}
-                                                                {item.packaging_type.units_per_package > 1 ? 's' : ''} each)
+                                                                (
+                                                                {
+                                                                    item
+                                                                        .packaging_type
+                                                                        .units_per_package
+                                                                }{' '}
+                                                                {
+                                                                    item
+                                                                        .product_variant
+                                                                        ?.base_unit_name
+                                                                }
+                                                                {item
+                                                                    .packaging_type
+                                                                    .units_per_package >
+                                                                1
+                                                                    ? 's'
+                                                                    : ''}{' '}
+                                                                each)
                                                             </p>
                                                         </div>
                                                     ) : (

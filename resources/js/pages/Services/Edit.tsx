@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import ServiceController from '@/actions/App/Http/Controllers/ServiceController';
 import Checkbox from '@/components/form/input/Checkbox';

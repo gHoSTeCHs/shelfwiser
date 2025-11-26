@@ -14,7 +14,7 @@ import { flattenCategories } from '@/lib/utils';
 import { ServiceCategory } from '@/types/service';
 import { Shop } from '@/types/shop';
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Minus, Plus, Save, Sparkles } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Save } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -40,7 +40,8 @@ export default function Create({ shops, categories }: Props) {
     const [serviceName, setServiceName] = useState<string>('');
     const [description, setDescription] = useState<string>('');
     const [imageUrl, setImageUrl] = useState<string>('');
-    const [hasMaterialOptions, setHasMaterialOptions] = useState<boolean>(false);
+    const [hasMaterialOptions, setHasMaterialOptions] =
+        useState<boolean>(false);
     const [isActive, setIsActive] = useState<boolean>(true);
     const [isAvailableOnline, setIsAvailableOnline] = useState<boolean>(true);
 
@@ -99,7 +100,7 @@ export default function Create({ shops, categories }: Props) {
 
             <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                    <Link href="/services">
+                    <Link href={'/services'}>
                         <Button variant="outline" size="sm">
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Back
@@ -176,10 +177,12 @@ export default function Create({ shops, categories }: Props) {
                                                     value: '',
                                                     label: 'No Category',
                                                 },
-                                                ...flatCategories.map((cat) => ({
-                                                    value: cat.id.toString(),
-                                                    label: cat.name,
-                                                })),
+                                                ...flatCategories.map(
+                                                    (cat) => ({
+                                                        value: cat.value.toString(),
+                                                        label: cat.label,
+                                                    }),
+                                                ),
                                             ]}
                                             placeholder="Select a category"
                                             onChange={(value) =>
@@ -227,8 +230,8 @@ export default function Create({ shops, categories }: Props) {
                                             Description
                                         </Label>
                                         <TextArea
-                                            name="description"
                                             id="description"
+                                            name={'description'}
                                             placeholder="Describe what this service includes..."
                                             rows={3}
                                             value={description}
@@ -257,25 +260,23 @@ export default function Create({ shops, categories }: Props) {
                                             }
                                             error={!!errors.image_url}
                                         />
-                                        <InputError message={errors.image_url} />
+                                        <InputError
+                                            message={errors.image_url}
+                                        />
                                     </div>
 
                                     <div className="flex items-center gap-2">
                                         <Checkbox
                                             id="has_material_options"
                                             checked={hasMaterialOptions}
-                                            onChange={(e) =>
-                                                setHasMaterialOptions(
-                                                    e.target.checked,
-                                                )
-                                            }
+                                            onChange={() => {}}
                                         />
                                         <Label
                                             htmlFor="has_material_options"
                                             className="mb-0 font-normal"
                                         >
-                                            Service has material options (customer
-                                            vs shop materials)
+                                            Service has material options
+                                            (customer vs shop materials)
                                         </Label>
                                     </div>
 
@@ -283,11 +284,7 @@ export default function Create({ shops, categories }: Props) {
                                         <Checkbox
                                             id="is_available_online"
                                             checked={isAvailableOnline}
-                                            onChange={(e) =>
-                                                setIsAvailableOnline(
-                                                    e.target.checked,
-                                                )
-                                            }
+                                            onChange={() => {}}
                                         />
                                         <Label
                                             htmlFor="is_available_online"
@@ -301,9 +298,7 @@ export default function Create({ shops, categories }: Props) {
                                         <Checkbox
                                             id="is_active"
                                             checked={isActive}
-                                            onChange={(e) =>
-                                                setIsActive(e.target.checked)
-                                            }
+                                            onChange={() => {}}
                                         />
                                         <Label
                                             htmlFor="is_active"
@@ -453,8 +448,9 @@ export default function Create({ shops, categories }: Props) {
                                                             <Label
                                                                 htmlFor={`variant-${index}-customer_price`}
                                                             >
-                                                                Customer Materials
-                                                                Price (₦)
+                                                                Customer
+                                                                Materials Price
+                                                                (₦)
                                                             </Label>
                                                             <Input
                                                                 type="number"
@@ -560,7 +556,7 @@ export default function Create({ shops, categories }: Props) {
 
                             {/* Actions */}
                             <div className="flex justify-end gap-4">
-                                <Link href="/services">
+                                <Link href={'/services'}>
                                     <Button type="button" variant="outline">
                                         Cancel
                                     </Button>

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StockMovement extends Model
 {
-    use HasFactory;
+//    use HasFactory;
 
     protected $fillable = [
         'tenant_id',

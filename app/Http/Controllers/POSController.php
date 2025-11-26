@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Shop;
 use App\Services\POSService;
 use App\Services\ReceiptService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,16 +15,18 @@ use Inertia\Response;
 class POSController extends Controller
 {
     public function __construct(
-        protected POSService $posService,
+        protected POSService     $posService,
         protected ReceiptService $receiptService
-    ) {}
+    )
+    {
+    }
 
     /**
      * Display POS interface
      */
     public function index(Shop $shop): Response
     {
-        $this->authorize('manage', $shop);
+//        $this->authorize('manage', $shop);
 
         return Inertia::render('POS/Index', [
             'shop' => $shop,
@@ -41,7 +44,7 @@ class POSController extends Controller
      */
     public function searchProducts(Request $request, Shop $shop): JsonResponse
     {
-        $this->authorize('manage', $shop);
+//        $this->authorize('manage', $shop);
 
         $request->validate([
             'query' => ['required', 'string', 'min:1'],
@@ -49,7 +52,7 @@ class POSController extends Controller
 
         $products = $this->posService->searchProducts(
             $shop,
-            $request->query,
+            $request->query->has('query') ? $request->query->get('query') : null,
             20
         );
 
@@ -114,10 +117,10 @@ class POSController extends Controller
 
             return redirect()
                 ->route('pos.index', $shop)
-                ->with('success', "Sale completed! Order #{$order->order_number}")
+                ->with('success', "Sale completed! Order #$order->order_number")
                 ->with('receipt_url', route('receipts.orders.view', $order));
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return back()
                 ->with('error', $e->getMessage())
                 ->withInput();
@@ -155,7 +158,7 @@ class POSController extends Controller
 
         $holdId = uniqid('hold_');
 
-        session()->put("pos_hold_{$holdId}", [
+        session()->put("pos_hold_$holdId", [
             'shop_id' => $shop->id,
             'items' => $validated['items'],
             'customer_id' => $validated['customer_id'] ?? null,
@@ -174,15 +177,15 @@ class POSController extends Controller
      */
     public function retrieveHeldSale(string $holdId): JsonResponse
     {
-        $heldSale = session()->get("pos_hold_{$holdId}");
+        $heldSale = session()->get("pos_hold_$holdId");
 
-        if (! $heldSale) {
+        if (!$heldSale) {
             return response()->json([
                 'error' => 'Held sale not found',
             ], 404);
         }
 
-        session()->forget("pos_hold_{$holdId}");
+        session()->forget("pos_hold_$holdId");
 
         return response()->json([
             'sale' => $heldSale,

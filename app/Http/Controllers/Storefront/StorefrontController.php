@@ -24,7 +24,7 @@ class StorefrontController extends Controller
      */
     public function index(Shop $shop): Response
     {
-        // Check if storefront is enabled
+            // Check if storefront is enabled
         if (! $shop->storefront_enabled) {
             abort(404, 'Storefront not available for this shop');
         }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CreateServiceRequest;
 use App\Http\Requests\UpdateServiceRequest;
 use App\Models\Service;
+use App\Models\ServiceAddon;
 use App\Models\ServiceCategory;
 use App\Models\Shop;
 use App\Services\ServiceManagementService;
@@ -13,12 +14,15 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class ServiceController extends Controller
 {
     public function __construct(
         private readonly ServiceManagementService $serviceManagementService
-    ) {}
+    )
+    {
+    }
 
     /**
      * Display a listing of services
@@ -30,7 +34,7 @@ class ServiceController extends Controller
         $tenantId = auth()->user()->tenant_id;
 
         return Inertia::render('Services/Index', [
-            'services' => Service::where('tenant_id', $tenantId)
+            'services' => Service::query()->where('tenant_id', $tenantId)
                 ->with(['category', 'shop', 'variants', 'images' => function ($query) {
                     $query->ordered();
                 }])
@@ -54,7 +58,7 @@ class ServiceController extends Controller
             ->whereIn('shop_offering_type', ['services', 'both'])
             ->get(['id', 'name', 'slug', 'shop_offering_type']);
 
-        $categories = ServiceCategory::where('tenant_id', $tenantId)
+        $categories = ServiceCategory::query()->where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->whereNull('parent_id')
             ->with('children')
@@ -69,6 +73,7 @@ class ServiceController extends Controller
 
     /**
      * Store a newly created service
+     * @throws Throwable
      */
     public function store(CreateServiceRequest $request): RedirectResponse
     {
@@ -81,7 +86,7 @@ class ServiceController extends Controller
         );
 
         return Redirect::route('services.index')
-            ->with('success', "Service '{$service->name}' created successfully.");
+            ->with('success', "Service '$service->name' created successfully.");
     }
 
     /**
@@ -94,8 +99,8 @@ class ServiceController extends Controller
         $service->load([
             'category',
             'shop',
-            'variants' => fn ($q) => $q->orderBy('sort_order'),
-            'addons' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
+            'variants' => fn($q) => $q->orderBy('sort_order'),
+            'addons' => fn($q) => $q->where('is_active', true)->orderBy('sort_order'),
             'images' => function ($query) {
                 $query->ordered();
             },
@@ -104,7 +109,7 @@ class ServiceController extends Controller
         // Get category-wide addons if service has a category
         $categoryAddons = [];
         if ($service->service_category_id) {
-            $categoryAddons = \App\Models\ServiceAddon::where('service_category_id', $service->service_category_id)
+            $categoryAddons = ServiceAddon::query()->where('service_category_id', $service->service_category_id)
                 ->whereNull('service_id')
                 ->where('is_active', true)
                 ->orderBy('sort_order')
@@ -127,8 +132,8 @@ class ServiceController extends Controller
 
         $service->load([
             'category',
-            'variants' => fn ($q) => $q->orderBy('sort_order'),
-            'addons' => fn ($q) => $q->orderBy('sort_order'),
+            'variants' => fn($q) => $q->orderBy('sort_order'),
+            'addons' => fn($q) => $q->orderBy('sort_order'),
             'images' => function ($query) {
                 $query->ordered();
             },
@@ -136,7 +141,7 @@ class ServiceController extends Controller
 
         $tenantId = auth()->user()->tenant_id;
 
-        $categories = ServiceCategory::where('tenant_id', $tenantId)
+        $categories = ServiceCategory::query()->where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->whereNull('parent_id')
             ->with('children')
@@ -151,17 +156,19 @@ class ServiceController extends Controller
 
     /**
      * Update the specified service
+     * @throws Throwable
      */
     public function update(UpdateServiceRequest $request, Service $service): RedirectResponse
     {
         $this->serviceManagementService->update($service, $request->validated());
 
         return Redirect::route('services.show', $service)
-            ->with('success', "Service '{$service->name}' updated successfully.");
+            ->with('success', "Service '$service->name' updated successfully.");
     }
 
     /**
      * Remove the specified service
+     * @throws Throwable
      */
     public function destroy(Service $service): RedirectResponse
     {
@@ -172,6 +179,6 @@ class ServiceController extends Controller
         $this->serviceManagementService->delete($service);
 
         return Redirect::route('services.index')
-            ->with('success', "Service '{$serviceName}' deleted successfully.");
+            ->with('success', "Service '$serviceName' deleted successfully.");
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Shop;
-use App\Policies\DashboardPolicy;
 use App\Services\DashboardService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
@@ -17,11 +16,13 @@ class DashboardController extends Controller
 {
     public function __construct(
         protected DashboardService $dashboardService
-    ) {}
+    )
+    {
+    }
 
     public function index(Request $request): Response
     {
-        //        Gate::authorize('view', DashboardPolicy::class);
+        Gate::authorize('dashboard.view');
 
         $user = $request->user();
 
@@ -43,9 +44,7 @@ class DashboardController extends Controller
         $shopIds = $this->getShopIdsForMetrics($user, $shopId);
         $dateRange = $this->dashboardService->getDateRange($period, $startDate, $endDate);
 
-        // Get data based on active tab
         $data = match ($activeTab) {
-            'overview' => $this->getOverviewData($user, $shopId, $shopIds, $period, $dateRange, $startDate, $endDate),
             'sales' => $this->getSalesTabData($user, $shopIds, $dateRange),
             'inventory' => $this->getInventoryTabData($user, $shopIds),
             'suppliers' => $this->getSuppliersTabData($user, $shopIds, $dateRange),
@@ -61,7 +60,7 @@ class DashboardController extends Controller
             'period' => $period,
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'can_view_financials' => $user->can('viewFinancials', DashboardPolicy::class),
+            'can_view_financials' => $user->can('dashboard.view_financials'),
         ]);
     }
 
@@ -75,7 +74,7 @@ class DashboardController extends Controller
             $endDate
         );
 
-        if ($user->can('viewFinancials', DashboardPolicy::class)) {
+        if ($user->can('viewFinancials')) {
             $metrics['inventory_valuation'] = $this->dashboardService->getInventoryValuation($shopIds);
             $metrics['profit'] = $this->dashboardService->getProfitMetrics(
                 $shopIds,
@@ -110,8 +109,7 @@ class DashboardController extends Controller
 
     protected function getFinancialsTabData($user, Collection $shopIds, array $dateRange): array
     {
-        // Only allow users with financial permissions to access this tab
-        if (! $user->can('viewFinancials', DashboardPolicy::class)) {
+        if (!$user->can('dashboard.view_financials')) {
             abort(403, 'You do not have permission to view financial data');
         }
 
@@ -125,7 +123,7 @@ class DashboardController extends Controller
      */
     public function refresh(Request $request): RedirectResponse
     {
-        Gate::authorize('refreshCache', DashboardPolicy::class);
+        Gate::authorize('refreshCache');
 
         $user = $request->user();
         $shopId = $request->query('shop');
@@ -171,7 +169,7 @@ class DashboardController extends Controller
         $assignedShopIds = $user->shops()->pluck('shops.id');
 
         if ($shopId) {
-            if (! $assignedShopIds->contains($shopId)) {
+            if (!$assignedShopIds->contains($shopId)) {
                 abort(403, 'You do not have access to this shop');
             }
 
@@ -185,7 +183,7 @@ class DashboardController extends Controller
     {
         $filtered = $metrics;
 
-        if (! $user->role->hasPermission('view_profits')) {
+        if (!$user->role->hasPermission('view_profits')) {
             if (isset($filtered['top_products'])) {
                 $filtered['top_products'] = array_map(function ($product) {
                     unset($product['profit'], $product['margin_percentage']);
@@ -197,11 +195,11 @@ class DashboardController extends Controller
             unset($filtered['profit']);
         }
 
-        if (! $user->role->hasPermission('view_costs') && isset($filtered['profit'])) {
+        if (!$user->role->hasPermission('view_costs') && isset($filtered['profit'])) {
             unset($filtered['profit']['cogs']);
         }
 
-        if (! $user->role->hasPermission('view_financials')) {
+        if (!$user->role->hasPermission('view_financials')) {
             unset($filtered['inventory_valuation']);
         }
 

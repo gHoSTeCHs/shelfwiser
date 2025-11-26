@@ -94,6 +94,7 @@ enum UserRole: string
                 'manage_tenant',
                 'manage_stores',
                 'manage_users',
+                'view_reports',
                 'view_all_reports',
                 'manage_inventory',
                 'manage_products',

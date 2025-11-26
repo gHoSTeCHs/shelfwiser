@@ -28,7 +28,9 @@ use Throwable;
 
 class StockMovementController extends Controller
 {
-    public function __construct(private readonly StockMovementService $stockMovementService) {}
+    public function __construct(private readonly StockMovementService $stockMovementService)
+    {
+    }
 
     /**
      * @throws AuthorizationException
@@ -316,7 +318,7 @@ class StockMovementController extends Controller
                 ->with('success', 'Inventory locations setup successfully.');
         } catch (Exception $e) {
             return Redirect::back()
-                ->with('error', 'Failed to setup inventory locations: '.$e->getMessage());
+                ->with('error', 'Failed to setup inventory locations: ' . $e->getMessage());
         }
     }
 
@@ -333,7 +335,7 @@ class StockMovementController extends Controller
                 'productVariant.product',
                 'fromLocation.location',
                 'toLocation.location',
-                'createdBy:id,name',
+                'createdBy:id,first_name',
             ])
             ->latest();
 
@@ -343,7 +345,7 @@ class StockMovementController extends Controller
 
         $movements = $query->get();
 
-        $filename = 'stock-movements-'.now()->format('Y-m-d-His').'.csv';
+        $filename = 'stock-movements-' . now()->format('Y-m-d-His') . '.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -377,7 +379,7 @@ class StockMovementController extends Controller
                     $movement->productVariant->product->name ?? 'N/A',
                     $movement->productVariant->sku ?? 'N/A',
                     $movement->productVariant->name ?? 'Default',
-                    $movement->type,
+                    $movement->type->label(),
                     $movement->quantity,
                     $movement->quantity_before ?? 'N/A',
                     $movement->quantity_after ?? 'N/A',

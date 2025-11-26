@@ -166,7 +166,8 @@ export default function Index({ products }: Props) {
                                                         : 'Inactive'}
                                                 </Badge>
                                                 <StockLevelBadge
-                                                    availableQuantity={totalStock}
+                                                    availableStock={totalStock}
+                                                    totalStock={totalStock}
                                                 />
                                             </div>
                                         </div>

@@ -3,9 +3,7 @@ import AppLayout from '@/layouts/AppLayout';
 import { SupplierReportProps } from '@/types/reports';
 import FilterBar from '@/components/reports/FilterBar';
 import DataTable from '@/components/reports/DataTable';
-import MetricCard from '@/components/dashboard/MetricCard';
 import { Card } from '@/components/ui/card';
-import { Truck, DollarSign, FileText, Clock } from 'lucide-react';
 
 export default function SupplierReport({
     performanceSummary,
@@ -200,7 +198,7 @@ export default function SupplierReport({
                                                 {((supplier.completed_count / supplier.po_count) * 100).toFixed(1)}%
                                             </td>
                                             <td className="px-4 py-4 text-right text-sm text-gray-900 dark:text-white">
-                                                {supplier.avg_lead_time.toFixed(0)} days
+                                                {Number(supplier.avg_lead_time).toFixed(0)} days
                                             </td>
                                         </tr>
                                     ))}
