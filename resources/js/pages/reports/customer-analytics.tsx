@@ -1,10 +1,17 @@
-import { Head } from '@inertiajs/react';
+import MetricCard from '@/components/dashboard/MetricCard';
+import DataTable from '@/components/reports/DataTable';
+import FilterBar from '@/components/reports/FilterBar';
 import AppLayout from '@/layouts/AppLayout';
 import { CustomerAnalyticsProps } from '@/types/reports';
-import FilterBar from '@/components/reports/FilterBar';
-import DataTable from '@/components/reports/DataTable';
-import MetricCard from '@/components/dashboard/MetricCard';
-import { Users, DollarSign, ShoppingCart, TrendingDown, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Head } from '@inertiajs/react';
+import {
+    AlertTriangle,
+    DollarSign,
+    ShoppingCart,
+    TrendingDown,
+    TrendingUp,
+    Users,
+} from 'lucide-react';
 
 export default function CustomerAnalytics({
     summary,
@@ -21,10 +28,10 @@ export default function CustomerAnalytics({
     const formatDate = (dateString: string | null) =>
         dateString
             ? new Date(dateString).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-            })
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+              })
             : '-';
 
     const filterConfig = [
@@ -123,8 +130,8 @@ export default function CustomerAnalytics({
                         value === 'Active'
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                             : value === 'At Risk'
-                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                              : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                     }`}
                 >
                     {value}
@@ -144,12 +151,13 @@ export default function CustomerAnalytics({
                         Customer Analytics
                     </h1>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Analyze customer behavior, lifetime value, and engagement patterns
+                        Analyze customer behavior, lifetime value, and
+                        engagement patterns
                     </p>
                 </div>
 
                 {/* Summary Cards */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     <MetricCard
                         title="Total Customers"
                         value={summary.total_customers.toLocaleString()}
@@ -228,4 +236,6 @@ export default function CustomerAnalytics({
     );
 }
 
-CustomerAnalytics.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
+CustomerAnalytics.layout = (page: React.ReactNode) => (
+    <AppLayout>{page}</AppLayout>
+);
