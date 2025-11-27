@@ -27,8 +27,8 @@ class UpdateProductRequest extends FormRequest
                     return;
                 }
                 $handler = \App\Services\ProductConfigHandlerFactory::make($productType);
-                if (!$handler->validate($value)) {
-                    $fail('Custom attributes validation failed for product type: ' . $productType->label);
+                if (! $handler->validate($value)) {
+                    $fail('Custom attributes validation failed for product type: '.$productType->label);
                 }
             }];
         }

@@ -71,14 +71,14 @@ enum InventoryModel: string
     public static function forSelect(): array
     {
         return collect(self::cases())
-            ->mapWithKeys(fn($model) => [$model->value => $model->label()])
+            ->mapWithKeys(fn ($model) => [$model->value => $model->label()])
             ->toArray();
     }
 
     public static function forSelectWithDescriptions(): array
     {
         return collect(self::cases())
-            ->map(fn($model) => [
+            ->map(fn ($model) => [
                 'value' => $model->value,
                 'label' => $model->label(),
                 'description' => $model->description(),

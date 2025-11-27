@@ -12,6 +12,7 @@ class UpdateServiceRequest extends FormRequest
     public function authorize(): bool
     {
         $service = $this->route('service');
+
         return $this->user()->can('manage', $service);
     }
 

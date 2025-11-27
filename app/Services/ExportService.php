@@ -21,7 +21,7 @@ class ExportService
 
             // Write data
             foreach ($data as $row) {
-                fputcsv($file, is_array($row) ? $row : (array)$row);
+                fputcsv($file, is_array($row) ? $row : (array) $row);
             }
 
             fclose($file);
@@ -29,7 +29,7 @@ class ExportService
 
         return response()->streamDownload($callback, $filename, [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 
@@ -39,7 +39,8 @@ class ExportService
     public function exportToExcel(array $headers, Collection $data, string $filename): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         return Excel::download(
-            new class($headers, $data) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+            new class($headers, $data) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings
+            {
                 public function __construct(private array $headers, private Collection $data) {}
 
                 public function collection(): Collection
@@ -95,7 +96,7 @@ class ExportService
                     $item->avg_price,
                 ],
                 'customer' => [
-                    ($item->customer?->first_name ?? '') . ' ' . ($item->customer?->last_name ?? ''),
+                    ($item->customer?->first_name ?? '').' '.($item->customer?->last_name ?? ''),
                     $item->customer?->email ?? 'N/A',
                     $item->order_count,
                     $item->total_revenue,
@@ -118,7 +119,7 @@ class ExportService
                 ],
                 default => [
                     $item->order_number,
-                    $item->customer ? ($item->customer->first_name . ' ' . $item->customer->last_name) : 'Walk-in',
+                    $item->customer ? ($item->customer->first_name.' '.$item->customer->last_name) : 'Walk-in',
                     $item->shop?->name ?? 'N/A',
                     $item->total_amount,
                     $item->status,
@@ -196,10 +197,10 @@ class ExportService
             ['Profit & Loss', 'Net Sales', $financialData['profit_loss']['net_sales']],
             ['Profit & Loss', 'COGS', -$financialData['profit_loss']['cogs']],
             ['Profit & Loss', 'Gross Profit', $financialData['profit_loss']['gross_profit']],
-            ['Profit & Loss', 'Gross Margin %', $financialData['profit_loss']['gross_margin'] . '%'],
+            ['Profit & Loss', 'Gross Margin %', $financialData['profit_loss']['gross_margin'].'%'],
             ['Profit & Loss', 'Operating Expenses', -$financialData['profit_loss']['operating_expenses']],
             ['Profit & Loss', 'Net Profit', $financialData['profit_loss']['net_profit']],
-            ['Profit & Loss', 'Net Margin %', $financialData['profit_loss']['net_margin'] . '%'],
+            ['Profit & Loss', 'Net Margin %', $financialData['profit_loss']['net_margin'].'%'],
 
             // Cash Flow Section
             ['Cash Flow', 'Cash Inflow', $financialData['cash_flow']['cash_inflow']],
@@ -238,7 +239,7 @@ class ExportService
 
         $rows = $customerData->map(function ($item) {
             return [
-                ($item->customer?->first_name ?? '') . ' ' . ($item->customer?->last_name ?? ''),
+                ($item->customer?->first_name ?? '').' '.($item->customer?->last_name ?? ''),
                 $item->customer?->email ?? 'N/A',
                 $item->order_count,
                 $item->total_revenue,

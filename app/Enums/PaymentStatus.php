@@ -62,7 +62,7 @@ enum PaymentStatus: string
     public static function forSelect(): array
     {
         return collect(self::cases())
-            ->mapWithKeys(fn($status) => [$status->value => $status->label()])
+            ->mapWithKeys(fn ($status) => [$status->value => $status->label()])
             ->toArray();
     }
 }

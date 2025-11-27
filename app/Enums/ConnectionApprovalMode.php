@@ -11,7 +11,7 @@ enum ConnectionApprovalMode: string
 
     public function requiredRole(): ?UserRole
     {
-        return match($this) {
+        return match ($this) {
             self::AUTO => null,
             self::OWNER => UserRole::OWNER,
             self::GENERAL_MANAGER => UserRole::GENERAL_MANAGER,
@@ -21,7 +21,7 @@ enum ConnectionApprovalMode: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::AUTO => 'Auto-approve all connections',
             self::OWNER => 'Require Owner approval',
             self::GENERAL_MANAGER => 'Require General Manager approval',
@@ -32,7 +32,7 @@ enum ConnectionApprovalMode: string
     public static function forSelect(): array
     {
         return collect(self::cases())
-            ->mapWithKeys(fn($mode) => [$mode->value => $mode->label()])
+            ->mapWithKeys(fn ($mode) => [$mode->value => $mode->label()])
             ->toArray();
     }
 }

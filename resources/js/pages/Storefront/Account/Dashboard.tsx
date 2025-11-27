@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import Badge from '@/components/ui/badge/Badge';
 import { Package, ShoppingBag, DollarSign } from 'lucide-react';
 import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
+import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 
 /**
  * Customer account dashboard page.
@@ -75,7 +76,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({ shop, customer, stats, rec
                             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                             <p className="text-gray-600 mb-4">No orders yet</p>
                             <Link
-                                href={`/store/${shop.slug}/products`}
+                                href={StorefrontController.products.url({ shop: shop.slug })}
                                 className="text-primary-600 hover:text-primary-700 font-medium"
                             >
                                 Start Shopping

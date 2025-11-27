@@ -18,8 +18,8 @@ class CreateStaffRequest extends FormRequest
     public function rules(): array
     {
         $roles = collect(UserRole::cases())
-            ->filter(fn($role) => $role !== UserRole::OWNER)
-            ->map(fn($role) => $role->value)
+            ->filter(fn ($role) => $role !== UserRole::OWNER)
+            ->map(fn ($role) => $role->value)
             ->toArray();
 
         return [
@@ -39,7 +39,7 @@ class CreateStaffRequest extends FormRequest
                 Rule::in($roles),
                 function ($attribute, $value, $fail) {
                     $targetRole = UserRole::from($value);
-                    if (!Gate::forUser($this->user())->allows('assignRole', [\App\Models\User::class, $targetRole])) {
+                    if (! Gate::forUser($this->user())->allows('assignRole', [\App\Models\User::class, $targetRole])) {
                         $fail("You don't have permission to assign the {$targetRole->label()} role.");
                     }
                 },

@@ -14,6 +14,7 @@ class CreateServiceAddonRequest extends FormRequest
         // Check if this is service-specific or category-wide
         if ($this->route('service')) {
             $service = $this->route('service');
+
             return $this->user()->can('manage', $service);
         }
 

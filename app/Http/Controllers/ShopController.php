@@ -11,11 +11,13 @@ use App\Http\Resources\ShopResource;
 use App\Models\Shop;
 use App\Models\ShopType;
 use App\Services\ShopCreationService;
+use Auth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class ShopController extends Controller
 {
@@ -26,20 +28,18 @@ class ShopController extends Controller
     /**
      * Show list of shops (Inertia page)
      */
-    public function index(): Response
+    public function index()
     {
-        Gate::authorize('create', Shop::class);
+        Gate::authorize('create', Auth::user());
 
         $shops = Shop::query()->where('tenant_id', auth()->user()->tenant_id)
             ->with('type', 'users')
+            ->withCount('products')
             ->latest()
             ->paginate(20);
 
         return Inertia::render('Shops/Index', [
-            'shops' => Shop::query()->where('tenant_id', auth()->user()->tenant_id)
-                ->with(['type', 'users'])
-                ->withCount('products')
-                ->paginate(20),
+            'shops' => $shops,
             'shopTypes' => ShopType::accessibleTo(auth()->user()->tenant_id)
                 ->where('is_active', true)
                 ->get(['slug', 'label']),
@@ -51,7 +51,7 @@ class ShopController extends Controller
      */
     public function create(): Response
     {
-        Gate::authorize('create', Shop::class);
+        Gate::authorize('create', Auth::user());
 
         $shopTypes = ShopType::accessibleTo(auth()->user()->tenant_id)
             ->where('is_active', true)
@@ -66,7 +66,8 @@ class ShopController extends Controller
 
     /**
      * Store new shop (Inertia POST)
-     * @throws \Throwable
+     *
+     * @throws Throwable
      */
     public function store(CreateShopRequest $request): RedirectResponse
     {

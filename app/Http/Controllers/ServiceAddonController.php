@@ -15,8 +15,7 @@ class ServiceAddonController extends Controller
 {
     public function __construct(
         private readonly ServiceManagementService $serviceManagementService
-    ) {
-    }
+    ) {}
 
     /**
      * Store a newly created addon (service-specific)
@@ -65,11 +64,11 @@ class ServiceAddonController extends Controller
     {
         // Check authorization
         if ($addon->service_id) {
-            if (!auth()->user()->can('manage', $addon->service)) {
+            if (! auth()->user()->can('manage', $addon->service)) {
                 abort(403);
             }
         } else {
-            if (!auth()->user()->role->hasPermission('manage_inventory')) {
+            if (! auth()->user()->role->hasPermission('manage_inventory')) {
                 abort(403);
             }
         }

@@ -37,7 +37,7 @@ class ServiceSeeder extends Seeder
         $services = $this->getServiceTemplates($shop);
 
         $selectedServices = array_rand($services, min($count, count($services)));
-        if (!is_array($selectedServices)) {
+        if (! is_array($selectedServices)) {
             $selectedServices = [$selectedServices];
         }
 
@@ -596,6 +596,6 @@ class ServiceSeeder extends Seeder
     protected function generateSlug(string $name): string
     {
         return strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name), '-'))
-            . '-' . substr(md5($name . microtime()), 0, 6);
+            .'-'.substr(md5($name.microtime()), 0, 6);
     }
 }

@@ -26,7 +26,7 @@ class ShopResource extends JsonResource
             ],
             'config' => $this->config,
             'is_active' => $this->is_active,
-            'users_count' => $this->whenLoaded('users', fn() => $this->users->count()),
+            'users_count' => $this->whenLoaded('users', fn () => $this->users->count()),
             'can_manage' => $request->user()->can('manage', $this->resource),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),

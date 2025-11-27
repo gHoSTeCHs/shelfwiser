@@ -42,7 +42,7 @@ class StockMovementService
                     $location->quantity += $quantity;
                 } elseif ($type->isDecrease()) {
                     if ($location->quantity < $quantity) {
-                        throw new Exception('Insufficient stock. Available: ' . $location->quantity);
+                        throw new Exception('Insufficient stock. Available: '.$location->quantity);
                     }
                     $location->quantity -= $quantity;
                 }
@@ -105,7 +105,7 @@ class StockMovementService
         try {
             return DB::transaction(function () use ($variant, $fromLocation, $toLocation, $quantity, $user, $reason, $notes) {
                 if ($fromLocation->quantity < $quantity) {
-                    throw new Exception('Insufficient stock at source location. Available: ' . $fromLocation->quantity);
+                    throw new Exception('Insufficient stock at source location. Available: '.$fromLocation->quantity);
                 }
 
                 $fromQuantityBefore = $fromLocation->quantity;
@@ -281,7 +281,7 @@ class StockMovementService
                 $quantityBefore = $location->quantity;
 
                 if ($location->quantity < $quantity) {
-                    throw new Exception('Insufficient stock. Available: ' . $location->quantity);
+                    throw new Exception('Insufficient stock. Available: '.$location->quantity);
                 }
 
                 $location->quantity -= $quantity;
@@ -345,13 +345,14 @@ class StockMovementService
 
                 if ($difference === 0) {
                     Log::info('Stock take completed: no adjustment needed.');
+
                     return null;
                 }
 
                 $location->quantity = $actualQuantity;
                 $location->save();
 
-//                $type = $difference > 0 ? StockMovementType::ADJUSTMENT_IN : StockMovementType::ADJUSTMENT_OUT;
+                //                $type = $difference > 0 ? StockMovementType::ADJUSTMENT_IN : StockMovementType::ADJUSTMENT_OUT;
                 $quantity = abs($difference);
 
                 $movement = StockMovement::query()->create([
@@ -416,6 +417,6 @@ class StockMovementService
             StockMovementType::PURCHASE_ORDER_RECEIVED => 'PO-RCV',
         };
 
-        return $prefix . '-' . strtoupper(uniqid());
+        return $prefix.'-'.strtoupper(uniqid());
     }
 }

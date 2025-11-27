@@ -6,28 +6,27 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PurchaseOrderPaymentStatus;
 use App\Enums\PurchaseOrderStatus;
-use App\Enums\StockMovementType;
 use App\Models\ProductCategory;
 use App\Models\Shop;
-use App\Models\Tenant;
 use App\Policies\DashboardPolicy;
 use App\Services\DashboardService;
 use App\Services\ExportService;
 use App\Services\ReportService;
 use Carbon\Carbon;
+use Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportsController extends Controller
 {
     public function __construct(
-        protected ReportService     $reportService,
-        protected DashboardService  $dashboardService,
-        protected ExportService     $exportService
+        protected ReportService    $reportService,
+        protected DashboardService $dashboardService,
+        protected ExportService    $exportService
     )
     {
     }
@@ -40,9 +39,7 @@ class ReportsController extends Controller
         $user = $request->user();
 
         // Check permission
-        if (!$user->role->hasPermission('view_reports')) {
-            abort(403, 'You do not have permission to view reports');
-        }
+       Gate::authorize('reports.view');
 
         $validated = $request->validate([
             'shop' => ['nullable', 'integer', 'exists:shops,id'],
@@ -105,7 +102,7 @@ class ReportsController extends Controller
     /**
      * Export Sales Report
      */
-    public function exportSales(Request $request): StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
+    public function exportSales(Request $request): StreamedResponse|BinaryFileResponse|\Illuminate\Http\Response
     {
         $user = $request->user();
 
@@ -149,10 +146,10 @@ class ReportsController extends Controller
 
         $timestamp = now()->format('Y-m-d-His');
 
-        return match($format) {
-            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "sales-report-{$timestamp}.xlsx"),
-            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "sales-report-{$timestamp}.pdf", 'Sales Report'),
-            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "sales-report-{$timestamp}.csv"),
+        return match ($format) {
+            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "sales-report-$timestamp.xlsx"),
+            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "sales-report-$timestamp.pdf", 'Sales Report'),
+            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "sales-report-$timestamp.csv"),
         };
     }
 
@@ -207,7 +204,7 @@ class ReportsController extends Controller
     /**
      * Export Inventory Report
      */
-    public function exportInventory(Request $request): StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
+    public function exportInventory(Request $request): StreamedResponse|BinaryFileResponse|\Illuminate\Http\Response
     {
         $user = $request->user();
 
@@ -238,10 +235,10 @@ class ReportsController extends Controller
 
         $timestamp = now()->format('Y-m-d-His');
 
-        return match($format) {
-            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "inventory-report-{$timestamp}.xlsx"),
-            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "inventory-report-{$timestamp}.pdf", 'Inventory Report'),
-            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "inventory-report-{$timestamp}.csv"),
+        return match ($format) {
+            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "inventory-report-$timestamp.xlsx"),
+            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "inventory-report-$timestamp.pdf", 'Inventory Report'),
+            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "inventory-report-$timestamp.csv"),
         };
     }
 
@@ -311,7 +308,7 @@ class ReportsController extends Controller
     /**
      * Export Supplier Report
      */
-    public function exportSuppliers(Request $request): StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
+    public function exportSuppliers(Request $request): StreamedResponse|BinaryFileResponse|\Illuminate\Http\Response
     {
         $user = $request->user();
 
@@ -350,10 +347,10 @@ class ReportsController extends Controller
 
         $timestamp = now()->format('Y-m-d-His');
 
-        return match($format) {
-            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "supplier-report-{$timestamp}.xlsx"),
-            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "supplier-report-{$timestamp}.pdf", 'Supplier Report'),
-            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "supplier-report-{$timestamp}.csv"),
+        return match ($format) {
+            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "supplier-report-$timestamp.xlsx"),
+            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "supplier-report-$timestamp.pdf", 'Supplier Report'),
+            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "supplier-report-$timestamp.csv"),
         };
     }
 
@@ -364,7 +361,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->can('viewFinancials', DashboardPolicy::class)) {
+        if (!$user->can('dashboard.view_financials', DashboardPolicy::class)) {
             abort(403, 'You do not have permission to view financial reports');
         }
 
@@ -396,7 +393,7 @@ class ReportsController extends Controller
     /**
      * Export Financial Report
      */
-    public function exportFinancials(Request $request): StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
+    public function exportFinancials(Request $request): StreamedResponse|BinaryFileResponse|\Illuminate\Http\Response
     {
         $user = $request->user();
 
@@ -427,10 +424,10 @@ class ReportsController extends Controller
 
         $timestamp = now()->format('Y-m-d-His');
 
-        return match($format) {
-            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "financial-report-{$timestamp}.xlsx"),
-            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "financial-report-{$timestamp}.pdf", 'Financial Report'),
-            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "financial-report-{$timestamp}.csv"),
+        return match ($format) {
+            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "financial-report-$timestamp.xlsx"),
+            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "financial-report-$timestamp.pdf", 'Financial Report'),
+            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "financial-report-$timestamp.csv"),
         };
     }
 
@@ -488,7 +485,7 @@ class ReportsController extends Controller
     /**
      * Export Customer Analytics
      */
-    public function exportCustomerAnalytics(Request $request): StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
+    public function exportCustomerAnalytics(Request $request): StreamedResponse|BinaryFileResponse|\Illuminate\Http\Response
     {
         $user = $request->user();
 
@@ -524,10 +521,10 @@ class ReportsController extends Controller
 
         $timestamp = now()->format('Y-m-d-His');
 
-        return match($format) {
-            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "customer-analytics-{$timestamp}.xlsx"),
-            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "customer-analytics-{$timestamp}.pdf", 'Customer Analytics'),
-            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "customer-analytics-{$timestamp}.csv"),
+        return match ($format) {
+            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "customer-analytics-$timestamp.xlsx"),
+            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "customer-analytics-$timestamp.pdf", 'Customer Analytics'),
+            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "customer-analytics-$timestamp.csv"),
         };
     }
 
@@ -538,7 +535,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->can('viewFinancials', DashboardPolicy::class)) {
+        if (!$user->can('dashboard.view_financials', DashboardPolicy::class)) {
             abort(403, 'You do not have permission to view product profitability');
         }
 
@@ -590,7 +587,7 @@ class ReportsController extends Controller
     /**
      * Export Product Profitability
      */
-    public function exportProductProfitability(Request $request): StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
+    public function exportProductProfitability(Request $request): StreamedResponse|BinaryFileResponse|\Illuminate\Http\Response
     {
         $user = $request->user();
 
@@ -628,10 +625,10 @@ class ReportsController extends Controller
 
         $timestamp = now()->format('Y-m-d-His');
 
-        return match($format) {
-            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "product-profitability-{$timestamp}.xlsx"),
-            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "product-profitability-{$timestamp}.pdf", 'Product Profitability'),
-            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "product-profitability-{$timestamp}.csv"),
+        return match ($format) {
+            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "product-profitability-$timestamp.xlsx"),
+            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "product-profitability-$timestamp.pdf", 'Product Profitability'),
+            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "product-profitability-$timestamp.csv"),
         };
     }
 
@@ -676,6 +673,7 @@ class ReportsController extends Controller
             if (!$assignedShopIds->contains($shopId)) {
                 abort(403, 'You do not have access to this shop');
             }
+
             return collect([$shopId]);
         }
 

@@ -1,10 +1,15 @@
 import { useSidebar } from '@/context/SidebarContext';
+import { SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
     BarChart3,
     Box,
+    Briefcase,
+    Building2,
     FileUser,
+    LayoutTemplate,
     Network,
+    Settings,
     ShoppingBag,
     Store,
     Wrench,
@@ -47,6 +52,7 @@ const navItems: NavItem[] = [
         name: 'Sales & Orders',
         subItems: [
             { name: 'Orders', path: '/orders' },
+            { name: 'Receipts', path: '/receipts' },
             { name: 'Purchase Orders', path: '/purchase-orders' },
         ],
     },
@@ -85,25 +91,55 @@ const navItems: NavItem[] = [
         name: 'Staff Management',
         path: '/staff',
     },
+    {
+        icon: <Briefcase />,
+        name: 'HR & Payroll',
+        subItems: [
+            { name: 'Payroll', path: '/payroll' },
+            { name: 'My Payslips', path: '/payroll/my-payslips' },
+            { name: 'Timesheets', path: '/timesheets' },
+            { name: 'Fund Requests', path: '/fund-requests' },
+            { name: 'Wage Advances', path: '/wage-advances' },
+        ],
+    },
 ];
 
-const othersItems: NavItem[] = [
-    // {
-    //     icon: <PieChartIcon />,
-    //     name: 'Charts',
-    //     subItems: [
-    //         { name: 'Line Chart', path: '/line-chart', pro: false },
-    //         { name: 'Bar Chart', path: '/bar-chart', pro: false },
-    //     ],
-    // },
+const othersItems: NavItem[] = [];
+
+const adminItems: NavItem[] = [
+    {
+        icon: <GridIcon />,
+        name: 'Admin Dashboard',
+        path: '/admin',
+    },
+    {
+        icon: <Building2 />,
+        name: 'Tenants',
+        path: '/admin/tenants',
+    },
+    {
+        icon: <LayoutTemplate />,
+        name: 'Product Templates',
+        path: '/admin/product-templates',
+    },
+    {
+        icon: <Settings />,
+        name: 'Platform Settings',
+        subItems: [
+            { name: 'Subscriptions', path: '/admin/subscriptions' },
+            { name: 'API Management', path: '/admin/api' },
+            { name: 'System Settings', path: '/admin/settings' },
+        ],
+    },
 ];
 
 const AppSidebar: React.FC = () => {
     const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
-    const { url } = usePage();
+    const { url, props } = usePage<SharedData>();
+    const isSuperAdmin = props.auth?.user?.is_super_admin ?? false;
 
     const [openSubmenu, setOpenSubmenu] = useState<{
-        type: 'main' | 'others';
+        type: 'main' | 'others' | 'admin';
         index: number;
     } | null>(null);
     const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
@@ -115,14 +151,15 @@ const AppSidebar: React.FC = () => {
 
     useEffect(() => {
         let submenuMatched = false;
-        ['main', 'others'].forEach((menuType) => {
-            const items = menuType === 'main' ? navItems : othersItems;
+        const menuTypes = isSuperAdmin ? ['main', 'others', 'admin'] : ['main', 'others'];
+        menuTypes.forEach((menuType) => {
+            const items = menuType === 'main' ? navItems : menuType === 'admin' ? adminItems : othersItems;
             items.forEach((nav, index) => {
                 if (nav.subItems) {
                     nav.subItems.forEach((subItem) => {
                         if (isActive(subItem.path)) {
                             setOpenSubmenu({
-                                type: menuType as 'main' | 'others',
+                                type: menuType as 'main' | 'others' | 'admin',
                                 index,
                             });
                             submenuMatched = true;
@@ -135,7 +172,7 @@ const AppSidebar: React.FC = () => {
         if (!submenuMatched) {
             setOpenSubmenu(null);
         }
-    }, [url, isActive]);
+    }, [url, isActive, isSuperAdmin]);
 
     useEffect(() => {
         if (openSubmenu !== null) {
@@ -151,7 +188,7 @@ const AppSidebar: React.FC = () => {
 
     const handleSubmenuToggle = (
         index: number,
-        menuType: 'main' | 'others',
+        menuType: 'main' | 'others' | 'admin',
     ) => {
         setOpenSubmenu((prevOpenSubmenu) => {
             if (
@@ -165,7 +202,7 @@ const AppSidebar: React.FC = () => {
         });
     };
 
-    const renderMenuItems = (items: NavItem[], menuType: 'main' | 'others') => (
+    const renderMenuItems = (items: NavItem[], menuType: 'main' | 'others' | 'admin') => (
         <ul className="flex flex-col gap-4">
             {items.map((nav, index) => (
                 <li key={nav.name}>
@@ -358,6 +395,24 @@ const AppSidebar: React.FC = () => {
             <div className="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
                 <nav className="mb-6">
                     <div className="flex flex-col gap-4">
+                        {isSuperAdmin && (
+                            <div>
+                                <h2
+                                    className={`mb-4 flex text-xs leading-[20px] text-gray-400 uppercase ${
+                                        !isExpanded && !isHovered
+                                            ? 'lg:justify-center'
+                                            : 'justify-start'
+                                    }`}
+                                >
+                                    {isExpanded || isHovered || isMobileOpen ? (
+                                        'Administration'
+                                    ) : (
+                                        <HorizontaLDots className="size-6" />
+                                    )}
+                                </h2>
+                                {renderMenuItems(adminItems, 'admin')}
+                            </div>
+                        )}
                         <div>
                             <h2
                                 className={`mb-4 flex text-xs leading-[20px] text-gray-400 uppercase ${
@@ -374,22 +429,24 @@ const AppSidebar: React.FC = () => {
                             </h2>
                             {renderMenuItems(navItems, 'main')}
                         </div>
-                        <div className="">
-                            <h2
-                                className={`mb-4 flex text-xs leading-[20px] text-gray-400 uppercase ${
-                                    !isExpanded && !isHovered
-                                        ? 'lg:justify-center'
-                                        : 'justify-start'
-                                }`}
-                            >
-                                {isExpanded || isHovered || isMobileOpen ? (
-                                    'Others'
-                                ) : (
-                                    <HorizontaLDots />
-                                )}
-                            </h2>
-                            {renderMenuItems(othersItems, 'others')}
-                        </div>
+                        {othersItems.length > 0 && (
+                            <div className="">
+                                <h2
+                                    className={`mb-4 flex text-xs leading-[20px] text-gray-400 uppercase ${
+                                        !isExpanded && !isHovered
+                                            ? 'lg:justify-center'
+                                            : 'justify-start'
+                                    }`}
+                                >
+                                    {isExpanded || isHovered || isMobileOpen ? (
+                                        'Others'
+                                    ) : (
+                                        <HorizontaLDots />
+                                    )}
+                                </h2>
+                                {renderMenuItems(othersItems, 'others')}
+                            </div>
+                        )}
                     </div>
                 </nav>
                 {/* {isExpanded || isHovered || isMobileOpen ? (

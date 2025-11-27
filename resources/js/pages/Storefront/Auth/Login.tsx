@@ -1,14 +1,14 @@
+import CustomerAuthController from '@/actions/App/Http/Controllers/Storefront/CustomerAuthController';
+import Checkbox from '@/components/form/input/Checkbox';
+import Input from '@/components/form/input/InputField';
+import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
 import { AuthLoginProps } from '@/types/storefront';
 import { Form, Link } from '@inertiajs/react';
 import React from 'react';
-import Input from '@/components/form/input/InputField';
-import Label from '@/components/form/Label';
-import InputError from '@/components/form/InputError';
-import Button from '@/components/ui/button/Button';
-import Checkbox from '@/components/form/input/Checkbox';
-import { Card } from '@/components/ui/card';
-import CustomerAuthController from '@/actions/App/Http/Controllers/Storefront/CustomerAuthController';
 
 /**
  * Customer login page component.
@@ -17,49 +17,55 @@ import CustomerAuthController from '@/actions/App/Http/Controllers/Storefront/Cu
 const Login: React.FC<AuthLoginProps> = ({ shop }) => {
     return (
         <StorefrontLayout shop={shop}>
-            <div className="max-w-md mx-auto">
+            <div className="mx-auto max-w-md">
                 <Card className="p-8">
                     <div className="mb-8 text-center">
-                        <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
+                        <h1 className="text-3xl font-bold text-gray-900">
+                            Welcome Back
+                        </h1>
                         <p className="mt-2 text-gray-600">
                             Sign in to your account to continue shopping
                         </p>
                     </div>
 
                     <Form
-                        action={CustomerAuthController.login.url({ shop: shop.slug })}
+                        action={CustomerAuthController.login.url({
+                            shop: shop.slug,
+                        })}
                         method="post"
                     >
-                        {({ errors, processing, data, setData }) => (
+                        {({ errors, processing }) => (
                             <>
                                 <div className="space-y-6">
                                     <div>
                                         <Label htmlFor="email">
-                                            Email Address <span className="text-error-500">*</span>
+                                            Email Address{' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Input
                                             id="email"
                                             name="email"
                                             type="email"
-                                            value={data.email || ''}
-                                            onChange={(e) => setData('email', e.target.value)}
-                                            error={!!errors.email}
+                                            placeholder="user@email.com"
                                             required
-                                            autoFocus
+                                            // autoFocus
                                         />
                                         <InputError message={errors.email} />
                                     </div>
 
                                     <div>
                                         <Label htmlFor="password">
-                                            Password <span className="text-error-500">*</span>
+                                            Password{' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Input
                                             id="password"
                                             name="password"
                                             type="password"
-                                            value={data.password || ''}
-                                            onChange={(e) => setData('password', e.target.value)}
                                             error={!!errors.password}
                                             required
                                         />
@@ -69,10 +75,13 @@ const Login: React.FC<AuthLoginProps> = ({ shop }) => {
                                     <div className="flex items-center">
                                         <Checkbox
                                             id="remember"
-                                            checked={data.remember || false}
-                                            onChange={(e) => setData('remember', e.target.checked)}
+                                            checked={false}
+                                            onChange={() => {}}
                                         />
-                                        <Label htmlFor="remember" className="ml-2 mb-0">
+                                        <Label
+                                            htmlFor="remember"
+                                            className="mb-0 ml-2"
+                                        >
                                             Remember me
                                         </Label>
                                     </div>
@@ -92,7 +101,9 @@ const Login: React.FC<AuthLoginProps> = ({ shop }) => {
                                     <p className="text-sm text-gray-600">
                                         Don't have an account?{' '}
                                         <Link
-                                            href={CustomerAuthController.showRegister.url({ shop: shop.slug })}
+                                            href={CustomerAuthController.showRegister.url(
+                                                { shop: shop.slug },
+                                            )}
                                             className="text-primary-600 hover:text-primary-700 font-medium"
                                         >
                                             Sign up

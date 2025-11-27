@@ -55,8 +55,8 @@ class CartService
         $variant = ProductVariant::findOrFail($variantId);
 
         // Check stock availability
-        if (!$this->checkStockAvailability($variant, $quantity)) {
-            throw new \Exception('Insufficient stock available. Only ' . $variant->available_stock . ' units in stock.');
+        if (! $this->checkStockAvailability($variant, $quantity)) {
+            throw new \Exception('Insufficient stock available. Only '.$variant->available_stock.' units in stock.');
         }
 
         return DB::transaction(function () use ($cart, $variant, $quantity, $packagingTypeId) {
@@ -71,8 +71,8 @@ class CartService
                 $newQuantity = $cartItem->quantity + $quantity;
 
                 // Check stock for new quantity
-                if (!$this->checkStockAvailability($variant, $newQuantity)) {
-                    throw new \Exception('Cannot add more items. Only ' . $variant->available_stock . ' units available.');
+                if (! $this->checkStockAvailability($variant, $newQuantity)) {
+                    throw new \Exception('Cannot add more items. Only '.$variant->available_stock.' units available.');
                 }
 
                 $cartItem->update(['quantity' => $newQuantity]);
@@ -88,6 +88,7 @@ class CartService
             }
 
             $cart->touch(); // Update cart timestamp
+
             return $cartItem->fresh(['productVariant.product', 'packagingType']);
         });
     }
@@ -105,7 +106,7 @@ class CartService
         $variant = ServiceVariant::with('service')->findOrFail($serviceVariantId);
 
         // Check if service is available online
-        if (!$variant->service->is_available_online || !$variant->is_active) {
+        if (! $variant->service->is_available_online || ! $variant->is_active) {
             throw new \Exception('This service is not available for online booking.');
         }
 
@@ -128,6 +129,7 @@ class CartService
             ]);
 
             $cart->touch();
+
             return $cartItem->fresh(['sellable']);
         });
     }
@@ -140,13 +142,14 @@ class CartService
         if ($quantity <= 0) {
             $item->delete();
             $item->cart->touch();
+
             return null;
         }
 
         // Check stock availability for products only
         if ($item->isProduct()) {
-            if (!$this->checkStockAvailability($item->productVariant, $quantity)) {
-                throw new \Exception('Insufficient stock available. Only ' . $item->productVariant->available_stock . ' units in stock.');
+            if (! $this->checkStockAvailability($item->productVariant, $quantity)) {
+                throw new \Exception('Insufficient stock available. Only '.$item->productVariant->available_stock.' units in stock.');
             }
         }
 
@@ -191,11 +194,11 @@ class CartService
             'sellable',
         ])->get();
 
-        $subtotal = $items->sum(fn($item) => $item->price * $item->quantity);
+        $subtotal = $items->sum(fn ($item) => $item->price * $item->quantity);
 
         // Calculate shipping only for products (services don't have shipping)
-        $productSubtotal = $items->filter(fn($item) => $item->isProduct())
-            ->sum(fn($item) => $item->price * $item->quantity);
+        $productSubtotal = $items->filter(fn ($item) => $item->isProduct())
+            ->sum(fn ($item) => $item->price * $item->quantity);
         $shippingFee = $this->calculateShipping($cart, $productSubtotal);
 
         $tax = $this->calculateTax($cart, $subtotal);
@@ -225,7 +228,7 @@ class CartService
                 ->where('shop_id', $shopId)
                 ->first();
 
-            if (!$guestCart) {
+            if (! $guestCart) {
                 return $customerCart;
             }
 
@@ -270,7 +273,7 @@ class CartService
     protected function checkStockAvailability(ProductVariant $variant, int $requestedQuantity): bool
     {
         // Check if variant is available online
-        if (!$variant->is_available_online) {
+        if (! $variant->is_available_online) {
             return false;
         }
 

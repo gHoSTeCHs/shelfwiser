@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductPackagingType;
@@ -34,11 +35,12 @@ class OrderSeeder extends Seeder
         $status = $this->getRandomStatus();
         $paymentStatus = $this->getRandomPaymentStatus($status);
         $createdBy = $this->getRandomStaff($shop);
+        $customer = $this->getRandomCustomer($shop);
 
         $createdAt = now()->subDays(rand(1, 90));
         $dateKey = $createdAt->format('Y-m-d');
 
-        if (!isset($this->dailyCounters[$dateKey])) {
+        if (! isset($this->dailyCounters[$dateKey])) {
             $lastOrder = Order::whereDate('created_at', $createdAt)->latest('id')->first();
             $this->dailyCounters[$dateKey] = $lastOrder ? (int) substr($lastOrder->order_number, -4) : 0;
         }
@@ -50,7 +52,7 @@ class OrderSeeder extends Seeder
         $order = Order::create([
             'tenant_id' => $shop->tenant_id,
             'shop_id' => $shop->id,
-            'customer_id' => null,
+            'customer_id' => $customer?->id,
             'order_number' => $orderNumber,
             'status' => $status,
             'payment_status' => $paymentStatus,
@@ -172,12 +174,14 @@ class OrderSeeder extends Seeder
         }
 
         $statuses = [PaymentStatus::UNPAID, PaymentStatus::PARTIAL, PaymentStatus::PAID];
+
         return $statuses[array_rand($statuses)];
     }
 
     protected function getRandomPaymentMethod(): string
     {
         $methods = ['cash', 'card', 'bank_transfer', 'mobile_money'];
+
         return $methods[array_rand($methods)];
     }
 
@@ -192,6 +196,23 @@ class OrderSeeder extends Seeder
             ->get();
 
         return $users->isNotEmpty() ? $users->random() : null;
+    }
+
+    /**
+     * Get a random customer for the shop's tenant (70% chance) or null for walk-in customer (30% chance)
+     */
+    protected function getRandomCustomer(Shop $shop): ?Customer
+    {
+        if (rand(1, 100) <= 30) {
+            return null;
+        }
+
+        $customers = Customer::query()
+            ->where('tenant_id', $shop->tenant_id)
+            ->where('is_active', true)
+            ->get();
+
+        return $customers->isNotEmpty() ? $customers->random() : null;
     }
 
     protected function determineQuantity(ProductPackagingType $packaging): int
@@ -211,7 +232,7 @@ class OrderSeeder extends Seeder
     {
         $shouldApplyDiscount = rand(1, 100) <= 20;
 
-        if (!$shouldApplyDiscount) {
+        if (! $shouldApplyDiscount) {
             return 0;
         }
 
@@ -225,7 +246,7 @@ class OrderSeeder extends Seeder
     {
         $shouldApplyTax = rand(1, 100) <= 30;
 
-        if (!$shouldApplyTax) {
+        if (! $shouldApplyTax) {
             return 0;
         }
 

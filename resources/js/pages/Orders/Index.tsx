@@ -1,7 +1,7 @@
 import Select from '@/components/form/Select';
 import Input from '@/components/form/input/InputField';
 import EmptyState from '@/components/ui/EmptyState';
-import Badge from '@/components/ui/badge/Badge';
+import Badge, { BadgeColor } from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
@@ -54,8 +54,8 @@ export default function Index({
         return matchesSearch && matchesStatus && matchesPaymentStatus;
     });
 
-    const getStatusColor = (status: string): string => {
-        const colors: Record<string, string> = {
+    const getStatusColor = (status: string): BadgeColor => {
+        const colors: Record<string, BadgeColor> = {
             pending: 'warning',
             confirmed: 'info',
             processing: 'brand',
@@ -68,8 +68,8 @@ export default function Index({
         return colors[status] || 'gray';
     };
 
-    const getPaymentStatusColor = (status: string): string => {
-        const colors: Record<string, string> = {
+    const getPaymentStatusColor = (status: string): BadgeColor => {
+        const colors: Record<string, BadgeColor> = {
             unpaid: 'error',
             partial: 'warning',
             paid: 'success',

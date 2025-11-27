@@ -78,12 +78,12 @@ class OrderService
                     $sellableId = $item['sellable_id'] ?? null;
 
                     // Backward compatibility: fallback to product_variant_id
-                    if (!$sellableType && isset($item['product_variant_id'])) {
+                    if (! $sellableType && isset($item['product_variant_id'])) {
                         $sellableType = ProductVariant::class;
                         $sellableId = $item['product_variant_id'];
                     }
 
-                    if (!$sellableType || !$sellableId) {
+                    if (! $sellableType || ! $sellableId) {
                         throw new Exception('Order item must specify sellable_type and sellable_id');
                     }
 
@@ -146,15 +146,14 @@ class OrderService
                             'tax_amount' => $item['tax_amount'] ?? 0,
                             'metadata' => $metadata,
                         ]);
-                    }
-                    else {
+                    } else {
                         throw new Exception("Unsupported sellable type: {$sellableType}");
                     }
                 }
 
                 $order->load([
                     'items.productVariant.product',
-                    'items.sellable'
+                    'items.sellable',
                 ]);
                 $order->calculateTotals();
                 $order->save();
@@ -181,8 +180,8 @@ class OrderService
     {
         Log::info('Order update process started.', ['order_id' => $order->id]);
 
-        if (!$order->canEdit()) {
-            throw new Exception('Order cannot be edited in current status: ' . $order->status->value);
+        if (! $order->canEdit()) {
+            throw new Exception('Order cannot be edited in current status: '.$order->status->value);
         }
 
         try {
@@ -196,12 +195,12 @@ class OrderService
                         $sellableId = $item['sellable_id'] ?? null;
 
                         // Backward compatibility: fallback to product_variant_id
-                        if (!$sellableType && isset($item['product_variant_id'])) {
+                        if (! $sellableType && isset($item['product_variant_id'])) {
                             $sellableType = ProductVariant::class;
                             $sellableId = $item['product_variant_id'];
                         }
 
-                        if (!$sellableType || !$sellableId) {
+                        if (! $sellableType || ! $sellableId) {
                             throw new Exception('Order item must specify sellable_type and sellable_id');
                         }
 
@@ -264,8 +263,7 @@ class OrderService
                                 'tax_amount' => $item['tax_amount'] ?? 0,
                                 'metadata' => $metadata,
                             ]);
-                        }
-                        else {
+                        } else {
                             throw new Exception("Unsupported sellable type: {$sellableType}");
                         }
                     }
@@ -281,7 +279,7 @@ class OrderService
 
                 $order->load([
                     'items.productVariant.product',
-                    'items.sellable'
+                    'items.sellable',
                 ]);
                 $order->calculateTotals();
                 $order->save();
@@ -290,7 +288,7 @@ class OrderService
 
                 return $order->fresh([
                     'items.productVariant.product',
-                    'items.sellable'
+                    'items.sellable',
                 ]);
             });
         } catch (Throwable $e) {
@@ -308,12 +306,12 @@ class OrderService
      */
     public function confirmOrder(Order $order, User $user): Order
     {
-        if (!$order->status->canTransitionTo(OrderStatus::CONFIRMED)) {
-            throw new Exception('Cannot confirm order in current status: ' . $order->status->value);
+        if (! $order->status->canTransitionTo(OrderStatus::CONFIRMED)) {
+            throw new Exception('Cannot confirm order in current status: '.$order->status->value);
         }
 
         try {
-            return DB::transaction(function () use ($order, $user) {
+            return DB::transaction(function () use ($order) {
                 foreach ($order->items as $item) {
                     // Only handle inventory for product items, skip services
                     if ($item->isProduct()) {
@@ -323,12 +321,12 @@ class OrderService
                             ->where('location_id', $order->shop_id)
                             ->first();
 
-                        if (!$location) {
+                        if (! $location) {
                             throw new Exception("No inventory location found for variant {$variant->sku} at shop");
                         }
 
                         if ($location->quantity - $location->reserved_quantity < $item->quantity) {
-                            throw new Exception("Insufficient stock for variant {$variant->sku}. Available: " . ($location->quantity - $location->reserved_quantity));
+                            throw new Exception("Insufficient stock for variant {$variant->sku}. Available: ".($location->quantity - $location->reserved_quantity));
                         }
 
                         $location->reserved_quantity += $item->quantity;
@@ -375,7 +373,7 @@ class OrderService
                             ->where('location_id', $order->shop_id)
                             ->first();
 
-                        if (!$location) {
+                        if (! $location) {
                             throw new Exception("No inventory location found for variant {$variant->sku}");
                         }
 
@@ -390,7 +388,7 @@ class OrderService
                             StockMovementType::SALE,
                             $user,
                             "Order #{$order->order_number}",
-                            "Fulfilled order item"
+                            'Fulfilled order item'
                         );
                     }
                     // Services don't require stock movements
@@ -418,8 +416,8 @@ class OrderService
      */
     public function cancelOrder(Order $order, User $user, ?string $reason = null): Order
     {
-        if (!$order->canCancel()) {
-            throw new Exception('Order cannot be cancelled in current status: ' . $order->status->value);
+        if (! $order->canCancel()) {
+            throw new Exception('Order cannot be cancelled in current status: '.$order->status->value);
         }
 
         try {
@@ -444,8 +442,8 @@ class OrderService
                 }
 
                 $order->status = OrderStatus::CANCELLED;
-                $order->internal_notes = ($order->internal_notes ? $order->internal_notes . "\n\n" : '') .
-                    "Cancelled by {$user->name} at " . now()->format('Y-m-d H:i:s') .
+                $order->internal_notes = ($order->internal_notes ? $order->internal_notes."\n\n" : '').
+                    "Cancelled by {$user->name} at ".now()->format('Y-m-d H:i:s').
                     ($reason ? "\nReason: {$reason}" : '');
                 $order->save();
 
@@ -465,7 +463,7 @@ class OrderService
 
     public function updatePaymentStatus(Order $order, PaymentStatus $newStatus, ?string $paymentMethod = null): Order
     {
-        if (!$order->payment_status->canTransitionTo($newStatus)) {
+        if (! $order->payment_status->canTransitionTo($newStatus)) {
             throw new Exception("Cannot change payment status from {$order->payment_status->value} to {$newStatus->value}");
         }
 

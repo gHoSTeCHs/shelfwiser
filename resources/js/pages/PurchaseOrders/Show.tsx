@@ -1,28 +1,25 @@
-import Button from '@/components/ui/button/Button';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
-import AppLayout from '@/layouts/AppLayout';
-import {
-    PurchaseOrder,
-    PurchaseOrderStatus,
-    PurchaseOrderPaymentStatus,
-} from '@/types/supplier';
-import { Head, router, useForm } from '@inertiajs/react';
-import {
-    FileText,
-    Building2,
-    Package,
-    Calendar,
-    DollarSign,
-    CheckCircle,
-    Truck,
-    XCircle,
-    Download,
-    CreditCard,
-} from 'lucide-react';
-import { FormEventHandler, useState } from 'react';
+import PurchaseOrderController from '@/actions/App/Http/Controllers/PurchaseOrderController.ts';
 import Input from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
+import { PurchaseOrder } from '@/types/supplier';
+import { paymentStatusConfig, statusConfig } from '@/utils/purchase-order';
+import { Head, useForm } from '@inertiajs/react';
+import {
+    Building2,
+    Calendar,
+    CheckCircle,
+    CreditCard,
+    DollarSign,
+    Download,
+    Package,
+    Truck,
+    XCircle,
+} from 'lucide-react';
+import { FormEventHandler, useState } from 'react';
 
 interface Props {
     purchaseOrder: PurchaseOrder;
@@ -30,29 +27,19 @@ interface Props {
     isBuyer: boolean;
 }
 
-const statusConfig: Record<PurchaseOrderStatus, { label: string; variant: 'default' | 'warning' | 'success' | 'danger' }> = {
-    draft: { label: 'Draft', variant: 'default' },
-    submitted: { label: 'Submitted', variant: 'warning' },
-    approved: { label: 'Approved', variant: 'success' },
-    processing: { label: 'Processing', variant: 'warning' },
-    shipped: { label: 'Shipped', variant: 'success' },
-    received: { label: 'Received', variant: 'success' },
-    completed: { label: 'Completed', variant: 'success' },
-    cancelled: { label: 'Cancelled', variant: 'danger' },
-};
-
-const paymentStatusConfig: Record<PurchaseOrderPaymentStatus, { label: string; variant: 'default' | 'warning' | 'success' | 'danger' }> = {
-    pending: { label: 'Pending', variant: 'warning' },
-    partial: { label: 'Partial', variant: 'warning' },
-    paid: { label: 'Paid', variant: 'success' },
-    overdue: { label: 'Overdue', variant: 'danger' },
-    cancelled: { label: 'Cancelled', variant: 'default' },
-};
-
-export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) {
+export default function Show({
+    purchaseOrder: po,
+    isSupplier,
+    isBuyer,
+}: Props) {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-    const { data: paymentData, setData: setPaymentData, post: postPayment, processing: processingPayment } = useForm({
+    const {
+        data: paymentData,
+        setData: setPaymentData,
+        post: postPayment,
+        processing: processingPayment,
+    } = useForm({
         amount: '',
         payment_date: new Date().toISOString().split('T')[0],
         payment_method: '',
@@ -62,40 +49,59 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
 
     const handleSubmit = () => {
         if (confirm('Submit this purchase order to the supplier?')) {
-            router.post(route('purchase-orders.submit', po.id));
+            PurchaseOrderController.submit({
+                purchaseOrder: po.id,
+            });
         }
     };
 
     const handleApprove = () => {
         if (confirm('Approve this purchase order?')) {
-            router.post(route('purchase-orders.approve', po.id));
+            PurchaseOrderController.approve({
+                purchaseOrder: po.id,
+            });
         }
     };
 
     const handleShip = () => {
-        if (confirm('Mark this order as shipped? This will deduct stock from your inventory.')) {
-            router.post(route('purchase-orders.ship', po.id));
+        if (
+            confirm(
+                'Mark this order as shipped? This will deduct stock from your inventory.',
+            )
+        ) {
+            PurchaseOrderController.ship({
+                purchaseOrder: po.id,
+            });
         }
     };
 
     const handleReceive = () => {
-        if (confirm('Confirm receipt of this order? This will add stock to your inventory.')) {
-            router.post(route('purchase-orders.receive', po.id));
+        if (
+            confirm(
+                'Confirm receipt of this order? This will add stock to your inventory.',
+            )
+        ) {
+            PurchaseOrderController.receive({
+                purchaseOrder: po.id,
+            });
         }
     };
 
     const handleCancel = () => {
         const reason = prompt('Reason for cancellation:');
         if (reason) {
-            router.post(route('purchase-orders.cancel', po.id), { reason });
+            PurchaseOrderController.cancel.url({
+                purchaseOrder: po.id,
+                // reason: reason
+            });
         }
     };
 
     const handleRecordPayment: FormEventHandler = (e) => {
         e.preventDefault();
-        postPayment(route('purchase-orders.record-payment', po.id), {
-            onSuccess: () => setShowPaymentModal(false),
-        });
+        // postPayment(route('purchase-orders.record-payment', po.id), {
+        //     onSuccess: () => setShowPaymentModal(false),
+        // });
     };
 
     const renderActions = () => {
@@ -107,7 +113,7 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                     <Button key="submit" onClick={handleSubmit}>
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Submit Order
-                    </Button>
+                    </Button>,
                 );
             }
 
@@ -116,25 +122,36 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                     <Button key="receive" onClick={handleReceive}>
                         <Download className="mr-2 h-4 w-4" />
                         Confirm Receipt
-                    </Button>
+                    </Button>,
                 );
             }
 
             if (['submitted', 'approved', 'processing'].includes(po.status)) {
                 actions.push(
-                    <Button key="cancel" variant="outline" onClick={handleCancel}>
+                    <Button
+                        key="cancel"
+                        variant="outline"
+                        onClick={handleCancel}
+                    >
                         <XCircle className="mr-2 h-4 w-4" />
                         Cancel Order
-                    </Button>
+                    </Button>,
                 );
             }
 
-            if (po.payment_status !== 'paid' && po.payment_status !== 'cancelled') {
+            if (
+                po.payment_status !== 'paid' &&
+                po.payment_status !== 'cancelled'
+            ) {
                 actions.push(
-                    <Button key="payment" variant="outline" onClick={() => setShowPaymentModal(true)}>
+                    <Button
+                        key="payment"
+                        variant="outline"
+                        onClick={() => setShowPaymentModal(true)}
+                    >
                         <CreditCard className="mr-2 h-4 w-4" />
                         Record Payment
-                    </Button>
+                    </Button>,
                 );
             }
         }
@@ -145,13 +162,17 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                     <Button key="approve" onClick={handleApprove}>
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Approve Order
-                    </Button>
+                    </Button>,
                 );
                 actions.push(
-                    <Button key="reject" variant="outline" onClick={handleCancel}>
+                    <Button
+                        key="reject"
+                        variant="outline"
+                        onClick={handleCancel}
+                    >
                         <XCircle className="mr-2 h-4 w-4" />
                         Reject Order
-                    </Button>
+                    </Button>,
                 );
             }
 
@@ -160,7 +181,7 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                     <Button key="ship" onClick={handleShip}>
                         <Truck className="mr-2 h-4 w-4" />
                         Mark as Shipped
-                    </Button>
+                    </Button>,
                 );
             }
         }
@@ -179,16 +200,26 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                             Purchase Order {po.po_number}
                         </h1>
                         <div className="mt-2 flex flex-wrap gap-2">
-                            <Badge variant={statusConfig[po.status].variant}>
+                            <Badge
+                                variant="light"
+                                color={statusConfig[po.status].color}
+                            >
                                 {statusConfig[po.status].label}
                             </Badge>
-                            <Badge variant={paymentStatusConfig[po.payment_status].variant}>
+                            <Badge
+                                variant="light"
+                                color={
+                                    paymentStatusConfig[po.payment_status].color
+                                }
+                            >
                                 {paymentStatusConfig[po.payment_status].label}
                             </Badge>
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">{renderActions()}</div>
+                    <div className="flex flex-wrap gap-2">
+                        {renderActions()}
+                    </div>
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-3">
@@ -232,18 +263,26 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                                         >
                                             <div className="flex-1">
                                                 <p className="font-medium text-gray-900 dark:text-white">
-                                                    {item.product_variant?.product?.name}
+                                                    {
+                                                        item.product_variant
+                                                            ?.product?.name
+                                                    }
                                                 </p>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                    SKU: {item.product_variant?.sku}
+                                                    SKU:{' '}
+                                                    {item.product_variant?.sku}
                                                 </p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-medium text-gray-900 dark:text-white">
-                                                    {item.quantity} × ${item.unit_price.toFixed(2)}
+                                                    {item.quantity} × $
+                                                    {Number(item.unit_price).toFixed(2)}
                                                 </p>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                    ${item.total_price.toFixed(2)}
+                                                    $
+                                                    {Number(item.total_price).toFixed(
+                                                        2,
+                                                    )}
                                                 </p>
                                             </div>
                                         </div>
@@ -261,37 +300,47 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
 
                             <div className="space-y-3 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+                                    <span className="text-gray-500 dark:text-gray-400">
+                                        Subtotal
+                                    </span>
                                     <span className="font-medium text-gray-900 dark:text-white">
-                                        ${po.subtotal.toFixed(2)}
+                                        ${Number(po.subtotal).toFixed(2)}
                                     </span>
                                 </div>
                                 {po.tax_amount > 0 && (
                                     <div className="flex justify-between">
-                                        <span className="text-gray-500 dark:text-gray-400">Tax</span>
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            Tax
+                                        </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            ${po.tax_amount.toFixed(2)}
+                                            ${Number(po.tax_amount).toFixed(2)}
                                         </span>
                                     </div>
                                 )}
                                 {po.shipping_amount > 0 && (
                                     <div className="flex justify-between">
-                                        <span className="text-gray-500 dark:text-gray-400">Shipping</span>
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            Shipping
+                                        </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            ${po.shipping_amount.toFixed(2)}
+                                            ${Number(po.shipping_amount).toFixed(2)}
                                         </span>
                                     </div>
                                 )}
                                 {po.discount_amount > 0 && (
                                     <div className="flex justify-between text-green-600">
                                         <span>Discount</span>
-                                        <span>-${po.discount_amount.toFixed(2)}</span>
+                                        <span>
+                                            -${po.discount_amount.toFixed(2)}
+                                        </span>
                                     </div>
                                 )}
                                 <div className="flex justify-between border-t pt-3 text-base font-semibold dark:border-gray-700">
-                                    <span className="text-gray-900 dark:text-white">Total</span>
                                     <span className="text-gray-900 dark:text-white">
-                                        ${po.total_amount.toFixed(2)}
+                                        Total
+                                    </span>
+                                    <span className="text-gray-900 dark:text-white">
+                                        ${Number(po.total_amount).toFixed(2)}
                                     </span>
                                 </div>
                             </div>
@@ -304,22 +353,32 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
 
                             <div className="space-y-3 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-gray-500 dark:text-gray-400">Paid Amount</span>
+                                    <span className="text-gray-500 dark:text-gray-400">
+                                        Paid Amount
+                                    </span>
                                     <span className="font-medium text-green-600">
-                                        ${po.paid_amount.toFixed(2)}
+                                        ${Number(po.paid_amount).toFixed(2)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-500 dark:text-gray-400">Outstanding</span>
+                                    <span className="text-gray-500 dark:text-gray-400">
+                                        Outstanding
+                                    </span>
                                     <span className="font-medium text-orange-600">
-                                        ${(po.total_amount - po.paid_amount).toFixed(2)}
+                                        $
+                                        {(
+                                            po.total_amount - po.paid_amount
+                                        ).toFixed(2)}
                                     </span>
                                 </div>
                                 {po.payment_due_date && (
                                     <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                                         <Calendar className="h-4 w-4" />
                                         <span className="text-xs">
-                                            Due: {new Date(po.payment_due_date).toLocaleDateString()}
+                                            Due:{' '}
+                                            {new Date(
+                                                po.payment_due_date,
+                                            ).toLocaleDateString()}
                                         </span>
                                     </div>
                                 )}
@@ -336,8 +395,14 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                                                 key={payment.id}
                                                 className="flex justify-between text-xs text-gray-600 dark:text-gray-400"
                                             >
-                                                <span>{new Date(payment.payment_date).toLocaleDateString()}</span>
-                                                <span className="font-medium">${payment.amount.toFixed(2)}</span>
+                                                <span>
+                                                    {new Date(
+                                                        payment.payment_date,
+                                                    ).toLocaleDateString()}
+                                                </span>
+                                                <span className="font-medium">
+                                                    ${Number(payment.amount).toFixed(2)}
+                                                </span>
                                             </div>
                                         ))}
                                     </div>
@@ -345,7 +410,8 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                             )}
                         </Card>
 
-                        {(po.expected_delivery_date || po.actual_delivery_date) && (
+                        {(po.expected_delivery_date ||
+                            po.actual_delivery_date) && (
                             <Card className="p-6">
                                 <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
                                     Delivery
@@ -355,7 +421,10 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                                         <div className="flex items-center gap-2">
                                             <Calendar className="h-4 w-4 text-gray-400" />
                                             <span className="text-gray-600 dark:text-gray-400">
-                                                Expected: {new Date(po.expected_delivery_date).toLocaleDateString()}
+                                                Expected:{' '}
+                                                {new Date(
+                                                    po.expected_delivery_date,
+                                                ).toLocaleDateString()}
                                             </span>
                                         </div>
                                     )}
@@ -363,7 +432,10 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                                         <div className="flex items-center gap-2">
                                             <CheckCircle className="h-4 w-4 text-green-500" />
                                             <span className="text-gray-600 dark:text-gray-400">
-                                                Delivered: {new Date(po.actual_delivery_date).toLocaleDateString()}
+                                                Delivered:{' '}
+                                                {new Date(
+                                                    po.actual_delivery_date,
+                                                ).toLocaleDateString()}
                                             </span>
                                         </div>
                                     )}
@@ -381,11 +453,12 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                             Record Payment
                         </h3>
 
-                        <form onSubmit={handleRecordPayment} className="space-y-4">
+                        <form
+                            onSubmit={handleRecordPayment}
+                            className="space-y-4"
+                        >
                             <div>
-                                <Label htmlFor="amount" required>
-                                    Amount
-                                </Label>
+                                <Label htmlFor="amount">Amount</Label>
                                 <Input
                                     id="amount"
                                     type="number"
@@ -393,43 +466,62 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                                     min="0.01"
                                     max={po.total_amount - po.paid_amount}
                                     value={paymentData.amount}
-                                    onChange={(e) => setPaymentData('amount', e.target.value)}
+                                    onChange={(e) =>
+                                        setPaymentData('amount', e.target.value)
+                                    }
                                     required
                                 />
                             </div>
 
                             <div>
-                                <Label htmlFor="payment_date" required>
+                                <Label htmlFor="payment_date">
                                     Payment Date
                                 </Label>
                                 <Input
                                     id="payment_date"
                                     type="date"
                                     value={paymentData.payment_date}
-                                    onChange={(e) => setPaymentData('payment_date', e.target.value)}
+                                    onChange={(e) =>
+                                        setPaymentData(
+                                            'payment_date',
+                                            e.target.value,
+                                        )
+                                    }
                                     required
                                 />
                             </div>
 
                             <div>
-                                <Label htmlFor="payment_method" required>
+                                <Label htmlFor="payment_method">
                                     Payment Method
                                 </Label>
                                 <Input
                                     id="payment_method"
                                     value={paymentData.payment_method}
-                                    onChange={(e) => setPaymentData('payment_method', e.target.value)}
+                                    onChange={(e) =>
+                                        setPaymentData(
+                                            'payment_method',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="e.g., Bank Transfer, Cash"
                                     required
                                 />
                             </div>
 
                             <div>
-                                <Label htmlFor="reference_number">Reference Number</Label>
+                                <Label htmlFor="reference_number">
+                                    Reference Number
+                                </Label>
                                 <Input
                                     id="reference_number"
                                     value={paymentData.reference_number}
-                                    onChange={(e) => setPaymentData('reference_number', e.target.value)}
+                                    onChange={(e) =>
+                                        setPaymentData(
+                                            'reference_number',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="Transaction ID or check number"
                                 />
                             </div>
@@ -440,7 +532,9 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                                     id="notes"
                                     rows={2}
                                     value={paymentData.notes}
-                                    onChange={(e) => setPaymentData('notes', e.target.value)}
+                                    onChange={(e) =>
+                                        setPaymentData('notes', e.target.value)
+                                    }
                                     className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                     placeholder="Optional payment notes"
                                 />
@@ -455,7 +549,11 @@ export default function Show({ purchaseOrder: po, isSupplier, isBuyer }: Props) 
                                 >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={processingPayment} className="flex-1">
+                                <Button
+                                    type="submit"
+                                    disabled={processingPayment}
+                                    className="flex-1"
+                                >
                                     <DollarSign className="mr-2 h-4 w-4" />
                                     Record Payment
                                 </Button>

@@ -335,7 +335,7 @@ class StockMovementController extends Controller
                 'productVariant.product',
                 'fromLocation.location',
                 'toLocation.location',
-                'createdBy:id,name',
+                'createdBy:id,first_name',
             ])
             ->latest();
 
@@ -379,7 +379,7 @@ class StockMovementController extends Controller
                     $movement->productVariant->product->name ?? 'N/A',
                     $movement->productVariant->sku ?? 'N/A',
                     $movement->productVariant->name ?? 'Default',
-                    $movement->type,
+                    $movement->type->label(),
                     $movement->quantity,
                     $movement->quantity_before ?? 'N/A',
                     $movement->quantity_after ?? 'N/A',

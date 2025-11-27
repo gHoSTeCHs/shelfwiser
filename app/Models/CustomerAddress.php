@@ -41,7 +41,7 @@ class CustomerAddress extends Model
      */
     public function customer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'customer_id');
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 
     /**
@@ -59,7 +59,7 @@ class CustomerAddress extends Model
     {
         return $query->where(function ($q) use ($type) {
             $q->where('type', $type)
-              ->orWhere('type', 'both');
+                ->orWhere('type', 'both');
         });
     }
 

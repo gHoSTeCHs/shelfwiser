@@ -3,11 +3,11 @@
 namespace App\Services;
 
 use App\Models\Service;
-use App\Models\ServiceVariant;
 use App\Models\ServiceAddon;
 use App\Models\ServiceCategory;
-use App\Models\Tenant;
+use App\Models\ServiceVariant;
 use App\Models\Shop;
+use App\Models\Tenant;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -55,7 +55,7 @@ class ServiceManagementService
                     }
                 }
 
-                Cache::tags(["tenant:{$tenant->id}:services"])->flush();
+                Cache::tags(["tenant:$tenant->id:services"])->flush();
 
                 Log::info('Service created successfully.', ['service_id' => $service->id]);
 
@@ -94,7 +94,7 @@ class ServiceManagementService
 
                 $service->update($data);
 
-                Cache::tags(["tenant:{$service->tenant_id}:services"])->flush();
+                Cache::tags(["tenant:$service->tenant_id:services"])->flush();
 
                 Log::info('Service updated successfully.', ['service_id' => $service->id]);
 
@@ -132,7 +132,7 @@ class ServiceManagementService
 
                 $service->delete();
 
-                Cache::tags(["tenant:{$tenantId}:services"])->flush();
+                Cache::tags(["tenant:$tenantId:services"])->flush();
 
                 Log::info('Service deleted successfully.', ['service_id' => $service->id]);
 
@@ -173,9 +173,9 @@ class ServiceManagementService
                 'is_active' => $data['is_active'] ?? true,
             ];
 
-            $variant = ServiceVariant::create($variantData);
+            $variant = ServiceVariant::query()->create($variantData);
 
-            Cache::tags(["tenant:{$service->tenant_id}:services"])->flush();
+            Cache::tags(["tenant:$service->tenant_id:services"])->flush();
 
             Log::info('Service variant created successfully.', ['variant_id' => $variant->id]);
 
@@ -236,7 +236,7 @@ class ServiceManagementService
 
             $variant->delete();
 
-            Cache::tags(["tenant:{$tenantId}:services"])->flush();
+            Cache::tags(["tenant:$tenantId:services"])->flush();
 
             Log::info('Service variant deleted successfully.', ['variant_id' => $variant->id]);
 
@@ -354,7 +354,7 @@ class ServiceManagementService
 
             $addon->delete();
 
-            Cache::tags(["tenant:{$tenantId}:services"])->flush();
+            Cache::tags(["tenant:$tenantId:services"])->flush();
 
             Log::info('Service addon deleted successfully.', ['addon_id' => $addon->id]);
 
@@ -379,7 +379,7 @@ class ServiceManagementService
         $counter = 1;
 
         while ($this->slugExists($slug, $shop, $excludeId)) {
-            $slug = $originalSlug . '-' . $counter;
+            $slug = $originalSlug.'-'.$counter;
             $counter++;
         }
 
@@ -391,7 +391,7 @@ class ServiceManagementService
      */
     protected function slugExists(string $slug, Shop $shop, ?int $excludeId = null): bool
     {
-        $query = Service::where('shop_id', $shop->id)
+        $query = Service::query()->where('shop_id', $shop->id)
             ->where('slug', $slug);
 
         if ($excludeId) {

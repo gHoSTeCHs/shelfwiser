@@ -9,9 +9,6 @@ class ShopConfigHandlerFactory
 {
     /**
      * Create a schema-based config handler from a shop type or schema array.
-     *
-     * @param ShopType|array $schemaSource
-     * @return ShopConfigHandler
      */
     public static function make(ShopType|array $schemaSource): ShopConfigHandler
     {

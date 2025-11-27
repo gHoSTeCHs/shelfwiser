@@ -26,7 +26,7 @@ class ServiceCategoryController extends Controller
         return Inertia::render('ServiceCategories/Index', [
             'categories' => ServiceCategory::query()->where('tenant_id', $tenantId)
                 ->whereNull('parent_id')
-                ->with(['children' => fn($q) => $q->orderBy('sort_order')])
+                ->with(['children' => fn ($q) => $q->orderBy('sort_order')])
                 ->withCount('services')
                 ->orderBy('sort_order')
                 ->get(),

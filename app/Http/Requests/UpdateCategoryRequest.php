@@ -9,6 +9,7 @@ class UpdateCategoryRequest extends FormRequest
     public function authorize(): bool
     {
         $category = $this->route('category');
+
         return $this->user()->can('update', $category);
     }
 
@@ -23,8 +24,8 @@ class UpdateCategoryRequest extends FormRequest
             'parent_id' => [
                 'nullable',
                 'integer',
-                'exists:product_categories,id,tenant_id,' . $tenantId,
-                'not_in:' . $categoryId,
+                'exists:product_categories,id,tenant_id,'.$tenantId,
+                'not_in:'.$categoryId,
             ],
             'is_active' => ['boolean'],
         ];

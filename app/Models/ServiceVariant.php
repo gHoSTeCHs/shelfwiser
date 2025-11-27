@@ -62,7 +62,7 @@ class ServiceVariant extends Model
      */
     public function getPriceForMaterialOption(?MaterialOption $option): float
     {
-        if (!$this->service->has_material_options || $option === MaterialOption::NONE) {
+        if (! $this->service->has_material_options || $option === MaterialOption::NONE) {
             return (float) $this->base_price;
         }
 

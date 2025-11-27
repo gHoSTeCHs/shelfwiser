@@ -1,6 +1,6 @@
 import StorefrontLayout from '@/layouts/StorefrontLayout';
-import { CheckoutProps } from '@/types/storefront';
-import { Form } from '@inertiajs/react';
+import { CheckoutProps, PaymentGatewayInfo } from '@/types/storefront';
+import { Form, router } from '@inertiajs/react';
 import React from 'react';
 import Input from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
@@ -10,16 +10,73 @@ import Checkbox from '@/components/form/input/Checkbox';
 import { Card } from '@/components/ui/card';
 import Badge from '@/components/ui/badge/Badge';
 import CheckoutController from '@/actions/App/Http/Controllers/Storefront/CheckoutController';
+import { PaymentGatewaySelector, PaystackButton } from '@/components/payment';
+import { PaymentGateway, PaystackCallbackResponse } from '@/types/payment';
 
 /**
  * Checkout page component for processing orders.
  * Single-page checkout with shipping/billing address and order summary.
  */
-const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses, customer }) => {
+const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses, customer, availableGateways = [] }) => {
     const [billingSameAsShipping, setBillingSameAsShipping] = React.useState(true);
     const [saveAddresses, setSaveAddresses] = React.useState(true);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = React.useState<string>('cash_on_delivery');
+    const [paymentReference, setPaymentReference] = React.useState<string>('');
+    const [isPaymentLoading, setIsPaymentLoading] = React.useState(false);
 
     const defaultAddress = addresses.find(addr => addr.is_default && addr.type === 'shipping');
+
+    /**
+     * Generate payment reference on component mount
+     */
+    React.useEffect(() => {
+        const timestamp = Date.now().toString(36);
+        const random = Math.random().toString(36).substring(2, 8);
+        setPaymentReference(`SW_${shop.slug}_${timestamp}_${random}`.toUpperCase());
+    }, [shop.slug]);
+
+    /**
+     * Convert backend gateway info to frontend PaymentGateway type
+     */
+    const convertToPaymentGateway = (gateway: PaymentGatewayInfo): PaymentGateway => ({
+        identifier: gateway.identifier,
+        name: gateway.name,
+        description: '',
+        isAvailable: gateway.isAvailable,
+        supportedCurrencies: gateway.supportedCurrencies,
+        supportsInline: gateway.supportsInline,
+        supportsRefunds: gateway.supportsRefunds,
+    });
+
+    /**
+     * Get the selected gateway's public key for inline payments
+     */
+    const getSelectedGatewayPublicKey = (): string => {
+        const gateway = availableGateways.find(g => g.identifier === selectedPaymentMethod);
+        return gateway?.publicKey || '';
+    };
+
+    /**
+     * Check if selected payment method is Paystack (supports inline)
+     */
+    const isPaystackPayment = (): boolean => {
+        return selectedPaymentMethod === 'paystack';
+    };
+
+    /**
+     * Handle successful Paystack payment
+     */
+    const handlePaystackSuccess = (response: PaystackCallbackResponse) => {
+        setIsPaymentLoading(true);
+        window.location.href = `/payment/callback/paystack?reference=${response.reference}&trxref=${response.trxref}`;
+    };
+
+    /**
+     * Handle Paystack payment modal close
+     */
+    const handlePaystackClose = () => {
+        setIsPaymentLoading(false);
+    };
 
     const isProduct = (item: any) => {
         return item.sellable_type === 'App\\Models\\ProductVariant' || item.product_variant_id;
@@ -253,14 +310,19 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
                                 <Card className="p-6">
                                     <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
 
-                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                        <p className="font-medium">Cash on Delivery</p>
-                                        <p className="text-sm text-gray-600 mt-1">
-                                            Pay with cash when your order is delivered
-                                        </p>
-                                    </div>
+                                    <PaymentGatewaySelector
+                                        availableGateways={availableGateways.map(convertToPaymentGateway)}
+                                        selectedGateway={selectedPaymentMethod}
+                                        onSelect={(gateway) => {
+                                            setSelectedPaymentMethod(gateway);
+                                            setData('payment_method', gateway);
+                                        }}
+                                        disabled={processing || isPaymentLoading}
+                                        currency={shop.currency || 'NGN'}
+                                    />
 
-                                    <input type="hidden" name="payment_method" value="cash_on_delivery" />
+                                    <input type="hidden" name="payment_method" value={selectedPaymentMethod} />
+                                    <input type="hidden" name="payment_reference" value={paymentReference} />
                                 </Card>
 
                                 <Card className="p-6">
@@ -350,16 +412,38 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
                                             </div>
                                         </div>
 
-                                        <Button
-                                            type="submit"
-                                            variant="primary"
-                                            fullWidth
-                                            disabled={processing}
-                                            loading={processing}
-                                            className="mt-6"
-                                        >
-                                            Place Order
-                                        </Button>
+                                        {isPaystackPayment() && getSelectedGatewayPublicKey() ? (
+                                            <PaystackButton
+                                                email={customer.email}
+                                                amount={Math.round(cartSummary.total * 100)}
+                                                currency={shop.currency || 'NGN'}
+                                                reference={paymentReference}
+                                                publicKey={getSelectedGatewayPublicKey()}
+                                                onSuccess={handlePaystackSuccess}
+                                                onClose={handlePaystackClose}
+                                                metadata={{
+                                                    order_number: paymentReference,
+                                                    shop_id: shop.id,
+                                                    customer_id: customer.id,
+                                                }}
+                                                label="Pay Now"
+                                                disabled={processing || isPaymentLoading}
+                                            />
+                                        ) : (
+                                            <Button
+                                                type="submit"
+                                                variant="primary"
+                                                fullWidth
+                                                disabled={processing || isPaymentLoading}
+                                                loading={processing || isPaymentLoading}
+                                                className="mt-6"
+                                            >
+                                                {selectedPaymentMethod === 'cash_on_delivery'
+                                                    ? 'Place Order'
+                                                    : `Pay ${shop.currency_symbol}${cartSummary.total.toFixed(2)}`
+                                                }
+                                            </Button>
+                                        )}
                                     </div>
                                 </Card>
                             </div>

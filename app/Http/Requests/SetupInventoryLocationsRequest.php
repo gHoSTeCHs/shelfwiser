@@ -29,7 +29,7 @@ class SetupInventoryLocationsRequest extends FormRequest
             'shop_ids.*' => [
                 'required',
                 'integer',
-                'exists:shops,id,tenant_id,' . $tenantId . ',is_active,1',
+                'exists:shops,id,tenant_id,'.$tenantId.',is_active,1',
             ],
         ];
     }

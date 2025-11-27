@@ -8,10 +8,10 @@ use App\Http\Requests\CreateOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Http\Requests\UpdatePaymentStatusRequest;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\Shop;
-use App\Models\User;
 use App\Services\OrderService;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -24,9 +24,7 @@ use Throwable;
 
 class OrderController extends Controller
 {
-    public function __construct(private readonly OrderService $orderService)
-    {
-    }
+    public function __construct(private readonly OrderService $orderService) {}
 
     /**
      * @throws AuthorizationException
@@ -97,7 +95,7 @@ class OrderController extends Controller
         try {
             $shop = Shop::query()->findOrFail($request->input('shop_id'));
             $customer = $request->input('customer_id')
-                ? User::query()->findOrFail($request->input('customer_id'))
+                ? Customer::query()->findOrFail($request->input('customer_id'))
                 : null;
 
             $order = $this->orderService->createOrder(
@@ -118,7 +116,7 @@ class OrderController extends Controller
         } catch (Exception $e) {
             return Redirect::back()
                 ->withInput()
-                ->with('error', 'Failed to create order: ' . $e->getMessage());
+                ->with('error', 'Failed to create order: '.$e->getMessage());
         }
     }
 
@@ -135,7 +133,8 @@ class OrderController extends Controller
             'items.productVariant.product',
             'items.productVariant.inventoryLocations.location',
             'items.packagingType',
-            'createdBy'
+            'createdBy',
+            'payments.recordedBy',
         ]);
 
         return Inertia::render('Orders/Show', [
@@ -153,7 +152,7 @@ class OrderController extends Controller
     {
         Gate::authorize('manage', $order);
 
-        if (!$order->canEdit()) {
+        if (! $order->canEdit()) {
             return Redirect::route('orders.show', $order)
                 ->with('error', 'Order cannot be edited in current status.');
         }
@@ -196,7 +195,7 @@ class OrderController extends Controller
         } catch (Exception $e) {
             return Redirect::back()
                 ->withInput()
-                ->with('error', 'Failed to update order: ' . $e->getMessage());
+                ->with('error', 'Failed to update order: '.$e->getMessage());
         }
     }
 
@@ -238,18 +237,18 @@ class OrderController extends Controller
                     $request->input('reason')
                 );
             } else {
-                if (!$order->status->canTransitionTo($newStatus)) {
+                if (! $order->status->canTransitionTo($newStatus)) {
                     throw new Exception("Cannot change status from {$order->status->value} to $newStatus->value");
                 }
                 $order->status = $newStatus;
 
                 // Set shipped_at timestamp when status changes to SHIPPED
-                if ($newStatus === OrderStatus::SHIPPED && !$order->shipped_at) {
+                if ($newStatus === OrderStatus::SHIPPED && ! $order->shipped_at) {
                     $order->shipped_at = now();
                 }
 
                 // Set delivered_at timestamp when status changes to DELIVERED
-                if ($newStatus === OrderStatus::DELIVERED && !$order->delivered_at) {
+                if ($newStatus === OrderStatus::DELIVERED && ! $order->delivered_at) {
                     $order->delivered_at = now();
                 }
 
@@ -260,7 +259,7 @@ class OrderController extends Controller
                 ->with('success', "Order status updated to {$newStatus->label()}.");
         } catch (Exception $e) {
             return Redirect::back()
-                ->with('error', 'Failed to update order status: ' . $e->getMessage());
+                ->with('error', 'Failed to update order status: '.$e->getMessage());
         }
     }
 
@@ -279,7 +278,7 @@ class OrderController extends Controller
                 ->with('success', "Payment status updated to {$newStatus->label()}.");
         } catch (Exception $e) {
             return Redirect::back()
-                ->with('error', 'Failed to update payment status: ' . $e->getMessage());
+                ->with('error', 'Failed to update payment status: '.$e->getMessage());
         }
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Requests\CreateProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductTemplate;
 use App\Models\ProductType;
 use App\Models\Shop;
 use App\Models\StockMovement;
@@ -15,10 +16,14 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class ProductController extends Controller
 {
-    public function __construct(private readonly ProductService $productService)
+    public function __construct(
+        private readonly ProductService $productService,
+//        private  ProductTemplateService $templateService
+    )
     {
     }
 
@@ -59,13 +64,23 @@ class ProductController extends Controller
             ->with('children')
             ->get(['id', 'name', 'slug']);
 
+        $templates = ProductTemplate::availableFor($tenantId)
+            ->active()
+            ->with(['productType', 'category'])
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('Products/Create', [
             'shops' => $shops,
             'productTypes' => $productTypes,
             'categories' => $categories,
+            'templates' => $templates,
         ]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function store(CreateProductRequest $request): RedirectResponse
     {
         $shop = Shop::query()->findOrFail($request->input('shop_id'));
@@ -95,7 +110,7 @@ class ProductController extends Controller
             },
             'variants.images' => function ($query) {
                 $query->ordered();
-            }
+            },
         ]);
 
         $tenantId = auth()->user()->tenant_id;
@@ -133,7 +148,7 @@ class ProductController extends Controller
             },
             'variants.images' => function ($query) {
                 $query->ordered();
-            }
+            },
         ]);
 
         $tenantId = auth()->user()->tenant_id;

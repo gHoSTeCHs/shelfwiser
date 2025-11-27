@@ -43,11 +43,6 @@ class ProductVariant extends Model
         'max_order_quantity' => 'integer',
     ];
 
-    protected $appends = [
-        'total_stock',
-        'available_stock',
-    ];
-
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
@@ -72,13 +67,29 @@ class ProductVariant extends Model
         return $this->morphMany(Image::class, 'imageable');
     }
 
+    /**
+     * Get total stock across all locations
+     * Note: Use eager loading with 'inventoryLocations' to avoid N+1 queries
+     */
     public function getTotalStockAttribute(): int
     {
+        if ($this->relationLoaded('inventoryLocations')) {
+            return $this->inventoryLocations->sum('quantity');
+        }
+
         return $this->inventoryLocations()->sum('quantity');
     }
 
+    /**
+     * Get available stock (total - reserved) across all locations
+     * Note: Use eager loading with 'inventoryLocations' to avoid N+1 queries
+     */
     public function getAvailableStockAttribute(): int
     {
+        if ($this->relationLoaded('inventoryLocations')) {
+            return $this->inventoryLocations->sum(fn ($loc) => $loc->quantity - $loc->reserved_quantity);
+        }
+
         return $this->inventoryLocations()->sum(\DB::raw('quantity - reserved_quantity'));
     }
 

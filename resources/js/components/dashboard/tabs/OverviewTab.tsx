@@ -19,6 +19,8 @@ export default function OverviewTab({
     data,
     canViewFinancials,
 }: OverviewTabProps) {
+    console.log(canViewFinancials)
+
     const formatCurrency = (value: number) =>
         new Intl.NumberFormat('en-NG', {
             style: 'currency',

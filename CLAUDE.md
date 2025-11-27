@@ -1,8 +1,8 @@
 # CLAUDE.md - ShelfWiser Development Guide
 
-> **Version:** 1.1.0 | **Updated:** 2025-11-15
+> **Version:** 1.4.0 | **Updated:** 2025-11-18
 > **Project:** ShelfWiser - Multi-Tenant Inventory Management SaaS
-> **Status:** Beta (Advanced Stage)
+> **Status:** Production-Ready
 
 ---
 
@@ -11,14 +11,22 @@
 **ShelfWiser** is a feature-complete, multi-tenant SaaS for inventory management with:
 - ✅ Multi-store operations with tenant isolation
 - ✅ Product catalog (variants, packaging, dynamic schemas)
+- ✅ **Product templates** (quick product creation from blueprints)
 - ✅ Stock movements with full audit trails
 - ✅ Order processing & lifecycle management
+- ✅ **POS/Quick Sale system** (retail checkout)
+- ✅ **Receipt generation** (PDF receipts, email delivery)
+- ✅ **Customer credit/tab system** (credit management)
 - ✅ **Supplier/procurement system** (B2B marketplace)
 - ✅ **E-commerce frontend** (shopping cart, customer accounts)
-- ✅ **Advanced reports** (sales, inventory, suppliers, financials, profitability)
-- ✅ 7-level role hierarchy with permissions
+- ✅ **Advanced reports** (sales, inventory, suppliers, financials)
+- ✅ **Employee payroll** (salary management, deductions)
+- ✅ **Super Admin system** (platform management)
+- ✅ **Payment gateway integration** (Paystack, OPay, Flutterwave, Crypto)
+- ✅ **PWA support** (offline mode, background sync)
+- ✅ 8-level role hierarchy with permissions
 
-**Current Architecture:** 25 models • 18 services • 10 policies • 10 enums • 45+ migrations
+**Current Architecture:** 36+ models • 26+ services • 13+ policies • 10+ enums • 56+ migrations
 
 ---
 
@@ -86,7 +94,7 @@ public function create(array $data): Product
 
 ### Authorization
 
-**7-Level Hierarchy:** Owner (100) → General Manager (80) → Store Manager (60) → Assistant Manager (50) → Sales Rep (40) → Inventory Clerk (30) → Cashier (30)
+**8-Level Hierarchy:** Super Admin (999) → Owner (100) → General Manager (80) → Store Manager (60) → Assistant Manager (50) → Sales Rep (40) → Inventory Clerk (30) → Cashier (30)
 
 ```php
 // Use policies
@@ -109,7 +117,12 @@ if ($targetUser->role->level() >= $currentUser->role->level()) {
 
 ```
 Tenant (root)
-├── User (7 roles) → ShopUser (pivot) → Shop
+├── User (7 roles) → ShopUser (pivot) → Shop  [Staff/Employees]
+├── Customer (separate from User) [E-commerce customers]
+│   ├── CustomerAddress
+│   ├── CustomerCreditTransaction
+│   ├── Cart → CartItem
+│   └── Order → OrderItem
 ├── Shop
 │   ├── Product
 │   │   ├── ProductCategory (hierarchical)
@@ -118,16 +131,72 @@ Tenant (root)
 │   │       ├── InventoryLocation (polymorphic)
 │   │       ├── ProductPackagingType
 │   │       └── StockMovement (audit trail)
-│   ├── Order → OrderItem
-│   └── PurchaseOrder → PurchaseOrderItem
+│   ├── Order → OrderItem → OrderPayment
+│   ├── PurchaseOrder → PurchaseOrderItem
+│   ├── Receipt (order/payment PDFs)
+│   └── EmployeePayroll (salary, deductions)
 ├── SupplierProfile (B2B marketplace)
 │   ├── SupplierConnection (tenant-to-tenant)
 │   ├── SupplierCatalogItem
 │   └── SupplierPricingTier
-└── Cart → CartItem (e-commerce)
+└── Service (sellable services, polymorphic with Product)
 ```
 
 **Key Enums:** UserRole • OrderStatus • PaymentStatus • StockMovementType • PurchaseOrderStatus • ConnectionStatus • InventoryModel
+
+**Important:** Customer and User are separate tables. Customer = e-commerce customers, User = staff/employees.
+
+---
+
+## 📦 Product Templates
+
+Product templates are reusable blueprints for quick product creation.
+
+### Types
+- **System templates** (`is_system=true`, `tenant_id=null`) - Created by Super Admin, available to all tenants
+- **Tenant templates** - Created by shop owners for their own use
+
+### Key Files
+- `ProductTemplate.php` - Model with `availableFor()` scope
+- `ProductTemplateService.php` - CRUD and product creation
+- `ProductTemplateController.php` - Tenant API endpoints
+- `AdminProductTemplateController.php` - Super Admin CRUD
+- `SearchableTemplateSelector.tsx` - Frontend search component
+
+### API Endpoints (Tenant)
+```php
+GET  /product-templates/available?search=milk&product_type_id=1  // Search templates
+GET  /product-templates/{id}                                      // Get template
+POST /product-templates/{id}/shops/{shop}/create-product          // Create product
+POST /product-templates/save                                      // Save as template
+```
+
+### Template Structure
+```php
+'template_structure' => [
+    'variants' => [
+        [
+            'name' => '150g Sachet',
+            'attributes' => ['size' => '150g'],
+            'packaging_types' => [
+                ['name' => 'Piece', 'units_per_package' => 1, 'is_base_unit' => true],
+                ['name' => 'Carton', 'units_per_package' => 48, 'can_break_down' => true],
+            ]
+        ]
+    ]
+]
+```
+
+### Usage in Frontend
+```tsx
+import SearchableTemplateSelector from '@/components/products/SearchableTemplateSelector';
+
+<SearchableTemplateSelector
+    templates={templates}
+    onSelect={handleTemplateSelect}
+    selectedTemplateId={selectedTemplateId}
+/>
+```
 
 ---
 
@@ -358,21 +427,28 @@ router.visit(OrderController.edit.url({ order: order.id }));
 
 ## 📋 Feature Status
 
-| Feature | Status | Files | Notes |
-|---------|--------|-------|-------|
-| Multi-Tenancy | ✅ Production | `Tenant.php`, `TenantService.php` | Row-level isolation |
-| Products/Inventory | ✅ Production | `Product.php`, `ProductService.php` | Variants, packaging, categories |
-| Stock Movements | ✅ Production | `StockMovementService.php` | 5 types, full audit trail |
-| Orders | ✅ Production | `OrderController.php`, `OrderService.php` | Full lifecycle |
-| **Supplier System** | ✅ **Beta** | `SupplierService.php`, `PurchaseOrderService.php` | B2B marketplace, PO workflow |
-| **E-Commerce** | 🔶 **Alpha** | `CartService.php`, `StorefrontService.php` | Cart, catalog, customer accounts |
-| **Reports** | ✅ **Beta** | `ReportService.php`, `ExportService.php` | 6 report types with exports |
-| Staff Management | ✅ Production | `StaffManagementService.php` | 7-level hierarchy |
-| Dashboard | ✅ Production | `DashboardService.php` | Permission-filtered metrics |
-| API | 🔶 Minimal | `routes/api.php` | Sanctum setup |
-| Testing | 🚧 Basic | `tests/` (15 files) | Needs expansion |
-| Payment Gateway | ❌ Not Started | - | Stripe/PayPal planned |
-| Shipping/Delivery | ❌ Not Started | - | Carrier integration planned |
+| Feature | Status | Key Files | Notes |
+|---------|--------|-----------|-------|
+| Multi-Tenancy | ✅ | `Tenant.php`, `TenantService.php` | Row-level isolation |
+| Products/Inventory | ✅ | `ProductService.php` | Variants, packaging, categories |
+| **Product Templates** | ✅ | `ProductTemplateService.php` | System/tenant blueprints, searchable selector |
+| Stock Movements | ✅ | `StockMovementService.php` | 5 types, full audit trail |
+| Orders | ✅ | `OrderService.php` | Full lifecycle, payment tracking |
+| POS System | ✅ | `POSService.php` | Quick sales, cash handling |
+| Receipts | ✅ | `ReceiptService.php` | PDF generation, email delivery |
+| Customer Credit | ✅ | `CustomerCreditService.php` | Credit limits, payment tracking |
+| Supplier System | ✅ | `PurchaseOrderService.php` | B2B marketplace, PO workflow |
+| E-Commerce | ✅ | `CartService.php`, `StorefrontService.php` | Cart, catalog, accounts |
+| Employee Payroll | ✅ | `EmployeePayrollService.php` | Salary, deductions, pay periods |
+| Services (sellable) | ✅ | `ServiceController.php` | Service catalog with polymorphism |
+| Reports | ✅ | `ReportService.php` | 6 report types with exports |
+| Staff Management | ✅ | `StaffManagementService.php` | 8-level hierarchy |
+| **Super Admin** | ✅ | `AdminTenantController.php` | Platform management, subscriptions |
+| **Payment Gateway** | ✅ | `PaymentGatewayManager.php` | Paystack, OPay, Flutterwave, Crypto |
+| **PWA/Offline** | ✅ | `sw.js`, `indexeddb.ts`, `sync.ts` | Service worker, IndexedDB, sync |
+| API | 🔶 | `routes/api.php` | Sanctum setup, webhooks |
+| Testing | 🚧 | `tests/` | Needs expansion |
+| Shipping/Delivery | ❌ | - | Carrier integration planned |
 
 ---
 
@@ -500,36 +576,49 @@ docs: Update CLAUDE.md feature status
 ```
 # Backend Core
 app/Models/Tenant.php                           # Tenant root
+app/Models/User.php                             # Staff/employees (8 roles)
+app/Models/Customer.php                         # E-commerce customers (separate!)
 app/Services/ProductService.php                 # Product CRUD
 app/Services/StockMovementService.php           # Inventory operations
 app/Services/OrderService.php                   # Order lifecycle
-app/Services/SupplierService.php                # Supplier B2B
-app/Services/PurchaseOrderService.php           # PO workflow
+app/Services/POSService.php                     # Point of sale
 app/Services/CartService.php                    # E-commerce cart
-app/Enums/UserRole.php                          # 7-level roles
+app/Services/EmployeePayrollService.php         # Payroll management
+app/Enums/UserRole.php                          # 8-level roles
 
-# Policies
-app/Policies/ProductPolicy.php
-app/Policies/OrderPolicy.php
-app/Policies/SupplierPolicy.php
-app/Policies/PurchaseOrderPolicy.php
+# Payment System
+app/Services/Payment/PaymentGatewayManager.php  # Gateway factory
+app/Services/Payment/PaymentGatewayInterface.php # Gateway contract
+app/Services/Payment/Gateways/PaystackGateway.php
+app/Http/Controllers/PaymentController.php      # Callbacks
+app/Http/Controllers/Webhooks/PaymentWebhookController.php
+
+# Admin System
+app/Http/Controllers/Admin/AdminTenantController.php
+app/Http/Middleware/EnsureSuperAdmin.php
+
+# PWA/Offline
+public/sw.js                                    # Service worker
+public/manifest.json                            # PWA manifest
+resources/js/lib/indexeddb.ts                   # IndexedDB utilities
+resources/js/lib/sync.ts                        # Sync mechanism
+resources/js/hooks/usePWA.ts                    # PWA hook
 
 # Frontend
 resources/js/app.tsx                            # Inertia entry
 resources/js/layouts/AppLayout.tsx              # Main layout
-resources/js/pages/Products/Create.tsx          # Example form
+resources/js/components/payment/                # Payment components
 resources/js/components/ui/                     # UI components
 resources/js/components/form/                   # Form components
-resources/js/types/index.ts                     # TypeScript types
 
 # Routes
 routes/web.php                                  # Main routes
+routes/api.php                                  # API + webhooks
 routes/storefront.php                           # E-commerce routes
-routes/auth.php                                 # Auth routes
 
 # Config
-vite.config.ts                                  # Wayfinder + Vite
-config/fortify.php                              # Auth config
+config/payment.php                              # Gateway configuration
+config/services.php                             # API keys
 ```
 
 ---
@@ -650,13 +739,12 @@ it('prevents unauthorized access', function () {
 
 ## 🎯 Next Priorities
 
-1. **Expand Testing** - Supplier system, PO workflow, e-commerce
-2. **Complete E-Commerce** - Checkout, payment gateway (Stripe/PayPal)
-3. **Production Readiness** - Performance, security audit, monitoring
-4. **Documentation** - API docs, deployment guide
+1. **Shipping Integration** - Carrier APIs (FedEx, UPS, DHL)
+2. **Expand Testing** - POS system, receipts, customer credit, payroll
+3. **Production Deployment** - Performance monitoring, error tracking, backups
+4. **API Documentation** - OpenAPI/Swagger docs for external integrations
+5. **Mobile Apps** - Native iOS/Android apps using the existing PWA foundation
 
 ---
 
-**Maintained by:** ShelfWiser Development Team
-**Last Analysis:** 2025-11-15
-**This guide reflects the actual codebase state, not aspirational goals.**
+**Last Updated:** 2025-11-18

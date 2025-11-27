@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\InventoryModel;
-use App\Models\Shop;
 use App\Models\ShopType;
 use App\Services\ShopConfigHandlerFactory;
 use Illuminate\Foundation\Http\FormRequest;
@@ -35,8 +34,8 @@ class UpdateShopRequest extends FormRequest
             $shopType = $this->getShopType();
             $rules['config'] = ['required', 'array', function ($attribute, $value, $fail) use ($shopType) {
                 $handler = ShopConfigHandlerFactory::make($shopType);
-                if (!$handler->validate($value)) {
-                    $fail('Configuration validation failed for shop type: ' . $shopType->label);
+                if (! $handler->validate($value)) {
+                    $fail('Configuration validation failed for shop type: '.$shopType->label);
                 }
             }];
         }

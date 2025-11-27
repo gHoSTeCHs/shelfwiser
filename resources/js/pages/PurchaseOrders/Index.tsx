@@ -9,11 +9,8 @@ import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
 import { Shop } from '@/types/shop';
-import {
-    PurchaseOrderListResponse,
-    PurchaseOrderPaymentStatus,
-    PurchaseOrderStatus,
-} from '@/types/supplier';
+import { PurchaseOrderListResponse } from '@/types/supplier';
+import { paymentStatusConfig, statusConfig } from '@/utils/purchase-order';
 import { Head, Link } from '@inertiajs/react';
 import {
     Building2,
@@ -29,37 +26,6 @@ interface Props {
     purchaseOrders: PurchaseOrderListResponse;
     shops: Shop[];
 }
-
-const statusConfig: Record<
-    PurchaseOrderStatus,
-    {
-        label: string;
-        variant: 'default' | 'warning' | 'success' | 'danger';
-    }
-> = {
-    draft: { label: 'Draft', variant: 'default' },
-    submitted: { label: 'Submitted', variant: 'warning' },
-    approved: { label: 'Approved', variant: 'success' },
-    processing: { label: 'Processing', variant: 'warning' },
-    shipped: { label: 'Shipped', variant: 'success' },
-    received: { label: 'Received', variant: 'success' },
-    completed: { label: 'Completed', variant: 'success' },
-    cancelled: { label: 'Cancelled', variant: 'danger' },
-};
-
-const paymentStatusConfig: Record<
-    PurchaseOrderPaymentStatus,
-    {
-        label: string;
-        variant: 'default' | 'warning' | 'success' | 'danger';
-    }
-> = {
-    pending: { label: 'Pending', variant: 'warning' },
-    partial: { label: 'Partial', variant: 'warning' },
-    paid: { label: 'Paid', variant: 'success' },
-    overdue: { label: 'Overdue', variant: 'danger' },
-    cancelled: { label: 'Cancelled', variant: 'default' },
-};
 
 export default function Index({ purchaseOrders, shops }: Props) {
     const [selectedShop, setSelectedShop] = useState('');
@@ -102,7 +68,7 @@ export default function Index({ purchaseOrders, shops }: Props) {
                                     label: shop.name,
                                 })),
                             ]}
-                            value={selectedShop}
+                            defaultValue={selectedShop}
                             onChange={setSelectedShop}
                             placeholder="Filter by shop"
                         />
@@ -138,9 +104,10 @@ export default function Index({ purchaseOrders, shops }: Props) {
                                                     {po.po_number}
                                                 </Link>
                                                 <Badge
-                                                    variant={
+                                                    variant={'light'}
+                                                    color={
                                                         statusConfig[po.status]
-                                                            .variant
+                                                            .color
                                                     }
                                                 >
                                                     {
@@ -149,10 +116,11 @@ export default function Index({ purchaseOrders, shops }: Props) {
                                                     }
                                                 </Badge>
                                                 <Badge
-                                                    variant={
+                                                    variant={'light'}
+                                                    color={
                                                         paymentStatusConfig[
                                                             po.payment_status
-                                                        ].variant
+                                                        ].color
                                                     }
                                                     size="sm"
                                                 >
@@ -195,9 +163,9 @@ export default function Index({ purchaseOrders, shops }: Props) {
                                                             Total:
                                                         </span>{' '}
                                                         $
-                                                        {po.total_amount.toFixed(
-                                                            2,
-                                                        )}
+                                                        {Number(
+                                                            po.total_amount,
+                                                        ).toFixed(2)}
                                                     </span>
                                                 </div>
 

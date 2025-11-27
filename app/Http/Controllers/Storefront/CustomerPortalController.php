@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Storefront;
 
-use App\Http\Controllers\Controller;
 use App\Enums\OrderType;
+use App\Http\Controllers\Controller;
 use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

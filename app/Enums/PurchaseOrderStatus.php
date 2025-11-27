@@ -40,7 +40,7 @@ enum PurchaseOrderStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::DRAFT => 'Draft',
             self::SUBMITTED => 'Submitted',
             self::APPROVED => 'Approved',
@@ -54,7 +54,7 @@ enum PurchaseOrderStatus: string
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::DRAFT => 'gray',
             self::SUBMITTED => 'yellow',
             self::APPROVED => 'blue',
@@ -69,7 +69,7 @@ enum PurchaseOrderStatus: string
     public static function forSelect(): array
     {
         return collect(self::cases())
-            ->mapWithKeys(fn($status) => [$status->value => $status->label()])
+            ->mapWithKeys(fn ($status) => [$status->value => $status->label()])
             ->toArray();
     }
 }

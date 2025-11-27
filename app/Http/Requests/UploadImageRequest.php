@@ -44,10 +44,10 @@ class UploadImageRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'image.mimes' => 'The image must be a file of type: ' . implode(', ', config('images.allowed_extensions')),
-            'image.max' => 'The image may not be greater than ' . (config('images.max_file_size') / 1024) . ' MB.',
-            'images.*.mimes' => 'Each image must be a file of type: ' . implode(', ', config('images.allowed_extensions')),
-            'images.*.max' => 'Each image may not be greater than ' . (config('images.max_file_size') / 1024) . ' MB.',
+            'image.mimes' => 'The image must be a file of type: '.implode(', ', config('images.allowed_extensions')),
+            'image.max' => 'The image may not be greater than '.(config('images.max_file_size') / 1024).' MB.',
+            'images.*.mimes' => 'Each image must be a file of type: '.implode(', ', config('images.allowed_extensions')),
+            'images.*.max' => 'Each image may not be greater than '.(config('images.max_file_size') / 1024).' MB.',
         ];
     }
 }

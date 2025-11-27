@@ -55,11 +55,10 @@ class TenantService extends Controller
         $counter = 1;
 
         while (Tenant::query()->where('slug', $slug)->exists()) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 
         return $slug;
     }
-
 }

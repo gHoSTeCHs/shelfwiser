@@ -1,7 +1,7 @@
-import { ProductPackagingType, ProductVariant } from '@/types/stockMovement';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
 import Input from '@/components/form/input/InputField';
+import { ProductVariant } from '@/types/stockMovement';
 import { useMemo } from 'react';
 
 interface PurchasePackagingFormProps {
@@ -36,7 +36,10 @@ export default function PurchasePackagingForm({
 
     const selectedPackaging = useMemo(() => {
         if (!selectedPackagingTypeId) return null;
-        return packagingTypes.find((pt) => pt.id === selectedPackagingTypeId) || null;
+        return (
+            packagingTypes.find((pt) => pt.id === selectedPackagingTypeId) ||
+            null
+        );
     }, [selectedPackagingTypeId, packagingTypes]);
 
     const totalUnits = useMemo(() => {
@@ -66,7 +69,8 @@ export default function PurchasePackagingForm({
         return (
             <div className="rounded-lg border border-warning-200 bg-warning-50 p-4 dark:border-warning-800 dark:bg-warning-900/10">
                 <p className="text-sm text-warning-800 dark:text-warning-200">
-                    No packaging types available for this product. Please add packaging types first.
+                    No packaging types available for this product. Please add
+                    packaging types first.
                 </p>
             </div>
         );
@@ -88,9 +92,10 @@ export default function PurchasePackagingForm({
                         };
                     })}
                     placeholder="Select packaging type"
-                    onChange={(value) => onPackagingTypeChange(value ? parseInt(value) : null)}
-                    value={selectedPackagingTypeId?.toString() || ''}
-                    defaultValue=""
+                    onChange={(value) =>
+                        onPackagingTypeChange(value ? parseInt(value) : null)
+                    }
+                    defaultValue={selectedPackagingTypeId?.toString() || ''}
                 />
             </div>
 
@@ -99,23 +104,34 @@ export default function PurchasePackagingForm({
                     <div className="grid gap-4 md:grid-cols-2">
                         <div>
                             <Label>
-                                Number of {selectedPackaging.display_name || selectedPackaging.name}(s)
-                                {required && <span className="text-error-500"> *</span>}
+                                Number of{' '}
+                                {selectedPackaging.display_name ||
+                                    selectedPackaging.name}
+                                (s)
+                                {required && (
+                                    <span className="text-error-500"> *</span>
+                                )}
                             </Label>
                             <Input
                                 type="number"
                                 min="1"
                                 value={packageQuantity}
                                 onChange={(e) =>
-                                    onPackageQuantityChange(parseInt(e.target.value) || 1)
+                                    onPackageQuantityChange(
+                                        parseInt(e.target.value) || 1,
+                                    )
                                 }
                             />
                         </div>
 
                         <div>
                             <Label>
-                                Cost per {selectedPackaging.display_name || selectedPackaging.name}
-                                {required && <span className="text-error-500"> *</span>}
+                                Cost per{' '}
+                                {selectedPackaging.display_name ||
+                                    selectedPackaging.name}
+                                {required && (
+                                    <span className="text-error-500"> *</span>
+                                )}
                             </Label>
                             <Input
                                 type="number"
@@ -123,7 +139,9 @@ export default function PurchasePackagingForm({
                                 step="0.01"
                                 value={costPerPackage}
                                 onChange={(e) =>
-                                    onCostPerPackageChange(parseFloat(e.target.value) || 0)
+                                    onCostPerPackageChange(
+                                        parseFloat(e.target.value) || 0,
+                                    )
                                 }
                             />
                         </div>
@@ -131,7 +149,9 @@ export default function PurchasePackagingForm({
 
                     <div className="space-y-2 rounded-lg bg-white p-3 dark:bg-gray-900">
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">Total Units</span>
+                            <span className="text-gray-600 dark:text-gray-400">
+                                Total Units
+                            </span>
                             <span className="font-medium text-gray-900 dark:text-white">
                                 {totalUnits} {variant.base_unit_name}
                                 {totalUnits > 1 ? 's' : ''}
@@ -159,22 +179,29 @@ export default function PurchasePackagingForm({
                         </div>
                     </div>
 
-                    {selectedPackaging.cost_price && selectedPackaging.cost_price > 0 && (
-                        <div className="rounded-lg border border-info-200 bg-info-50 p-3 dark:border-info-800 dark:bg-info-900/10">
-                            <p className="text-xs text-info-800 dark:text-info-200">
-                                <strong>Previous cost:</strong> {formatCurrency(selectedPackaging.cost_price)} per package
-                                {costPerPackage !== selectedPackaging.cost_price && (
-                                    <span className="ml-2">
-                                        (
-                                        {costPerPackage > selectedPackaging.cost_price
-                                            ? `+${formatCurrency(costPerPackage - selectedPackaging.cost_price)}`
-                                            : `-${formatCurrency(selectedPackaging.cost_price - costPerPackage)}`}
-                                        )
-                                    </span>
-                                )}
-                            </p>
-                        </div>
-                    )}
+                    {selectedPackaging.cost_price &&
+                        selectedPackaging.cost_price > 0 && (
+                            <div className="border-info-200 bg-info-50 dark:border-info-800 dark:bg-info-900/10 rounded-lg border p-3">
+                                <p className="text-info-800 dark:text-info-200 text-xs">
+                                    <strong>Previous cost:</strong>{' '}
+                                    {formatCurrency(
+                                        selectedPackaging.cost_price,
+                                    )}{' '}
+                                    per package
+                                    {costPerPackage !==
+                                        selectedPackaging.cost_price && (
+                                        <span className="ml-2">
+                                            (
+                                            {costPerPackage >
+                                            selectedPackaging.cost_price
+                                                ? `+${formatCurrency(costPerPackage - selectedPackaging.cost_price)}`
+                                                : `-${formatCurrency(selectedPackaging.cost_price - costPerPackage)}`}
+                                            )
+                                        </span>
+                                    )}
+                                </p>
+                            </div>
+                        )}
                 </div>
             )}
         </div>

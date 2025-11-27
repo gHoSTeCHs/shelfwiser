@@ -13,6 +13,12 @@ class DatabaseSeeder extends Seeder
             ShopTypeSeeder::class,
             ProductTypeSeeder::class,
 
+            // Tax System
+            TaxJurisdictionSeeder::class,
+            TaxBracketSeeder::class,
+            CorporateTaxRateSeeder::class,
+            TaxReliefSeeder::class,
+
             // Core Multi-Tenancy
             TenantSeeder::class,
             UserSeeder::class,
@@ -21,6 +27,7 @@ class DatabaseSeeder extends Seeder
 
             // Product System
             ProductCategorySeeder::class,
+            ProductTemplateSeeder::class,
             ProductSeeder::class,
             ProductPackagingTypeSeeder::class,
             InventoryLocationSeeder::class,
@@ -31,9 +38,11 @@ class DatabaseSeeder extends Seeder
 
             // E-commerce
             CustomerSeeder::class,
+            CustomerCreditSeeder::class,
 
             // Operations
             OrderSeeder::class,
+            OrderPaymentSeeder::class,
             StockMovementSeeder::class,
 
             // Supplier/Procurement System
@@ -41,6 +50,13 @@ class DatabaseSeeder extends Seeder
             SupplierCatalogSeeder::class,
             SupplierConnectionSeeder::class,
             PurchaseOrderSeeder::class,
+
+            // Employee Payroll & HR System
+            EmployeePayrollDetailSeeder::class,
+            TimesheetSeeder::class,
+            FundRequestSeeder::class,
+            WageAdvanceSeeder::class,
+            PayrollPeriodSeeder::class,
         ]);
     }
 }

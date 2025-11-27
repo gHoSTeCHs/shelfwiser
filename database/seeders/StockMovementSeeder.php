@@ -14,7 +14,7 @@ class StockMovementSeeder extends Seeder
     {
         $inventoryLocations = InventoryLocation::with([
             'productVariant.packagingTypes',
-            'productVariant.product.shop.tenant'
+            'productVariant.product.shop.tenant',
         ])->get();
 
         foreach ($inventoryLocations as $location) {
@@ -46,7 +46,7 @@ class StockMovementSeeder extends Seeder
         $packaging = $variant->packagingTypes()->where('is_base_unit', false)->first()
             ?? $variant->packagingTypes()->first();
 
-        if (!$packaging) {
+        if (! $packaging) {
             return;
         }
 
@@ -86,7 +86,7 @@ class StockMovementSeeder extends Seeder
         $variant = $location->productVariant;
         $packaging = $variant->packagingTypes()->first();
 
-        if (!$packaging) {
+        if (! $packaging) {
             return;
         }
 
@@ -137,7 +137,7 @@ class StockMovementSeeder extends Seeder
         $packaging = $variant->packagingTypes()->where('is_base_unit', true)->first()
             ?? $variant->packagingTypes()->first();
 
-        if (!$packaging) {
+        if (! $packaging) {
             return;
         }
 
@@ -147,7 +147,7 @@ class StockMovementSeeder extends Seeder
         $currentQty = $location->quantity;
         $adjustmentQty = rand(1, min(20, max(1, (int) ($currentQty * 0.05))));
 
-        if (!$isIncrease) {
+        if (! $isIncrease) {
             $adjustmentQty = min($adjustmentQty, $currentQty);
             if ($adjustmentQty <= 0) {
                 return;
@@ -189,7 +189,7 @@ class StockMovementSeeder extends Seeder
         $packaging = $variant->packagingTypes()->where('is_base_unit', true)->first()
             ?? $variant->packagingTypes()->first();
 
-        if (!$packaging) {
+        if (! $packaging) {
             return;
         }
 

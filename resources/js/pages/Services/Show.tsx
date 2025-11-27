@@ -1,6 +1,8 @@
+import ServiceAddonController from '@/actions/App/Http/Controllers/ServiceAddonController';
 import ServiceController from '@/actions/App/Http/Controllers/ServiceController';
 import ServiceVariantController from '@/actions/App/Http/Controllers/ServiceVariantController';
-import ServiceAddonController from '@/actions/App/Http/Controllers/ServiceAddonController';
+import AddonFormModal from '@/components/services/AddonFormModal';
+import VariantFormModal from '@/components/services/VariantFormModal';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
@@ -16,14 +18,11 @@ import {
     Globe,
     Package2,
     Plus,
-    Settings,
     Sparkles,
     Tag,
     Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
-import VariantFormModal from '@/components/services/VariantFormModal';
-import AddonFormModal from '@/components/services/AddonFormModal';
 
 interface Props {
     service: Service;
@@ -33,9 +32,12 @@ interface Props {
 
 export default function Show({ service, category_addons, can_manage }: Props) {
     const [variantModalOpen, setVariantModalOpen] = useState(false);
-    const [selectedVariant, setSelectedVariant] = useState<ServiceVariant | null>(null);
+    const [selectedVariant, setSelectedVariant] =
+        useState<ServiceVariant | null>(null);
     const [addonModalOpen, setAddonModalOpen] = useState(false);
-    const [selectedAddon, setSelectedAddon] = useState<ServiceAddon | null>(null);
+    const [selectedAddon, setSelectedAddon] = useState<ServiceAddon | null>(
+        null,
+    );
 
     const handleEditVariant = (variant: ServiceVariant) => {
         setSelectedVariant(variant);
@@ -75,7 +77,7 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-start gap-4">
-                        <Link href="/services">
+                        <Link href={'/services'}>
                             <Button variant="outline" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                                 Back
@@ -133,7 +135,9 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                 <div className="flex flex-wrap gap-2">
                                     <Badge
                                         variant={
-                                            service.is_active ? 'light' : 'solid'
+                                            service.is_active
+                                                ? 'light'
+                                                : 'solid'
                                         }
                                         color={
                                             service.is_active
@@ -215,14 +219,14 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                     <div>
                         <Card title="Quick Stats">
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between rounded-lg bg-primary-50 p-3 dark:bg-primary-900/20">
+                                <div className="bg-primary-50 dark:bg-primary-900/20 flex items-center justify-between rounded-lg p-3">
                                     <div className="flex items-center gap-2">
-                                        <Sparkles className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                                        <Sparkles className="text-primary-600 dark:text-primary-400 h-5 w-5" />
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Variants
                                         </span>
                                     </div>
-                                    <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
+                                    <span className="text-primary-600 dark:text-primary-400 text-lg font-bold">
                                         {service.variants?.length || 0}
                                     </span>
                                 </div>
@@ -241,20 +245,21 @@ export default function Show({ service, category_addons, can_manage }: Props) {
 
                                 {service.variants &&
                                     service.variants.length > 0 && (
-                                        <div className="rounded-lg bg-info-50 p-3 dark:bg-info-900/20">
+                                        <div className="bg-info-50 dark:bg-info-900/20 rounded-lg p-3">
                                             <div className="flex items-center gap-2">
-                                                <DollarSign className="h-5 w-5 text-info-600 dark:text-info-400" />
+                                                <DollarSign className="text-info-600 dark:text-info-400 h-5 w-5" />
                                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                                     Starting Price
                                                 </span>
                                             </div>
-                                            <p className="mt-1 text-lg font-bold text-info-600 dark:text-info-400">
+                                            <p className="text-info-600 dark:text-info-400 mt-1 text-lg font-bold">
                                                 ₦
                                                 {Math.min(
-                                                    ...service.variants.map((v) =>
-                                                        parseFloat(
-                                                            v.base_price.toString(),
-                                                        ),
+                                                    ...service.variants.map(
+                                                        (v) =>
+                                                            parseFloat(
+                                                                v.base_price.toString(),
+                                                            ),
                                                     ),
                                                 ).toLocaleString()}
                                             </p>

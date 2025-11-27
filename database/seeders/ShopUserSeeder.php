@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Tenant;
 use App\Enums\UserRole;
+use App\Models\Tenant;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -62,7 +62,7 @@ class ShopUserSeeder extends Seeder
 
     protected function attachUser($tenant, $user, $shop): void
     {
-        if (!$user || !$shop) {
+        if (! $user || ! $shop) {
             return;
         }
 

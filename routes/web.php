@@ -1,21 +1,37 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminProductTemplateController;
+use App\Http\Controllers\Admin\AdminTenantController;
+use App\Http\Controllers\CustomerCreditController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FundRequestController;
 use App\Http\Controllers\ImageController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderPaymentController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\POSController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductTemplateController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\ServiceAddonController;
 use App\Http\Controllers\ServiceCategoryController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceVariantController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\ShopSettingsController;
+use App\Http\Controllers\StaffPayrollController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\SupplierCatalogController;
 use App\Http\Controllers\SupplierConnectionController;
 use App\Http\Controllers\SupplierProfileController;
+use App\Http\Controllers\TimesheetController;
+use App\Http\Controllers\WageAdvanceController;
 use App\Http\Controllers\Web\StaffManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -24,8 +40,33 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+Route::get('/offline', function () {
+    return view('offline');
+})->name('offline');
+
+Route::middleware(['auth', 'super_admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    Route::resource('tenants', AdminTenantController::class);
+
+    Route::prefix('tenants/{tenant}')->name('tenants.')->group(function () {
+        Route::post('/toggle-active', [AdminTenantController::class, 'toggleActive'])->name('toggle-active');
+        Route::post('/extend-subscription', [AdminTenantController::class, 'extendSubscription'])->name('extend-subscription');
+        Route::patch('/update-limits', [AdminTenantController::class, 'updateLimits'])->name('update-limits');
+    });
+
+    Route::resource('product-templates', AdminProductTemplateController::class);
+});
+
+Route::get('/payment/callback/{gateway}/{order}', [PaymentController::class, 'callback'])
+    ->name('payment.callback');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::prefix('payment')->name('payment.')->group(function () {
+        Route::post('/orders/{order}/initialize', [PaymentController::class, 'initialize'])->name('initialize');
+        Route::get('/orders/{order}/verify', [PaymentController::class, 'verify'])->name('verify');
+    });
+
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('dashboard/refresh', [DashboardController::class, 'refresh'])->name('dashboard.refresh');
 
@@ -53,6 +94,86 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{staff}/edit', [StaffManagementController::class, 'edit'])->name('edit');
         Route::put('/{staff}', [StaffManagementController::class, 'update'])->name('update');
         Route::delete('/{staff}', [StaffManagementController::class, 'destroy'])->name('destroy');
+
+        Route::post('/{employee}/payroll', [StaffPayrollController::class, 'store'])->name('payroll.store');
+        Route::patch('/{employee}/payroll/deductions', [StaffPayrollController::class, 'updateDeductions'])->name('payroll.deductions.update');
+        Route::patch('/{employee}/payroll/tax-settings', [StaffPayrollController::class, 'updateTaxSettings'])->name('payroll.tax-settings.update');
+    });
+
+    Route::prefix('timesheets')->name('timesheets.')->group(function () {
+        Route::get('/', [TimesheetController::class, 'index'])->name('index');
+        Route::get('/approval-queue', [TimesheetController::class, 'approvalQueue'])->name('approval-queue');
+        Route::get('/{timesheet}', [TimesheetController::class, 'show'])->name('show');
+
+        Route::post('/clock-in', [TimesheetController::class, 'clockIn'])->name('clock-in');
+        Route::post('/{timesheet}/clock-out', [TimesheetController::class, 'clockOut'])->name('clock-out');
+        Route::post('/{timesheet}/start-break', [TimesheetController::class, 'startBreak'])->name('start-break');
+        Route::post('/{timesheet}/end-break', [TimesheetController::class, 'endBreak'])->name('end-break');
+
+        Route::patch('/{timesheet}', [TimesheetController::class, 'update'])->name('update');
+        Route::post('/{timesheet}/submit', [TimesheetController::class, 'submit'])->name('submit');
+        Route::post('/{timesheet}/approve', [TimesheetController::class, 'approve'])->name('approve');
+        Route::post('/{timesheet}/reject', [TimesheetController::class, 'reject'])->name('reject');
+
+        Route::delete('/{timesheet}', [TimesheetController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('fund-requests')->name('fund-requests.')->group(function () {
+        Route::get('/', [FundRequestController::class, 'index'])->name('index');
+        Route::get('/approval-queue', [FundRequestController::class, 'approvalQueue'])->name('approval-queue');
+        Route::get('/create', [FundRequestController::class, 'create'])->name('create');
+        Route::post('/', [FundRequestController::class, 'store'])->name('store');
+        Route::get('/{fundRequest}', [FundRequestController::class, 'show'])->name('show');
+
+        Route::patch('/{fundRequest}', [FundRequestController::class, 'update'])->name('update');
+        Route::post('/{fundRequest}/approve', [FundRequestController::class, 'approve'])->name('approve');
+        Route::post('/{fundRequest}/reject', [FundRequestController::class, 'reject'])->name('reject');
+        Route::post('/{fundRequest}/disburse', [FundRequestController::class, 'disburse'])->name('disburse');
+        Route::post('/{fundRequest}/cancel', [FundRequestController::class, 'cancel'])->name('cancel');
+
+        Route::delete('/{fundRequest}', [FundRequestController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('wage-advances')->name('wage-advances.')->group(function () {
+        Route::get('/', [WageAdvanceController::class, 'index'])->name('index');
+        Route::get('/approval-queue', [WageAdvanceController::class, 'approvalQueue'])->name('approval-queue');
+        Route::get('/create', [WageAdvanceController::class, 'create'])->name('create');
+        Route::post('/', [WageAdvanceController::class, 'store'])->name('store');
+        Route::get('/{wageAdvance}', [WageAdvanceController::class, 'show'])->name('show');
+
+        Route::patch('/{wageAdvance}', [WageAdvanceController::class, 'update'])->name('update');
+        Route::post('/{wageAdvance}/approve', [WageAdvanceController::class, 'approve'])->name('approve');
+        Route::post('/{wageAdvance}/reject', [WageAdvanceController::class, 'reject'])->name('reject');
+        Route::post('/{wageAdvance}/disburse', [WageAdvanceController::class, 'disburse'])->name('disburse');
+        Route::post('/{wageAdvance}/record-repayment', [WageAdvanceController::class, 'recordRepayment'])->name('record-repayment');
+        Route::post('/{wageAdvance}/cancel', [WageAdvanceController::class, 'cancel'])->name('cancel');
+
+        Route::delete('/{wageAdvance}', [WageAdvanceController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('payroll')->name('payroll.')->group(function () {
+        Route::get('/', [PayrollController::class, 'index'])->name('index');
+        Route::get('/create', [PayrollController::class, 'create'])->name('create');
+        Route::post('/', [PayrollController::class, 'store'])->name('store');
+        Route::get('/my-payslips', [PayrollController::class, 'myPayslips'])->name('my-payslips');
+        Route::get('/payslip/{payslip}', [PayrollController::class, 'showPayslip'])->name('show-payslip');
+        Route::get('/{payrollPeriod}', [PayrollController::class, 'show'])->name('show');
+
+        Route::post('/{payrollPeriod}/process', [PayrollController::class, 'process'])->name('process');
+        Route::post('/{payrollPeriod}/approve', [PayrollController::class, 'approve'])->name('approve');
+        Route::post('/{payrollPeriod}/mark-as-paid', [PayrollController::class, 'markAsPaid'])->name('mark-as-paid');
+        Route::post('/{payrollPeriod}/cancel', [PayrollController::class, 'cancel'])->name('cancel');
+
+        Route::delete('/{payrollPeriod}', [PayrollController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
+        Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-as-read');
+        Route::post('/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('mark-as-read');
+        Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
+        Route::delete('/read/all', [NotificationController::class, 'deleteAllRead'])->name('delete-all-read');
     });
 
     Route::resource('shops', ShopController::class);
@@ -62,9 +183,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/', [ShopController::class, 'updateStorefrontSettings'])->name('update');
     });
 
+    Route::prefix('shops/{shop}/tax-settings')->name('shops.tax-settings.')->group(function () {
+        Route::get('/', [ShopSettingsController::class, 'show'])->name('show');
+        Route::patch('/', [ShopSettingsController::class, 'update'])->name('update');
+    });
+
     Route::resource('categories', ProductCategoryController::class);
 
     Route::resource('products', ProductController::class);
+
+    // Product Templates (for tenants)
+    Route::prefix('product-templates')->name('product-templates.')->group(function () {
+        Route::get('/available', [ProductTemplateController::class, 'available'])->name('available');
+        Route::get('/{productTemplate}', [ProductTemplateController::class, 'show'])->name('show');
+        Route::post('/{productTemplate}/shops/{shop}/create-product', [ProductTemplateController::class, 'createProduct'])->name('create-product');
+        Route::post('/save', [ProductTemplateController::class, 'saveAsTemplate'])->name('save');
+    });
 
     // Image Management Routes
     Route::prefix('images')->name('images.')->group(function () {
@@ -107,6 +241,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');
         Route::post('/{order}/payment', [OrderController::class, 'updatePaymentStatus'])->name('update-payment');
+        Route::post('/{order}/payments', [OrderPaymentController::class, 'store'])->name('payments.store');
+        Route::delete('/payments/{orderPayment}', [OrderPaymentController::class, 'destroy'])->name('payments.destroy');
+    });
+
+    Route::prefix('customers/{shop}')->name('customers.')->group(function () {
+        Route::get('/credit', [CustomerCreditController::class, 'index'])->name('credit.index');
+        Route::get('/credit/{customer}', [CustomerCreditController::class, 'show'])->name('credit.show');
+        Route::get('/credit/{customer}/payment', [CustomerCreditController::class, 'createPayment'])->name('credit.payment.create');
+        Route::post('/credit/{customer}/payment', [CustomerCreditController::class, 'storePayment'])->name('credit.payment.store');
+        Route::get('/credit/{customer}/transactions', [CustomerCreditController::class, 'transactions'])->name('credit.transactions');
+    });
+
+    Route::prefix('receipts')->name('receipts.')->group(function () {
+        Route::get('/', [ReceiptController::class, 'index'])->name('index');
+        Route::get('/{receipt}', [ReceiptController::class, 'show'])->name('show');
+        Route::post('/{receipt}/email', [ReceiptController::class, 'emailReceipt'])->name('email');
+        Route::get('/orders/{order}/view', [ReceiptController::class, 'viewOrderReceipt'])->name('orders.view');
+        Route::get('/orders/{order}/download', [ReceiptController::class, 'downloadOrderReceipt'])->name('orders.download');
+        Route::get('/payments/{payment}/view', [ReceiptController::class, 'viewPaymentReceipt'])->name('payments.view');
+        Route::get('/payments/{payment}/download', [ReceiptController::class, 'downloadPaymentReceipt'])->name('payments.download');
+    });
+
+    Route::prefix('pos/{shop}')->name('pos.')->group(function () {
+        Route::get('/', [POSController::class, 'index'])->name('index');
+        Route::get('/search/products', [POSController::class, 'searchProducts'])->name('search.products');
+        Route::get('/search/customers', [POSController::class, 'searchCustomers'])->name('search.customers');
+        Route::post('/complete', [POSController::class, 'completeSale'])->name('complete');
+        Route::get('/session-summary', [POSController::class, 'sessionSummary'])->name('session-summary');
+        Route::post('/hold', [POSController::class, 'holdSale'])->name('hold');
+        Route::get('/held-sales', [POSController::class, 'heldSales'])->name('held-sales');
+        Route::get('/held-sales/{holdId}', [POSController::class, 'retrieveHeldSale'])->name('retrieve-held-sale');
     });
 
     Route::prefix('stock-movements')->name('stock-movements.')->group(function () {
@@ -164,9 +329,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{purchaseOrder}/payment', [PurchaseOrderController::class, 'recordPayment'])->name('record-payment');
     });
 
-
 });
 
-
+require __DIR__ . '/storefront.php';
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+

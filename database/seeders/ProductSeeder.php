@@ -13,6 +13,7 @@ use Illuminate\Database\Seeder;
 class ProductSeeder extends Seeder
 {
     protected array $productTypeCache = [];
+
     protected array $categoryCache = [];
 
     public function run(): void
@@ -40,7 +41,7 @@ class ProductSeeder extends Seeder
         $products = $this->getProductTemplates($shop);
 
         $selectedProducts = array_rand($products, min($count, count($products)));
-        if (!is_array($selectedProducts)) {
+        if (! is_array($selectedProducts)) {
             $selectedProducts = [$selectedProducts];
         }
 
@@ -615,7 +616,7 @@ class ProductSeeder extends Seeder
     protected function generateSlug(string $name): string
     {
         return strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name), '-'))
-            . '-' . substr(md5($name . microtime()), 0, 6);
+            .'-'.substr(md5($name.microtime()), 0, 6);
     }
 
     protected function generateSKU(Product $product): string
@@ -629,6 +630,6 @@ class ProductSeeder extends Seeder
 
     protected function generateBarcode(string $sku): string
     {
-        return '978' . substr(md5($sku), 0, 10);
+        return '978'.substr(md5($sku), 0, 10);
     }
 }

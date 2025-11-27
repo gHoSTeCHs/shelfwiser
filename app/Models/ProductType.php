@@ -33,8 +33,8 @@ class ProductType extends Model
 
     protected static function booted(): void
     {
-        static::saved(fn($type) => static::clearCache($type->tenant_id));
-        static::deleted(fn($type) => static::clearCache($type->tenant_id));
+        static::saved(fn ($type) => static::clearCache($type->tenant_id));
+        static::deleted(fn ($type) => static::clearCache($type->tenant_id));
     }
 
     private static function clearCache(?int $tenantId): void
@@ -45,7 +45,7 @@ class ProductType extends Model
 
     public function scopeAccessibleTo($query, ?int $tenantId)
     {
-        return $query->where(fn($q) => $q
+        return $query->where(fn ($q) => $q
             ->whereNull('tenant_id')
             ->orWhere('tenant_id', $tenantId)
         );

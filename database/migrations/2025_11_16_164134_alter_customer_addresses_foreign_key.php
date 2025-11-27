@@ -17,9 +17,9 @@ return new class extends Migration
 
             // Add the new foreign key constraint to the customers table
             $table->foreign('customer_id')
-                  ->references('id')
-                  ->on('customers')
-                  ->onDelete('cascade');
+                ->references('id')
+                ->on('customers')
+                ->onDelete('cascade');
         });
     }
 
@@ -34,9 +34,9 @@ return new class extends Migration
 
             // Add the old foreign key constraint back to the users table
             $table->foreign('customer_id', 'customer_addresses_customer_id_foreign')
-                  ->references('id')
-                  ->on('users')
-                  ->onDelete('cascade');
+                ->references('id')
+                ->on('users')
+                ->onDelete('cascade');
         });
     }
 };

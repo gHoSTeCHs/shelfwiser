@@ -3,11 +3,11 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Models\ProductPackagingType;
 use App\Models\ProductType;
 use App\Models\ProductVariant;
-use App\Models\ProductPackagingType;
-use App\Models\Tenant;
 use App\Models\Shop;
+use App\Models\Tenant;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

@@ -15,6 +15,7 @@ class Product extends Model
     protected $fillable = [
         'tenant_id',
         'shop_id',
+        'template_id',
         'product_type_id',
         'category_id',
         'name',
@@ -46,6 +47,11 @@ class Product extends Model
     public function shop(): BelongsTo
     {
         return $this->belongsTo(Shop::class);
+    }
+
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(ProductTemplate::class);
     }
 
     public function type(): BelongsTo

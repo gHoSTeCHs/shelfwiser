@@ -87,8 +87,8 @@ export default function PackagingSelector({
                 })}
                 placeholder="Select packaging type"
                 onChange={(value) => onPackagingTypeChange(value ? parseInt(value) : null)}
-                value={selectedPackagingTypeId?.toString() || ''}
-                defaultValue=""
+                defaultValue={selectedPackagingTypeId?.toString() || ''}
+
             />
 
             {selectedPackaging && (

@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\PurchaseOrderPaymentStatus;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\StockMovementType;
-use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\PurchaseOrderPayment;
@@ -246,7 +245,7 @@ class PurchaseOrderService
         });
     }
 
-    public function cancelPurchaseOrder(PurchaseOrder $po, string $reason = null): PurchaseOrder
+    public function cancelPurchaseOrder(PurchaseOrder $po, ?string $reason = null): PurchaseOrder
     {
         return DB::transaction(function () use ($po, $reason) {
             if (! $po->status->canCancel()) {
@@ -382,6 +381,7 @@ class PurchaseOrderService
     {
         if (preg_match('/Net (\d+)/', $paymentTerms, $matches)) {
             $days = (int) $matches[1];
+
             return now()->addDays($days)->toDateTime();
         }
 

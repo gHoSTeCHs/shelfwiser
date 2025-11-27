@@ -10,7 +10,7 @@ enum CatalogVisibility: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PUBLIC => 'Public (visible to all)',
             self::PRIVATE => 'Private (not visible)',
             self::CONNECTIONS_ONLY => 'Connections Only',
@@ -20,7 +20,7 @@ enum CatalogVisibility: string
     public static function forSelect(): array
     {
         return collect(self::cases())
-            ->mapWithKeys(fn($visibility) => [$visibility->value => $visibility->label()])
+            ->mapWithKeys(fn ($visibility) => [$visibility->value => $visibility->label()])
             ->toArray();
     }
 }

@@ -51,7 +51,7 @@ class ServiceAddon extends Model
      */
     public function isServiceSpecific(): bool
     {
-        return !is_null($this->service_id);
+        return ! is_null($this->service_id);
     }
 
     /**
@@ -59,7 +59,7 @@ class ServiceAddon extends Model
      */
     public function isCategoryWide(): bool
     {
-        return !is_null($this->service_category_id) && is_null($this->service_id);
+        return ! is_null($this->service_category_id) && is_null($this->service_id);
     }
 
     /**
@@ -84,6 +84,6 @@ class ServiceAddon extends Model
     public function scopeForCategory($query, int $categoryId)
     {
         return $query->where('service_category_id', $categoryId)
-                     ->whereNull('service_id');
+            ->whereNull('service_id');
     }
 }

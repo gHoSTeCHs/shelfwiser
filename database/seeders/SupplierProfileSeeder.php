@@ -38,7 +38,7 @@ class SupplierProfileSeeder extends Seeder
         foreach ($suppliersConfig as $config) {
             $tenant = $tenants->firstWhere('slug', $config['tenant_slug']);
 
-            if (!$tenant) {
+            if (! $tenant) {
                 continue;
             }
 

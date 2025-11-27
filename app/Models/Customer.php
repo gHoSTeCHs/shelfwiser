@@ -27,6 +27,10 @@ class Customer extends Authenticatable
         'password',
         'is_active',
         'marketing_opt_in',
+        'account_balance',
+        'credit_limit',
+        'total_purchases',
+        'last_purchase_at',
     ];
 
     /**
@@ -49,6 +53,10 @@ class Customer extends Authenticatable
         'is_active' => 'boolean',
         'marketing_opt_in' => 'boolean',
         'password' => 'hashed',
+        'account_balance' => 'decimal:2',
+        'credit_limit' => 'decimal:2',
+        'total_purchases' => 'decimal:2',
+        'last_purchase_at' => 'datetime',
     ];
 
     /**
@@ -135,7 +143,7 @@ class Customer extends Authenticatable
      */
     public function hasVerifiedEmail(): bool
     {
-        return !is_null($this->email_verified_at);
+        return ! is_null($this->email_verified_at);
     }
 
     /**
@@ -146,5 +154,47 @@ class Customer extends Authenticatable
         return $this->forceFill([
             'email_verified_at' => $this->freshTimestamp(),
         ])->save();
+    }
+
+    /**
+     * Get all credit transactions for the customer
+     */
+    public function creditTransactions(): HasMany
+    {
+        return $this->hasMany(CustomerCreditTransaction::class);
+    }
+
+    /**
+     * Get available credit remaining for customer
+     */
+    public function availableCredit(): ?float
+    {
+        if (! $this->credit_limit) {
+            return null;
+        }
+
+        return max(0, (float) $this->credit_limit - (float) $this->account_balance);
+    }
+
+    /**
+     * Check if customer can make a purchase on credit
+     */
+    public function canPurchaseOnCredit(float $amount): bool
+    {
+        if (! $this->credit_limit) {
+            return true;
+        }
+
+        return ((float) $this->account_balance + $amount) <= (float) $this->credit_limit;
+    }
+
+    /**
+     * Get all unpaid orders for customer
+     */
+    public function unpaidOrders()
+    {
+        return $this->orders()
+            ->whereIn('payment_status', ['unpaid', 'partial'])
+            ->orderBy('created_at');
     }
 }

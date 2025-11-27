@@ -79,7 +79,7 @@ class SupplierConnectionService
         });
     }
 
-    public function suspendConnection(SupplierConnection $connection, string $reason = null): SupplierConnection
+    public function suspendConnection(SupplierConnection $connection, ?string $reason = null): SupplierConnection
     {
         return DB::transaction(function () use ($connection, $reason) {
             $connection->suspend();

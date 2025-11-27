@@ -21,11 +21,9 @@ use Inertia\Response;
 class PurchaseOrderController extends Controller
 {
     public function __construct(
-        private readonly PurchaseOrderService      $purchaseOrderService,
+        private readonly PurchaseOrderService $purchaseOrderService,
         private readonly SupplierConnectionService $connectionService
-    )
-    {
-    }
+    ) {}
 
     /**
      * @throws AuthorizationException
@@ -59,7 +57,7 @@ class PurchaseOrderController extends Controller
      */
     public function supplier(): Response
     {
-//        Gate::authorize('viewAsSupplier', auth()->user()->tenant);
+        //        Gate::authorize('viewAsSupplier', auth()->user()->tenant);
 
         $purchaseOrders = PurchaseOrder::forSupplier(auth()->user()->tenant_id)
             ->with(['buyerTenant', 'shop', 'items.productVariant', 'createdBy'])
@@ -79,7 +77,7 @@ class PurchaseOrderController extends Controller
         $shops = Shop::where('tenant_id', $tenantId)->get(['id', 'name']);
 
         $connections = $this->connectionService->getConnectionsForBuyer(auth()->user()->tenant);
-        $approvedConnections = $connections->filter(fn($conn) => $conn->status->canOrder());
+        $approvedConnections = $connections->filter(fn ($conn) => $conn->status->canOrder());
 
         $supplierCatalog = [];
         $selectedSupplierId = $request->input('supplier');
@@ -97,7 +95,7 @@ class PurchaseOrderController extends Controller
             'shops' => $shops,
             'supplierConnections' => $approvedConnections,
             'supplierCatalog' => $supplierCatalog,
-            'selectedSupplierId' => $selectedSupplierId ? (int)$selectedSupplierId : null,
+            'selectedSupplierId' => $selectedSupplierId ? (int) $selectedSupplierId : null,
         ]);
     }
 
