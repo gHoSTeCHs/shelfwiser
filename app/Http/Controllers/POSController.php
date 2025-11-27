@@ -15,18 +15,16 @@ use Inertia\Response;
 class POSController extends Controller
 {
     public function __construct(
-        protected POSService     $posService,
+        protected POSService $posService,
         protected ReceiptService $receiptService
-    )
-    {
-    }
+    ) {}
 
     /**
      * Display POS interface
      */
     public function index(Shop $shop): Response
     {
-//        $this->authorize('manage', $shop);
+        $this->authorize('manage', $shop);
 
         return Inertia::render('POS/Index', [
             'shop' => $shop,
@@ -39,12 +37,9 @@ class POSController extends Controller
         ]);
     }
 
-    /**
-     * Search products for POS
-     */
     public function searchProducts(Request $request, Shop $shop): JsonResponse
     {
-//        $this->authorize('manage', $shop);
+        $this->authorize('manage', $shop);
 
         $request->validate([
             'query' => ['required', 'string', 'min:1'],
@@ -61,16 +56,18 @@ class POSController extends Controller
         ]);
     }
 
-    /**
-     * Search customers for POS
-     */
-    public function searchCustomers(Request $request): JsonResponse
+    public function searchCustomers(Request $request, Shop $shop): JsonResponse
     {
+        $this->authorize('manage', $shop);
+
         $request->validate([
             'query' => ['required', 'string', 'min:1'],
         ]);
 
-        $customers = $this->posService->searchCustomers($request->query, 10);
+        $customers = $this->posService->searchCustomers(
+            $request->input('query'),
+            10
+        );
 
         return response()->json([
             'customers' => $customers,
@@ -179,7 +176,7 @@ class POSController extends Controller
     {
         $heldSale = session()->get("pos_hold_$holdId");
 
-        if (!$heldSale) {
+        if (! $heldSale) {
             return response()->json([
                 'error' => 'Held sale not found',
             ], 404);
