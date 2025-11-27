@@ -93,9 +93,16 @@ class OrderController extends Controller
     public function store(CreateOrderRequest $request): RedirectResponse
     {
         try {
-            $shop = Shop::query()->findOrFail($request->input('shop_id'));
+            // Validate shop belongs to user's tenant
+            $shop = Shop::query()
+                ->where('tenant_id', $request->user()->tenant_id)
+                ->findOrFail($request->input('shop_id'));
+
+            // Validate customer belongs to user's tenant (if provided)
             $customer = $request->input('customer_id')
-                ? Customer::query()->findOrFail($request->input('customer_id'))
+                ? Customer::query()
+                    ->where('tenant_id', $request->user()->tenant_id)
+                    ->findOrFail($request->input('customer_id'))
                 : null;
 
             $order = $this->orderService->createOrder(

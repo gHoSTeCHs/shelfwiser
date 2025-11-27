@@ -119,8 +119,19 @@ class StockMovementService
 
                 $referenceNumber = $this->generateReferenceNumber(StockMovementType::TRANSFER_OUT);
 
+                // Determine shop_id for from location
+                $fromShopId = $fromLocation->location_type === \App\Models\Shop::class
+                    ? $fromLocation->location_id
+                    : $variant->product->shop_id;
+
+                // Determine shop_id for to location
+                $toShopId = $toLocation->location_type === \App\Models\Shop::class
+                    ? $toLocation->location_id
+                    : $variant->product->shop_id;
+
                 $outMovement = StockMovement::query()->create([
                     'tenant_id' => $user->tenant_id,
+                    'shop_id' => $fromShopId,
                     'product_variant_id' => $variant->id,
                     'from_location_id' => $fromLocation->id,
                     'to_location_id' => $toLocation->id,
@@ -136,6 +147,7 @@ class StockMovementService
 
                 $inMovement = StockMovement::query()->create([
                     'tenant_id' => $user->tenant_id,
+                    'shop_id' => $toShopId,
                     'product_variant_id' => $variant->id,
                     'from_location_id' => $fromLocation->id,
                     'to_location_id' => $toLocation->id,

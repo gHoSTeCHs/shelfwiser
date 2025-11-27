@@ -22,10 +22,8 @@ class ProductController extends Controller
 {
     public function __construct(
         private readonly ProductService $productService,
-//        private  ProductTemplateService $templateService
-    )
-    {
-    }
+        //        private  ProductTemplateService $templateService
+    ) {}
 
     public function index(): Response
     {
@@ -83,7 +81,10 @@ class ProductController extends Controller
      */
     public function store(CreateProductRequest $request): RedirectResponse
     {
-        $shop = Shop::query()->findOrFail($request->input('shop_id'));
+        // Validate shop belongs to user's tenant
+        $shop = Shop::query()
+            ->where('tenant_id', $request->user()->tenant_id)
+            ->findOrFail($request->input('shop_id'));
 
         $product = $this->productService->create(
             $request->validated(),

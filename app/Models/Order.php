@@ -165,24 +165,22 @@ class Order extends Model
 
     public static function generateOrderNumber(int $tenantId, $createdAt = null): string
     {
-        static $sequenceCache = [];
-
         $creationDate = $createdAt ? Carbon::parse($createdAt) : now();
         $prefix = 'ORD';
         $date = $creationDate->format('Ymd');
-        $cacheKey = $tenantId.'-'.$date;
 
-        if (! isset($sequenceCache[$cacheKey])) {
-            $lastOrder = self::where('tenant_id', $tenantId)
-                ->whereDate('created_at', $creationDate)
-                ->latest('id')
-                ->first();
-            $sequenceCache[$cacheKey] = $lastOrder ? (int) substr($lastOrder->order_number, -4) : 0;
-        }
+        // Query database to get the maximum sequence number for today
+        // This is more reliable than static cache for concurrent requests
+        $lastOrder = self::where('tenant_id', $tenantId)
+            ->whereDate('created_at', $creationDate)
+            ->orderBy('id', 'desc')
+            ->lockForUpdate() // Lock the row to prevent race conditions
+            ->first();
 
-        $sequenceCache[$cacheKey]++;
+        $sequence = $lastOrder ? (int) substr($lastOrder->order_number, -4) : 0;
+        $sequence++;
 
-        return sprintf('%s-%s-%04d', $prefix, $date, $sequenceCache[$cacheKey]);
+        return sprintf('%s-%s-%04d', $prefix, $date, $sequence);
     }
 
     /**
