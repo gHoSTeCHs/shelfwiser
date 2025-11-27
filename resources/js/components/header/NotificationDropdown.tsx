@@ -1,20 +1,18 @@
-import { useState, useEffect } from 'react';
-import { Dropdown } from '../ui/dropdown/Dropdown';
-import { DropdownItem } from '@/components/ui/dropdown';
-import { Link, router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import axios from 'axios';
 import {
     Bell,
-    FileText,
+    CheckCircle,
     Clock,
     DollarSign,
-    CheckCircle,
-    XCircle,
-    FileIcon,
     FilePlus,
+    FileText,
     HandCoins,
     TrendingUp,
+    XCircle,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Dropdown } from '../ui/dropdown/Dropdown';
 
 interface Notification {
     id: number;
@@ -104,11 +102,13 @@ export default function NotificationDropdown() {
     const handleNotificationClick = async (notification: Notification) => {
         if (!notification.is_read) {
             try {
-                await axios.post(`/notifications/${notification.id}/mark-as-read`);
+                await axios.post(
+                    `/notifications/${notification.id}/mark-as-read`,
+                );
                 setNotifications((prev) =>
                     prev.map((n) =>
-                        n.id === notification.id ? { ...n, is_read: true } : n
-                    )
+                        n.id === notification.id ? { ...n, is_read: true } : n,
+                    ),
                 );
                 setUnreadCount((prev) => Math.max(0, prev - 1));
             } catch (error) {
@@ -126,7 +126,7 @@ export default function NotificationDropdown() {
         try {
             await axios.post('/notifications/mark-all-as-read');
             setNotifications((prev) =>
-                prev.map((n) => ({ ...n, is_read: true }))
+                prev.map((n) => ({ ...n, is_read: true })),
             );
             setUnreadCount(0);
         } catch (error) {
@@ -135,8 +135,7 @@ export default function NotificationDropdown() {
     };
 
     const getIcon = (iconName: string) => {
-        const IconComponent = iconMap[iconName] || Bell;
-        return IconComponent;
+        return iconMap[iconName] || Bell;
     };
 
     const getTimeAgo = (dateString: string) => {
@@ -158,7 +157,7 @@ export default function NotificationDropdown() {
                 onClick={toggleDropdown}
             >
                 {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-semibold text-white">
+                    <span className="absolute -top-1 -right-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-semibold text-white">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
@@ -190,7 +189,7 @@ export default function NotificationDropdown() {
                         {unreadCount > 0 && (
                             <button
                                 onClick={handleMarkAllAsRead}
-                                className="text-xs text-primary-600 hover:text-primary-700"
+                                className="text-primary-600 hover:text-primary-700 text-xs"
                             >
                                 Mark all read
                             </button>
@@ -217,7 +216,7 @@ export default function NotificationDropdown() {
                     </div>
                 </div>
 
-                <ul className="custom-scrollbar flex h-auto flex-col overflow-y-auto">
+                <ul className="flex custom-scrollbar h-auto flex-col overflow-y-auto">
                     {loading ? (
                         <li className="flex items-center justify-center py-8 text-sm text-gray-500">
                             Loading notifications...
@@ -225,19 +224,28 @@ export default function NotificationDropdown() {
                     ) : notifications.length === 0 ? (
                         <li className="flex flex-col items-center justify-center py-8 text-center">
                             <Bell className="mb-2 h-12 w-12 text-gray-400" />
-                            <p className="text-sm text-gray-500">No notifications yet</p>
+                            <p className="text-sm text-gray-500">
+                                No notifications yet
+                            </p>
                         </li>
                     ) : (
                         notifications.map((notification) => {
                             const Icon = getIcon(notification.icon);
-                            const colorClass = colorMap[notification.color] || colorMap.light;
+                            const colorClass =
+                                colorMap[notification.color] || colorMap.light;
 
                             return (
                                 <li key={notification.id}>
                                     <button
-                                        onClick={() => handleNotificationClick(notification)}
+                                        onClick={() =>
+                                            handleNotificationClick(
+                                                notification,
+                                            )
+                                        }
                                         className={`flex w-full gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 text-left transition hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
-                                            !notification.is_read ? 'bg-primary-50/30' : ''
+                                            !notification.is_read
+                                                ? 'bg-primary-50/30'
+                                                : ''
                                         }`}
                                     >
                                         <span
@@ -260,16 +268,25 @@ export default function NotificationDropdown() {
                                             <span className="flex items-center gap-2 text-theme-xs text-gray-500 dark:text-gray-400">
                                                 {notification.shop && (
                                                     <>
-                                                        <span>{notification.shop.name}</span>
+                                                        <span>
+                                                            {
+                                                                notification
+                                                                    .shop.name
+                                                            }
+                                                        </span>
                                                         <span className="h-1 w-1 rounded-full bg-gray-400"></span>
                                                     </>
                                                 )}
-                                                <span>{getTimeAgo(notification.created_at)}</span>
+                                                <span>
+                                                    {getTimeAgo(
+                                                        notification.created_at,
+                                                    )}
+                                                </span>
                                             </span>
                                         </span>
 
                                         {!notification.is_read && (
-                                            <span className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-primary-600"></span>
+                                            <span className="bg-primary-600 mt-2 h-2 w-2 flex-shrink-0 rounded-full"></span>
                                         )}
                                     </button>
                                 </li>

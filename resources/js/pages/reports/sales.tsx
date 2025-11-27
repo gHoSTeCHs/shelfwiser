@@ -333,7 +333,7 @@ export default function SalesReport({
                 </div>
 
                 {/* Summary Cards */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     <MetricCard
                         title="Total Orders"
                         value={summary.total_orders.toLocaleString()}
