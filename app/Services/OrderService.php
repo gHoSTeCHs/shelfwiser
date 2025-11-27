@@ -316,21 +316,26 @@ class OrderService
                     // Only handle inventory for product items, skip services
                     if ($item->isProduct()) {
                         $variant = $item->productVariant;
+
+                        // Use lockForUpdate to prevent race conditions during concurrent orders
                         $location = $variant->inventoryLocations()
                             ->where('location_type', 'App\\Models\\Shop')
                             ->where('location_id', $order->shop_id)
+                            ->lockForUpdate()
                             ->first();
 
                         if (! $location) {
                             throw new Exception("No inventory location found for variant {$variant->sku} at shop");
                         }
 
-                        if ($location->quantity - $location->reserved_quantity < $item->quantity) {
-                            throw new Exception("Insufficient stock for variant {$variant->sku}. Available: ".($location->quantity - $location->reserved_quantity));
+                        // Check available stock (quantity - reserved)
+                        $availableStock = $location->quantity - $location->reserved_quantity;
+                        if ($availableStock < $item->quantity) {
+                            throw new Exception("Insufficient stock for variant {$variant->sku}. Available: {$availableStock}");
                         }
 
-                        $location->reserved_quantity += $item->quantity;
-                        $location->save();
+                        // Use atomic increment to prevent race conditions
+                        $location->increment('reserved_quantity', $item->quantity);
                     }
                     // Services don't require inventory reservation
                 }
@@ -427,14 +432,17 @@ class OrderService
                         // Only handle inventory for product items, skip services
                         if ($item->isProduct()) {
                             $variant = $item->productVariant;
+
+                            // Use lockForUpdate to prevent race conditions
                             $location = $variant->inventoryLocations()
                                 ->where('location_type', 'App\\Models\\Shop')
                                 ->where('location_id', $order->shop_id)
+                                ->lockForUpdate()
                                 ->first();
 
                             if ($location) {
-                                $location->reserved_quantity -= $item->quantity;
-                                $location->save();
+                                // Use atomic decrement to prevent race conditions
+                                $location->decrement('reserved_quantity', $item->quantity);
                             }
                         }
                         // Services don't have reserved inventory

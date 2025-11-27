@@ -33,9 +33,14 @@ class ProductController extends Controller
 
         return Inertia::render('Products/Index', [
             'products' => Product::where('tenant_id', $tenantId)
-                ->with(['type', 'category', 'shop', 'variants.inventoryLocations', 'variants.packagingTypes', 'images' => function ($query) {
-                    $query->ordered();
-                }])
+                ->with([
+                    'type:id,slug,label',
+                    'category:id,name,slug',
+                    'shop:id,name,slug',
+                    'images' => function ($query) {
+                        $query->ordered()->limit(1); // Only load primary image for list view
+                    },
+                ])
                 ->withCount('variants')
                 ->latest()
                 ->paginate(20),

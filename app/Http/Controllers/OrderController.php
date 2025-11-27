@@ -37,7 +37,11 @@ class OrderController extends Controller
 
         return Inertia::render('Orders/Index', [
             'orders' => Order::query()->where('tenant_id', $tenantId)
-                ->with(['shop', 'customer', 'items', 'createdBy'])
+                ->with([
+                    'shop:id,name,slug',
+                    'customer:id,first_name,last_name,email',
+                    'createdBy:id,first_name,last_name',
+                ])
                 ->withCount('items')
                 ->latest()
                 ->paginate(20),
@@ -71,14 +75,25 @@ class OrderController extends Controller
             ->where('is_active', true)
             ->get(['id', 'name', 'slug']);
 
+        // TODO: Replace with async product search (Select2/AJAX) for better performance with large inventories
+        // For now, limit results to prevent memory exhaustion
         $products = ProductVariant::query()
             ->whereHas('product', function ($query) use ($tenantId) {
                 $query->where('tenant_id', $tenantId)
                     ->where('is_active', true);
             })
-            ->with(['product.shop', 'inventoryLocations', 'packagingTypes' => function ($query) {
-                $query->where('is_active', true)->orderBy('display_order');
-            }])
+            ->with([
+                'product:id,name,slug,shop_id',
+                'product.shop:id,name',
+                'packagingTypes' => function ($query) {
+                    $query->where('is_active', true)
+                        ->orderBy('display_order')
+                        ->select('id', 'product_variant_id', 'name', 'display_name', 'price', 'units_per_package');
+                },
+            ])
+            ->select('id', 'product_id', 'name', 'sku', 'price', 'is_active')
+            ->where('is_active', true)
+            ->limit(100) // Prevent loading thousands of variants at once
             ->get();
 
         return Inertia::render('Orders/Create', [

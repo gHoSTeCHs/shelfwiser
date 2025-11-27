@@ -44,7 +44,11 @@ class EmployeePayrollService
                 'end_date' => $data['end_date'] ?? null,
             ]);
 
-            Cache::tags(["tenant:{$employee->tenant_id}:payroll"])->flush();
+            // Invalidate list cache and specific employee payroll cache
+            Cache::tags([
+                "tenant:{$employee->tenant_id}:payroll:list",
+                "tenant:{$employee->tenant_id}:payroll:employee:{$employee->id}",
+            ])->flush();
 
             return $payrollDetail->fresh();
         });
@@ -64,7 +68,11 @@ class EmployeePayrollService
 
             $payrollDetail->update($data);
 
-            Cache::tags(["tenant:{$employee->tenant_id}:payroll"])->flush();
+            // Invalidate list cache and specific employee payroll cache
+            Cache::tags([
+                "tenant:{$employee->tenant_id}:payroll:list",
+                "tenant:{$employee->tenant_id}:payroll:employee:{$employee->id}",
+            ])->flush();
 
             return $payrollDetail->fresh();
         });
