@@ -32,7 +32,7 @@ const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
 
     const variantOptions = product.variants?.map(variant => ({
         value: variant.id.toString(),
-        label: `${variant.sku} - ${shop.currency_symbol}${variant.price.toFixed(2)}`,
+        label: `${variant.sku} - ${shop.currency_symbol}${Number(variant.price).toFixed(2)}`,
     })) || [];
 
     const packagingOptions = selectedVariant?.packaging_types?.map(packaging => ({

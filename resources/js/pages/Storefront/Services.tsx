@@ -95,12 +95,12 @@ const Services: React.FC<StorefrontServicesProps> = ({
                     </form>
 
                     <div className="w-full md:w-48">
-                        <Select
-                            options={sortOptions}
-                            defaultValue={filters.sort || ''}
-                            onChange={handleSortChange}
-                            placeholder="Sort by"
-                        />
+                        {/*<Select*/}
+                        {/*    options={sortOptions}*/}
+                        {/*    defaultValue={filters.sort || ''}*/}
+                        {/*    onChange={handleSortChange}*/}
+                        {/*    placeholder="Sort by"*/}
+                        {/*/>*/}
                     </div>
                 </div>
 
