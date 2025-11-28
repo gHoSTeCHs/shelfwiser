@@ -24,7 +24,7 @@ class WageAdvanceService
      */
     public function calculateEligibility(User $employee, Shop $shop): array
     {
-        $payrollDetail = $employee->payrollDetail;
+        $payrollDetail = $employee->employeePayrollDetail;
 
         if (! $payrollDetail) {
             return [
@@ -315,7 +315,8 @@ class WageAdvanceService
      */
     public function getActiveAdvancesForPayroll(User $employee, Carbon $payrollDate): Collection
     {
-        return WageAdvance::forUser($employee->id)
+        return WageAdvance::where('tenant_id', $employee->tenant_id)
+            ->where('user_id', $employee->id)
             ->whereIn('status', [WageAdvanceStatus::DISBURSED, WageAdvanceStatus::REPAYING])
             ->where('repayment_start_date', '<=', $payrollDate)
             ->get();
