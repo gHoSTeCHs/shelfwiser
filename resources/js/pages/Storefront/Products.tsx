@@ -8,7 +8,7 @@ import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import EmptyState from '@/components/ui/EmptyState';
-import { Package, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Package, Search } from 'lucide-react';
 import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 
 /**
@@ -34,7 +34,7 @@ const Products: React.FC<StorefrontProductsProps> = ({
         router.get(
             StorefrontController.products.url({ shop: shop.slug }),
             params,
-            { preserveState: true }
+            { preserveState: true },
         );
     };
 
@@ -47,7 +47,7 @@ const Products: React.FC<StorefrontProductsProps> = ({
         router.get(
             StorefrontController.products.url({ shop: shop.slug }),
             params,
-            { preserveState: true }
+            { preserveState: true },
         );
     };
 
@@ -55,7 +55,7 @@ const Products: React.FC<StorefrontProductsProps> = ({
         router.get(
             StorefrontController.products.url({ shop: shop.slug }),
             { ...filters, page },
-            { preserveState: true, preserveScroll: true }
+            { preserveState: true, preserveScroll: true },
         );
     };
 
@@ -67,20 +67,29 @@ const Products: React.FC<StorefrontProductsProps> = ({
         { value: 'newest', label: 'Newest First' },
     ];
 
-    const selectedCategory = categories.find(cat => cat.id === filters.category);
+    const selectedCategory = categories.find(
+        (cat) => cat.id === filters.category,
+    );
 
     return (
         <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count}>
             <div className="space-y-6">
                 <Breadcrumbs
                     items={[
-                        { label: 'Home', href: StorefrontController.index.url({ shop: shop.slug }) },
+                        {
+                            label: 'Home',
+                            href: StorefrontController.index.url({
+                                shop: shop.slug,
+                            }),
+                        },
                         { label: 'Products' },
-                        ...(selectedCategory ? [{ label: selectedCategory.name }] : []),
+                        ...(selectedCategory
+                            ? [{ label: selectedCategory.name }]
+                            : []),
                     ]}
                 />
 
-                <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-col gap-4 md:flex-row">
                     <form onSubmit={handleSearch} className="flex-1">
                         <div className="relative">
                             <input
@@ -88,23 +97,23 @@ const Products: React.FC<StorefrontProductsProps> = ({
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search products..."
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="focus:ring-primary-500 w-full rounded-md border border-gray-300 py-2 pr-4 pl-10 focus:ring-2 focus:outline-none"
                             />
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
                         </div>
                     </form>
 
                     <div className="w-full md:w-48">
-                        <Select
-                            options={sortOptions}
-                            defaultValue={filters.sort || ''}
-                            onChange={handleSortChange}
-                            placeholder="Sort by"
-                        />
+                        {/*<Select*/}
+                        {/*    options={sortOptions}*/}
+                        {/*    defaultValue={filters.sort || ''}*/}
+                        {/*    onChange={handleSortChange}*/}
+                        {/*    placeholder="Sort by"*/}
+                        {/*/>*/}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
                     <aside className="lg:col-span-1">
                         <ProductFilter
                             shop={shop}
@@ -116,15 +125,17 @@ const Products: React.FC<StorefrontProductsProps> = ({
                     </aside>
 
                     <div className="lg:col-span-3">
-                        <div className="mb-4 flex justify-between items-center">
+                        <div className="mb-4 flex items-center justify-between">
                             <p className="text-gray-600">
-                                {products.total} {products.total === 1 ? 'product' : 'products'} found
+                                {products.total}{' '}
+                                {products.total === 1 ? 'product' : 'products'}{' '}
+                                found
                             </p>
                         </div>
 
                         {products.data.length > 0 ? (
                             <>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                                     {products.data.map((product) => (
                                         <ProductCard
                                             key={product.id}
@@ -135,24 +146,38 @@ const Products: React.FC<StorefrontProductsProps> = ({
                                 </div>
 
                                 {products.last_page > 1 && (
-                                    <div className="flex justify-center items-center space-x-4">
+                                    <div className="flex items-center justify-center space-x-4">
                                         <Button
                                             variant="outline"
-                                            onClick={() => handlePageChange(products.current_page - 1)}
-                                            disabled={products.current_page === 1}
+                                            onClick={() =>
+                                                handlePageChange(
+                                                    products.current_page - 1,
+                                                )
+                                            }
+                                            disabled={
+                                                products.current_page === 1
+                                            }
                                             startIcon={<ChevronLeft />}
                                         >
                                             Previous
                                         </Button>
 
                                         <span className="text-sm text-gray-600">
-                                            Page {products.current_page} of {products.last_page}
+                                            Page {products.current_page} of{' '}
+                                            {products.last_page}
                                         </span>
 
                                         <Button
                                             variant="outline"
-                                            onClick={() => handlePageChange(products.current_page + 1)}
-                                            disabled={products.current_page === products.last_page}
+                                            onClick={() =>
+                                                handlePageChange(
+                                                    products.current_page + 1,
+                                                )
+                                            }
+                                            disabled={
+                                                products.current_page ===
+                                                products.last_page
+                                            }
                                             endIcon={<ChevronRight />}
                                         >
                                             Next

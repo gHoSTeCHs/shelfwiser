@@ -1,4 +1,4 @@
-import { useSidebar } from '@/context/SidebarContext';
+import { useOptionalSidebar } from '@/context/SidebarContext';
 import { usePage } from '@inertiajs/react';
 import { AlertCircle, CheckCircle, Info, X, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -12,7 +12,9 @@ interface FlashMessages {
 
 export default function FlashMessage() {
     const { flash } = usePage<{ flash: FlashMessages }>().props;
-    const { isExpanded, isHovered } = useSidebar();
+    const sidebar = useOptionalSidebar();
+    const isExpanded = sidebar?.isExpanded ?? false;
+    const isHovered = sidebar?.isHovered ?? false;
     const [visible, setVisible] = useState<Record<string, boolean>>({});
 
     useEffect(() => {

@@ -23,6 +23,10 @@ export const useSidebar = () => {
   return context;
 };
 
+export const useOptionalSidebar = () => {
+  return useContext(SidebarContext);
+};
+
 export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {

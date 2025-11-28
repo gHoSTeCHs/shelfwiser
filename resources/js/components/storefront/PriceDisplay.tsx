@@ -32,13 +32,15 @@ const PriceDisplay: React.FC<PriceDisplayProps> = ({
     const hasRetailPrice = retailPrice && retailPrice !== price;
 
     const formatPrice = (amount: number) => {
-        return `${shop.currency_symbol}${amount.toFixed(shop.currency_decimals || 2)}`;
+        return `${shop.currency_symbol}${Number(amount).toFixed(shop.currency_decimals || 2)}`;
     };
 
     return (
         <div className={className}>
             <div className="flex items-baseline gap-2">
-                <span className={`font-bold text-gray-900 ${sizeClasses[size]}`}>
+                <span
+                    className={`font-bold text-gray-900 ${sizeClasses[size]}`}
+                >
                     {formatPrice(displayPrice)}
                 </span>
 
@@ -50,8 +52,9 @@ const PriceDisplay: React.FC<PriceDisplayProps> = ({
             </div>
 
             {showTaxLabel && shop.vat_enabled && (
-                <p className="text-xs text-gray-500 mt-1">
-                    {shop.vat_inclusive ? 'Inc.' : 'Excl.'} VAT ({shop.vat_rate}%)
+                <p className="mt-1 text-xs text-gray-500">
+                    {shop.vat_inclusive ? 'Inc.' : 'Excl.'} VAT ({shop.vat_rate}
+                    %)
                 </p>
             )}
         </div>
