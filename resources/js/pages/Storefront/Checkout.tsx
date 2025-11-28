@@ -9,7 +9,10 @@ import Button from '@/components/ui/button/Button';
 import Checkbox from '@/components/form/input/Checkbox';
 import { Card } from '@/components/ui/card';
 import Badge from '@/components/ui/badge/Badge';
+import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import CheckoutController from '@/actions/App/Http/Controllers/Storefront/CheckoutController';
+import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
 import { PaymentGatewaySelector, PaystackButton } from '@/components/payment';
 import { PaymentGateway, PaystackCallbackResponse } from '@/types/payment';
 
@@ -107,7 +110,15 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
     return (
         <StorefrontLayout shop={shop} customer={customer} cartItemCount={cartSummary.item_count}>
             <div className="max-w-6xl mx-auto">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
+                <Breadcrumbs
+                    items={[
+                        { label: 'Home', href: StorefrontController.index.url({ shop: shop.slug }) },
+                        { label: 'Cart', href: CartController.index.url({ shop: shop.slug }) },
+                        { label: 'Checkout' },
+                    ]}
+                />
+
+                <h1 className="text-3xl font-bold text-gray-900 mb-8 mt-6">Checkout</h1>
 
                 <Form
                     action={CheckoutController.process.url({ shop: shop.slug })}

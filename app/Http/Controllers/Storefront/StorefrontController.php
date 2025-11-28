@@ -32,6 +32,17 @@ class StorefrontController extends Controller
         $featuredProducts = $this->storefrontService->getFeaturedProducts($shop);
         $categories = $this->storefrontService->getCategories($shop);
 
+        // Get featured services (limit to 4 for homepage)
+        $featuredServices = \App\Models\Service::where('shop_id', $shop->id)
+            ->where('is_active', true)
+            ->where('is_available_online', true)
+            ->where('is_featured', true)
+            ->with(['variants' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->limit(4)
+            ->get();
+
         // Get cart summary for current user/session
         $cart = $this->cartService->getCart($shop, auth()->id());
         $cartSummary = $this->cartService->getCartSummary($cart);
@@ -39,6 +50,7 @@ class StorefrontController extends Controller
         return Inertia::render('Storefront/Home', [
             'shop' => $shop,
             'featuredProducts' => $featuredProducts,
+            'featuredServices' => $featuredServices,
             'categories' => $categories,
             'cartSummary' => $cartSummary,
         ]);

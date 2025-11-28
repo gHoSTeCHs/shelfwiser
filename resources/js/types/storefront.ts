@@ -16,6 +16,10 @@ export interface Customer {
     email_verified_at: string | null;
     is_active: boolean;
     marketing_opt_in: boolean;
+    account_balance: number;
+    credit_limit: number | null;
+    total_purchases: number;
+    last_purchase_at: string | null;
     created_at: string;
     updated_at: string;
     full_name?: string;
@@ -173,6 +177,7 @@ export interface CustomerAddress {
 export interface StorefrontHomeProps {
     shop: Shop;
     featuredProducts: Product[];
+    featuredServices: Service[];
     categories: ProductCategory[];
     cartSummary: CartSummary;
 }

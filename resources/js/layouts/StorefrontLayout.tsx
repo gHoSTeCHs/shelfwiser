@@ -57,6 +57,12 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
                                     >
                                         Products
                                     </Link>
+                                    <Link
+                                        href={StorefrontController.services.url({ shop: shop.slug })}
+                                        className="text-gray-700 hover:text-primary-600"
+                                    >
+                                        Services
+                                    </Link>
                                 </nav>
                             </div>
 

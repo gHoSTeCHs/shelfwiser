@@ -3,16 +3,17 @@ import { StorefrontHomeProps } from '@/types/storefront';
 import { Link } from '@inertiajs/react';
 import React from 'react';
 import ProductCard from '@/components/storefront/ProductCard';
+import ServiceCard from '@/components/storefront/ServiceCard';
 import Button from '@/components/ui/button/Button';
 import EmptyState from '@/components/ui/EmptyState';
-import { Package, ArrowRight } from 'lucide-react';
+import { Package, ArrowRight, Briefcase } from 'lucide-react';
 import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 
 /**
- * Storefront homepage displaying featured products and categories.
+ * Storefront homepage displaying featured products, services, and categories.
  * Entry point for customer shopping experience.
  */
-const Home: React.FC<StorefrontHomeProps> = ({ shop, featuredProducts, categories, cartSummary }) => {
+const Home: React.FC<StorefrontHomeProps> = ({ shop, featuredProducts, featuredServices, categories, cartSummary }) => {
     return (
         <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count}>
             <div className="space-y-12">
@@ -90,6 +91,31 @@ const Home: React.FC<StorefrontHomeProps> = ({ shop, featuredProducts, categorie
                         />
                     )}
                 </section>
+
+                {featuredServices && featuredServices.length > 0 && (
+                    <section>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                Featured Services
+                            </h2>
+                            <Link href={StorefrontController.services.url({ shop: shop.slug })}>
+                                <Button variant="outline" endIcon={<ArrowRight />}>
+                                    View All
+                                </Button>
+                            </Link>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {featuredServices.map((service) => (
+                                <ServiceCard
+                                    key={service.id}
+                                    service={service}
+                                    shop={shop}
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 {shop.storefront_settings?.business_hours && (
                     <section className="bg-gray-50 rounded-lg p-6">

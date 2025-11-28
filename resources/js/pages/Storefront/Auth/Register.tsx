@@ -8,7 +8,9 @@ import InputError from '@/components/form/InputError';
 import Button from '@/components/ui/button/Button';
 import Checkbox from '@/components/form/input/Checkbox';
 import { Card } from '@/components/ui/card';
+import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import CustomerAuthController from '@/actions/App/Http/Controllers/Storefront/CustomerAuthController';
+import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 
 /**
  * Customer registration page component.
@@ -17,7 +19,14 @@ import CustomerAuthController from '@/actions/App/Http/Controllers/Storefront/Cu
 const Register: React.FC<AuthRegisterProps> = ({ shop }) => {
     return (
         <StorefrontLayout shop={shop}>
-            <div className="max-w-md mx-auto">
+            <Breadcrumbs
+                items={[
+                    { label: 'Home', href: StorefrontController.index.url({ shop: shop.slug }) },
+                    { label: 'Register' },
+                ]}
+            />
+
+            <div className="max-w-md mx-auto mt-6">
                 <Card className="p-8">
                     <div className="mb-8 text-center">
                         <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
