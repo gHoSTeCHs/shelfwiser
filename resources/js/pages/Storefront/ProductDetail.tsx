@@ -176,11 +176,11 @@ const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
                     </div>
                 </div>
 
-                {relatedProducts && relatedProducts.length > 0 && (
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                            Related Products
-                        </h2>
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                        Related Products
+                    </h2>
+                    {relatedProducts && relatedProducts.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             {relatedProducts.map((relatedProduct) => (
                                 <ProductCard
@@ -190,8 +190,12 @@ const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
                                 />
                             ))}
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <div className="text-center py-8 text-gray-500">
+                            <p>No related products available at this time.</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </StorefrontLayout>
     );

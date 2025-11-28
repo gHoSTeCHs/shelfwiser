@@ -25,6 +25,7 @@ class CartService
                     'shop_id' => $shop->id,
                 ],
                 [
+                    'tenant_id' => $shop->tenant_id,
                     'expires_at' => now()->addDays(30),
                 ]
             );
@@ -38,6 +39,7 @@ class CartService
                 'shop_id' => $shop->id,
             ],
             [
+                'tenant_id' => $shop->tenant_id,
                 'expires_at' => now()->addDays(7),
             ]
         );
@@ -299,9 +301,14 @@ class CartService
         $settings = $shop->storefront_settings ?? [];
 
         $shippingFee = $settings['shipping_fee'] ?? 0;
-        $freeShippingThreshold = $settings['free_shipping_threshold'] ?? PHP_FLOAT_MAX;
+        $freeShippingThreshold = $settings['free_shipping_threshold'] ?? null;
 
-        return $subtotal >= $freeShippingThreshold ? 0 : $shippingFee;
+        // If free shipping threshold is set and subtotal meets it, shipping is free
+        if ($freeShippingThreshold !== null && $subtotal >= $freeShippingThreshold) {
+            return 0;
+        }
+
+        return $shippingFee;
     }
 
     /**

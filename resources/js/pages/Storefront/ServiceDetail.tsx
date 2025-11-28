@@ -346,11 +346,11 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
                 </div>
 
                 {/* Related Services */}
-                {relatedServices && relatedServices.length > 0 && (
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                            Related Services
-                        </h2>
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                        Related Services
+                    </h2>
+                    {relatedServices && relatedServices.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             {relatedServices.map((relatedService) => (
                                 <ServiceCard
@@ -360,8 +360,12 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
                                 />
                             ))}
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <div className="text-center py-8 text-gray-500">
+                            <p>No related services available at this time.</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </StorefrontLayout>
     );

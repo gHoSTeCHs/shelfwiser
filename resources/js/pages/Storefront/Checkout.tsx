@@ -15,6 +15,7 @@ import StorefrontController from '@/actions/App/Http/Controllers/Storefront/Stor
 import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
 import { PaymentGatewaySelector, PaystackButton } from '@/components/payment';
 import { PaymentGateway, PaystackCallbackResponse } from '@/types/payment';
+import { useFormValidation } from '@/hooks/useFormValidation';
 
 /**
  * Checkout page component for processing orders.
@@ -28,6 +29,17 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
     const [isPaymentLoading, setIsPaymentLoading] = React.useState(false);
 
     const defaultAddress = addresses.find(addr => addr.is_default && addr.type === 'shipping');
+
+    // Client-side validation
+    const { errors: clientErrors, validateField } = useFormValidation({
+        shipping_first_name: { required: true, minLength: 2, maxLength: 255 },
+        shipping_last_name: { required: true, minLength: 2, maxLength: 255 },
+        shipping_phone: { required: true, pattern: /^[\d\s\-+()]+$/ },
+        shipping_address_1: { required: true, minLength: 5, maxLength: 255 },
+        shipping_city: { required: true, minLength: 2, maxLength: 100 },
+        shipping_state: { required: true, minLength: 2, maxLength: 100 },
+        shipping_country: { required: true, minLength: 2, maxLength: 100 },
+    });
 
     /**
      * Generate payment reference on component mount
@@ -145,10 +157,11 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
                                                         ...data.shipping_address,
                                                         first_name: e.target.value
                                                     })}
-                                                    error={!!errors['shipping_address.first_name']}
+                                                    onBlur={(e) => validateField('shipping_first_name', e.target.value)}
+                                                    error={!!errors['shipping_address.first_name'] || !!clientErrors.shipping_first_name}
                                                     required
                                                 />
-                                                <InputError message={errors['shipping_address.first_name']} />
+                                                <InputError message={errors['shipping_address.first_name'] || clientErrors.shipping_first_name} />
                                             </div>
 
                                             <div>

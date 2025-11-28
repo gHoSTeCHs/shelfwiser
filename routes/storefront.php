@@ -32,9 +32,11 @@ Route::prefix('store/{shop:slug}')->name('storefront.')->group(function () {
 
     Route::middleware('guest:customer')->group(function () {
         Route::get('/login', [CustomerAuthController::class, 'showLogin'])->name('login');
-        Route::post('/login', [CustomerAuthController::class, 'login']);
+        Route::post('/login', [CustomerAuthController::class, 'login'])
+            ->middleware('throttle:5,1'); // 5 attempts per minute
         Route::get('/register', [CustomerAuthController::class, 'showRegister'])->name('register');
-        Route::post('/register', [CustomerAuthController::class, 'register']);
+        Route::post('/register', [CustomerAuthController::class, 'register'])
+            ->middleware('throttle:3,1'); // 3 registrations per minute
     });
 
     Route::middleware('auth:customer')->group(function () {
