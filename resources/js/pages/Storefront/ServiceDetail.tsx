@@ -113,11 +113,7 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
         },
     ];
 
-    const handleAddonToggle = (
-        addonId: number,
-        allows_quantity: boolean,
-        price: number,
-    ) => {
+    const handleAddonToggle = (addonId: number) => {
         setSelectedAddons((prev) => {
             const current = prev[addonId] || 0;
             if (current > 0) {
@@ -350,8 +346,6 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
                                                             onChange={() =>
                                                                 handleAddonToggle(
                                                                     addon.id,
-                                                                    addon.allows_quantity,
-                                                                    addon.price,
                                                                 )
                                                             }
                                                         />
@@ -506,12 +500,13 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
                                 />
                             ))}
                         </div>
-                    ) : (
-                        <div className="text-center py-8 text-gray-500">
-                            <p>No related services available at this time.</p>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
+                {(!relatedServices || relatedServices.length === 0) && (
+                    <div className="py-8 text-center text-gray-500">
+                        <p>No related services available at this time.</p>
+                    </div>
+                )}
             </div>
         </StorefrontLayout>
     );

@@ -1,13 +1,12 @@
-import { Customer, Shop } from '@/types/storefront';
-import { Head, Link, router } from '@inertiajs/react';
-import { ShoppingCart, User, LogOut, Package } from 'lucide-react';
-import React from 'react';
-import FlashMessage from '@/components/FlashMessage';
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
 import CustomerAuthController from '@/actions/App/Http/Controllers/Storefront/CustomerAuthController';
 import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
-import { Form } from '@inertiajs/react';
+import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import FlashMessage from '@/components/FlashMessage';
+import { Customer, Shop } from '@/types/storefront';
+import { Form, Head, Link, router } from '@inertiajs/react';
+import { LogOut, Package, ShoppingCart, User } from 'lucide-react';
+import React from 'react';
 
 interface StorefrontLayoutProps {
     shop: Shop;
@@ -29,17 +28,16 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
     const [showUserMenu, setShowUserMenu] = React.useState(false);
     const [isNavigating, setIsNavigating] = React.useState(false);
 
-    // Show loading indicator during page transitions
     React.useEffect(() => {
         const handleStart = () => setIsNavigating(true);
         const handleFinish = () => setIsNavigating(false);
 
-        router.on('start', handleStart);
-        router.on('finish', handleFinish);
+        const startListener = router.on('start', handleStart);
+        const finishListener = router.on('finish', handleFinish);
 
         return () => {
-            router.off('start', handleStart);
-            router.off('finish', handleFinish);
+            startListener();
+            finishListener();
         };
     }, []);
 
@@ -47,39 +45,46 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
         <>
             <Head title={shop.name} />
 
-            {/* Loading bar */}
             {isNavigating && (
-                <div className="fixed top-0 left-0 right-0 h-1 bg-primary-600 z-[9999] animate-pulse" />
+                <div className="bg-primary-600 fixed top-0 right-0 left-0 z-[9999] h-1 animate-pulse" />
             )}
 
             <div className="min-h-screen bg-gray-50">
-                <header className="bg-white shadow-sm sticky top-0 z-50">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between items-center h-16">
+                <header className="sticky top-0 z-50 bg-white shadow-sm">
+                    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                        <div className="flex h-16 items-center justify-between">
                             <div className="flex items-center space-x-8">
                                 <Link
-                                    href={StorefrontController.index.url({ shop: shop.slug })}
-                                    className="text-2xl font-bold text-gray-900 hover:text-primary-600"
+                                    href={StorefrontController.index.url({
+                                        shop: shop.slug,
+                                    })}
+                                    className="hover:text-primary-600 text-2xl font-bold text-gray-900"
                                 >
                                     {shop.name}
                                 </Link>
 
-                                <nav className="hidden md:flex space-x-6">
+                                <nav className="hidden space-x-6 md:flex">
                                     <Link
-                                        href={StorefrontController.index.url({ shop: shop.slug })}
-                                        className="text-gray-700 hover:text-primary-600"
+                                        href={StorefrontController.index.url({
+                                            shop: shop.slug,
+                                        })}
+                                        className="hover:text-primary-600 text-gray-700"
                                     >
                                         Home
                                     </Link>
                                     <Link
-                                        href={StorefrontController.products.url({ shop: shop.slug })}
-                                        className="text-gray-700 hover:text-primary-600"
+                                        href={StorefrontController.products.url(
+                                            { shop: shop.slug },
+                                        )}
+                                        className="hover:text-primary-600 text-gray-700"
                                     >
                                         Products
                                     </Link>
                                     <Link
-                                        href={StorefrontController.services.url({ shop: shop.slug })}
-                                        className="text-gray-700 hover:text-primary-600"
+                                        href={StorefrontController.services.url(
+                                            { shop: shop.slug },
+                                        )}
+                                        className="hover:text-primary-600 text-gray-700"
                                     >
                                         Services
                                     </Link>
@@ -88,12 +93,14 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
 
                             <div className="flex items-center space-x-4">
                                 <Link
-                                    href={CartController.index.url({ shop: shop.slug })}
-                                    className="relative p-2 text-gray-700 hover:text-primary-600"
+                                    href={CartController.index.url({
+                                        shop: shop.slug,
+                                    })}
+                                    className="hover:text-primary-600 relative p-2 text-gray-700"
                                 >
                                     <ShoppingCart className="h-6 w-6" />
                                     {cartItemCount > 0 && (
-                                        <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                        <span className="bg-primary-600 absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-xs text-white">
                                             {cartItemCount}
                                         </span>
                                     )}
@@ -102,8 +109,10 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
                                 {customer ? (
                                     <div className="relative">
                                         <button
-                                            onClick={() => setShowUserMenu(!showUserMenu)}
-                                            className="flex items-center space-x-2 p-2 text-gray-700 hover:text-primary-600"
+                                            onClick={() =>
+                                                setShowUserMenu(!showUserMenu)
+                                            }
+                                            className="hover:text-primary-600 flex items-center space-x-2 p-2 text-gray-700"
                                         >
                                             <User className="h-6 w-6" />
                                             <span className="hidden md:block">
@@ -112,9 +121,11 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
                                         </button>
 
                                         {showUserMenu && (
-                                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                            <div className="absolute right-0 z-50 mt-2 w-48 rounded-md bg-white py-1 shadow-lg">
                                                 <Link
-                                                    href={CustomerPortalController.dashboard.url({ shop: shop.slug })}
+                                                    href={CustomerPortalController.dashboard.url(
+                                                        { shop: shop.slug },
+                                                    )}
                                                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                                 >
                                                     <div className="flex items-center space-x-2">
@@ -123,7 +134,9 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
                                                     </div>
                                                 </Link>
                                                 <Link
-                                                    href={CustomerPortalController.orders.url({ shop: shop.slug })}
+                                                    href={CustomerPortalController.orders.url(
+                                                        { shop: shop.slug },
+                                                    )}
                                                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                                 >
                                                     <div className="flex items-center space-x-2">
@@ -132,17 +145,21 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
                                                     </div>
                                                 </Link>
                                                 <Form
-                                                    action={CustomerAuthController.logout.url({ shop: shop.slug })}
+                                                    action={CustomerAuthController.logout.url(
+                                                        { shop: shop.slug },
+                                                    )}
                                                     method="post"
                                                 >
                                                     {() => (
                                                         <button
                                                             type="submit"
-                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
                                                         >
                                                             <div className="flex items-center space-x-2">
                                                                 <LogOut className="h-4 w-4" />
-                                                                <span>Logout</span>
+                                                                <span>
+                                                                    Logout
+                                                                </span>
                                                             </div>
                                                         </button>
                                                     )}
@@ -152,8 +169,10 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
                                     </div>
                                 ) : (
                                     <Link
-                                        href={CustomerAuthController.showLogin.url({ shop: shop.slug })}
-                                        className="text-gray-700 hover:text-primary-600"
+                                        href={CustomerAuthController.showLogin.url(
+                                            { shop: shop.slug },
+                                        )}
+                                        className="hover:text-primary-600 text-gray-700"
                                     >
                                         Login
                                     </Link>
@@ -165,14 +184,17 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
 
                 <FlashMessage />
 
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
                     {children}
                 </main>
 
-                <footer className="bg-white border-t border-gray-200 mt-12">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <footer className="mt-12 border-t border-gray-200 bg-white">
+                    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
                         <div className="text-center text-gray-600">
-                            <p>&copy; {new Date().getFullYear()} {shop.name}. All rights reserved.</p>
+                            <p>
+                                &copy; {new Date().getFullYear()} {shop.name}.
+                                All rights reserved.
+                            </p>
                         </div>
                     </div>
                 </footer>
