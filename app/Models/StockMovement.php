@@ -72,6 +72,11 @@ class StockMovement extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function performedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function packagingType(): BelongsTo
     {
         return $this->belongsTo(ProductPackagingType::class, 'product_packaging_type_id');
