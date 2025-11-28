@@ -77,7 +77,8 @@ class ProductService
                     }
                 }
 
-                Cache::tags(["tenant:$tenant->id:products"])->flush();
+                // Invalidate only list cache, not individual product caches
+                Cache::tags(["tenant:$tenant->id:products:list"])->flush();
 
                 Log::info('Product created successfully.', ['product_id' => $product->id]);
 
@@ -121,7 +122,11 @@ class ProductService
 
                 $product->update($data);
 
-                Cache::tags(["tenant:$product->tenant_id:products"])->flush();
+                // Invalidate specific product cache and list cache
+                Cache::tags([
+                    "tenant:$product->tenant_id:products:list",
+                    "tenant:$product->tenant_id:product:$product->id",
+                ])->flush();
 
                 Log::info('Product updated successfully.', ['product_id' => $product->id]);
 

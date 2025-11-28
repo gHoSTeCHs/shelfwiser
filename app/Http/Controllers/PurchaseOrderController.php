@@ -101,7 +101,12 @@ class PurchaseOrderController extends Controller
 
     public function store(CreatePurchaseOrderRequest $request): RedirectResponse
     {
-        $shop = Shop::findOrFail($request->input('shop_id'));
+        // Validate shop belongs to user's tenant
+        $shop = Shop::query()
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->findOrFail($request->input('shop_id'));
+
+        // Supplier tenant doesn't need validation as it's a different tenant (B2B)
         $supplierTenant = Tenant::findOrFail($request->input('supplier_tenant_id'));
 
         $po = $this->purchaseOrderService->createPurchaseOrder(

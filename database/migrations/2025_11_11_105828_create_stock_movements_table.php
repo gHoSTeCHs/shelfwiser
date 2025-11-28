@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('reference_number')->nullable()->unique();
             $table->text('reason')->nullable();
             $table->text('notes')->nullable();
-            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
             $table->index(['tenant_id', 'product_variant_id']);

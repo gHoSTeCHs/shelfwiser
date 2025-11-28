@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('reference_number')->nullable();
             $table->text('notes')->nullable();
 
-            $table->foreignId('recorded_by')->constrained('users')->nullOnDelete();
+            $table->foreignId('recorded_by')->nullable()->constrained('users')->nullOnDelete();
 
             $table->timestamps();
             $table->softDeletes();

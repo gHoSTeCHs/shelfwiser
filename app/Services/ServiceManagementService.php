@@ -55,7 +55,8 @@ class ServiceManagementService
                     }
                 }
 
-                Cache::tags(["tenant:$tenant->id:services"])->flush();
+                // Invalidate only list cache, not individual service caches
+                Cache::tags(["tenant:$tenant->id:services:list"])->flush();
 
                 Log::info('Service created successfully.', ['service_id' => $service->id]);
 
@@ -94,7 +95,11 @@ class ServiceManagementService
 
                 $service->update($data);
 
-                Cache::tags(["tenant:$service->tenant_id:services"])->flush();
+                // Invalidate specific service cache and list cache
+                Cache::tags([
+                    "tenant:$service->tenant_id:services:list",
+                    "tenant:$service->tenant_id:service:$service->id",
+                ])->flush();
 
                 Log::info('Service updated successfully.', ['service_id' => $service->id]);
 
@@ -132,7 +137,11 @@ class ServiceManagementService
 
                 $service->delete();
 
-                Cache::tags(["tenant:$tenantId:services"])->flush();
+                // Invalidate specific service cache and list cache
+                Cache::tags([
+                    "tenant:$tenantId:services:list",
+                    "tenant:$tenantId:service:$service->id",
+                ])->flush();
 
                 Log::info('Service deleted successfully.', ['service_id' => $service->id]);
 
@@ -175,7 +184,11 @@ class ServiceManagementService
 
             $variant = ServiceVariant::query()->create($variantData);
 
-            Cache::tags(["tenant:$service->tenant_id:services"])->flush();
+            // Invalidate parent service and list cache
+            Cache::tags([
+                "tenant:$service->tenant_id:services:list",
+                "tenant:$service->tenant_id:service:$service->id",
+            ])->flush();
 
             Log::info('Service variant created successfully.', ['variant_id' => $variant->id]);
 
@@ -206,7 +219,11 @@ class ServiceManagementService
         try {
             $variant->update($data);
 
-            Cache::tags(["tenant:{$variant->service->tenant_id}:services"])->flush();
+            // Invalidate parent service and list cache
+            Cache::tags([
+                "tenant:{$variant->service->tenant_id}:services:list",
+                "tenant:{$variant->service->tenant_id}:service:{$variant->service_id}",
+            ])->flush();
 
             Log::info('Service variant updated successfully.', ['variant_id' => $variant->id]);
 
@@ -233,10 +250,15 @@ class ServiceManagementService
 
         try {
             $tenantId = $variant->service->tenant_id;
+            $serviceId = $variant->service_id;
 
             $variant->delete();
 
-            Cache::tags(["tenant:$tenantId:services"])->flush();
+            // Invalidate parent service and list cache
+            Cache::tags([
+                "tenant:$tenantId:services:list",
+                "tenant:$tenantId:service:$serviceId",
+            ])->flush();
 
             Log::info('Service variant deleted successfully.', ['variant_id' => $variant->id]);
 
@@ -279,11 +301,14 @@ class ServiceManagementService
 
             $addon = ServiceAddon::create($addonData);
 
-            // Flush cache based on context
+            // Invalidate cache based on context (list and specific service)
             if ($service) {
-                Cache::tags(["tenant:{$service->tenant_id}:services"])->flush();
+                Cache::tags([
+                    "tenant:{$service->tenant_id}:services:list",
+                    "tenant:{$service->tenant_id}:service:{$service->id}",
+                ])->flush();
             } elseif ($category) {
-                Cache::tags(["tenant:{$category->tenant_id}:services"])->flush();
+                Cache::tags(["tenant:{$category->tenant_id}:services:list"])->flush();
             }
 
             Log::info('Service addon created successfully.', ['addon_id' => $addon->id]);
@@ -316,11 +341,14 @@ class ServiceManagementService
         try {
             $addon->update($data);
 
-            // Flush cache based on context
+            // Invalidate cache based on context (list and specific service)
             if ($addon->service_id) {
-                Cache::tags(["tenant:{$addon->service->tenant_id}:services"])->flush();
+                Cache::tags([
+                    "tenant:{$addon->service->tenant_id}:services:list",
+                    "tenant:{$addon->service->tenant_id}:service:{$addon->service_id}",
+                ])->flush();
             } elseif ($addon->service_category_id) {
-                Cache::tags(["tenant:{$addon->category->tenant_id}:services"])->flush();
+                Cache::tags(["tenant:{$addon->category->tenant_id}:services:list"])->flush();
             }
 
             Log::info('Service addon updated successfully.', ['addon_id' => $addon->id]);
@@ -347,14 +375,23 @@ class ServiceManagementService
         Log::info('Service addon deletion started.', ['addon_id' => $addon->id]);
 
         try {
-            // Get tenant ID before deletion
+            // Get tenant ID and service ID before deletion
             $tenantId = $addon->service_id
                 ? $addon->service->tenant_id
                 : $addon->category->tenant_id;
+            $serviceId = $addon->service_id;
 
             $addon->delete();
 
-            Cache::tags(["tenant:$tenantId:services"])->flush();
+            // Invalidate cache based on context (list and specific service)
+            if ($serviceId) {
+                Cache::tags([
+                    "tenant:$tenantId:services:list",
+                    "tenant:$tenantId:service:$serviceId",
+                ])->flush();
+            } else {
+                Cache::tags(["tenant:$tenantId:services:list"])->flush();
+            }
 
             Log::info('Service addon deleted successfully.', ['addon_id' => $addon->id]);
 

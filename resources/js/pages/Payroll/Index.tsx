@@ -126,8 +126,8 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
 
             <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-dark-900">Payroll Management</h1>
-                    <p className="mt-1 text-sm text-dark-600">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Payroll Management</h1>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         Manage payroll periods and process employee payments
                     </p>
                 </div>
@@ -147,13 +147,13 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-dark-600">Total Gross Pay</p>
-                            <p className="mt-1 text-2xl font-bold text-dark-900">
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Gross Pay</p>
+                            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(totalGrossPay)}
                             </p>
                         </div>
-                        <div className="rounded-lg bg-primary-100 p-3">
-                            <DollarSign className="h-6 w-6 text-primary-600" />
+                        <div className="rounded-lg bg-primary-100 p-3 dark:bg-primary-900/20">
+                            <DollarSign className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                         </div>
                     </div>
                 </Card>
@@ -161,13 +161,13 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-dark-600">Total Deductions</p>
-                            <p className="mt-1 text-2xl font-bold text-dark-900">
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Deductions</p>
+                            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(totalDeductions)}
                             </p>
                         </div>
-                        <div className="rounded-lg bg-warning-100 p-3">
-                            <FileText className="h-6 w-6 text-warning-600" />
+                        <div className="rounded-lg bg-warning-100 p-3 dark:bg-warning-900/20">
+                            <FileText className="h-6 w-6 text-warning-600 dark:text-warning-400" />
                         </div>
                     </div>
                 </Card>
@@ -175,24 +175,24 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-dark-600">Total Net Pay</p>
-                            <p className="mt-1 text-2xl font-bold text-dark-900">
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Net Pay</p>
+                            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(totalNetPay)}
                             </p>
                         </div>
-                        <div className="rounded-lg bg-success-100 p-3">
-                            <DollarSign className="h-6 w-6 text-success-600" />
+                        <div className="rounded-lg bg-success-100 p-3 dark:bg-success-900/20">
+                            <DollarSign className="h-6 w-6 text-success-600 dark:text-success-400" />
                         </div>
                     </div>
                 </Card>
             </div>
 
             <Card className="overflow-hidden">
-                <div className="border-b border-dark-200 bg-dark-50 p-4">
+                <div className="border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
                     <div className="grid gap-4 sm:grid-cols-2">
                         {shops.length > 1 && (
                             <div>
-                                <label className="mb-1 block text-sm font-medium text-dark-700">
+                                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Filter by Shop
                                 </label>
                                 <Select
@@ -210,7 +210,7 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                         )}
 
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-dark-700">
+                            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Filter by Status
                             </label>
                             <Select
@@ -246,64 +246,64 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                         </div>
                     ) : (
                         <table className="w-full">
-                            <thead className="bg-dark-50">
+                            <thead className="bg-gray-50 dark:bg-gray-800">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Period
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Shop
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Dates
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Employees
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Gross Pay
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Deductions
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Net Pay
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Status
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-dark-200 bg-white">
+                            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
                                 {payrollPeriods.map((period) => (
-                                    <tr key={period.id} className="hover:bg-dark-50">
+                                    <tr key={period.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col">
-                                                <span className="font-medium text-dark-900">
+                                                <span className="font-medium text-gray-900 dark:text-white">
                                                     {period.period_name}
                                                 </span>
-                                                <span className="text-sm text-dark-500">
+                                                <span className="text-sm text-gray-500 dark:text-gray-400">
                                                     Payment: {formatDate(period.payment_date)}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className="text-sm text-dark-600">
+                                            <span className="text-sm text-gray-600 dark:text-gray-300">
                                                 {period.shop ? period.shop.name : 'All Shops'}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <div className="flex flex-col text-sm text-dark-600">
+                                            <div className="flex flex-col text-sm text-gray-600 dark:text-gray-300">
                                                 <span>{formatDate(period.start_date)}</span>
-                                                <span className="text-dark-400">to</span>
+                                                <span className="text-gray-400 dark:text-gray-500">to</span>
                                                 <span>{formatDate(period.end_date)}</span>
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <div className="flex items-center gap-1 text-sm text-dark-600">
+                                            <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300">
                                                 <Users className="h-4 w-4" />
                                                 <span>{period.employee_count}</span>
                                                 {period.includes_general_manager && (
@@ -313,13 +313,13 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm font-medium text-dark-900">
+                                        <td className="px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
                                             {formatCurrency(period.total_gross_pay)}
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm font-medium text-dark-900">
+                                        <td className="px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
                                             {formatCurrency(period.total_deductions)}
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm font-semibold text-success-600">
+                                        <td className="px-4 py-3 text-right text-sm font-semibold text-success-600 dark:text-success-400">
                                             {formatCurrency(period.total_net_pay)}
                                         </td>
                                         <td className="px-4 py-3">
@@ -344,7 +344,7 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                                                 href={PayrollController.show.url({
                                                     payrollPeriod: period.id,
                                                 })}
-                                                className="text-sm font-medium text-primary-600 hover:text-primary-700"
+                                                className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                                             >
                                                 View Details
                                             </Link>

@@ -34,7 +34,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['tenant_id', 'email']);
-            $table->index('email');
+            
             $table->index('preferred_shop_id');
         });
     }

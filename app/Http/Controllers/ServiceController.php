@@ -20,9 +20,7 @@ class ServiceController extends Controller
 {
     public function __construct(
         private readonly ServiceManagementService $serviceManagementService
-    )
-    {
-    }
+    ) {}
 
     /**
      * Display a listing of services
@@ -73,11 +71,15 @@ class ServiceController extends Controller
 
     /**
      * Store a newly created service
+     *
      * @throws Throwable
      */
     public function store(CreateServiceRequest $request): RedirectResponse
     {
-        $shop = Shop::findOrFail($request->input('shop_id'));
+        // Validate shop belongs to user's tenant
+        $shop = Shop::query()
+            ->where('tenant_id', $request->user()->tenant_id)
+            ->findOrFail($request->input('shop_id'));
 
         $service = $this->serviceManagementService->create(
             $request->validated(),
@@ -99,8 +101,8 @@ class ServiceController extends Controller
         $service->load([
             'category',
             'shop',
-            'variants' => fn($q) => $q->orderBy('sort_order'),
-            'addons' => fn($q) => $q->where('is_active', true)->orderBy('sort_order'),
+            'variants' => fn ($q) => $q->orderBy('sort_order'),
+            'addons' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
             'images' => function ($query) {
                 $query->ordered();
             },
@@ -132,8 +134,8 @@ class ServiceController extends Controller
 
         $service->load([
             'category',
-            'variants' => fn($q) => $q->orderBy('sort_order'),
-            'addons' => fn($q) => $q->orderBy('sort_order'),
+            'variants' => fn ($q) => $q->orderBy('sort_order'),
+            'addons' => fn ($q) => $q->orderBy('sort_order'),
             'images' => function ($query) {
                 $query->ordered();
             },
@@ -156,6 +158,7 @@ class ServiceController extends Controller
 
     /**
      * Update the specified service
+     *
      * @throws Throwable
      */
     public function update(UpdateServiceRequest $request, Service $service): RedirectResponse
@@ -168,6 +171,7 @@ class ServiceController extends Controller
 
     /**
      * Remove the specified service
+     *
      * @throws Throwable
      */
     public function destroy(Service $service): RedirectResponse

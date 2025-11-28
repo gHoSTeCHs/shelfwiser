@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StockMovementType;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -95,13 +96,16 @@ class POSService
                 if ($variant->track_stock) {
                     $variant->decrement('stock_quantity', $quantity);
 
-                    app(StockMovementService::class)->recordMovement(
-                        $variant,
-                        -$quantity,
-                        'sale',
-                        "POS Sale - Order {$order->order_number}",
-                        $shop->id
-                    );
+                    app(StockMovementService::class)->recordMovement([
+                        'tenant_id' => auth()->user()->tenant_id,
+                        'shop_id' => $shop->id,
+                        'product_variant_id' => $variant->id,
+                        'type' => StockMovementType::SALE,
+                        'quantity' => -$quantity,
+                        'reference_number' => "POS-{$order->order_number}",
+                        'notes' => "POS Sale - Order {$order->order_number}",
+                        'created_by' => auth()->id(),
+                    ]);
                 }
             }
 

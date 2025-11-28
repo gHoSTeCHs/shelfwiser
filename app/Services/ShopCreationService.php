@@ -54,7 +54,8 @@ class ShopCreationService
 
                 //            event(new \App\Events\ShopCreated($shop, $creator));
 
-                Cache::tags(["tenant:$tenant->id:shops"])->flush();
+                // Invalidate only list cache, not individual shop caches
+                Cache::tags(["tenant:$tenant->id:shops:list"])->flush();
 
                 Log::info('Shop created successfully.', ['shop_id' => $shop->id]);
 

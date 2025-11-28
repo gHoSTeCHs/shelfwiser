@@ -119,13 +119,17 @@ readonly class PayrollService
      */
     protected function generatePayslip(PayrollPeriod $payrollPeriod, User $employee): Payslip
     {
-        $payrollDetail = $employee->payrollDetail;
+        $payrollDetail = $employee->employeePayrollDetail;
 
         if (! $payrollDetail) {
             throw new RuntimeException("Employee $employee->name has no payroll details configured");
         }
 
-        $shop = $payrollDetail->shop ?? $employee->shops()->first();
+        $shop = $employee->shops()->first();
+
+        if (! $shop) {
+            throw new RuntimeException("Employee $employee->name is not assigned to any shop");
+        }
 
         $earnings = $this->calculateEarnings($employee, $payrollPeriod);
 
@@ -168,7 +172,7 @@ readonly class PayrollService
      */
     protected function calculateEarnings(User $employee, PayrollPeriod $payrollPeriod): array
     {
-        $payrollDetail = $employee->payrollDetail;
+        $payrollDetail = $employee->employeePayrollDetail;
         //        $shop = $payrollDetail->shop ?? $employee->shops()->first();
 
         $timesheetSummary = $this->timesheetService->getTimesheetSummary(
@@ -226,8 +230,8 @@ readonly class PayrollService
      */
     protected function calculateDeductions(User $employee, PayrollPeriod $payrollPeriod, float $grossPay): array
     {
-        $payrollDetail = $employee->payrollDetail;
-        $shop = $payrollDetail->shop ?? $employee->shops()->first();
+        $payrollDetail = $employee->employeePayrollDetail;
+        $shop = $employee->shops()->first();
 
         $incomeTax = 0;
         $taxDetails = null;
@@ -304,7 +308,7 @@ readonly class PayrollService
     {
         $query = User::where('tenant_id', $payrollPeriod->tenant_id)
             ->where('is_active', true)
-            ->whereHas('payrollDetail');
+            ->whereHas('employeePayrollDetail');
 
         if ($payrollPeriod->shop_id) {
             $query->whereHas('shops', function ($q) use ($payrollPeriod) {
@@ -312,7 +316,7 @@ readonly class PayrollService
             });
         }
 
-        return $query->with(['payrollDetail', 'shops', 'customDeductions'])->get();
+        return $query->with(['employeePayrollDetail', 'shops', 'customDeductions'])->get();
     }
 
     /**

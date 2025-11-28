@@ -39,12 +39,10 @@ class POSController extends Controller
         ]);
     }
 
-    /**
-     * Search products for POS
-     */
     public function searchProducts(Request $request, Shop $shop): JsonResponse
     {
 //        $this->authorize('manage', $shop);
+
 
         $request->validate([
             'query' => ['required', 'string', 'min:1'],
@@ -61,16 +59,18 @@ class POSController extends Controller
         ]);
     }
 
-    /**
-     * Search customers for POS
-     */
-    public function searchCustomers(Request $request): JsonResponse
+    public function searchCustomers(Request $request, Shop $shop): JsonResponse
     {
+//        $this->authorize('manage', $shop);
+
         $request->validate([
             'query' => ['required', 'string', 'min:1'],
         ]);
 
-        $customers = $this->posService->searchCustomers($request->query, 10);
+        $customers = $this->posService->searchCustomers(
+            $request->input('query'),
+            10
+        );
 
         return response()->json([
             'customers' => $customers,
@@ -82,7 +82,7 @@ class POSController extends Controller
      */
     public function completeSale(Request $request, Shop $shop): RedirectResponse
     {
-        $this->authorize('manage', $shop);
+//        $this->authorize('manage', $shop);
 
         $validated = $request->validate([
             'items' => ['required', 'array', 'min:1'],
@@ -132,7 +132,7 @@ class POSController extends Controller
      */
     public function sessionSummary(Request $request, Shop $shop): JsonResponse
     {
-        $this->authorize('manage', $shop);
+//        $this->authorize('manage', $shop);
 
         $summary = $this->posService->getSessionSummary(
             $shop,
@@ -148,7 +148,7 @@ class POSController extends Controller
      */
     public function holdSale(Request $request, Shop $shop): JsonResponse
     {
-        $this->authorize('manage', $shop);
+//        $this->authorize('manage', $shop);
 
         $validated = $request->validate([
             'items' => ['required', 'array'],

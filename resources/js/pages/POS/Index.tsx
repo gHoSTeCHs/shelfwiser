@@ -1,13 +1,16 @@
 import POSController from '@/actions/App/Http/Controllers/POSController';
 import Input from '@/components/form/input/InputField';
+import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout.tsx';
 import { Shop } from '@/types/shop';
-import { Head, router } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     Check,
+    Loader2,
     Minus,
     Plus,
     Search,
@@ -55,25 +58,37 @@ interface Product {
     };
 }
 
-/**
- * POS (Point of Sale) interface for quick retail checkout.
- * Optimized for speed with keyboard shortcuts and barcode scanning.
- */
 const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
     const [cart, setCart] = React.useState<CartItem[]>([]);
     const [searchQuery, setSearchQuery] = React.useState('');
     const [searchResults, setSearchResults] = React.useState<Product[]>([]);
+    const [isSearching, setIsSearching] = React.useState(false);
+    const [searchError, setSearchError] = React.useState<string | null>(null);
+
     const [selectedCustomer, setSelectedCustomer] =
         React.useState<Customer | null>(null);
     const [customerSearch, setCustomerSearch] = React.useState('');
     const [customerResults, setCustomerResults] = React.useState<Customer[]>(
         [],
     );
-    const [paymentMethod, setPaymentMethod] = React.useState('cash');
-    const [amountTendered, setAmountTendered] = React.useState('');
+    const [isSearchingCustomers, setIsSearchingCustomers] =
+        React.useState(false);
+    const [customerSearchError, setCustomerSearchError] = React.useState<
+        string | null
+    >(null);
+    const [showCustomerSearch, setShowCustomerSearch] = React.useState(false);
+
     const [discount, setDiscount] = React.useState('');
     const [notes, setNotes] = React.useState('');
-    const [showCustomerSearch, setShowCustomerSearch] = React.useState(false);
+    const [paymentMethod, setPaymentMethod] = React.useState('cash');
+    const [amountTendered, setAmountTendered] = React.useState(0);
+
+    const searchAbortControllerRef = React.useRef<AbortController>(
+        new AbortController(),
+    );
+    const customerSearchAbortControllerRef = React.useRef<AbortController>(
+        new AbortController(),
+    );
 
     const searchProducts = async () => {
         if (searchQuery.length < 1) {
@@ -81,15 +96,31 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
             return;
         }
 
+        searchAbortControllerRef.current.abort();
+        searchAbortControllerRef.current = new AbortController();
+
+        setIsSearching(true);
+        setSearchError(null);
+
         try {
             const response = await fetch(
                 POSController.searchProducts.url({ shop: shop.id }) +
                     `?query=${encodeURIComponent(searchQuery)}`,
+                { signal: searchAbortControllerRef.current.signal },
             );
+
+            if (!response.ok) {
+                throw new Error('Failed to search products');
+            }
+
             const data = await response.json();
             setSearchResults(data.products || []);
         } catch (error) {
-            console.error('Search error:', error);
+            if (error instanceof Error && error.name !== 'AbortError') {
+                setSearchError('Failed to search products. Please try again.');
+            }
+        } finally {
+            setIsSearching(false);
         }
     };
 
@@ -99,26 +130,50 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
             return;
         }
 
+        customerSearchAbortControllerRef.current.abort();
+        customerSearchAbortControllerRef.current = new AbortController();
+
+        setIsSearchingCustomers(true);
+        setCustomerSearchError(null);
+
         try {
             const response = await fetch(
                 POSController.searchCustomers.url({ shop: shop.id }) +
                     `?query=${encodeURIComponent(customerSearch)}`,
+                { signal: customerSearchAbortControllerRef.current.signal },
             );
+
+            if (!response.ok) {
+                throw new Error('Failed to search customers');
+            }
+
             const data = await response.json();
             setCustomerResults(data.customers || []);
         } catch (error) {
-            console.error('Customer search error:', error);
+            if (error instanceof Error && error.name !== 'AbortError') {
+                setCustomerSearchError(
+                    'Failed to search customers. Please try again.',
+                );
+            }
+        } finally {
+            setIsSearchingCustomers(false);
         }
     };
 
     React.useEffect(() => {
         const timer = setTimeout(searchProducts, 300);
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(timer);
+            searchAbortControllerRef.current.abort();
+        };
     }, [searchQuery]);
 
     React.useEffect(() => {
         const timer = setTimeout(searchCustomers, 300);
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(timer);
+            customerSearchAbortControllerRef.current.abort();
+        };
     }, [customerSearch]);
 
     const addToCart = (product: Product) => {
@@ -191,7 +246,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
 
     const calculateChange = () => {
         if (paymentMethod !== 'cash') return 0;
-        const tendered = parseFloat(amountTendered) || 0;
+        const tendered = amountTendered || 0;
         const total = calculateTotal();
         return Math.max(0, tendered - total);
     };
@@ -200,48 +255,16 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
         setCart([]);
         setSelectedCustomer(null);
         setPaymentMethod('cash');
-        setAmountTendered('');
+        setAmountTendered(0);
         setDiscount('');
         setNotes('');
     };
 
-    const completeSale = () => {
-        if (cart.length === 0) {
-            alert('Cart is empty');
-            return;
-        }
-
-        const total = calculateTotal();
-        const tendered = parseFloat(amountTendered) || 0;
-
-        if (paymentMethod === 'cash' && tendered < total) {
-            alert('Amount tendered is less than total');
-            return;
-        }
-
-        router.post(
-            POSController.completeSale.url({ shop: shop.id }),
-            {
-                items: cart,
-                customer_id: selectedCustomer?.id,
-                payment_method: paymentMethod,
-                amount_tendered: paymentMethod === 'cash' ? tendered : total,
-                discount_amount: parseFloat(discount) || 0,
-                notes: notes || null,
-            },
-            {
-                onSuccess: () => {
-                    clearCart();
-                },
-            },
-        );
-    };
-
     return (
-        <div className="min-h-screen dark:bg-gray-900 dark:text-white">
+        <AppLayout>
             <Head title={`POS - ${shop.name}`} />
 
-            <div className="flex h-screen flex-col">
+            <div className="flex h-[calc(100vh-4rem)] flex-col">
                 <div className="bg-primary-600 flex items-center justify-between px-6 py-4 text-white">
                     <div>
                         <h1 className="text-2xl font-bold">{shop.name}</h1>
@@ -267,17 +290,22 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                         <Card className="p-4">
                             <div className="relative">
                                 <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
+                                {isSearching && (
+                                    <Loader2 className="absolute top-1/2 right-3 h-5 w-5 -translate-y-1/2 animate-spin text-gray-400" />
+                                )}
                                 <Input
-                                    // name='product_name'
                                     type="text"
                                     placeholder="Search products by SKU, barcode, or name..."
                                     value={searchQuery}
                                     onChange={(e) =>
                                         setSearchQuery(e.target.value)
                                     }
-                                    className="pl-10"
+                                    className="pr-10 pl-10"
                                 />
                             </div>
+                            {searchError && (
+                                <InputError message={searchError} />
+                            )}
 
                             {searchResults.length > 0 && (
                                 <div className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-gray-200">
@@ -298,7 +326,9 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                             <div className="text-right">
                                                 <p className="text-primary-600 font-bold">
                                                     {shop.currency_symbol}
-                                                    {product.price.toFixed(2)}
+                                                    {Number(
+                                                        product.price,
+                                                    ).toFixed(2)}
                                                 </p>
                                                 {product.track_stock && (
                                                     <p className="text-xs text-gray-500">
@@ -396,9 +426,9 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                             {
                                                                 shop.currency_symbol
                                                             }
-                                                            {item.unit_price.toFixed(
-                                                                2,
-                                                            )}{' '}
+                                                            {Number(
+                                                                item.unit_price,
+                                                            ).toFixed(2)}{' '}
                                                             each
                                                         </p>
                                                         <p className="text-primary-600 text-lg font-bold">
@@ -406,8 +436,12 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                                 shop.currency_symbol
                                                             }
                                                             {(
-                                                                item.unit_price *
-                                                                item.quantity
+                                                                Number(
+                                                                    item.unit_price,
+                                                                ) *
+                                                                Number(
+                                                                    item.quantity,
+                                                                )
                                                             ).toFixed(2)}
                                                         </p>
                                                     </div>
@@ -452,18 +486,30 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                 </div>
                             ) : (
                                 <div>
-                                    <Input
-                                        type="text"
-                                        placeholder="Search customer..."
-                                        value={customerSearch}
-                                        onChange={(e) => {
-                                            setCustomerSearch(e.target.value);
-                                            setShowCustomerSearch(true);
-                                        }}
-                                        onFocus={() =>
-                                            setShowCustomerSearch(true)
-                                        }
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            type="text"
+                                            placeholder="Search customer..."
+                                            value={customerSearch}
+                                            onChange={(e) => {
+                                                setCustomerSearch(
+                                                    e.target.value,
+                                                );
+                                                setShowCustomerSearch(true);
+                                            }}
+                                            onFocus={() =>
+                                                setShowCustomerSearch(true)
+                                            }
+                                        />
+                                        {isSearchingCustomers && (
+                                            <Loader2 className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
+                                        )}
+                                    </div>
+                                    {customerSearchError && (
+                                        <InputError
+                                            message={customerSearchError}
+                                        />
+                                    )}
                                     {showCustomerSearch &&
                                         customerResults.length > 0 && (
                                             <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-gray-200">
@@ -508,122 +554,200 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                         </Card>
 
                         <Card className="flex flex-1 flex-col p-4">
-                            <div className="mb-4 space-y-3">
-                                <div className="flex justify-between text-sm">
-                                    <span>Subtotal:</span>
-                                    <span className="font-medium">
-                                        {shop.currency_symbol}
-                                        {calculateSubtotal().toFixed(2)}
-                                    </span>
-                                </div>
-
-                                {shop.vat_enabled && (
-                                    <div className="flex justify-between text-sm">
-                                        <span>Tax ({shop.vat_rate}%):</span>
-                                        <span className="font-medium">
-                                            {shop.currency_symbol}
-                                            {calculateTax().toFixed(2)}
-                                        </span>
-                                    </div>
-                                )}
-
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm">Discount:</span>
-                                    <Input
-                                        type="number"
-                                        placeholder="0.00"
-                                        value={discount}
-                                        onChange={(e) =>
-                                            setDiscount(e.target.value)
-                                        }
-                                        className="w-32 text-right"
-                                        min="0"
-                                        step="0.01"
-                                    />
-                                </div>
-
-                                <div className="flex items-center justify-between border-t pt-3">
-                                    <span className="text-xl font-bold">
-                                        Total:
-                                    </span>
-                                    <span className="text-primary-600 text-2xl font-bold">
-                                        {shop.currency_symbol}
-                                        {calculateTotal().toFixed(2)}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <div>
-                                    <Label>Payment Method</Label>
-                                    <Select
-                                        options={Object.entries(
-                                            paymentMethods,
-                                        ).map(([value, label]) => ({
-                                            value,
-                                            label,
-                                        }))}
-                                        value={paymentMethod}
-                                        onChange={setPaymentMethod}
-                                    />
-                                </div>
-
-                                {paymentMethod === 'cash' && (
-                                    <div>
-                                        <Label>Amount Tendered</Label>
-                                        <Input
-                                            type="number"
-                                            placeholder="0.00"
-                                            value={amountTendered}
-                                            onChange={(e) =>
-                                                setAmountTendered(
-                                                    e.target.value,
-                                                )
-                                            }
-                                            min="0"
-                                            step="0.01"
+                            <Form
+                                action={POSController.completeSale.url({
+                                    shop: shop.id,
+                                })}
+                                method="post"
+                                onSuccess={clearCart}
+                            >
+                                {({ processing, errors }) => (
+                                    <>
+                                        <input
+                                            type="hidden"
+                                            name="items"
+                                            value={JSON.stringify(cart)}
                                         />
-                                        {amountTendered && (
-                                            <p className="mt-1 text-sm text-gray-600">
-                                                Change:{' '}
-                                                <span className="font-semibold text-success-600">
+                                        <input
+                                            type="hidden"
+                                            name="customer_id"
+                                            value={selectedCustomer?.id || ''}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="discount_amount"
+                                            value={discount || '0'}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="notes"
+                                            value={notes || ''}
+                                        />
+
+                                        <div className="mb-4 space-y-3">
+                                            <div className="flex justify-between text-sm">
+                                                <span>Subtotal:</span>
+                                                <span className="font-medium">
                                                     {shop.currency_symbol}
-                                                    {calculateChange().toFixed(
+                                                    {calculateSubtotal().toFixed(
                                                         2,
                                                     )}
                                                 </span>
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                                            </div>
 
-                            <div className="mt-auto space-y-2 pt-4">
-                                <Button
-                                    variant="primary"
-                                    fullWidth
-                                    size="lg"
-                                    onClick={completeSale}
-                                    disabled={cart.length === 0}
-                                    startIcon={<Check />}
-                                >
-                                    Complete Sale
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    fullWidth
-                                    onClick={clearCart}
-                                    disabled={cart.length === 0}
-                                    startIcon={<X />}
-                                >
-                                    Clear Cart
-                                </Button>
-                            </div>
+                                            {shop.vat_enabled && (
+                                                <div className="flex justify-between text-sm">
+                                                    <span>
+                                                        Tax ({shop.vat_rate}%):
+                                                    </span>
+                                                    <span className="font-medium">
+                                                        {shop.currency_symbol}
+                                                        {calculateTax().toFixed(
+                                                            2,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm">
+                                                    Discount:
+                                                </span>
+                                                <Input
+                                                    type="number"
+                                                    placeholder="0.00"
+                                                    value={discount}
+                                                    onChange={(e) =>
+                                                        setDiscount(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="w-32 text-right"
+                                                    min="0"
+                                                    step="0.01"
+                                                />
+                                            </div>
+
+                                            <div className="flex items-center justify-between border-t pt-3">
+                                                <span className="text-xl font-bold">
+                                                    Total:
+                                                </span>
+                                                <span className="text-primary-600 text-2xl font-bold">
+                                                    {shop.currency_symbol}
+                                                    {calculateTotal().toFixed(
+                                                        2,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <div>
+                                                <Label>Payment Method</Label>
+                                                <Select
+                                                    name="payment_method"
+                                                    options={Object.entries(
+                                                        paymentMethods,
+                                                    ).map(([value, label]) => ({
+                                                        value,
+                                                        label,
+                                                    }))}
+                                                    value={paymentMethod}
+                                                    onChange={(value) =>
+                                                        setPaymentMethod(value)
+                                                    }
+                                                />
+                                                {errors.payment_method && (
+                                                    <InputError
+                                                        message={
+                                                            errors.payment_method
+                                                        }
+                                                    />
+                                                )}
+                                            </div>
+
+                                            {paymentMethod === 'cash' && (
+                                                <div>
+                                                    <Label>
+                                                        Amount Tendered
+                                                    </Label>
+                                                    <Input
+                                                        type="number"
+                                                        name="amount_tendered"
+                                                        placeholder="0.00"
+                                                        value={amountTendered}
+                                                        onChange={(e) =>
+                                                            setAmountTendered(
+                                                                parseFloat(
+                                                                    e.target
+                                                                        .value,
+                                                                ) || 0,
+                                                            )
+                                                        }
+                                                        min="0"
+                                                        step="0.01"
+                                                        error={
+                                                            !!errors.amount_tendered
+                                                        }
+                                                    />
+                                                    {errors.amount_tendered && (
+                                                        <InputError
+                                                            message={
+                                                                errors.amount_tendered
+                                                            }
+                                                        />
+                                                    )}
+                                                    {amountTendered > 0 && (
+                                                        <p className="mt-1 text-sm text-gray-600">
+                                                            Change:{' '}
+                                                            <span className="font-semibold text-success-600">
+                                                                {
+                                                                    shop.currency_symbol
+                                                                }
+                                                                {calculateChange().toFixed(
+                                                                    2,
+                                                                )}
+                                                            </span>
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-auto space-y-2 pt-4">
+                                            <Button
+                                                type="submit"
+                                                variant="primary"
+                                                fullWidth
+                                                size="lg"
+                                                disabled={
+                                                    cart.length === 0 ||
+                                                    processing
+                                                }
+                                                loading={processing}
+                                                startIcon={<Check />}
+                                            >
+                                                Complete Sale
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                fullWidth
+                                                onClick={clearCart}
+                                                disabled={cart.length === 0}
+                                                startIcon={<X />}
+                                            >
+                                                Clear Cart
+                                            </Button>
+                                        </div>
+                                    </>
+                                )}
+                            </Form>
                         </Card>
                     </div>
                 </div>
             </div>
-        </div>
+        </AppLayout>
     );
 };
 

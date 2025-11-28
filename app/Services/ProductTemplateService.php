@@ -215,7 +215,8 @@ class ProductTemplateService
                 }
             }
 
-            Cache::tags(["tenant:{$shop->tenant_id}:products"])->flush();
+            // Invalidate only product list cache since this is a new product
+            Cache::tags(["tenant:{$shop->tenant_id}:products:list"])->flush();
 
             return $product->load(['variants.packagingTypes', 'productType', 'category']);
         });
@@ -240,9 +241,10 @@ class ProductTemplateService
     protected function clearCache(?int $tenantId): void
     {
         Cache::forget('product_templates:system');
+        Cache::forget('product_templates:system:list');
 
         if ($tenantId) {
-            Cache::tags(["tenant:{$tenantId}:templates"])->flush();
+            Cache::tags(["tenant:{$tenantId}:templates:list"])->flush();
         }
     }
 

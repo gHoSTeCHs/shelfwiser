@@ -48,7 +48,7 @@ class WageAdvancePolicy
      */
     public function create(User $user): bool
     {
-        return $user->payrollDetail !== null;
+        return $user->employeePayrollDetail !== null;
     }
 
     /**

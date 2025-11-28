@@ -49,7 +49,8 @@ class StaffManagementService
                     Log::info('Invitation email queued for staff.', ['staff_id' => $staff->id]);
                 }
 
-                Cache::tags(["tenant:$tenant->id:staff"])->flush();
+                // Invalidate only list cache, not individual staff caches
+                Cache::tags(["tenant:$tenant->id:staff:list"])->flush();
 
                 Log::info('Staff member created successfully.', [
                     'staff_id' => $staff->id,
@@ -100,7 +101,11 @@ class StaffManagementService
                     $this->assignShops($staff, $data['shop_ids'], $staff->tenant);
                 }
 
-                Cache::tags(["tenant:$staff->tenant_id:staff"])->flush();
+                // Invalidate specific staff cache and list cache
+                Cache::tags([
+                    "tenant:$staff->tenant_id:staff:list",
+                    "tenant:$staff->tenant_id:staff:$staff->id",
+                ])->flush();
 
                 Log::info('Staff member updated successfully.', ['staff_id' => $staff->id]);
 
@@ -172,7 +177,11 @@ class StaffManagementService
 
                 $staff->update(['is_active' => false]);
 
-                Cache::tags(["tenant:$staff->tenant_id:staff"])->flush();
+                // Invalidate specific staff cache and list cache
+                Cache::tags([
+                    "tenant:$staff->tenant_id:staff:list",
+                    "tenant:$staff->tenant_id:staff:$staff->id",
+                ])->flush();
             });
 
             Log::info('Staff member deleted successfully.', ['staff_id' => $staff->id]);

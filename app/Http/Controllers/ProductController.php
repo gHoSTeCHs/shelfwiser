@@ -22,10 +22,8 @@ class ProductController extends Controller
 {
     public function __construct(
         private readonly ProductService $productService,
-//        private  ProductTemplateService $templateService
-    )
-    {
-    }
+        //        private  ProductTemplateService $templateService
+    ) {}
 
     public function index(): Response
     {
@@ -35,9 +33,14 @@ class ProductController extends Controller
 
         return Inertia::render('Products/Index', [
             'products' => Product::where('tenant_id', $tenantId)
-                ->with(['type', 'category', 'shop', 'variants.inventoryLocations', 'variants.packagingTypes', 'images' => function ($query) {
-                    $query->ordered();
-                }])
+                ->with([
+                    'type:id,slug,label',
+                    'category:id,name,slug',
+                    'shop:id,name,slug',
+                    'images' => function ($query) {
+                        $query->ordered()->limit(1); // Only load primary image for list view
+                    },
+                ])
                 ->withCount('variants')
                 ->latest()
                 ->paginate(20),
@@ -83,7 +86,10 @@ class ProductController extends Controller
      */
     public function store(CreateProductRequest $request): RedirectResponse
     {
-        $shop = Shop::query()->findOrFail($request->input('shop_id'));
+        // Validate shop belongs to user's tenant
+        $shop = Shop::query()
+            ->where('tenant_id', $request->user()->tenant_id)
+            ->findOrFail($request->input('shop_id'));
 
         $product = $this->productService->create(
             $request->validated(),
