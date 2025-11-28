@@ -97,9 +97,9 @@ const Products: React.FC<StorefrontProductsProps> = ({
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search products..."
-                                className="focus:ring-primary-500 w-full rounded-md border border-gray-300 py-2 pr-4 pl-10 focus:ring-2 focus:outline-none"
+                                className="focus:ring-primary-500 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white py-2 pr-4 pl-10 focus:ring-2 focus:outline-none"
                             />
-                            <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                            <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                         </div>
                     </form>
 
@@ -126,7 +126,7 @@ const Products: React.FC<StorefrontProductsProps> = ({
 
                     <div className="lg:col-span-3">
                         <div className="mb-4 flex items-center justify-between">
-                            <p className="text-gray-600">
+                            <p className="text-gray-600 dark:text-gray-400">
                                 {products.total}{' '}
                                 {products.total === 1 ? 'product' : 'products'}{' '}
                                 found
@@ -162,7 +162,7 @@ const Products: React.FC<StorefrontProductsProps> = ({
                                             Previous
                                         </Button>
 
-                                        <span className="text-sm text-gray-600">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">
                                             Page {products.current_page} of{' '}
                                             {products.last_page}
                                         </span>

@@ -61,8 +61,8 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-success-100 rounded-full mb-4">
                         <CheckCircle className="w-10 h-10 text-success-600" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900">Order Confirmed!</h1>
-                    <p className="mt-2 text-gray-600">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Order Confirmed!</h1>
+                    <p className="mt-2 text-gray-600 dark:text-gray-400">
                         Thank you for your order. We'll send you a confirmation email shortly.
                     </p>
                 </div>
@@ -70,33 +70,33 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
                 <Card className="p-6 mb-6">
                     <div className="flex justify-between items-start mb-6">
                         <div>
-                            <p className="text-sm text-gray-600">Order Number</p>
-                            <p className="text-xl font-bold">{order.order_number}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Order Number</p>
+                            <p className="text-xl font-bold text-gray-900 dark:text-white">{order.order_number}</p>
                         </div>
                         <Badge color="primary">
                             {order.status.replace('_', ' ').toUpperCase()}
                         </Badge>
                     </div>
 
-                    <div className="border-t pt-6">
-                        <h2 className="font-semibold mb-4">Order Items</h2>
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Order Items</h2>
                         <div className="space-y-3">
                             {order.items?.map((item) => (
                                 <div key={item.id} className="flex justify-between items-center">
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <p className="font-medium">
+                                            <p className="font-medium text-gray-900 dark:text-white">
                                                 {getItemName(item)}
                                             </p>
                                             {isService(item) && (
                                                 <Badge color="info" size="sm">Service</Badge>
                                             )}
                                         </div>
-                                        <p className="text-sm text-gray-600">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">
                                             {getItemDetails(item)}
                                         </p>
                                     </div>
-                                    <p className="font-medium">
+                                    <p className="font-medium text-gray-900 dark:text-white">
                                         {shop.currency_symbol}{item.total_amount.toFixed(2)}
                                     </p>
                                 </div>

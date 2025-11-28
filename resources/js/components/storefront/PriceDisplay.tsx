@@ -39,20 +39,20 @@ const PriceDisplay: React.FC<PriceDisplayProps> = ({
         <div className={className}>
             <div className="flex items-baseline gap-2">
                 <span
-                    className={`font-bold text-gray-900 ${sizeClasses[size]}`}
+                    className={`font-bold text-gray-900 dark:text-white ${sizeClasses[size]}`}
                 >
                     {formatPrice(displayPrice)}
                 </span>
 
                 {hasRetailPrice && (
-                    <span className="text-sm text-gray-500 line-through">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 line-through">
                         {formatPrice(price)}
                     </span>
                 )}
             </div>
 
             {showTaxLabel && shop.vat_enabled && (
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     {shop.vat_inclusive ? 'Inc.' : 'Excl.'} VAT ({shop.vat_rate}
                     %)
                 </p>

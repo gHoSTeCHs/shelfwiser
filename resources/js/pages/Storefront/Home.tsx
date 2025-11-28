@@ -17,12 +17,12 @@ const Home: React.FC<StorefrontHomeProps> = ({ shop, featuredProducts, featuredS
     return (
         <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count}>
             <div className="space-y-12">
-                <section className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg p-8 md:p-12">
+                <section className="bg-gradient-to-r from-brand-600 to-brand-700 dark:from-brand-700 dark:to-brand-800 text-white rounded-lg p-8 md:p-12 shadow-theme-lg">
                     <div className="max-w-3xl">
                         <h1 className="text-4xl md:text-5xl font-bold mb-4">
                             Welcome to {shop.name}
                         </h1>
-                        <p className="text-xl mb-8 text-primary-100">
+                        <p className="text-xl mb-8 text-brand-100 dark:text-brand-200">
                             {shop.description || 'Discover our quality products and enjoy a seamless shopping experience.'}
                         </p>
                         <Link href={StorefrontController.products.url({ shop: shop.slug })}>
@@ -35,7 +35,7 @@ const Home: React.FC<StorefrontHomeProps> = ({ shop, featuredProducts, featuredS
 
                 {categories && categories.length > 0 && (
                     <section>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                             Shop by Category
                         </h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -45,13 +45,13 @@ const Home: React.FC<StorefrontHomeProps> = ({ shop, featuredProducts, featuredS
                                     href={StorefrontController.products.url({
                                         shop: shop.slug,
                                     }) + `?category=${category.id}`}
-                                    className="bg-white border border-gray-200 rounded-lg p-6 hover:border-primary-300 hover:shadow-md transition text-center"
+                                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-md dark:hover:shadow-gray-800/50 transition text-center"
                                 >
-                                    <h3 className="font-semibold text-gray-900">
+                                    <h3 className="font-semibold text-gray-900 dark:text-white">
                                         {category.name}
                                     </h3>
                                     {category.description && (
-                                        <p className="text-sm text-gray-600 mt-1">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                             {category.description}
                                         </p>
                                     )}
@@ -63,7 +63,7 @@ const Home: React.FC<StorefrontHomeProps> = ({ shop, featuredProducts, featuredS
 
                 <section>
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                             Featured Products
                         </h2>
                         <Link href={StorefrontController.products.url({ shop: shop.slug })}>
@@ -95,7 +95,7 @@ const Home: React.FC<StorefrontHomeProps> = ({ shop, featuredProducts, featuredS
                 {featuredServices && featuredServices.length > 0 && (
                     <section>
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-900">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                                 Featured Services
                             </h2>
                             <Link href={StorefrontController.services.url({ shop: shop.slug })}>
@@ -118,11 +118,11 @@ const Home: React.FC<StorefrontHomeProps> = ({ shop, featuredProducts, featuredS
                 )}
 
                 {shop.storefront_settings?.business_hours && (
-                    <section className="bg-gray-50 rounded-lg p-6">
-                        <h3 className="font-semibold text-gray-900 mb-2">
+                    <section className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-theme-sm">
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                             Business Hours
                         </h3>
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 dark:text-gray-400">
                             {shop.storefront_settings.business_hours}
                         </p>
                     </section>

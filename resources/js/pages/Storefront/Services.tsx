@@ -88,9 +88,9 @@ const Services: React.FC<StorefrontServicesProps> = ({
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search services..."
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                             />
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                         </div>
                     </form>
 
@@ -117,7 +117,7 @@ const Services: React.FC<StorefrontServicesProps> = ({
 
                     <div className="lg:col-span-3">
                         <div className="mb-4 flex justify-between items-center">
-                            <p className="text-gray-600">
+                            <p className="text-gray-600 dark:text-gray-400">
                                 {services.total} {services.total === 1 ? 'service' : 'services'} found
                             </p>
                         </div>
@@ -145,7 +145,7 @@ const Services: React.FC<StorefrontServicesProps> = ({
                                             Previous
                                         </Button>
 
-                                        <span className="text-sm text-gray-600">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">
                                             Page {services.current_page} of {services.last_page}
                                         </span>
 

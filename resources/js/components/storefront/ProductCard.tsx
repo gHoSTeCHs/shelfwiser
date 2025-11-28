@@ -22,8 +22,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, shop }) => {
 
     return (
         <Link href={StorefrontController.show.url({ shop: shop.slug, product: product.slug })}>
-            <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
+            <Card className="h-full hover:shadow-lg dark:hover:shadow-gray-800/50 transition-shadow cursor-pointer bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <div className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-t-lg overflow-hidden">
                     {product.image ? (
                         <img
                             src={product.image}
@@ -31,7 +31,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, shop }) => {
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
                             <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
@@ -42,15 +42,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, shop }) => {
                 <div className="p-4">
                     <div className="mb-2">
                         {product.category && (
-                            <p className="text-xs text-gray-500 mb-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                                 {product.category.name}
                             </p>
                         )}
-                        <h3 className="font-semibold text-gray-900 line-clamp-2 mb-1">
+                        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 mb-1">
                             {product.name}
                         </h3>
                         {mainVariant?.sku && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
                                 SKU: {mainVariant.sku}
                             </p>
                         )}
@@ -80,7 +80,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, shop }) => {
                     </div>
 
                     {product.description && (
-                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
                             {product.description}
                         </p>
                     )}

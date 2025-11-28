@@ -28,8 +28,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, shop }) => {
                 service: service.slug,
             })}
         >
-            <Card className="h-full cursor-pointer transition-shadow hover:shadow-lg">
-                <div className="aspect-square overflow-hidden rounded-t-lg bg-gray-100">
+            <Card className="h-full cursor-pointer transition-shadow hover:shadow-lg dark:hover:shadow-gray-800/50 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <div className="aspect-square overflow-hidden rounded-t-lg bg-gray-100 dark:bg-gray-700">
                     {service.image_url ? (
                         <img
                             src={service.image_url}
@@ -37,7 +37,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, shop }) => {
                             className="h-full w-full object-cover"
                         />
                     ) : (
-                        <div className="flex h-full w-full items-center justify-center text-gray-400">
+                        <div className="flex h-full w-full items-center justify-center text-gray-400 dark:text-gray-500">
                             <svg
                                 className="h-16 w-16"
                                 fill="none"
@@ -58,23 +58,23 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, shop }) => {
                 <div className="p-4">
                     <div className="mb-2">
                         {service.category && (
-                            <p className="mb-1 text-xs text-gray-500">
+                            <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
                                 {service.category.name}
                             </p>
                         )}
-                        <h3 className="mb-1 line-clamp-2 font-semibold text-gray-900">
+                        <h3 className="mb-1 line-clamp-2 font-semibold text-gray-900 dark:text-white">
                             {service.name}
                         </h3>
                     </div>
 
                     <div className="mb-2 flex items-center justify-between">
                         <div>
-                            <p className="text-lg font-bold text-gray-900">
+                            <p className="text-lg font-bold text-gray-900 dark:text-white">
                                 {shop.currency_symbol}
                                 {Number(basePrice).toFixed(2)}
                             </p>
                             {service.has_material_options && (
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
                                     Starting price
                                 </p>
                             )}
@@ -92,7 +92,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, shop }) => {
                     </div>
 
                     {service.description && (
-                        <p className="mt-2 line-clamp-2 text-sm text-gray-600">
+                        <p className="mt-2 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
                             {service.description}
                         </p>
                     )}

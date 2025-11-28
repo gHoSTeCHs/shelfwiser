@@ -93,7 +93,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                     ]}
                 />
 
-                <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Shopping Cart</h1>
 
                 {cartSummary.item_count === 0 ? (
                     <Card className="p-12">
@@ -124,7 +124,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                 <Card key={item.id} className="p-6">
                                     <div className="flex gap-6">
                                         {/* Item Image */}
-                                        <div className="w-24 h-24 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
+                                        <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden flex-shrink-0">
                                             {getItemImage(item) ? (
                                                 <img
                                                     src={getItemImage(item)}
@@ -132,7 +132,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                                <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
                                                     {isService(item) ? (
                                                         <Briefcase className="w-8 h-8" />
                                                     ) : (
@@ -146,7 +146,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <h3 className="font-semibold text-gray-900">
+                                                        <h3 className="font-semibold text-gray-900 dark:text-white">
                                                             {getItemName(item)}
                                                         </h3>
                                                         {isService(item) && (
@@ -157,11 +157,11 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                     {/* Product-specific details */}
                                                     {isProduct(item) && (
                                                         <>
-                                                            <p className="text-sm text-gray-600">
+                                                            <p className="text-sm text-gray-600 dark:text-gray-400">
                                                                 SKU: {item.productVariant?.sku}
                                                             </p>
                                                             {item.packagingType && (
-                                                                <p className="text-sm text-gray-600">
+                                                                <p className="text-sm text-gray-600 dark:text-gray-400">
                                                                     Packaging: {item.packagingType.name}
                                                                 </p>
                                                             )}
@@ -171,11 +171,11 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                     {/* Service-specific details */}
                                                     {isService(item) && (
                                                         <>
-                                                            <p className="text-sm text-gray-600">
+                                                            <p className="text-sm text-gray-600 dark:text-gray-400">
                                                                 {item.sellable?.name}
                                                             </p>
                                                             {item.material_option && getMaterialOptionLabel(item.material_option) && (
-                                                                <p className="text-sm text-gray-600">
+                                                                <p className="text-sm text-gray-600 dark:text-gray-400">
                                                                     <Badge color="warning" size="sm" className="mt-1">
                                                                         {getMaterialOptionLabel(item.material_option)}
                                                                     </Badge>
@@ -183,9 +183,9 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                             )}
                                                             {item.selected_addons && item.selected_addons.length > 0 && (
                                                                 <div className="mt-2">
-                                                                    <p className="text-xs text-gray-500">Add-ons:</p>
+                                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Add-ons:</p>
                                                                     {item.selected_addons.map((addon: any, idx: number) => (
-                                                                        <p key={idx} className="text-sm text-gray-600">
+                                                                        <p key={idx} className="text-sm text-gray-600 dark:text-gray-400">
                                                                             • {addon.name || `Addon #${addon.addon_id}`}
                                                                             {addon.quantity > 1 && ` (×${addon.quantity})`}
                                                                         </p>
@@ -208,7 +208,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                         <button
                                                             type="submit"
                                                             disabled={processing}
-                                                            className="text-error-600 hover:text-error-700 disabled:opacity-50"
+                                                            className="text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300 disabled:opacity-50"
                                                             aria-label="Remove item"
                                                         >
                                                             <Trash2 className="w-5 h-5" />
@@ -240,7 +240,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                                     disabled={processing}
                                                                 />
                                                                 {updatingItem === item.id && (
-                                                                    <span className="text-sm text-gray-500">
+                                                                    <span className="text-sm text-gray-500 dark:text-gray-400">
                                                                         {processing ? 'Updating...' : 'Auto-updating...'}
                                                                     </span>
                                                                 )}
@@ -253,14 +253,14 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                 {/* Price */}
                                                 <div className="text-right">
                                                     {isService(item) && item.base_price && (
-                                                        <p className="text-xs text-gray-500">
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">
                                                             Base: {shop.currency_symbol}{item.base_price.toFixed(2)}
                                                         </p>
                                                     )}
-                                                    <p className="text-sm text-gray-600">
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400">
                                                         {shop.currency_symbol}{item.price.toFixed(2)} each
                                                     </p>
-                                                    <p className="text-lg font-bold text-gray-900">
+                                                    <p className="text-lg font-bold text-gray-900 dark:text-white">
                                                         {shop.currency_symbol}{item.subtotal?.toFixed(2)}
                                                     </p>
                                                 </div>
@@ -268,7 +268,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
 
                                             {/* Stock warning for products only */}
                                             {isProduct(item) && item.productVariant && item.quantity > item.productVariant.available_stock && (
-                                                <p className="text-sm text-error-600 mt-2">
+                                                <p className="text-sm text-error-600 dark:text-error-400 mt-2">
                                                     Only {item.productVariant.available_stock} available in stock
                                                 </p>
                                             )}

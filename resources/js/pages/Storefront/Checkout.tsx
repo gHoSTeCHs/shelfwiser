@@ -130,7 +130,7 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
                     ]}
                 />
 
-                <h1 className="text-3xl font-bold text-gray-900 mb-8 mt-6">Checkout</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 mt-6">Checkout</h1>
 
                 <Form
                     action={CheckoutController.process.url({ shop: shop.slug })}
@@ -140,7 +140,7 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             <div className="lg:col-span-2 space-y-6">
                                 <Card className="p-6">
-                                    <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
+                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Shipping Address</h2>
 
                                     <div className="space-y-4">
                                         <div className="grid grid-cols-2 gap-4">
@@ -332,7 +332,7 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
                                 </Card>
 
                                 <Card className="p-6">
-                                    <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
+                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Payment Method</h2>
 
                                     <PaymentGatewaySelector
                                         availableGateways={availableGateways.map(convertToPaymentGateway)}
@@ -350,14 +350,14 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
                                 </Card>
 
                                 <Card className="p-6">
-                                    <h2 className="text-xl font-semibold mb-4">Order Notes</h2>
+                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Order Notes</h2>
 
                                     <Label htmlFor="customer_notes">Special Instructions (Optional)</Label>
                                     <textarea
                                         id="customer_notes"
                                         name="customer_notes"
                                         rows={3}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                                         value={data.customer_notes || ''}
                                         onChange={(e) => setData('customer_notes', e.target.value)}
                                         placeholder="Any special requests or delivery instructions?"
@@ -383,56 +383,56 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
 
                             <div className="lg:col-span-1">
                                 <Card className="p-6 sticky top-20">
-                                    <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
 
                                     <div className="space-y-4">
                                         {cartSummary.items.map((item) => (
                                             <div key={item.id} className="flex justify-between text-sm">
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2">
-                                                        <p className="font-medium">
+                                                        <p className="font-medium text-gray-900 dark:text-white">
                                                             {getItemName(item)}
                                                         </p>
                                                         {isService(item) && (
                                                             <Badge color="info" size="sm">Service</Badge>
                                                         )}
                                                     </div>
-                                                    <p className="text-gray-600 text-xs">
+                                                    <p className="text-gray-600 dark:text-gray-400 text-xs">
                                                         {getItemVariantName(item)}
                                                     </p>
-                                                    <p className="text-gray-600 text-xs">
+                                                    <p className="text-gray-600 dark:text-gray-400 text-xs">
                                                         Qty: {item.quantity}
                                                     </p>
                                                 </div>
-                                                <p className="font-medium">
+                                                <p className="font-medium text-gray-900 dark:text-white">
                                                     {shop.currency_symbol}{item.subtotal?.toFixed(2)}
                                                 </p>
                                             </div>
                                         ))}
 
-                                        <div className="border-t pt-4 space-y-2">
+                                        <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
                                             <div className="flex justify-between text-sm">
-                                                <p>Subtotal</p>
-                                                <p>{shop.currency_symbol}{cartSummary.subtotal.toFixed(2)}</p>
+                                                <p className="text-gray-600 dark:text-gray-400">Subtotal</p>
+                                                <p className="text-gray-900 dark:text-white">{shop.currency_symbol}{cartSummary.subtotal.toFixed(2)}</p>
                                             </div>
 
                                             {cartSummary.tax > 0 && (
                                                 <div className="flex justify-between text-sm">
-                                                    <p>Tax</p>
-                                                    <p>{shop.currency_symbol}{cartSummary.tax.toFixed(2)}</p>
+                                                    <p className="text-gray-600 dark:text-gray-400">Tax</p>
+                                                    <p className="text-gray-900 dark:text-white">{shop.currency_symbol}{cartSummary.tax.toFixed(2)}</p>
                                                 </div>
                                             )}
 
                                             {cartSummary.shipping_fee > 0 && (
                                                 <div className="flex justify-between text-sm">
-                                                    <p>Shipping</p>
-                                                    <p>{shop.currency_symbol}{cartSummary.shipping_fee.toFixed(2)}</p>
+                                                    <p className="text-gray-600 dark:text-gray-400">Shipping</p>
+                                                    <p className="text-gray-900 dark:text-white">{shop.currency_symbol}{cartSummary.shipping_fee.toFixed(2)}</p>
                                                 </div>
                                             )}
 
-                                            <div className="border-t pt-2 flex justify-between font-bold text-lg">
-                                                <p>Total</p>
-                                                <p>{shop.currency_symbol}{cartSummary.total.toFixed(2)}</p>
+                                            <div className="border-t border-gray-200 dark:border-gray-700 pt-2 flex justify-between font-bold text-lg">
+                                                <p className="text-gray-900 dark:text-white">Total</p>
+                                                <p className="text-gray-900 dark:text-white">{shop.currency_symbol}{cartSummary.total.toFixed(2)}</p>
                                             </div>
                                         </div>
 
