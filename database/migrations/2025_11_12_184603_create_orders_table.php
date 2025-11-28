@@ -36,7 +36,7 @@ return new class extends Migration
             $table->index(['tenant_id', 'status']);
             $table->index(['tenant_id', 'payment_status']);
             $table->index(['tenant_id', 'created_at']);
-            $table->index('order_number');
+            
             $table->index('customer_id');
         });
     }

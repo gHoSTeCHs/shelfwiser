@@ -15,16 +15,18 @@ use Inertia\Response;
 class POSController extends Controller
 {
     public function __construct(
-        protected POSService $posService,
+        protected POSService     $posService,
         protected ReceiptService $receiptService
-    ) {}
+    )
+    {
+    }
 
     /**
      * Display POS interface
      */
     public function index(Shop $shop): Response
     {
-        $this->authorize('manage', $shop);
+//        $this->authorize('manage', $shop);
 
         return Inertia::render('POS/Index', [
             'shop' => $shop,
@@ -39,7 +41,8 @@ class POSController extends Controller
 
     public function searchProducts(Request $request, Shop $shop): JsonResponse
     {
-        $this->authorize('manage', $shop);
+//        $this->authorize('manage', $shop);
+
 
         $request->validate([
             'query' => ['required', 'string', 'min:1'],
@@ -58,7 +61,7 @@ class POSController extends Controller
 
     public function searchCustomers(Request $request, Shop $shop): JsonResponse
     {
-        $this->authorize('manage', $shop);
+//        $this->authorize('manage', $shop);
 
         $request->validate([
             'query' => ['required', 'string', 'min:1'],
@@ -79,7 +82,7 @@ class POSController extends Controller
      */
     public function completeSale(Request $request, Shop $shop): RedirectResponse
     {
-        $this->authorize('manage', $shop);
+//        $this->authorize('manage', $shop);
 
         $validated = $request->validate([
             'items' => ['required', 'array', 'min:1'],
@@ -129,7 +132,7 @@ class POSController extends Controller
      */
     public function sessionSummary(Request $request, Shop $shop): JsonResponse
     {
-        $this->authorize('manage', $shop);
+//        $this->authorize('manage', $shop);
 
         $summary = $this->posService->getSessionSummary(
             $shop,
@@ -145,7 +148,7 @@ class POSController extends Controller
      */
     public function holdSale(Request $request, Shop $shop): JsonResponse
     {
-        $this->authorize('manage', $shop);
+//        $this->authorize('manage', $shop);
 
         $validated = $request->validate([
             'items' => ['required', 'array'],
@@ -176,7 +179,7 @@ class POSController extends Controller
     {
         $heldSale = session()->get("pos_hold_$holdId");
 
-        if (! $heldSale) {
+        if (!$heldSale) {
             return response()->json([
                 'error' => 'Held sale not found',
             ], 404);

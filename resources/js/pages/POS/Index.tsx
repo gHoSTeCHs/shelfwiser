@@ -3,11 +3,11 @@ import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
-import AppLayout from '@/components/layouts/AppLayout';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout.tsx';
 import { Shop } from '@/types/shop';
-import { Head, useForm } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     Check,
     Loader2,
@@ -80,6 +80,8 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
 
     const [discount, setDiscount] = React.useState('');
     const [notes, setNotes] = React.useState('');
+    const [paymentMethod, setPaymentMethod] = React.useState('cash');
+    const [amountTendered, setAmountTendered] = React.useState(0);
 
     const searchAbortControllerRef = React.useRef<AbortController>(
         new AbortController(),
@@ -87,15 +89,6 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
     const customerSearchAbortControllerRef = React.useRef<AbortController>(
         new AbortController(),
     );
-
-    const form = useForm({
-        items: cart,
-        customer_id: selectedCustomer?.id,
-        payment_method: 'cash',
-        amount_tendered: 0,
-        discount_amount: parseFloat(discount) || 0,
-        notes: notes || null,
-    });
 
     const searchProducts = async () => {
         if (searchQuery.length < 1) {
@@ -252,8 +245,8 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
     };
 
     const calculateChange = () => {
-        if (form.data.payment_method !== 'cash') return 0;
-        const tendered = form.data.amount_tendered || 0;
+        if (paymentMethod !== 'cash') return 0;
+        const tendered = amountTendered || 0;
         const total = calculateTotal();
         return Math.max(0, tendered - total);
     };
@@ -261,52 +254,10 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
     const clearCart = () => {
         setCart([]);
         setSelectedCustomer(null);
-        form.setData({
-            items: [],
-            customer_id: undefined,
-            payment_method: 'cash',
-            amount_tendered: 0,
-            discount_amount: 0,
-            notes: null,
-        });
+        setPaymentMethod('cash');
+        setAmountTendered(0);
         setDiscount('');
         setNotes('');
-    };
-
-    const handleCompleteSale = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (cart.length === 0) {
-            return;
-        }
-
-        const total = calculateTotal();
-
-        if (
-            form.data.payment_method === 'cash' &&
-            form.data.amount_tendered < total
-        ) {
-            form.setError(
-                'amount_tendered',
-                'Amount tendered must be greater than or equal to total',
-            );
-            return;
-        }
-
-        form.transform((data) => ({
-            ...data,
-            items: cart,
-            customer_id: selectedCustomer?.id,
-            amount_tendered:
-                data.payment_method === 'cash' ? data.amount_tendered : total,
-            discount_amount: parseFloat(discount) || 0,
-            notes: notes || null,
-        })).post(POSController.completeSale.url({ shop: shop.id }), {
-            onSuccess: () => {
-                clearCart();
-            },
-            preserveScroll: true,
-        });
     };
 
     return (
@@ -349,7 +300,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                     onChange={(e) =>
                                         setSearchQuery(e.target.value)
                                     }
-                                    className="pl-10 pr-10"
+                                    className="pr-10 pl-10"
                                 />
                             </div>
                             {searchError && (
@@ -375,7 +326,9 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                             <div className="text-right">
                                                 <p className="text-primary-600 font-bold">
                                                     {shop.currency_symbol}
-                                                    {product.price.toFixed(2)}
+                                                    {Number(
+                                                        product.price,
+                                                    ).toFixed(2)}
                                                 </p>
                                                 {product.track_stock && (
                                                     <p className="text-xs text-gray-500">
@@ -473,9 +426,9 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                             {
                                                                 shop.currency_symbol
                                                             }
-                                                            {item.unit_price.toFixed(
-                                                                2,
-                                                            )}{' '}
+                                                            {Number(
+                                                                item.unit_price,
+                                                            ).toFixed(2)}{' '}
                                                             each
                                                         </p>
                                                         <p className="text-primary-600 text-lg font-bold">
@@ -483,8 +436,12 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                                 shop.currency_symbol
                                                             }
                                                             {(
-                                                                item.unit_price *
-                                                                item.quantity
+                                                                Number(
+                                                                    item.unit_price,
+                                                                ) *
+                                                                Number(
+                                                                    item.quantity,
+                                                                )
                                                             ).toFixed(2)}
                                                         </p>
                                                     </div>
@@ -597,152 +554,195 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                         </Card>
 
                         <Card className="flex flex-1 flex-col p-4">
-                            <form onSubmit={handleCompleteSale}>
-                                <div className="mb-4 space-y-3">
-                                    <div className="flex justify-between text-sm">
-                                        <span>Subtotal:</span>
-                                        <span className="font-medium">
-                                            {shop.currency_symbol}
-                                            {calculateSubtotal().toFixed(2)}
-                                        </span>
-                                    </div>
-
-                                    {shop.vat_enabled && (
-                                        <div className="flex justify-between text-sm">
-                                            <span>Tax ({shop.vat_rate}%):</span>
-                                            <span className="font-medium">
-                                                {shop.currency_symbol}
-                                                {calculateTax().toFixed(2)}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm">
-                                            Discount:
-                                        </span>
-                                        <Input
-                                            type="number"
-                                            placeholder="0.00"
-                                            value={discount}
-                                            onChange={(e) =>
-                                                setDiscount(e.target.value)
-                                            }
-                                            className="w-32 text-right"
-                                            min="0"
-                                            step="0.01"
+                            <Form
+                                action={POSController.completeSale.url({
+                                    shop: shop.id,
+                                })}
+                                method="post"
+                                onSuccess={clearCart}
+                            >
+                                {({ processing, errors }) => (
+                                    <>
+                                        <input
+                                            type="hidden"
+                                            name="items"
+                                            value={JSON.stringify(cart)}
                                         />
-                                    </div>
-
-                                    <div className="flex items-center justify-between border-t pt-3">
-                                        <span className="text-xl font-bold">
-                                            Total:
-                                        </span>
-                                        <span className="text-primary-600 text-2xl font-bold">
-                                            {shop.currency_symbol}
-                                            {calculateTotal().toFixed(2)}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <div>
-                                        <Label>Payment Method</Label>
-                                        <Select
-                                            options={Object.entries(
-                                                paymentMethods,
-                                            ).map(([value, label]) => ({
-                                                value,
-                                                label,
-                                            }))}
-                                            value={form.data.payment_method}
-                                            onChange={(value) =>
-                                                form.setData(
-                                                    'payment_method',
-                                                    value,
-                                                )
-                                            }
+                                        <input
+                                            type="hidden"
+                                            name="customer_id"
+                                            value={selectedCustomer?.id || ''}
                                         />
-                                        {form.errors.payment_method && (
-                                            <InputError
-                                                message={
-                                                    form.errors.payment_method
-                                                }
-                                            />
-                                        )}
-                                    </div>
+                                        <input
+                                            type="hidden"
+                                            name="discount_amount"
+                                            value={discount || '0'}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="notes"
+                                            value={notes || ''}
+                                        />
 
-                                    {form.data.payment_method === 'cash' && (
-                                        <div>
-                                            <Label>Amount Tendered</Label>
-                                            <Input
-                                                type="number"
-                                                placeholder="0.00"
-                                                value={form.data.amount_tendered}
-                                                onChange={(e) =>
-                                                    form.setData(
-                                                        'amount_tendered',
-                                                        parseFloat(
-                                                            e.target.value,
-                                                        ) || 0,
-                                                    )
-                                                }
-                                                min="0"
-                                                step="0.01"
-                                                error={
-                                                    !!form.errors
-                                                        .amount_tendered
-                                                }
-                                            />
-                                            {form.errors.amount_tendered && (
-                                                <InputError
-                                                    message={
-                                                        form.errors
-                                                            .amount_tendered
-                                                    }
-                                                />
-                                            )}
-                                            {form.data.amount_tendered > 0 && (
-                                                <p className="mt-1 text-sm text-gray-600">
-                                                    Change:{' '}
-                                                    <span className="font-semibold text-success-600">
+                                        <div className="mb-4 space-y-3">
+                                            <div className="flex justify-between text-sm">
+                                                <span>Subtotal:</span>
+                                                <span className="font-medium">
+                                                    {shop.currency_symbol}
+                                                    {calculateSubtotal().toFixed(
+                                                        2,
+                                                    )}
+                                                </span>
+                                            </div>
+
+                                            {shop.vat_enabled && (
+                                                <div className="flex justify-between text-sm">
+                                                    <span>
+                                                        Tax ({shop.vat_rate}%):
+                                                    </span>
+                                                    <span className="font-medium">
                                                         {shop.currency_symbol}
-                                                        {calculateChange().toFixed(
+                                                        {calculateTax().toFixed(
                                                             2,
                                                         )}
                                                     </span>
-                                                </p>
+                                                </div>
+                                            )}
+
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm">
+                                                    Discount:
+                                                </span>
+                                                <Input
+                                                    type="number"
+                                                    placeholder="0.00"
+                                                    value={discount}
+                                                    onChange={(e) =>
+                                                        setDiscount(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="w-32 text-right"
+                                                    min="0"
+                                                    step="0.01"
+                                                />
+                                            </div>
+
+                                            <div className="flex items-center justify-between border-t pt-3">
+                                                <span className="text-xl font-bold">
+                                                    Total:
+                                                </span>
+                                                <span className="text-primary-600 text-2xl font-bold">
+                                                    {shop.currency_symbol}
+                                                    {calculateTotal().toFixed(
+                                                        2,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <div>
+                                                <Label>Payment Method</Label>
+                                                <Select
+                                                    name="payment_method"
+                                                    options={Object.entries(
+                                                        paymentMethods,
+                                                    ).map(([value, label]) => ({
+                                                        value,
+                                                        label,
+                                                    }))}
+                                                    value={paymentMethod}
+                                                    onChange={(value) =>
+                                                        setPaymentMethod(value)
+                                                    }
+                                                />
+                                                {errors.payment_method && (
+                                                    <InputError
+                                                        message={
+                                                            errors.payment_method
+                                                        }
+                                                    />
+                                                )}
+                                            </div>
+
+                                            {paymentMethod === 'cash' && (
+                                                <div>
+                                                    <Label>
+                                                        Amount Tendered
+                                                    </Label>
+                                                    <Input
+                                                        type="number"
+                                                        name="amount_tendered"
+                                                        placeholder="0.00"
+                                                        value={amountTendered}
+                                                        onChange={(e) =>
+                                                            setAmountTendered(
+                                                                parseFloat(
+                                                                    e.target
+                                                                        .value,
+                                                                ) || 0,
+                                                            )
+                                                        }
+                                                        min="0"
+                                                        step="0.01"
+                                                        error={
+                                                            !!errors.amount_tendered
+                                                        }
+                                                    />
+                                                    {errors.amount_tendered && (
+                                                        <InputError
+                                                            message={
+                                                                errors.amount_tendered
+                                                            }
+                                                        />
+                                                    )}
+                                                    {amountTendered > 0 && (
+                                                        <p className="mt-1 text-sm text-gray-600">
+                                                            Change:{' '}
+                                                            <span className="font-semibold text-success-600">
+                                                                {
+                                                                    shop.currency_symbol
+                                                                }
+                                                                {calculateChange().toFixed(
+                                                                    2,
+                                                                )}
+                                                            </span>
+                                                        </p>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
-                                    )}
-                                </div>
 
-                                <div className="mt-auto space-y-2 pt-4">
-                                    <Button
-                                        type="submit"
-                                        variant="primary"
-                                        fullWidth
-                                        size="lg"
-                                        disabled={
-                                            cart.length === 0 || form.processing
-                                        }
-                                        loading={form.processing}
-                                        startIcon={<Check />}
-                                    >
-                                        Complete Sale
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        fullWidth
-                                        onClick={clearCart}
-                                        disabled={cart.length === 0}
-                                        startIcon={<X />}
-                                    >
-                                        Clear Cart
-                                    </Button>
-                                </div>
-                            </form>
+                                        <div className="mt-auto space-y-2 pt-4">
+                                            <Button
+                                                type="submit"
+                                                variant="primary"
+                                                fullWidth
+                                                size="lg"
+                                                disabled={
+                                                    cart.length === 0 ||
+                                                    processing
+                                                }
+                                                loading={processing}
+                                                startIcon={<Check />}
+                                            >
+                                                Complete Sale
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                fullWidth
+                                                onClick={clearCart}
+                                                disabled={cart.length === 0}
+                                                startIcon={<X />}
+                                            >
+                                                Clear Cart
+                                            </Button>
+                                        </div>
+                                    </>
+                                )}
+                            </Form>
                         </Card>
                     </div>
                 </div>

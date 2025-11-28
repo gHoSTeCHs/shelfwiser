@@ -34,7 +34,7 @@ return new class extends Migration
             $table->timestamp('emailed_at')->nullable();
             $table->string('emailed_to')->nullable();
 
-            $table->foreignId('generated_by')->constrained('users')->nullOnDelete();
+            $table->foreignId('generated_by')->nullable()->constrained('users')->nullOnDelete();
 
             $table->timestamps();
 

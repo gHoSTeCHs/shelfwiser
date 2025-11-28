@@ -14,7 +14,7 @@ return new class extends Migration
         // Orders table indexes
         Schema::table('orders', function (Blueprint $table) {
             $table->index('created_at', 'orders_created_at_index');
-            $table->index('order_number', 'orders_order_number_index');
+
             $table->index(['tenant_id', 'created_at'], 'orders_tenant_created_index');
             $table->index(['tenant_id', 'status'], 'orders_tenant_status_index');
             $table->index(['tenant_id', 'payment_status'], 'orders_tenant_payment_status_index');
@@ -48,7 +48,7 @@ return new class extends Migration
 
         // Customers table indexes
         Schema::table('customers', function (Blueprint $table) {
-            $table->index('email', 'customers_email_index');
+
             $table->index('phone', 'customers_phone_index');
             $table->index(['tenant_id', 'is_active'], 'customers_tenant_active_index');
             $table->index('created_at', 'customers_created_at_index');
@@ -68,7 +68,7 @@ return new class extends Migration
 
         // Purchase orders table indexes
         Schema::table('purchase_orders', function (Blueprint $table) {
-            $table->index('created_at', 'purchase_orders_created_at_index');
+
             $table->index('status', 'purchase_orders_status_index');
             $table->index(['buyer_tenant_id', 'created_at'], 'po_buyer_created_index');
             $table->index(['supplier_tenant_id', 'created_at'], 'po_supplier_created_index');
@@ -80,7 +80,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Orders
         Schema::table('orders', function (Blueprint $table) {
             $table->dropIndex('orders_created_at_index');
             $table->dropIndex('orders_order_number_index');
@@ -90,7 +89,6 @@ return new class extends Migration
             $table->dropIndex('orders_shop_created_index');
         });
 
-        // Stock movements
         Schema::table('stock_movements', function (Blueprint $table) {
             $table->dropIndex('stock_movements_type_index');
             $table->dropIndex('stock_movements_created_at_index');
@@ -99,7 +97,6 @@ return new class extends Migration
             $table->dropIndex('stock_movements_variant_created_index');
         });
 
-        // Products
         Schema::table('products', function (Blueprint $table) {
             $table->dropIndex('products_is_active_index');
             $table->dropIndex('products_tenant_active_index');
@@ -107,7 +104,6 @@ return new class extends Migration
             $table->dropIndex('products_created_at_index');
         });
 
-        // Product variants
         Schema::table('product_variants', function (Blueprint $table) {
             $table->dropIndex('product_variants_sku_index');
             $table->dropIndex('product_variants_barcode_index');
@@ -115,7 +111,6 @@ return new class extends Migration
             $table->dropIndex('product_variants_product_active_index');
         });
 
-        // Customers
         Schema::table('customers', function (Blueprint $table) {
             $table->dropIndex('customers_email_index');
             $table->dropIndex('customers_phone_index');
@@ -123,19 +118,16 @@ return new class extends Migration
             $table->dropIndex('customers_created_at_index');
         });
 
-        // Order items
         Schema::table('order_items', function (Blueprint $table) {
             $table->dropIndex('order_items_sellable_index');
         });
 
-        // Services
         Schema::table('services', function (Blueprint $table) {
             $table->dropIndex('services_is_active_index');
             $table->dropIndex('services_tenant_active_index');
             $table->dropIndex('services_shop_active_index');
         });
 
-        // Purchase orders
         Schema::table('purchase_orders', function (Blueprint $table) {
             $table->dropIndex('purchase_orders_created_at_index');
             $table->dropIndex('purchase_orders_status_index');
