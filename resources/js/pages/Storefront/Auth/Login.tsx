@@ -1,4 +1,6 @@
 import CustomerAuthController from '@/actions/App/Http/Controllers/Storefront/CustomerAuthController';
+import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
@@ -15,9 +17,18 @@ import React from 'react';
  * Allows customers to authenticate and access their account.
  */
 const Login: React.FC<AuthLoginProps> = ({ shop }) => {
+    const [rememberMe, setRememberMe] = React.useState(false);
+
     return (
         <StorefrontLayout shop={shop}>
-            <div className="mx-auto max-w-md">
+            <Breadcrumbs
+                items={[
+                    { label: 'Home', href: StorefrontController.index.url({ shop: shop.slug }) },
+                    { label: 'Login' },
+                ]}
+            />
+
+            <div className="mx-auto max-w-md mt-6">
                 <Card className="p-8">
                     <div className="mb-8 text-center">
                         <h1 className="text-3xl font-bold text-gray-900">
@@ -75,9 +86,10 @@ const Login: React.FC<AuthLoginProps> = ({ shop }) => {
                                     <div className="flex items-center">
                                         <Checkbox
                                             id="remember"
-                                            checked={false}
-                                            onChange={() => {}}
+                                            checked={rememberMe}
+                                            onChange={(e) => setRememberMe(e.target.checked)}
                                         />
+                                        <input type="hidden" name="remember" value={rememberMe ? '1' : '0'} />
                                         <Label
                                             htmlFor="remember"
                                             className="mb-0 ml-2"

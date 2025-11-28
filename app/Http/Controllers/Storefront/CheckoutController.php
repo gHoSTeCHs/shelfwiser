@@ -41,6 +41,23 @@ class CheckoutController extends Controller
                 ->with('error', 'Your cart is empty');
         }
 
+        // Validate stock availability for products before showing checkout page
+        $stockIssues = [];
+        foreach ($cartSummary['items'] as $item) {
+            if ($item->isProduct()) {
+                $variant = $item->productVariant;
+                if ($variant->available_stock < $item->quantity) {
+                    $stockIssues[] = "{$variant->product->name} - Only {$variant->available_stock} available (you have {$item->quantity} in cart)";
+                }
+            }
+        }
+
+        if (! empty($stockIssues)) {
+            return redirect()
+                ->route('storefront.cart', $shop->slug)
+                ->with('error', 'Some items in your cart are out of stock. Please update quantities: '.implode(', ', $stockIssues));
+        }
+
         $addresses = $customer->addresses()->get();
 
         return Inertia::render('Storefront/Checkout', [

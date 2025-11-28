@@ -14,6 +14,7 @@ class Cart extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'tenant_id',
         'shop_id',
         'customer_id',
         'session_id',
@@ -28,6 +29,14 @@ class Cart extends Model
     protected $casts = [
         'expires_at' => 'datetime',
     ];
+
+    /**
+     * Get the tenant that owns the cart.
+     */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
 
     /**
      * Get the shop that owns the cart.

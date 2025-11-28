@@ -5,6 +5,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import Button from '@/components/ui/button/Button';
 import Badge from '@/components/ui/badge/Badge';
+import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import { CheckCircle } from 'lucide-react';
 import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
@@ -49,7 +50,14 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
     return (
         <StorefrontLayout shop={shop}>
             <div className="max-w-3xl mx-auto">
-                <div className="text-center mb-8">
+                <Breadcrumbs
+                    items={[
+                        { label: 'Home', href: StorefrontController.index.url({ shop: shop.slug }) },
+                        { label: 'Order Confirmation' },
+                    ]}
+                />
+
+                <div className="text-center mb-8 mt-6">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-success-100 rounded-full mb-4">
                         <CheckCircle className="w-10 h-10 text-success-600" />
                     </div>

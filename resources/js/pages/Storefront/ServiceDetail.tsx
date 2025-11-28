@@ -506,8 +506,12 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
                                 />
                             ))}
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <div className="text-center py-8 text-gray-500">
+                            <p>No related services available at this time.</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </StorefrontLayout>
     );

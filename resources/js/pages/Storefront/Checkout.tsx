@@ -9,9 +9,13 @@ import Button from '@/components/ui/button/Button';
 import Checkbox from '@/components/form/input/Checkbox';
 import { Card } from '@/components/ui/card';
 import Badge from '@/components/ui/badge/Badge';
+import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import CheckoutController from '@/actions/App/Http/Controllers/Storefront/CheckoutController';
+import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
 import { PaymentGatewaySelector, PaystackButton } from '@/components/payment';
 import { PaymentGateway, PaystackCallbackResponse } from '@/types/payment';
+import { useFormValidation } from '@/hooks/useFormValidation';
 
 /**
  * Checkout page component for processing orders.
@@ -25,6 +29,17 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
     const [isPaymentLoading, setIsPaymentLoading] = React.useState(false);
 
     const defaultAddress = addresses.find(addr => addr.is_default && addr.type === 'shipping');
+
+    // Client-side validation
+    const { errors: clientErrors, validateField } = useFormValidation({
+        shipping_first_name: { required: true, minLength: 2, maxLength: 255 },
+        shipping_last_name: { required: true, minLength: 2, maxLength: 255 },
+        shipping_phone: { required: true, pattern: /^[\d\s\-+()]+$/ },
+        shipping_address_1: { required: true, minLength: 5, maxLength: 255 },
+        shipping_city: { required: true, minLength: 2, maxLength: 100 },
+        shipping_state: { required: true, minLength: 2, maxLength: 100 },
+        shipping_country: { required: true, minLength: 2, maxLength: 100 },
+    });
 
     /**
      * Generate payment reference on component mount
@@ -107,7 +122,15 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
     return (
         <StorefrontLayout shop={shop} customer={customer} cartItemCount={cartSummary.item_count}>
             <div className="max-w-6xl mx-auto">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
+                <Breadcrumbs
+                    items={[
+                        { label: 'Home', href: StorefrontController.index.url({ shop: shop.slug }) },
+                        { label: 'Cart', href: CartController.index.url({ shop: shop.slug }) },
+                        { label: 'Checkout' },
+                    ]}
+                />
+
+                <h1 className="text-3xl font-bold text-gray-900 mb-8 mt-6">Checkout</h1>
 
                 <Form
                     action={CheckoutController.process.url({ shop: shop.slug })}
@@ -134,10 +157,11 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
                                                         ...data.shipping_address,
                                                         first_name: e.target.value
                                                     })}
-                                                    error={!!errors['shipping_address.first_name']}
+                                                    onBlur={(e) => validateField('shipping_first_name', e.target.value)}
+                                                    error={!!errors['shipping_address.first_name'] || !!clientErrors.shipping_first_name}
                                                     required
                                                 />
-                                                <InputError message={errors['shipping_address.first_name']} />
+                                                <InputError message={errors['shipping_address.first_name'] || clientErrors.shipping_first_name} />
                                             </div>
 
                                             <div>

@@ -27,10 +27,30 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
     children,
 }) => {
     const [showUserMenu, setShowUserMenu] = React.useState(false);
+    const [isNavigating, setIsNavigating] = React.useState(false);
+
+    // Show loading indicator during page transitions
+    React.useEffect(() => {
+        const handleStart = () => setIsNavigating(true);
+        const handleFinish = () => setIsNavigating(false);
+
+        router.on('start', handleStart);
+        router.on('finish', handleFinish);
+
+        return () => {
+            router.off('start', handleStart);
+            router.off('finish', handleFinish);
+        };
+    }, []);
 
     return (
         <>
             <Head title={shop.name} />
+
+            {/* Loading bar */}
+            {isNavigating && (
+                <div className="fixed top-0 left-0 right-0 h-1 bg-primary-600 z-[9999] animate-pulse" />
+            )}
 
             <div className="min-h-screen bg-gray-50">
                 <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -56,6 +76,12 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
                                         className="text-gray-700 hover:text-primary-600"
                                     >
                                         Products
+                                    </Link>
+                                    <Link
+                                        href={StorefrontController.services.url({ shop: shop.slug })}
+                                        className="text-gray-700 hover:text-primary-600"
+                                    >
+                                        Services
                                     </Link>
                                 </nav>
                             </div>

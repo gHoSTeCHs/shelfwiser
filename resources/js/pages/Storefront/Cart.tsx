@@ -20,10 +20,31 @@ import CheckoutController from '@/actions/App/Http/Controllers/Storefront/Checko
  */
 const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
     const [updatingItem, setUpdatingItem] = React.useState<number | null>(null);
+    const updateTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-    const handleQuantityChange = (itemId: number, newQuantity: number) => {
+    const handleQuantityChange = (itemId: number, newQuantity: number, submitForm: () => void) => {
         setUpdatingItem(itemId);
+
+        // Clear previous timeout
+        if (updateTimeoutRef.current) {
+            clearTimeout(updateTimeoutRef.current);
+        }
+
+        // Debounce the auto-submit by 800ms
+        updateTimeoutRef.current = setTimeout(() => {
+            submitForm();
+            setUpdatingItem(null);
+        }, 800);
     };
+
+    // Cleanup timeout on unmount
+    React.useEffect(() => {
+        return () => {
+            if (updateTimeoutRef.current) {
+                clearTimeout(updateTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const isProduct = (item: any) => {
         return item.sellable_type === 'App\\Models\\ProductVariant' || item.product_variant_id;
@@ -205,31 +226,26 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                     })}
                                                     method="patch"
                                                 >
-                                                    {({ processing, setData }) => (
+                                                    {({ processing, setData, submit }) => (
                                                         <>
-                                                            <QuantitySelector
-                                                                quantity={item.quantity}
-                                                                onChange={(newQuantity) => {
-                                                                    setData('quantity', newQuantity);
-                                                                    handleQuantityChange(item.id, newQuantity);
-                                                                }}
-                                                                min={1}
-                                                                max={isProduct(item) ? (item.productVariant?.available_stock || 999) : 999}
-                                                                disabled={processing}
-                                                            />
-                                                            <input type="hidden" name="quantity" value={item.quantity} />
-                                                            {updatingItem === item.id && (
-                                                                <Button
-                                                                    type="submit"
-                                                                    variant="outline"
-                                                                    size="sm"
+                                                            <div className="flex items-center gap-3">
+                                                                <QuantitySelector
+                                                                    quantity={item.quantity}
+                                                                    onChange={(newQuantity) => {
+                                                                        setData('quantity', newQuantity);
+                                                                        handleQuantityChange(item.id, newQuantity, submit);
+                                                                    }}
+                                                                    min={1}
+                                                                    max={isProduct(item) ? (item.productVariant?.available_stock || 999) : 999}
                                                                     disabled={processing}
-                                                                    loading={processing}
-                                                                    className="ml-4"
-                                                                >
-                                                                    Update
-                                                                </Button>
-                                                            )}
+                                                                />
+                                                                {updatingItem === item.id && (
+                                                                    <span className="text-sm text-gray-500">
+                                                                        {processing ? 'Updating...' : 'Auto-updating...'}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <input type="hidden" name="quantity" value={item.quantity} />
                                                         </>
                                                     )}
                                                 </Form>
