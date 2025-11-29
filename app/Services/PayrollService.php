@@ -86,10 +86,6 @@ readonly class PayrollService
         }
 
         return DB::transaction(function () use ($payrollPeriod, $processor) {
-            $payrollPeriod->update([
-                'status' => PayrollStatus::PROCESSING,
-            ]);
-
             $employees = $this->getEmployeesForPayroll($payrollPeriod);
 
             $totalGrossPay = 0;
@@ -306,6 +302,11 @@ readonly class PayrollService
 
         $otherDeductions = $employee->customDeductions()
             ->where('is_active', true)
+            ->where('effective_from', '<=', $payrollPeriod->end_date)
+            ->where(function ($q) use ($payrollPeriod) {
+                $q->whereNull('effective_to')
+                    ->orWhere('effective_to', '>=', $payrollPeriod->start_date);
+            })
             ->sum('amount');
 
         $totalDeductions = $incomeTax + $pensionEmployee + $nhf + $nhis + $wageAdvanceDeduction + $otherDeductions;
@@ -330,7 +331,16 @@ readonly class PayrollService
     {
         $query = User::where('tenant_id', $payrollPeriod->tenant_id)
             ->where('is_active', true)
-            ->whereHas('employeePayrollDetail');
+            ->whereHas('employeePayrollDetail', function ($q) use ($payrollPeriod) {
+                $q->where(function ($query) use ($payrollPeriod) {
+                    $query->whereNull('start_date')
+                        ->orWhere('start_date', '<=', $payrollPeriod->end_date);
+                })
+                ->where(function ($query) use ($payrollPeriod) {
+                    $query->whereNull('end_date')
+                        ->orWhere('end_date', '>=', $payrollPeriod->start_date);
+                });
+            });
 
         if ($payrollPeriod->shop_id) {
             $query->whereHas('shops', function ($q) use ($payrollPeriod) {
