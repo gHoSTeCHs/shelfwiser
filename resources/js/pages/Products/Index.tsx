@@ -113,6 +113,7 @@ export default function Index({ products }: Props) {
                 ) : (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         {filteredProducts.map((product) => {
+
                             const minPrice =
                                 product.variants.length > 0
                                     ? Math.min(
@@ -122,21 +123,26 @@ export default function Index({ products }: Props) {
                                       )
                                     : 0;
 
-                            const totalStock = product.variants.reduce(
+                            const totalStock = (product.variants || []).reduce(
                                 (sum, variant) => {
                                     const variantStock =
-                                        variant.inventory_locations?.reduce(
-                                            (vSum, loc) =>
-                                                vSum +
-                                                (loc.quantity -
-                                                    loc.reserved_quantity),
-                                            0,
-                                        ) || 0;
+                                        variant.inventory_locations &&
+                                        Array.isArray(
+                                            variant.inventory_locations,
+                                        )
+                                            ? variant.inventory_locations.reduce(
+                                                  (vSum, loc) =>
+                                                      vSum +
+                                                      ((loc?.quantity || 0) -
+                                                          (loc?.reserved_quantity ||
+                                                              0)),
+                                                  0,
+                                              )
+                                            : 0;
                                     return sum + variantStock;
                                 },
                                 0,
                             );
-
                             return (
                                 <Card
                                     key={product.id}

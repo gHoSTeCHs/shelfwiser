@@ -1,7 +1,7 @@
-import { Shop } from '@/types/shop.ts';
-import { SchemaProperty } from '@/types/index';
-import { ProductVariant } from '@/types/stockMovement';
 import { Image } from '@/types/image';
+import { SchemaProperty } from '@/types/index';
+import { Shop } from '@/types/shop.ts';
+import { ProductVariant } from '@/types/stockMovement';
 
 export interface ProductType {
     id: number;
@@ -22,6 +22,7 @@ export interface ProductCategory {
     id: number;
     name: string;
     slug: string;
+    description?: string;
     children?: ProductCategory[];
 }
 
@@ -50,4 +51,3 @@ export interface ProductListResponse {
     data: Product[];
     total: number;
 }
-

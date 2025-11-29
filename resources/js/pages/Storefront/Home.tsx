@@ -6,7 +6,7 @@ import ProductCard from '@/components/storefront/ProductCard';
 import ServiceCard from '@/components/storefront/ServiceCard';
 import Button from '@/components/ui/button/Button';
 import EmptyState from '@/components/ui/EmptyState';
-import { Package, ArrowRight, Briefcase } from 'lucide-react';
+import { Package, ArrowRight } from 'lucide-react';
 import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 
 /**

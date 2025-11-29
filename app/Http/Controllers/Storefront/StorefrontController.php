@@ -36,9 +36,7 @@ class StorefrontController extends Controller
         $featuredServices = \App\Models\Service::where('shop_id', $shop->id)
             ->where('is_active', true)
             ->where('is_available_online', true)
-            ->where('is_featured', true)
             ->with(['variants' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
-            ->orderBy('sort_order')
             ->orderBy('name')
             ->limit(4)
             ->get();

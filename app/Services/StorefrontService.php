@@ -20,7 +20,9 @@ class StorefrontService
         return Product::where('shop_id', $shop->id)
             ->where('is_active', true)
             ->where('is_featured', true)
-            ->with(['variants' => fn ($q) => $q->where('is_available_online', true)->where('is_active', true)])
+            ->with(['variants' => fn ($q) => $q->where('is_available_online', true)
+                ->where('is_active', true)
+                ->with('inventoryLocations')])
             ->orderBy('display_order')
             ->orderBy('name')
             ->limit($limit)
@@ -40,7 +42,9 @@ class StorefrontService
         $query = Product::where('shop_id', $shop->id)
             ->where('is_active', true)
             ->with([
-                'variants' => fn ($q) => $q->where('is_available_online', true)->where('is_active', true),
+                'variants' => fn ($q) => $q->where('is_available_online', true)
+                    ->where('is_active', true)
+                    ->with('inventoryLocations'),
                 'category',
             ]);
 
@@ -103,7 +107,9 @@ class StorefrontService
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
-            ->with(['variants' => fn ($q) => $q->where('is_available_online', true)->where('is_active', true)])
+            ->with(['variants' => fn ($q) => $q->where('is_available_online', true)
+                ->where('is_active', true)
+                ->with('inventoryLocations')])
             ->limit($limit)
             ->get();
     }

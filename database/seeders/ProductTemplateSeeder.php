@@ -6,6 +6,7 @@ use App\Models\ProductCategory;
 use App\Models\ProductTemplate;
 use App\Models\ProductType;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class ProductTemplateSeeder extends Seeder
 {
@@ -465,8 +466,8 @@ class ProductTemplateSeeder extends Seeder
                 continue; // Skip if product type not found
             }
 
-            ProductTemplate::firstOrCreate(
-                ['slug' => \Illuminate\Support\Str::slug($templateData['name']), 'tenant_id' => null],
+            ProductTemplate::query()->firstOrCreate(
+                ['slug' => Str::slug($templateData['name']), 'tenant_id' => null],
                 $templateData
             );
         }
@@ -478,16 +479,16 @@ class ProductTemplateSeeder extends Seeder
     protected function createSystemCategories(): void
     {
         $categories = [
-            ['name' => 'Beverages', 'slug' => 'beverages'],
-            ['name' => 'Dairy Products', 'slug' => 'dairy-products'],
-            ['name' => 'Noodles & Pasta', 'slug' => 'noodles-pasta'],
-            ['name' => 'Snacks & Confectionery', 'slug' => 'snacks-confectionery'],
-            ['name' => 'Personal Care', 'slug' => 'personal-care'],
-            ['name' => 'Cleaning Supplies', 'slug' => 'cleaning-supplies'],
-            ['name' => 'Cooking Essentials', 'slug' => 'cooking-essentials'],
-            ['name' => 'Canned Foods', 'slug' => 'canned-foods'],
-            ['name' => 'Baby Products', 'slug' => 'baby-products'],
-            ['name' => 'Health & Wellness', 'slug' => 'health-wellness'],
+            ['name' => 'Beverages', 'slug' => 'beverages', 'description' => 'Refresh and energize with a diverse selection of drinks. Choose from soft drinks, juices, water, energy drinks, teas, and more to match every taste and occasion.'],
+            ['name' => 'Dairy Products', 'slug' => 'dairy-products', 'description' => 'Fresh and high-quality dairy options including milk, cheese, yogurt, butter, and more. Perfect for cooking, baking, or enjoying on their own.'],
+            ['name' => 'Noodles & Pasta', 'slug' => 'noodles-pasta', 'description' => 'Quick, convenient, and satisfying meal options. Explore instant noodles, spaghetti, macaroni, and specialty pasta perfect for fast cooking and delicious recipes.'],
+            ['name' => 'Snacks & Confectionery', 'slug' => 'snacks-confectionery', 'description' => 'Indulge in delicious treats—from chips, biscuits, nuts, and chocolates to sweets and baked goodies. Perfect for cravings, quick bites, and sharing moments.'],
+            ['name' => 'Personal Care', 'slug' => 'personal-care', 'description' => 'Everything you need to look and feel your best. Explore skincare, haircare, grooming, and hygiene essentials made to support daily wellness and enhance your personal routine.'],
+            ['name' => 'Cleaning Supplies', 'slug' => 'cleaning-supplies', 'description' => 'Keep your home spotless with effective cleaning solutions, detergents, disinfectants, and tools. Designed to ensure hygiene, comfort, and a fresh living space.'],
+            ['name' => 'Cooking Essentials', 'slug' => 'cooking-essentials', 'description' => 'Everything you need for everyday cooking—from oils, spices, and seasonings to flour, grains, and sauces. Build your perfect pantry with top-quality basics.'],
+            ['name' => 'Canned Foods', 'slug' => 'canned-foods', 'description' => 'Convenient and long-lasting meal options including vegetables, soups, beans, fish, and ready-to-eat dishes. Ideal for quick cooking and emergency storage.'],
+            ['name' => 'Baby Products', 'slug' => 'baby-products', 'description' => 'Safe, gentle, and trusted items for your little ones. Explore baby food, diapers, skincare, feeding accessories, toys, and more—crafted for comfort and care.'],
+            ['name' => 'Health & Wellness', 'slug' => 'health-wellness', 'description' => 'A curated range of products dedicated to improving physical and mental wellbeing. Find supplements, fitness gear, healthy foods, and self-care essentials to support an active lifestyle.'],
         ];
 
         foreach ($categories as $category) {
