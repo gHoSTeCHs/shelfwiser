@@ -57,9 +57,12 @@ class AppServiceProvider extends ServiceProvider
 
         // Dashboard polices
         Gate::define('dashboard.view', [DashboardPolicy::class, 'view']);
-
         Gate::define('dashboard.view_financials', [DashboardPolicy::class, 'viewFinancials']);
         Gate::define('dashboard.refresh_cache', [DashboardPolicy::class, 'refreshCache']);
+
+        // Shop polices
+        Gate::define('shop.view', [ShopPolicy::class, 'view']);
+        Gate::define('shop.manage', [ShopPolicy::class, 'manage']);
 
         // Report Polices
         Gate::define('reports.view', [ReportPolicy::class, 'view']);
