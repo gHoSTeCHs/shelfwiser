@@ -20,6 +20,7 @@ import {
     X,
 } from 'lucide-react';
 import React from 'react';
+import useToast from '@/hooks/useToast.ts';
 
 interface POSProps {
     shop: Shop;
@@ -90,6 +91,8 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
         new AbortController(),
     );
 
+    const toast = useToast()
+
     const searchProducts = async () => {
         if (searchQuery.length < 1) {
             setSearchResults([]);
@@ -110,7 +113,8 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
             );
 
             if (!response.ok) {
-                throw new Error('Failed to search products');
+
+                toast.error('Failed to search products');
             }
 
             const data = await response.json();
@@ -144,7 +148,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
             );
 
             if (!response.ok) {
-                throw new Error('Failed to search customers');
+                 toast.error('Failed to search customers');
             }
 
             const data = await response.json();

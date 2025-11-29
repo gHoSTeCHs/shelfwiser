@@ -45,7 +45,7 @@ class AdminProductTemplateController extends Controller
     public function create(): Response
     {
         return Inertia::render('Admin/ProductTemplates/Create', [
-            'productTypes' => ProductType::with('configSchema')->orderBy('label')->get(),
+            'productTypes' => ProductType::orderBy('label')->get(),
             'categories' => ProductCategory::whereNull('tenant_id')->orderBy('name')->get(),
         ]);
     }

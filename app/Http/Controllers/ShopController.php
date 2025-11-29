@@ -145,7 +145,7 @@ class ShopController extends Controller
      */
     public function editStorefrontSettings(Shop $shop): Response
     {
-        Gate::authorize('manage', $shop);
+        Gate::authorize('shop.manage', $shop);
 
         return Inertia::render('Shops/StorefrontSettings', [
             'shop' => $shop,

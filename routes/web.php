@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminApiController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminProductTemplateController;
+use App\Http\Controllers\Admin\AdminSettingsController;
+use App\Http\Controllers\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Admin\AdminTenantController;
 use App\Http\Controllers\CustomerCreditController;
 use App\Http\Controllers\DashboardController;
@@ -16,6 +19,7 @@ use App\Http\Controllers\POSController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductTemplateController;
+use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\ReportsController;
@@ -56,6 +60,23 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->name('admin.')->gro
     });
 
     Route::resource('product-templates', AdminProductTemplateController::class);
+
+    // Platform Settings
+    Route::prefix('subscriptions')->name('subscriptions.')->group(function () {
+        Route::get('/', [AdminSubscriptionController::class, 'index'])->name('index');
+    });
+
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/', [AdminApiController::class, 'index'])->name('index');
+        Route::post('/', [AdminApiController::class, 'store'])->name('store');
+        Route::delete('/{key}', [AdminApiController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', [AdminSettingsController::class, 'index'])->name('index');
+        Route::patch('/', [AdminSettingsController::class, 'update'])->name('update');
+        Route::post('/clear-cache', [AdminSettingsController::class, 'clearCache'])->name('clear-cache');
+    });
 });
 
 Route::get('/payment/callback/{gateway}/{order}', [PaymentController::class, 'callback'])
@@ -195,6 +216,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('categories', ProductCategoryController::class);
 
     Route::resource('products', ProductController::class);
+
+    // Product Variant Routes
+    Route::prefix('variants')->name('variants.')->group(function () {
+        Route::get('/{variant}/edit', [ProductVariantController::class, 'edit'])->name('edit');
+        Route::put('/{variant}', [ProductVariantController::class, 'update'])->name('update');
+    });
 
     // Product Templates (for tenants)
     Route::prefix('product-templates')->name('product-templates.')->group(function () {

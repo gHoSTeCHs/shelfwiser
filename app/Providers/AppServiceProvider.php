@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\FundRequest;
 use App\Models\Notification;
 use App\Models\PayrollPeriod;
+use App\Models\ProductVariant;
 use App\Models\Receipt;
 use App\Models\Service;
 use App\Models\Shop;
@@ -17,6 +18,7 @@ use App\Policies\DashboardPolicy;
 use App\Policies\FundRequestPolicy;
 use App\Policies\NotificationPolicy;
 use App\Policies\PayrollPolicy;
+use App\Policies\ProductVariantPolicy;
 use App\Policies\ReceiptPolicy;
 use App\Policies\ReportPolicy;
 use App\Policies\ServicePolicy;
@@ -48,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Shop::class, StorefrontPolicy::class);
         Gate::policy(Service::class, ServicePolicy::class);
         Gate::policy(Customer::class, CustomerPolicy::class);
+        Gate::policy(ProductVariant::class, ProductVariantPolicy::class);
         Gate::policy(Receipt::class, ReceiptPolicy::class);
         Gate::policy(Timesheet::class, TimesheetPolicy::class);
         Gate::policy(FundRequest::class, FundRequestPolicy::class);
@@ -66,5 +69,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Report Polices
         Gate::define('reports.view', [ReportPolicy::class, 'view']);
+
+        // TimeSheet
+        Gate::define('timesheet.viewAny', [TimesheetPolicy::class, 'viewAny']);
     }
 }

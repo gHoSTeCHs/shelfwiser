@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import StockMovementController from '@/actions/App/Http/Controllers/StockMovementController';
+import ProductVariantController from '@/actions/App/Http/Controllers/ProductVariantController';
 import SetupInventoryModal from '@/components/stock/SetupInventoryModal';
 import StockAdjustmentModal from '@/components/stock/StockAdjustmentModal';
 import StockLevelBadge from '@/components/stock/StockLevelBadge';
@@ -301,18 +302,40 @@ export default function Show({ product, can_manage, available_shops, recent_move
                                                         SKU: {variant.sku}
                                                     </p>
                                                 </div>
-                                                <Badge
-                                                    variant="light"
-                                                    color={
-                                                        variant.is_active
-                                                            ? 'success'
-                                                            : 'error'
-                                                    }
-                                                >
-                                                    {variant.is_active
-                                                        ? 'Active'
-                                                        : 'Inactive'}
-                                                </Badge>
+                                                <div className="flex items-center gap-2">
+                                                    <Badge
+                                                        variant="light"
+                                                        color={
+                                                            variant.is_active
+                                                                ? 'success'
+                                                                : 'error'
+                                                        }
+                                                    >
+                                                        {variant.is_active
+                                                            ? 'Active'
+                                                            : 'Inactive'}
+                                                    </Badge>
+                                                    {can_manage && (
+                                                        <Link
+                                                            href={ProductVariantController.edit.url(
+                                                                {
+                                                                    variant:
+                                                                        variant.id,
+                                                                },
+                                                            )}
+                                                            onClick={(e) =>
+                                                                e.stopPropagation()
+                                                            }
+                                                        >
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                            >
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

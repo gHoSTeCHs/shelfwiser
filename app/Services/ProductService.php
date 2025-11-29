@@ -245,4 +245,92 @@ class ProductService
             ]);
         }
     }
+
+    /**
+     * Update a product variant
+     *
+     * @throws Throwable
+     */
+    public function updateVariant(ProductVariant $variant, array $data): ProductVariant
+    {
+        Log::info('Product variant update process started.', [
+            'variant_id' => $variant->id,
+            'product_id' => $variant->product_id,
+            'data' => $data,
+        ]);
+
+        try {
+            return DB::transaction(function () use ($variant, $data) {
+                $variant->update($data);
+
+                // If price changed, update packaging types prices proportionally
+                if (isset($data['price']) && $variant->packagingTypes()->exists()) {
+                    $basePackaging = $variant->packagingTypes()
+                        ->where('is_base_unit', true)
+                        ->first();
+
+                    if ($basePackaging) {
+                        $basePackaging->update(['price' => $data['price']]);
+
+                        // Update other packaging types based on units_per_package
+                        $otherPackaging = $variant->packagingTypes()
+                            ->where('is_base_unit', false)
+                            ->get();
+
+                        foreach ($otherPackaging as $packaging) {
+                            $packaging->update([
+                                'price' => $data['price'] * $packaging->units_per_package,
+                            ]);
+                        }
+                    }
+                }
+
+                // If cost_price changed, update packaging types cost prices proportionally
+                if (isset($data['cost_price']) && $variant->packagingTypes()->exists()) {
+                    $basePackaging = $variant->packagingTypes()
+                        ->where('is_base_unit', true)
+                        ->first();
+
+                    if ($basePackaging && $data['cost_price'] !== null) {
+                        $basePackaging->update(['cost_price' => $data['cost_price']]);
+
+                        // Update other packaging types based on units_per_package
+                        $otherPackaging = $variant->packagingTypes()
+                            ->where('is_base_unit', false)
+                            ->get();
+
+                        foreach ($otherPackaging as $packaging) {
+                            $packaging->update([
+                                'cost_price' => $data['cost_price'] * $packaging->units_per_package,
+                            ]);
+                        }
+                    }
+                }
+
+                $product = $variant->product;
+
+                // Invalidate caches
+                Cache::tags([
+                    "tenant:{$product->tenant_id}:products:list",
+                    "tenant:{$product->tenant_id}:product:{$product->id}",
+                ])->flush();
+
+                Log::info('Product variant updated successfully.', [
+                    'variant_id' => $variant->id,
+                    'product_id' => $variant->product_id,
+                ]);
+
+                return $variant->fresh(['product', 'packagingTypes']);
+            });
+        } catch (Throwable $e) {
+            Log::error('Product variant update failed.', [
+                'variant_id' => $variant->id,
+                'product_id' => $variant->product_id,
+                'data' => $data,
+                'exception' => $e,
+            ]);
+
+            throw $e;
+        }
+    }
 }

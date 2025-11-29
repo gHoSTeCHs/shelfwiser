@@ -89,6 +89,9 @@ enum UserRole: string
                 'process_supplier_orders',
                 'receive_stock',
                 'view_supplier_analytics',
+                'view_timesheets',
+                'manage_timesheets',
+                'approve_timesheets',
             ],
             self::OWNER => [
                 'manage_tenant',
@@ -112,6 +115,9 @@ enum UserRole: string
                 'process_supplier_orders',
                 'receive_stock',
                 'view_supplier_analytics',
+                'view_timesheets',
+                'manage_timesheets',
+                'approve_timesheets',
             ],
             self::GENERAL_MANAGER => [
                 'manage_stores',
@@ -131,6 +137,9 @@ enum UserRole: string
                 'process_supplier_orders',
                 'receive_stock',
                 'view_supplier_analytics',
+                'view_timesheets',
+                'manage_timesheets',
+                'approve_timesheets',
             ],
             self::STORE_MANAGER => [
                 'manage_store_users',
@@ -141,6 +150,9 @@ enum UserRole: string
                 'manage_customers',
                 'manage_purchase_orders',
                 'receive_stock',
+                'view_timesheets',
+                'manage_timesheets',
+                'approve_timesheets',
             ],
             self::ASSISTANT_MANAGER => [
                 'view_store_reports',
@@ -150,17 +162,24 @@ enum UserRole: string
                 'approve_supplier_connections',
                 'manage_purchase_orders',
                 'receive_stock',
+                'view_timesheets',
+                'manage_timesheets',
+                'approve_timesheets',
             ],
             self::SALES_REP => [
                 'process_orders',
                 'view_products',
                 'manage_customers',
                 'view_inventory',
+                'view_timesheets',
+                'manage_timesheets',
             ],
             self::CASHIER => [
                 'process_sales',
                 'view_products',
                 'basic_customer_info',
+                'view_timesheets',
+                'manage_timesheets',
             ],
             self::INVENTORY_CLERK => [
                 'manage_store_inventory',
@@ -168,6 +187,8 @@ enum UserRole: string
                 'receive_stock',
                 'stock_transfers',
                 'view_purchase_orders',
+                'view_timesheets',
+                'manage_timesheets',
             ],
         };
     }
@@ -220,8 +241,8 @@ enum UserRole: string
     public static function forSelect(): array
     {
         return collect(self::cases())
-            ->filter(fn ($role) => $role !== self::SUPER_ADMIN)
-            ->mapWithKeys(fn ($role) => [$role->value => $role->label()])
+            ->filter(fn($role) => $role !== self::SUPER_ADMIN)
+            ->mapWithKeys(fn($role) => [$role->value => $role->label()])
             ->toArray();
     }
 
@@ -231,7 +252,7 @@ enum UserRole: string
     public static function allForSelect(): array
     {
         return collect(self::cases())
-            ->mapWithKeys(fn ($role) => [$role->value => $role->label()])
+            ->mapWithKeys(fn($role) => [$role->value => $role->label()])
             ->toArray();
     }
 
@@ -241,7 +262,7 @@ enum UserRole: string
     public static function tenantRoles(): array
     {
         return collect(self::cases())
-            ->filter(fn ($role) => $role !== self::SUPER_ADMIN)
+            ->filter(fn($role) => $role !== self::SUPER_ADMIN)
             ->values()
             ->toArray();
     }

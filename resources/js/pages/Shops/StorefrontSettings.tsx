@@ -10,8 +10,9 @@ import InputError from '@/components/form/InputError';
 import Checkbox from '@/components/form/input/Checkbox';
 import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
-import { Save } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Save, Store } from 'lucide-react';
 import ShopController from '@/actions/App/Http/Controllers/ShopController';
+import { Link } from '@inertiajs/react';
 
 interface StorefrontSettingsProps {
     shop: Shop;
@@ -53,12 +54,40 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({ shop, currencie
             <Head title={`Storefront Settings - ${shop.name}`} />
 
             <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Storefront Settings</h1>
-                        <p className="mt-1 text-sm text-gray-600">
-                            Configure your online storefront appearance and functionality
-                        </p>
+                <div>
+                    <Link
+                        href={`/shops/${shop.id}`}
+                        className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                    >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Shop
+                    </Link>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/20">
+                                <Store className="h-6 w-6 text-brand-600 dark:text-brand-400" />
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                                    Storefront Settings
+                                </h1>
+                                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                    Configure {shop.name}'s online storefront appearance and functionality
+                                </p>
+                            </div>
+                        </div>
+                        {storefrontEnabled && (
+                            <a
+                                href={`/store/${shop.slug}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Button variant="outline">
+                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                    View Storefront
+                                </Button>
+                            </a>
+                        )}
                     </div>
                 </div>
 

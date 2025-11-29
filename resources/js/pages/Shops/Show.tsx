@@ -15,6 +15,8 @@ import {
     MapPin,
     Package,
     Phone,
+    Settings,
+    Store,
     TrendingUp,
     Users,
 } from 'lucide-react';
@@ -315,6 +317,18 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                         </Card>
 
                         <div className="space-y-3">
+                            {can_manage && (
+                                <Link href={`/shops/${shop.id}/storefront-settings`}>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full gap-2"
+                                    >
+                                        <Store className="h-4 w-4" />
+                                        Storefront Settings
+                                    </Button>
+                                </Link>
+                            )}
+
                             <Link href={`/shops/${shop.id}/products`}>
                                 <Button
                                     variant="outline"
@@ -334,6 +348,18 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                                     View Reports
                                 </Button>
                             </Link>
+
+                            {can_manage && (
+                                <Link href={`/shops/${shop.id}/tax-settings`}>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full gap-2"
+                                    >
+                                        <Settings className="h-4 w-4" />
+                                        Tax Settings
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>
