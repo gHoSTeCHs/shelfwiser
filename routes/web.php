@@ -70,6 +70,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('dashboard/refresh', [DashboardController::class, 'refresh'])->name('dashboard.refresh');
 
+    Route::get('/toast-demo', function () {
+        return Inertia::render('ToastDemo');
+    })->name('toast-demo');
+
     // Reports
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/sales', [ReportsController::class, 'sales'])->name('sales');
