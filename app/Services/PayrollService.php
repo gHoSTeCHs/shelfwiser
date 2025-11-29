@@ -39,6 +39,23 @@ readonly class PayrollService
         ?string $periodName = null
     ): PayrollPeriod {
         return DB::transaction(function () use ($tenantId, $shopId, $startDate, $endDate, $paymentDate, $periodName) {
+            $overlapping = PayrollPeriod::query()
+                ->where('tenant_id', $tenantId)
+                ->where('shop_id', $shopId)
+                ->where(function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('start_date', [$startDate, $endDate])
+                        ->orWhereBetween('end_date', [$startDate, $endDate])
+                        ->orWhere(function ($q) use ($startDate, $endDate) {
+                            $q->where('start_date', '<=', $startDate)
+                                ->where('end_date', '>=', $endDate);
+                        });
+                })
+                ->exists();
+
+            if ($overlapping) {
+                throw new RuntimeException('A payroll period with overlapping dates already exists for this shop');
+            }
+
             $name = $periodName ?? $startDate->format('F Y');
 
             $payrollPeriod = PayrollPeriod::query()->create([
@@ -192,7 +209,7 @@ readonly class PayrollService
         switch ($payrollDetail->pay_type) {
             case PayType::SALARY:
                 $baseSalary = (float) $payrollDetail->pay_amount;
-                $regularPay = $baseSalary;
+                $regularPay = 0;
                 $hourlyRate = $baseSalary / 160;
                 $overtimePay = $overtimeHours * $hourlyRate * $overtimeMultiplier;
                 break;
@@ -208,6 +225,11 @@ readonly class PayrollService
                 $hoursPerDay = 8;
                 $regularPay = ($regularHours / $hoursPerDay) * $dailyRate;
                 $overtimePay = ($overtimeHours / $hoursPerDay) * $dailyRate * $overtimeMultiplier;
+                break;
+
+            case PayType::COMMISSION_BASED:
+                $regularPay = 0;
+                $overtimePay = 0;
                 break;
         }
 

@@ -116,12 +116,14 @@ class WageAdvanceService
 
         $approvedAmount = $amountApproved ?? $wageAdvance->amount_requested;
 
-        $eligibility = $this->calculateEligibility($wageAdvance->user, $wageAdvance->shop);
-        if ($approvedAmount > $eligibility['available_amount']) {
-            throw new \RuntimeException('Approved amount exceeds available limit');
-        }
-
         return DB::transaction(function () use ($wageAdvance, $approver, $approvedAmount, $installments, $notes) {
+            $lockedUser = User::lockForUpdate()->find($wageAdvance->user_id);
+
+            $eligibility = $this->calculateEligibility($lockedUser, $wageAdvance->shop);
+            if ($approvedAmount > $eligibility['available_amount']) {
+                throw new \RuntimeException('Approved amount exceeds available limit');
+            }
+
             $wageAdvance->update([
                 'status' => WageAdvanceStatus::APPROVED,
                 'amount_approved' => $approvedAmount,
@@ -208,6 +210,10 @@ class WageAdvanceService
     {
         if (! $wageAdvance->status->canRecordRepayment()) {
             throw new \RuntimeException('Cannot record repayment for this wage advance');
+        }
+
+        if ($amount <= 0) {
+            throw new \InvalidArgumentException('Repayment amount must be greater than zero');
         }
 
         return DB::transaction(function () use ($wageAdvance, $amount) {

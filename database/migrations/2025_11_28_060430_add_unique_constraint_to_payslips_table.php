@@ -11,6 +11,8 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('payslips', function (Blueprint $table) {
+            $table->unique(['payroll_period_id', 'user_id'], 'payslips_period_user_unique');
+            $table->index(['tenant_id', 'user_id']);
             $table->index('created_at');
 
             $table->softDeletes();
