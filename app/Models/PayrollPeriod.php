@@ -86,39 +86,37 @@ class PayrollPeriod extends Model
      */
     public function payslips(): HasMany
     {
-        return $this->hasMany(Payslip::class);
+        return $this->hasMany(Payslip::class)->whereNull('payslips.deleted_at');
     }
 
-    /**
-     * Check if payroll is draft
-     */
     public function isDraft(): bool
     {
         return $this->status === PayrollStatus::DRAFT;
     }
 
-    /**
-     * Check if payroll is processed
-     */
     public function isProcessed(): bool
     {
         return $this->status === PayrollStatus::PROCESSED;
     }
 
-    /**
-     * Check if payroll is approved
-     */
     public function isApproved(): bool
     {
         return $this->status === PayrollStatus::APPROVED;
     }
 
-    /**
-     * Check if payroll is paid
-     */
     public function isPaid(): bool
     {
         return $this->status === PayrollStatus::PAID;
+    }
+
+    public function canBeEdited(): bool
+    {
+        return $this->status === PayrollStatus::DRAFT;
+    }
+
+    public function canBeDeleted(): bool
+    {
+        return in_array($this->status, [PayrollStatus::DRAFT, PayrollStatus::CANCELLED]);
     }
 
     /**

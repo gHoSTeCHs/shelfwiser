@@ -92,6 +92,11 @@ export default function Show({
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [processing, setProcessing] = useState(false);
+    const [approving, setApproving] = useState(false);
+    const [markingPaid, setMarkingPaid] = useState(false);
+    const [cancelling, setCancelling] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -143,18 +148,26 @@ export default function Show({
                 'Are you sure you want to process this payroll? This will generate payslips for all eligible employees.'
             )
         ) {
+            setProcessing(true);
             router.post(
                 PayrollController.process.url({ payrollPeriod: payrollPeriod.id }),
-                {}
+                {},
+                {
+                    onFinish: () => setProcessing(false),
+                }
             );
         }
     };
 
     const handleApprove = () => {
         if (confirm('Are you sure you want to approve this payroll?')) {
+            setApproving(true);
             router.post(
                 PayrollController.approve.url({ payrollPeriod: payrollPeriod.id }),
-                {}
+                {},
+                {
+                    onFinish: () => setApproving(false),
+                }
             );
         }
     };
@@ -165,9 +178,13 @@ export default function Show({
                 'Are you sure you want to mark this payroll as paid? This will trigger wage advance repayments.'
             )
         ) {
+            setMarkingPaid(true);
             router.post(
                 PayrollController.markAsPaid.url({ payrollPeriod: payrollPeriod.id }),
-                {}
+                {},
+                {
+                    onFinish: () => setMarkingPaid(false),
+                }
             );
         }
     };
@@ -178,6 +195,7 @@ export default function Show({
             return;
         }
 
+        setCancelling(true);
         router.post(
             PayrollController.cancel.url({ payrollPeriod: payrollPeriod.id }),
             { reason: cancelReason },
@@ -186,15 +204,18 @@ export default function Show({
                     setShowCancelDialog(false);
                     setCancelReason('');
                 },
+                onFinish: () => setCancelling(false),
             }
         );
     };
 
     const handleDelete = () => {
+        setDeleting(true);
         router.delete(PayrollController.destroy.url({ payrollPeriod: payrollPeriod.id }), {
             onSuccess: () => {
                 router.visit(PayrollController.index.url());
             },
+            onFinish: () => setDeleting(false),
         });
     };
 
@@ -240,8 +261,10 @@ export default function Show({
                                 size="md"
                                 startIcon={<Play className="h-4 w-4" />}
                                 onClick={handleProcess}
+                                loading={processing}
+                                disabled={processing}
                             >
-                                Process Payroll
+                                {processing ? 'Processing...' : 'Process Payroll'}
                             </Button>
                         )}
 
@@ -251,8 +274,10 @@ export default function Show({
                                 size="md"
                                 startIcon={<CheckCircle className="h-4 w-4" />}
                                 onClick={handleApprove}
+                                loading={approving}
+                                disabled={approving}
                             >
-                                Approve Payroll
+                                {approving ? 'Approving...' : 'Approve Payroll'}
                             </Button>
                         )}
 
@@ -262,8 +287,10 @@ export default function Show({
                                 size="md"
                                 startIcon={<DollarSign className="h-4 w-4" />}
                                 onClick={handleMarkAsPaid}
+                                loading={markingPaid}
+                                disabled={markingPaid}
                             >
-                                Mark as Paid
+                                {markingPaid ? 'Marking as Paid...' : 'Mark as Paid'}
                             </Button>
                         )}
 
@@ -273,6 +300,7 @@ export default function Show({
                                 size="md"
                                 startIcon={<XCircle className="h-4 w-4" />}
                                 onClick={() => setShowCancelDialog(true)}
+                                disabled={cancelling}
                             >
                                 Cancel
                             </Button>
@@ -284,6 +312,7 @@ export default function Show({
                                 size="md"
                                 startIcon={<Trash2 className="h-4 w-4" />}
                                 onClick={() => setShowDeleteDialog(true)}
+                                disabled={deleting}
                             >
                                 Delete
                             </Button>
