@@ -129,7 +129,7 @@ export interface EmployeeCustomDeduction {
     user_id: number;
     tenant_id: number;
     deduction_name: string;
-    deduction_type: string;
+    deduction_type: DeductionType;
     amount: number;
     percentage: number | null;
     is_active: boolean;
@@ -137,6 +137,7 @@ export interface EmployeeCustomDeduction {
     effective_to: string | null;
     created_at: string;
     updated_at: string;
+    user?: User;
 }
 
 export interface EarningsBreakdown {
@@ -187,6 +188,16 @@ export type PayType = 'salary' | 'hourly' | 'daily' | 'commission_based';
 export type PayFrequency = 'weekly' | 'bi_weekly' | 'monthly' | 'quarterly' | 'annually';
 
 export type TaxHandling = 'employee_calculates' | 'shop_calculates';
+
+export type DeductionType =
+    | 'fixed_amount'
+    | 'percentage'
+    | 'loan_repayment'
+    | 'advance_repayment'
+    | 'insurance'
+    | 'union_dues'
+    | 'savings'
+    | 'other';
 
 export interface User {
     id: number;

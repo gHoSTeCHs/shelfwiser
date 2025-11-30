@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Admin\AdminTenantController;
 use App\Http\Controllers\CustomerCreditController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmployeeCustomDeductionController;
 use App\Http\Controllers\FundRequestController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\NotificationController;
@@ -126,6 +127,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{employee}/payroll', [StaffPayrollController::class, 'store'])->name('payroll.store');
         Route::patch('/{employee}/payroll/deductions', [StaffPayrollController::class, 'updateDeductions'])->name('payroll.deductions.update');
         Route::patch('/{employee}/payroll/tax-settings', [StaffPayrollController::class, 'updateTaxSettings'])->name('payroll.tax-settings.update');
+
+        // Custom deductions
+        Route::prefix('{employee}/deductions')->name('deductions.')->group(function () {
+            Route::get('/', [EmployeeCustomDeductionController::class, 'index'])->name('index');
+            Route::get('/create', [EmployeeCustomDeductionController::class, 'create'])->name('create');
+            Route::post('/', [EmployeeCustomDeductionController::class, 'store'])->name('store');
+            Route::get('/{deduction}/edit', [EmployeeCustomDeductionController::class, 'edit'])->name('edit');
+            Route::put('/{deduction}', [EmployeeCustomDeductionController::class, 'update'])->name('update');
+            Route::delete('/{deduction}', [EmployeeCustomDeductionController::class, 'destroy'])->name('destroy');
+            Route::post('/{deduction}/toggle-status', [EmployeeCustomDeductionController::class, 'toggleStatus'])->name('toggle-status');
+        });
     });
 
     Route::prefix('timesheets')->name('timesheets.')->group(function () {
