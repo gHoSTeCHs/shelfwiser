@@ -88,10 +88,22 @@ class StaffManagementController extends Controller
     {
         Gate::authorize('view', $staff);
 
-        $staff->load(['shops', 'tenant']);
+        $staff->load([
+            'shops',
+            'tenant',
+            'employeePayrollDetail',
+            'customDeductions' => function ($query) {
+                $query->latest();
+            },
+        ]);
+
+        $canManagePayroll = Gate::allows('updatePayrollDetails', $staff);
+        $canManageDeductions = Gate::allows('updateDeductionPreferences', $staff);
 
         return Inertia::render('StaffManagement/Show', [
             'staff' => $staff,
+            'canManagePayroll' => $canManagePayroll,
+            'canManageDeductions' => $canManageDeductions,
         ]);
     }
 

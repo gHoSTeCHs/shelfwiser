@@ -3,7 +3,8 @@ import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
 import AppLayout from '@/layouts/AppLayout';
 import { User } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { EmployeeCustomDeduction, EmployeePayrollDetail } from '@/types/payroll';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     Building2,
     Calendar,
@@ -12,6 +13,10 @@ import {
     Mail,
     Shield,
     User as UserIcon,
+    DollarSign,
+    Receipt,
+    Plus,
+    CreditCard,
 } from 'lucide-react';
 
 interface Shop {
@@ -22,18 +27,19 @@ interface Shop {
 
 interface StaffMember extends User {
     shops: Shop[];
+    employeePayrollDetail?: EmployeePayrollDetail;
+    customDeductions?: EmployeeCustomDeduction[];
 }
 
 interface Props {
     staff: StaffMember;
+    canManagePayroll: boolean;
+    canManageDeductions: boolean;
 }
 
-export default function Show({ staff }: Props) {
+export default function Show({ staff, canManagePayroll, canManageDeductions }: Props) {
     const getRoleBadgeColor = (role: string): string => {
-        const colorMap: Record<
-            string,
-            'success' | 'info' | 'warning' | 'error'
-        > = {
+        const colorMap: Record<string, 'success' | 'info' | 'warning' | 'error'> = {
             owner: 'error',
             general_manager: 'info',
             store_manager: 'success',
@@ -58,11 +64,30 @@ export default function Show({ staff }: Props) {
         return labelMap[role] || role;
     };
 
+    const formatCurrency = (amount: number | string) => {
+        return new Intl.NumberFormat('en-NG', {
+            style: 'currency',
+            currency: 'NGN',
+        }).format(parseFloat(amount.toString()));
+    };
+
+    const formatEmploymentType = (type: string) => {
+        return type
+            .split('_')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    };
+
+    const hasPayrollDetails = !!staff.employeePayrollDetail;
+    const activeCustomDeductions =
+        staff.customDeductions?.filter((d) => d.is_active) || [];
+    const totalActiveDeductions = activeCustomDeductions.length;
+
     return (
         <AppLayout>
             <Head title={`${staff.name} - Staff Details`} />
 
-            <div className="mx-auto max-w-4xl space-y-6">
+            <div className="mx-auto max-w-7xl space-y-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link
@@ -95,10 +120,7 @@ export default function Show({ staff }: Props) {
                                 {staff.name}
                             </h1>
                             <div className="mt-2 flex flex-wrap items-center gap-3">
-                                <Badge
-                                    variant="light"
-                                    color={getRoleBadgeColor(staff.role)}
-                                >
+                                <Badge variant="light" color={getRoleBadgeColor(staff.role)}>
                                     {getRoleLabel(staff.role)}
                                 </Badge>
                                 {staff.is_tenant_owner && (
@@ -108,9 +130,7 @@ export default function Show({ staff }: Props) {
                                 )}
                                 <Badge
                                     variant="light"
-                                    color={
-                                        staff.is_active ? 'success' : 'error'
-                                    }
+                                    color={staff.is_active ? 'success' : 'error'}
                                 >
                                     {staff.is_active ? 'Active' : 'Inactive'}
                                 </Badge>
@@ -121,6 +141,7 @@ export default function Show({ staff }: Props) {
 
                 <div className="grid gap-6 lg:grid-cols-3">
                     <div className="space-y-6 lg:col-span-2">
+                        {/* Personal Information */}
                         <Card title="Personal Information">
                             <div className="p-6">
                                 <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
@@ -165,6 +186,237 @@ export default function Show({ staff }: Props) {
                             </div>
                         </Card>
 
+                        {/* Payroll Details */}
+                        <Card title="Payroll Details">
+                            <div className="p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+                                        <DollarSign className="h-5 w-5" />
+                                        Payroll Details
+                                    </h2>
+                                    {canManagePayroll && (
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() =>
+                                                router.visit(`/staff/${staff.id}/edit#payroll`)
+                                            }
+                                        >
+                                            {hasPayrollDetails ? 'Edit' : 'Set Up'}
+                                        </Button>
+                                    )}
+                                </div>
+
+                                {hasPayrollDetails ? (
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                Employment Type
+                                            </label>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {formatEmploymentType(
+                                                    staff.employeePayrollDetail.employment_type
+                                                )}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                Pay Type
+                                            </label>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {formatEmploymentType(
+                                                    staff.employeePayrollDetail.pay_type
+                                                )}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                Pay Amount
+                                            </label>
+                                            <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
+                                                {formatCurrency(
+                                                    staff.employeePayrollDetail.pay_amount
+                                                )}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                Pay Frequency
+                                            </label>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {formatEmploymentType(
+                                                    staff.employeePayrollDetail.pay_frequency
+                                                )}
+                                            </p>
+                                        </div>
+
+                                        {staff.employeePayrollDetail.position_title && (
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                    Position
+                                                </label>
+                                                <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                    {staff.employeePayrollDetail.position_title}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {staff.employeePayrollDetail.department && (
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                    Department
+                                                </label>
+                                                <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                    {staff.employeePayrollDetail.department}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        <div className="sm:col-span-2">
+                                            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                Deductions Enabled
+                                            </label>
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                {staff.employeePayrollDetail.pension_enabled && (
+                                                    <Badge color="info" size="sm">
+                                                        Pension (
+                                                        {staff.employeePayrollDetail.pension_employee_rate}
+                                                        %)
+                                                    </Badge>
+                                                )}
+                                                {staff.employeePayrollDetail.nhf_enabled && (
+                                                    <Badge color="info" size="sm">
+                                                        NHF (
+                                                        {staff.employeePayrollDetail.nhf_rate}%)
+                                                    </Badge>
+                                                )}
+                                                {staff.employeePayrollDetail.nhis_enabled && (
+                                                    <Badge color="info" size="sm">
+                                                        NHIS (
+                                                        {formatCurrency(
+                                                            staff.employeePayrollDetail
+                                                                .nhis_amount || 0
+                                                        )}
+                                                        )
+                                                    </Badge>
+                                                )}
+                                                {staff.employeePayrollDetail
+                                                    .enable_tax_calculations && (
+                                                    <Badge color="info" size="sm">
+                                                        Income Tax
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-900">
+                                        <DollarSign className="mx-auto h-12 w-12 text-gray-400" />
+                                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            No payroll details configured
+                                        </p>
+                                        {canManagePayroll && (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="mt-4"
+                                                onClick={() =>
+                                                    router.visit(`/staff/${staff.id}/edit#payroll`)
+                                                }
+                                            >
+                                                Set Up Payroll
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
+
+                        {/* Custom Deductions */}
+                        <Card title="Custom Deductions">
+                            <div className="p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+                                        <Receipt className="h-5 w-5" />
+                                        Custom Deductions
+                                        {totalActiveDeductions > 0 && (
+                                            <Badge color="info" size="sm">
+                                                {totalActiveDeductions} active
+                                            </Badge>
+                                        )}
+                                    </h2>
+                                    {canManageDeductions && (
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            startIcon={<Plus className="h-4 w-4" />}
+                                            onClick={() =>
+                                                router.visit(`/staff/${staff.id}/deductions`)
+                                            }
+                                        >
+                                            Manage
+                                        </Button>
+                                    )}
+                                </div>
+
+                                {staff.customDeductions && staff.customDeductions.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {staff.customDeductions.slice(0, 5).map((deduction) => (
+                                            <div
+                                                key={deduction.id}
+                                                className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <Receipt className="h-4 w-4 text-gray-400" />
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {deduction.deduction_name}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                            {deduction.deduction_type === 'percentage'
+                                                                ? `${deduction.percentage}% of salary`
+                                                                : formatCurrency(
+                                                                      deduction.amount
+                                                                  )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <Badge
+                                                    color={deduction.is_active ? 'success' : 'light'}
+                                                    size="sm"
+                                                >
+                                                    {deduction.is_active ? 'Active' : 'Inactive'}
+                                                </Badge>
+                                            </div>
+                                        ))}
+                                        {staff.customDeductions.length > 5 && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                fullWidth
+                                                onClick={() =>
+                                                    router.visit(`/staff/${staff.id}/deductions`)
+                                                }
+                                            >
+                                                View all {staff.customDeductions.length} deductions
+                                            </Button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-900">
+                                        <Receipt className="mx-auto h-12 w-12 text-gray-400" />
+                                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            No custom deductions configured
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
+
+                        {/* Role & Permissions */}
                         <Card title="Role & Permissions">
                             <div className="p-6">
                                 <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
@@ -178,12 +430,7 @@ export default function Show({ staff }: Props) {
                                             Role
                                         </label>
                                         <div className="mt-1">
-                                            <Badge
-                                                variant="light"
-                                                color={getRoleBadgeColor(
-                                                    staff.role,
-                                                )}
-                                            >
+                                            <Badge variant="light" color={getRoleBadgeColor(staff.role)}>
                                                 {getRoleLabel(staff.role)}
                                             </Badge>
                                         </div>
@@ -196,15 +443,9 @@ export default function Show({ staff }: Props) {
                                         <div className="mt-1">
                                             <Badge
                                                 variant="light"
-                                                color={
-                                                    staff.is_active
-                                                        ? 'success'
-                                                        : 'error'
-                                                }
+                                                color={staff.is_active ? 'success' : 'error'}
                                             >
-                                                {staff.is_active
-                                                    ? 'Active'
-                                                    : 'Inactive'}
+                                                {staff.is_active ? 'Active' : 'Inactive'}
                                             </Badge>
                                         </div>
                                     </div>
@@ -215,13 +456,14 @@ export default function Show({ staff }: Props) {
                                                 Email Verified
                                             </label>
                                             <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                                {new Date(
-                                                    staff.email_verified_at,
-                                                ).toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric',
-                                                })}
+                                                {new Date(staff.email_verified_at).toLocaleDateString(
+                                                    'en-US',
+                                                    {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                    }
+                                                )}
                                             </p>
                                         </div>
                                     )}
@@ -229,6 +471,7 @@ export default function Show({ staff }: Props) {
                             </div>
                         </Card>
 
+                        {/* Assigned Shops */}
                         <Card title="Assigned Shops">
                             <div className="p-6">
                                 <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
@@ -274,6 +517,7 @@ export default function Show({ staff }: Props) {
                     </div>
 
                     <div className="space-y-6">
+                        {/* Timeline */}
                         <Card title="Timeline">
                             <div className="p-6">
                                 <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
@@ -287,9 +531,7 @@ export default function Show({ staff }: Props) {
                                             Joined
                                         </label>
                                         <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            {new Date(
-                                                staff.created_at,
-                                            ).toLocaleDateString('en-US', {
+                                            {new Date(staff.created_at).toLocaleDateString('en-US', {
                                                 year: 'numeric',
                                                 month: 'long',
                                                 day: 'numeric',
@@ -302,19 +544,35 @@ export default function Show({ staff }: Props) {
                                             Last Updated
                                         </label>
                                         <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            {new Date(
-                                                staff.updated_at,
-                                            ).toLocaleDateString('en-US', {
+                                            {new Date(staff.updated_at).toLocaleDateString('en-US', {
                                                 year: 'numeric',
                                                 month: 'long',
                                                 day: 'numeric',
                                             })}
                                         </p>
                                     </div>
+
+                                    {hasPayrollDetails && staff.employeePayrollDetail.start_date && (
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                Employment Start
+                                            </label>
+                                            <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                {new Date(
+                                                    staff.employeePayrollDetail.start_date
+                                                ).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                })}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </Card>
 
+                        {/* Quick Actions */}
                         <div className="space-y-3">
                             <Link href={`/staff/${staff.id}/edit`}>
                                 <Button className="w-full gap-2">
@@ -322,6 +580,15 @@ export default function Show({ staff }: Props) {
                                     Edit Staff Member
                                 </Button>
                             </Link>
+
+                            {canManageDeductions && (
+                                <Link href={`/staff/${staff.id}/deductions`}>
+                                    <Button variant="outline" className="w-full gap-2">
+                                        <CreditCard className="h-4 w-4" />
+                                        Manage Deductions
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>
