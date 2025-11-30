@@ -73,7 +73,35 @@ class PurchaseOrderService
         $connection = $this->connectionService->getConnection($po->buyerTenant, $po->supplierTenant);
 
         $quantity = $data['quantity'];
+
+        // Validate MOQ (Minimum Order Quantity)
+        if ($catalogItem->min_order_quantity && $quantity < $catalogItem->min_order_quantity) {
+            throw new \Exception(
+                "Quantity {$quantity} is below the minimum order quantity of {$catalogItem->min_order_quantity} for this item"
+            );
+        }
+
         $unitPrice = $data['unit_price'] ?? $catalogItem->getPriceForQuantity($quantity, $connection?->id);
+        $itemTotal = $unitPrice * $quantity;
+
+        // Validate credit limit if connection has one
+        if ($connection && $connection->credit_limit) {
+            // Calculate current outstanding amount
+            $outstandingAmount = $this->calculateOutstandingAmount($po->buyerTenant->id, $po->supplier_tenant_id);
+
+            // Calculate new total with this item
+            $poCurrentTotal = $po->total_amount ?? 0;
+            $newPoTotal = $poCurrentTotal + $itemTotal;
+            $newTotalOutstanding = $outstandingAmount + $newPoTotal - $poCurrentTotal;
+
+            if ($newTotalOutstanding > $connection->credit_limit) {
+                $availableCredit = max(0, $connection->credit_limit - $outstandingAmount);
+                throw new \Exception(
+                    "Adding this item would exceed your credit limit. Available credit: " .
+                    number_format($availableCredit, 2)
+                );
+            }
+        }
 
         $product = $catalogItem->product;
         $productVariantId = $data['product_variant_id'] ?? $product->variants()->first()?->id;
@@ -406,5 +434,35 @@ class PurchaseOrderService
             ->with(['buyerTenant', 'shop', 'items.productVariant', 'createdBy'])
             ->orderBy('created_at', 'desc')
             ->get();
+    }
+
+    /**
+     * Calculate total outstanding amount for a buyer with a specific supplier
+     */
+    protected function calculateOutstandingAmount(int $buyerTenantId, int $supplierTenantId): float
+    {
+        // Get all purchase orders that haven't been fully paid
+        $unpaidPOs = PurchaseOrder::where('buyer_tenant_id', $buyerTenantId)
+            ->where('supplier_tenant_id', $supplierTenantId)
+            ->whereIn('status', [
+                PurchaseOrderStatus::APPROVED,
+                PurchaseOrderStatus::SHIPPED,
+                PurchaseOrderStatus::RECEIVED,
+            ])
+            ->where(function ($query) {
+                $query->where('payment_status', '!=', PurchaseOrderPaymentStatus::PAID)
+                    ->orWhereNull('payment_status');
+            })
+            ->get();
+
+        // Sum up the outstanding amounts
+        $totalOutstanding = 0;
+        foreach ($unpaidPOs as $po) {
+            $totalAmount = $po->total_amount ?? 0;
+            $paidAmount = $po->payments()->sum('amount');
+            $totalOutstanding += ($totalAmount - $paidAmount);
+        }
+
+        return $totalOutstanding;
     }
 }

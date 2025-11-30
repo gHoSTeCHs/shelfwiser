@@ -6,6 +6,7 @@ use App\Enums\WageAdvanceStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WageAdvance extends Model
@@ -84,6 +85,14 @@ class WageAdvance extends Model
     public function disbursedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'disbursed_by_user_id');
+    }
+
+    /**
+     * Wage advance repayments
+     */
+    public function repayments(): HasMany
+    {
+        return $this->hasMany(WageAdvanceRepayment::class);
     }
 
     /**
