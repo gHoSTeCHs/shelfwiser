@@ -91,7 +91,7 @@ class ShopController extends Controller
 
         return Inertia::render('Shops/Show', [
             'shop' => (new ShopResource($shop->load('type', 'users')))->toArray(request()),
-            'can_manage' => auth()->user()->can('manage', 'shop'),
+            'can_manage' => auth()->user()->can('shop.manage', $shop),
         ]);
     }
 

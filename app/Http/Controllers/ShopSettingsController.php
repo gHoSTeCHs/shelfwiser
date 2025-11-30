@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class ShopSettingsController extends Controller
 {
@@ -22,11 +23,11 @@ class ShopSettingsController extends Controller
      */
     public function show(Shop $shop): Response
     {
-        Gate::authorize('update', $shop);
+        Gate::authorize('shop.manage', $shop);
 
         $shop->load('taxSettings.taxJurisdiction');
 
-        $taxJurisdictions = TaxJurisdiction::where('is_active', true)
+        $taxJurisdictions = TaxJurisdiction::query()->where('is_active', true)
             ->orderBy('country_code')
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'country_code']);
@@ -49,6 +50,7 @@ class ShopSettingsController extends Controller
 
     /**
      * Update shop tax and payroll settings
+     * @throws Throwable
      */
     public function update(Request $request, Shop $shop): RedirectResponse
     {
@@ -71,7 +73,7 @@ class ShopSettingsController extends Controller
             if ($shop->taxSettings) {
                 $shop->taxSettings->update($validated);
             } else {
-                ShopTaxSetting::create([
+                ShopTaxSetting::query()->create([
                     ...$validated,
                     'shop_id' => $shop->id,
                     'tenant_id' => $shop->tenant_id,

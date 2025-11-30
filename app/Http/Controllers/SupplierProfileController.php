@@ -14,11 +14,13 @@ use Inertia\Response;
 
 class SupplierProfileController extends Controller
 {
-    public function __construct(private readonly SupplierService $supplierService) {}
+    public function __construct(private readonly SupplierService $supplierService)
+    {
+    }
 
     public function index(): Response
     {
-        Gate::authorize('viewAny', SupplierProfile::class);
+        Gate::authorize('catalog.viewAny', SupplierProfile::class);
 
         $tenant = auth()->user()->tenant;
         $profile = $tenant->supplierProfile;
@@ -49,7 +51,7 @@ class SupplierProfileController extends Controller
 
     public function disable(): RedirectResponse
     {
-        Gate::authorize('updateProfile', auth()->user()->tenant->supplierProfile);
+        Gate::authorize('catalog.updateProfile', auth()->user()->tenant->supplierProfile);
 
         $this->supplierService->disableSupplierMode(auth()->user()->tenant);
 

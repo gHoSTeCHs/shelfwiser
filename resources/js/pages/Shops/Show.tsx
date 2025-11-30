@@ -30,8 +30,6 @@ interface Props {
 export default function ShopsShow({ shop, can_manage }: Props) {
     console.log(shop, can_manage);
 
-    console.log(shop.name);
-
     return (
         <AppLayout>
             <Head title={`${shop.name} - Shop Details`} />

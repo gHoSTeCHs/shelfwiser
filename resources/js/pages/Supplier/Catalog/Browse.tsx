@@ -1,4 +1,3 @@
-import SupplierCatalogController from '@/actions/App/Http/Controllers/SupplierCatalogController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
@@ -11,12 +10,12 @@ import {
 } from '@/types/supplier';
 import { Head, Link } from '@inertiajs/react';
 import {
-    Package,
+    AlertCircle,
     DollarSign,
+    Package,
     ShoppingCart,
     Store,
     TrendingUp,
-    AlertCircle,
 } from 'lucide-react';
 
 interface Props {
@@ -111,9 +110,9 @@ export default function Browse({ catalogItems, supplier }: Props) {
                                             </div>
                                             <span className="text-lg font-bold text-brand-900 dark:text-brand-100">
                                                 $
-                                                {item.base_wholesale_price.toFixed(
-                                                    2,
-                                                )}
+                                                {Number(
+                                                    item.base_wholesale_price,
+                                                ).toFixed(2)}
                                             </span>
                                         </div>
 
@@ -148,10 +147,10 @@ export default function Browse({ catalogItems, supplier }: Props) {
 
                                         {item.pricing_tiers &&
                                             item.pricing_tiers.length > 0 && (
-                                                <div className="rounded-lg border border-info-200 bg-info-50 p-3 dark:border-info-800 dark:bg-info-950/50">
+                                                <div className="border-info-200 bg-info-50 dark:border-info-800 dark:bg-info-950/50 rounded-lg border p-3">
                                                     <div className="mb-2 flex items-center gap-2">
-                                                        <TrendingUp className="h-4 w-4 text-info-600 dark:text-info-400" />
-                                                        <span className="text-sm font-medium text-info-900 dark:text-info-200">
+                                                        <TrendingUp className="text-info-600 dark:text-info-400 h-4 w-4" />
+                                                        <span className="text-info-900 dark:text-info-200 text-sm font-medium">
                                                             Volume Pricing
                                                         </span>
                                                     </div>
@@ -160,8 +159,10 @@ export default function Browse({ catalogItems, supplier }: Props) {
                                                             .slice(0, 2)
                                                             .map((tier) => (
                                                                 <div
-                                                                    key={tier.id}
-                                                                    className="flex items-center justify-between text-xs text-info-700 dark:text-info-300"
+                                                                    key={
+                                                                        tier.id
+                                                                    }
+                                                                    className="text-info-700 dark:text-info-300 flex items-center justify-between text-xs"
                                                                 >
                                                                     <span>
                                                                         {
@@ -173,7 +174,9 @@ export default function Browse({ catalogItems, supplier }: Props) {
                                                                     </span>
                                                                     <span className="font-semibold">
                                                                         $
-                                                                        {tier.price.toFixed(
+                                                                        {Number(
+                                                                            tier.price,
+                                                                        ).toFixed(
                                                                             2,
                                                                         )}
                                                                     </span>
@@ -181,11 +184,12 @@ export default function Browse({ catalogItems, supplier }: Props) {
                                                             ))}
                                                         {item.pricing_tiers
                                                             .length > 2 && (
-                                                            <p className="text-xs text-info-600 dark:text-info-400">
+                                                            <p className="text-info-600 dark:text-info-400 text-xs">
                                                                 +
                                                                 {item
                                                                     .pricing_tiers
-                                                                    .length - 2}{' '}
+                                                                    .length -
+                                                                    2}{' '}
                                                                 more tier
                                                                 {item
                                                                     .pricing_tiers

@@ -21,16 +21,18 @@ use Inertia\Response;
 class PurchaseOrderController extends Controller
 {
     public function __construct(
-        private readonly PurchaseOrderService $purchaseOrderService,
+        private readonly PurchaseOrderService      $purchaseOrderService,
         private readonly SupplierConnectionService $connectionService
-    ) {}
+    )
+    {
+    }
 
     /**
      * @throws AuthorizationException
      */
     public function index(Request $request): Response
     {
-        Gate::authorize('viewAny', PurchaseOrder::class);
+        Gate::authorize('purchaseOrder.viewAny', PurchaseOrder::class);
 
         $tenantId = auth()->user()->tenant_id;
         $shopId = $request->input('shop_id');
@@ -57,7 +59,7 @@ class PurchaseOrderController extends Controller
      */
     public function supplier(): Response
     {
-        Gate::authorize('viewAsSupplier', auth()->user()->tenant);
+        Gate::authorize('purchaseOrder.viewAsSupplier', auth()->user()->tenant);
 
         $purchaseOrders = PurchaseOrder::forSupplier(auth()->user()->tenant_id)
             ->with(['buyerTenant', 'shop', 'items.productVariant', 'createdBy'])
@@ -71,13 +73,13 @@ class PurchaseOrderController extends Controller
 
     public function create(Request $request): Response
     {
-        Gate::authorize('viewAny', PurchaseOrder::class);
+        Gate::authorize('purchaseOrder.viewAny', PurchaseOrder::class);
 
         $tenantId = auth()->user()->tenant_id;
         $shops = Shop::where('tenant_id', $tenantId)->get(['id', 'name']);
 
         $connections = $this->connectionService->getConnectionsForBuyer(auth()->user()->tenant);
-        $approvedConnections = $connections->filter(fn ($conn) => $conn->status->canOrder());
+        $approvedConnections = $connections->filter(fn($conn) => $conn->status->canOrder());
 
         $supplierCatalog = [];
         $selectedSupplierId = $request->input('supplier');
@@ -95,7 +97,7 @@ class PurchaseOrderController extends Controller
             'shops' => $shops,
             'supplierConnections' => $approvedConnections,
             'supplierCatalog' => $supplierCatalog,
-            'selectedSupplierId' => $selectedSupplierId ? (int) $selectedSupplierId : null,
+            'selectedSupplierId' => $selectedSupplierId ? (int)$selectedSupplierId : null,
         ]);
     }
 
@@ -123,7 +125,7 @@ class PurchaseOrderController extends Controller
 
     public function show(PurchaseOrder $purchaseOrder): Response
     {
-        Gate::authorize('view', $purchaseOrder);
+        Gate::authorize('purchaseOrder.view', $purchaseOrder);
 
         $purchaseOrder->load([
             'items.productVariant.product',
@@ -151,7 +153,7 @@ class PurchaseOrderController extends Controller
 
     public function submit(PurchaseOrder $purchaseOrder): RedirectResponse
     {
-        Gate::authorize('submit', $purchaseOrder);
+        Gate::authorize('purchaseOrder.submit', $purchaseOrder);
 
         $this->purchaseOrderService->submitPurchaseOrder($purchaseOrder, auth()->user());
 
@@ -161,7 +163,7 @@ class PurchaseOrderController extends Controller
 
     public function approve(PurchaseOrder $purchaseOrder): RedirectResponse
     {
-        Gate::authorize('approve', $purchaseOrder);
+        Gate::authorize('purchaseOrder.approve', $purchaseOrder);
 
         $this->purchaseOrderService->approvePurchaseOrder($purchaseOrder, auth()->user());
 
@@ -171,7 +173,7 @@ class PurchaseOrderController extends Controller
 
     public function ship(PurchaseOrder $purchaseOrder): RedirectResponse
     {
-        Gate::authorize('ship', $purchaseOrder);
+        Gate::authorize('purchaseOrder.ship', $purchaseOrder);
 
         $this->purchaseOrderService->shipPurchaseOrder($purchaseOrder, auth()->user());
 
@@ -193,7 +195,7 @@ class PurchaseOrderController extends Controller
 
     public function cancel(Request $request, PurchaseOrder $purchaseOrder): RedirectResponse
     {
-        Gate::authorize('cancel', $purchaseOrder);
+        Gate::authorize('purchaseOrder.cancel', $purchaseOrder);
 
         $this->purchaseOrderService->cancelPurchaseOrder(
             $purchaseOrder,
