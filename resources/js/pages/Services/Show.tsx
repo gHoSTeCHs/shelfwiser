@@ -219,14 +219,14 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                     <div>
                         <Card title="Quick Stats">
                             <div className="space-y-4">
-                                <div className="bg-primary-50 dark:bg-primary-900/20 flex items-center justify-between rounded-lg p-3">
+                                <div className="bg-brand-50 dark:bg-brand-900/20 flex items-center justify-between rounded-lg p-3">
                                     <div className="flex items-center gap-2">
-                                        <Sparkles className="text-primary-600 dark:text-primary-400 h-5 w-5" />
+                                        <Sparkles className="text-brand-600 dark:text-brand-400 h-5 w-5" />
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Variants
                                         </span>
                                     </div>
-                                    <span className="text-primary-600 dark:text-primary-400 text-lg font-bold">
+                                    <span className="text-brand-600 dark:text-brand-400 text-lg font-bold">
                                         {service.variants?.length || 0}
                                     </span>
                                 </div>

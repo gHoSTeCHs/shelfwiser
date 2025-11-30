@@ -75,8 +75,8 @@ class POSService
                 $lineTotal = $unitPrice * $quantity;
 
                 $lineTax = 0;
-                if ($shop->vat_enabled && $variant->product->is_taxable) {
-                    $lineTax = $lineTotal * ($shop->vat_rate / 100);
+                if (($shop->vat_enabled ?? false) && ($variant->product->is_taxable ?? false)) {
+                    $lineTax = $lineTotal * (($shop->vat_rate ?? 0) / 100);
                 }
 
                 OrderItem::create([
@@ -122,8 +122,9 @@ class POSService
             $paymentNotes = null;
             if ($paymentMethod === 'cash' && $amountTendered > 0) {
                 $change = $amountTendered - $totalAmount;
-                $paymentNotes = "Cash tendered: {$shop->currency_symbol}".number_format($amountTendered, 2).
-                               ", Change: {$shop->currency_symbol}".number_format($change, 2);
+                $currencySymbol = $shop->currency_symbol ?? '$';
+                $paymentNotes = "Cash tendered: {$currencySymbol}".number_format($amountTendered, 2).
+                               ", Change: {$currencySymbol}".number_format($change, 2);
 
                 $order->update([
                     'internal_notes' => $paymentNotes,

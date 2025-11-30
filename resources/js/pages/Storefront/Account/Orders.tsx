@@ -56,7 +56,7 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
                                                     shop: shop.slug,
                                                     order: order.id
                                                 })}
-                                                className="text-xl font-semibold text-primary-600 hover:text-primary-700"
+                                                className="text-xl font-semibold text-brand-600 hover:text-brand-700"
                                             >
                                                 {order.order_number}
                                             </Link>

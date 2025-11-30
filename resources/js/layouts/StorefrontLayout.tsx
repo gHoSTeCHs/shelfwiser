@@ -67,7 +67,7 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
             <Head title={shop.name} />
 
             {isNavigating && (
-                <div className="bg-primary-600 fixed top-0 right-0 left-0 z-[9999] h-1 animate-pulse" />
+                <div className="bg-brand-600 fixed top-0 right-0 left-0 z-[9999] h-1 animate-pulse" />
             )}
 
             <div className="min-h-screen bg-gray-50 dark:bg-gray-950">

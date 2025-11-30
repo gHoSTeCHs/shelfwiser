@@ -153,7 +153,7 @@ export default function TwoFactorChallenge() {
                                             or you can{' '}
                                             <button
                                                 type="button"
-                                                className="text-primary-600 decoration-primary-300 dark:text-primary-400 dark:decoration-primary-500 cursor-pointer underline underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current"
+                                                className="text-brand-600 decoration-brand-300 dark:text-brand-400 dark:decoration-brand-500 cursor-pointer underline underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current"
                                                 onClick={() =>
                                                     toggleRecoveryMode(
                                                         clearErrors,

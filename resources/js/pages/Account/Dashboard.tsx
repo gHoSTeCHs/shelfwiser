@@ -92,8 +92,8 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                                     {stats.total_orders}
                                 </p>
                             </div>
-                            <div className="p-3 bg-primary-100 rounded-lg">
-                                <ShoppingBag className="h-8 w-8 text-primary-600" />
+                            <div className="p-3 bg-brand-100 rounded-lg">
+                                <ShoppingBag className="h-8 w-8 text-brand-600" />
                             </div>
                         </div>
                     </Card>
@@ -155,7 +155,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                                                 order: order.id,
                                             },
                                         )}
-                                        className="block p-4 border border-gray-200 rounded-lg hover:border-primary-500 hover:shadow-md transition"
+                                        className="block p-4 border border-gray-200 rounded-lg hover:border-brand-500 hover:shadow-md transition"
                                     >
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                             <div className="flex-1">
@@ -252,8 +252,8 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                     >
                         <Card className="p-6 hover:shadow-lg transition cursor-pointer">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-primary-100 rounded-lg">
-                                    <ShoppingBag className="h-6 w-6 text-primary-600" />
+                                <div className="p-3 bg-brand-100 rounded-lg">
+                                    <ShoppingBag className="h-6 w-6 text-brand-600" />
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-gray-900">

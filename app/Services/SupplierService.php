@@ -143,11 +143,15 @@ class SupplierService
         ]);
     }
 
-    public function getAvailableCatalog(Tenant $supplierTenant, ?Tenant $buyerTenant = null): Collection
+    public function getAvailableCatalog(?Tenant $supplierTenant = null, ?Tenant $buyerTenant = null): Collection
     {
-        $query = SupplierCatalogItem::forSupplier($supplierTenant->id)
+        $query = SupplierCatalogItem::query()
             ->available()
-            ->with(['product.variants', 'pricingTiers']);
+            ->with(['product.variants', 'pricingTiers', 'supplierTenant']);
+
+        if ($supplierTenant) {
+            $query->forSupplier($supplierTenant->id);
+        }
 
         if ($buyerTenant) {
             $query->visibleTo($buyerTenant->id);

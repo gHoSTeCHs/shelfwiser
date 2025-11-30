@@ -71,7 +71,7 @@ const ServiceFilter: React.FC<ServiceFilterProps> = ({
                         onClick={() => handleCategoryClick(null)}
                         className={`w-full text-left px-3 py-2 rounded-md transition ${
                             !currentCategory
-                                ? 'bg-primary-100 text-primary-700 font-medium'
+                                ? 'bg-brand-100 text-brand-700 font-medium'
                                 : 'text-gray-700 hover:bg-gray-100'
                         }`}
                     >
@@ -84,7 +84,7 @@ const ServiceFilter: React.FC<ServiceFilterProps> = ({
                             onClick={() => handleCategoryClick(category.id)}
                             className={`w-full text-left px-3 py-2 rounded-md transition flex items-center gap-2 ${
                                 currentCategory === category.id
-                                    ? 'bg-primary-100 text-primary-700 font-medium'
+                                    ? 'bg-brand-100 text-brand-700 font-medium'
                                     : 'text-gray-700 hover:bg-gray-100'
                             }`}
                         >

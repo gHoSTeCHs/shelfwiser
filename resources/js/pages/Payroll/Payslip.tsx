@@ -336,7 +336,7 @@ export default function Payslip({ payslip }: Props) {
                             <h3 className="mb-4 text-base font-semibold text-dark-900">
                                 Employer Contributions
                             </h3>
-                            <div className="rounded-lg border border-dark-200 bg-primary-50 p-4">
+                            <div className="rounded-lg border border-dark-200 bg-brand-50 p-4">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-dark-600">
                                         Pension (Employer Contribution)

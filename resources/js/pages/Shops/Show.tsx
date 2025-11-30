@@ -318,15 +318,29 @@ export default function ShopsShow({ shop, can_manage }: Props) {
 
                         <div className="space-y-3">
                             {can_manage && (
-                                <Link href={`/shops/${shop.id}/storefront-settings`}>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full gap-2"
+                                <>
+                                    <Link href={`/shops/${shop.id}/settings`}>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full gap-2"
+                                        >
+                                            <Settings className="h-4 w-4" />
+                                            Shop Settings
+                                        </Button>
+                                    </Link>
+
+                                    <Link
+                                        href={`/shops/${shop.id}/storefront-settings`}
                                     >
-                                        <Store className="h-4 w-4" />
-                                        Storefront Settings
-                                    </Button>
-                                </Link>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full gap-2"
+                                        >
+                                            <Store className="h-4 w-4" />
+                                            Storefront Settings
+                                        </Button>
+                                    </Link>
+                                </>
                             )}
 
                             <Link href={`/shops/${shop.id}/products`}>

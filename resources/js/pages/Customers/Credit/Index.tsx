@@ -95,8 +95,8 @@ const Index: React.FC<Props> = ({ shop, customers, filters, stats }) => {
                                     {stats.total_customers}
                                 </p>
                             </div>
-                            <div className="bg-primary-100 rounded-full p-3">
-                                <Users className="text-primary-600 h-8 w-8" />
+                            <div className="bg-brand-100 rounded-full p-3">
+                                <Users className="text-brand-600 h-8 w-8" />
                             </div>
                         </div>
                     </Card>

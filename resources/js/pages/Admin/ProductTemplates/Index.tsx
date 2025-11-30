@@ -111,8 +111,8 @@ export default function Index({ templates, productTypes, categories, filters, st
                 <div className="grid gap-4 sm:grid-cols-3">
                     <Card className="p-4">
                         <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-primary-100 p-2 dark:bg-primary-900">
-                                <LayoutTemplate className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                            <div className="rounded-lg bg-brand-100 p-2 dark:bg-brand-900">
+                                <LayoutTemplate className="h-5 w-5 text-brand-600 dark:text-brand-400" />
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Templates</p>
@@ -234,7 +234,7 @@ export default function Index({ templates, productTypes, categories, filters, st
                                                 <div>
                                                     <Link
                                                         href={AdminProductTemplateController.show.url({ product_template: template.id })}
-                                                        className="font-medium text-gray-900 hover:text-primary-600 dark:text-white dark:hover:text-primary-400"
+                                                        className="font-medium text-gray-900 hover:text-brand-600 dark:text-white dark:hover:text-brand-400"
                                                     >
                                                         {template.name}
                                                     </Link>
@@ -302,7 +302,7 @@ export default function Index({ templates, productTypes, categories, filters, st
                                             disabled={!link.url}
                                             className={`rounded px-3 py-1 text-sm ${
                                                 link.active
-                                                    ? 'bg-primary-600 text-white'
+                                                    ? 'bg-brand-600 text-white'
                                                     : link.url
                                                     ? 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
                                                     : 'cursor-not-allowed text-gray-300 dark:text-gray-600'

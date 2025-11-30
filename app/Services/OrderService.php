@@ -383,7 +383,6 @@ class OrderService
                         }
 
                         $location->reserved_quantity -= $item->quantity;
-                        $location->quantity -= $item->quantity;
                         $location->save();
 
                         $this->stockMovementService->adjustStock(

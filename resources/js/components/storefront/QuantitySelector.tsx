@@ -60,7 +60,7 @@ const QuantitySelector: React.FC<QuantitySelectorProps> = ({
                 min={min}
                 max={max}
                 disabled={disabled}
-                className="w-16 px-3 py-2 border-t border-b border-gray-300 text-center focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-16 px-3 py-2 border-t border-b border-gray-300 text-center focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Quantity"
             />
 

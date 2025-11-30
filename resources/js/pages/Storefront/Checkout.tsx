@@ -357,7 +357,7 @@ const Checkout: React.FC<CheckoutProps> = ({ shop, cart, cartSummary, addresses,
                                         id="customer_notes"
                                         name="customer_notes"
                                         rows={3}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                                         value={data.customer_notes || ''}
                                         onChange={(e) => setData('customer_notes', e.target.value)}
                                         placeholder="Any special requests or delivery instructions?"

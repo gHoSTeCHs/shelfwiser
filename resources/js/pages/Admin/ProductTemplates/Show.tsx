@@ -182,7 +182,7 @@ export default function Show({ template, usageCount }: Props) {
                                 {template.template_structure.variants.map((variant, index) => (
                                     <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                                         <div className="flex items-center gap-2 mb-3">
-                                            <Package className="h-4 w-4 text-primary-500" />
+                                            <Package className="h-4 w-4 text-brand-500" />
                                             <h3 className="font-medium text-gray-900 dark:text-white">
                                                 {variant.name}
                                             </h3>
@@ -264,7 +264,7 @@ export default function Show({ template, usageCount }: Props) {
                                 Usage Statistics
                             </h2>
                             <div className="text-center py-4">
-                                <p className="text-4xl font-bold text-primary-600 dark:text-primary-400">
+                                <p className="text-4xl font-bold text-brand-600 dark:text-brand-400">
                                     {usageCount}
                                 </p>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">

@@ -147,7 +147,7 @@ export default function ImageGallery({
                         />
 
                         <div className="absolute top-2 left-2">
-                            <span className="inline-flex items-center gap-1 rounded-full bg-primary-500 px-2.5 py-1 text-xs font-medium text-white">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-brand-500 px-2.5 py-1 text-xs font-medium text-white">
                                 <Star className="h-3 w-3 fill-current" />
                                 Primary
                             </span>

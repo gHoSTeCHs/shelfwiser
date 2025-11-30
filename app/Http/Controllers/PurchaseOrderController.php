@@ -57,7 +57,7 @@ class PurchaseOrderController extends Controller
      */
     public function supplier(): Response
     {
-        //        Gate::authorize('viewAsSupplier', auth()->user()->tenant);
+        Gate::authorize('viewAsSupplier', auth()->user()->tenant);
 
         $purchaseOrders = PurchaseOrder::forSupplier(auth()->user()->tenant_id)
             ->with(['buyerTenant', 'shop', 'items.productVariant', 'createdBy'])

@@ -90,14 +90,14 @@ const PaymentGatewaySelector: React.FC<PaymentGatewaySelectorProps> = ({
                     disabled={disabled}
                     className={`w-full flex items-start p-4 rounded-lg border-2 transition-all text-left ${
                         selectedGateway === gateway.identifier
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                            ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
                             : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                     } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                     <div
                         className={`flex-shrink-0 p-2 rounded-lg ${
                             selectedGateway === gateway.identifier
-                                ? 'bg-primary-100 text-primary-600 dark:bg-primary-800 dark:text-primary-400'
+                                ? 'bg-brand-100 text-brand-600 dark:bg-brand-800 dark:text-brand-400'
                                 : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
                         }`}
                     >
@@ -109,7 +109,7 @@ const PaymentGatewaySelector: React.FC<PaymentGatewaySelectorProps> = ({
                                 {gateway.name}
                             </p>
                             {selectedGateway === gateway.identifier && (
-                                <div className="w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center">
+                                <div className="w-5 h-5 rounded-full bg-brand-500 flex items-center justify-center">
                                     <svg
                                         className="w-3 h-3 text-white"
                                         fill="currentColor"

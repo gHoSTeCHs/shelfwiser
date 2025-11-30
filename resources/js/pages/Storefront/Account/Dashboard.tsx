@@ -27,8 +27,8 @@ const Dashboard: React.FC<AccountDashboardProps> = ({ shop, customer, stats, rec
                                 <p className="text-sm text-gray-600">Total Orders</p>
                                 <p className="text-3xl font-bold mt-2">{stats.total_orders}</p>
                             </div>
-                            <div className="bg-primary-100 p-3 rounded-full">
-                                <Package className="w-8 h-8 text-primary-600" />
+                            <div className="bg-brand-100 p-3 rounded-full">
+                                <Package className="w-8 h-8 text-brand-600" />
                             </div>
                         </div>
                     </Card>
@@ -65,7 +65,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({ shop, customer, stats, rec
                         <h2 className="text-xl font-semibold">Recent Orders</h2>
                         <Link
                             href={CustomerPortalController.orders.url({ shop: shop.slug })}
-                            className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                            className="text-brand-600 hover:text-brand-700 text-sm font-medium"
                         >
                             View All
                         </Link>
@@ -77,7 +77,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({ shop, customer, stats, rec
                             <p className="text-gray-600 mb-4">No orders yet</p>
                             <Link
                                 href={StorefrontController.products.url({ shop: shop.slug })}
-                                className="text-primary-600 hover:text-primary-700 font-medium"
+                                className="text-brand-600 hover:text-brand-700 font-medium"
                             >
                                 Start Shopping
                             </Link>
@@ -88,7 +88,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({ shop, customer, stats, rec
                                 <Link
                                     key={order.id}
                                     href={CustomerPortalController.orderDetail.url({ shop: shop.slug, order: order.id })}
-                                    className="block border border-gray-200 rounded-lg p-4 hover:border-primary-300 hover:shadow-sm transition"
+                                    className="block border border-gray-200 rounded-lg p-4 hover:border-brand-300 hover:shadow-sm transition"
                                 >
                                     <div className="flex justify-between items-start mb-2">
                                         <div>

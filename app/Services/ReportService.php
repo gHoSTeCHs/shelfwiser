@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PurchaseOrderPaymentStatus;
 use App\Enums\PurchaseOrderStatus;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -599,7 +600,7 @@ class ReportService
 
         return $query->paginate($perPage)
             ->through(function ($item) {
-                $customer = User::find($item->customer_id);
+                $customer = Customer::find($item->customer_id);
                 $item->customer = $customer;
                 $item->customer_status = $this->getCustomerStatus($item->days_since_last_order);
                 $item->lifetime_value = (float)$item->total_revenue;

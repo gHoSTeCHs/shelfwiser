@@ -269,15 +269,15 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
             <Head title={`POS - ${shop.name}`} />
 
             <div className="flex h-[calc(100vh-4rem)] flex-col">
-                <div className="bg-primary-600 flex items-center justify-between px-6 py-4 text-white">
+                <div className="bg-brand-600 flex items-center justify-between px-6 py-4 text-white">
                     <div>
                         <h1 className="text-2xl font-bold">{shop.name}</h1>
-                        <p className="text-primary-100 text-sm">
+                        <p className="text-brand-100 text-sm">
                             Point of Sale
                         </p>
                     </div>
                     <div className="text-right">
-                        <p className="text-primary-100 text-sm">
+                        <p className="text-brand-100 text-sm">
                             Session Active
                         </p>
                         <p className="font-semibold">
@@ -328,7 +328,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                 </p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-primary-600 font-bold">
+                                                <p className="text-brand-600 font-bold">
                                                     {shop.currency_symbol}
                                                     {Number(
                                                         product.price,
@@ -435,7 +435,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                             ).toFixed(2)}{' '}
                                                             each
                                                         </p>
-                                                        <p className="text-primary-600 text-lg font-bold">
+                                                        <p className="text-brand-600 text-lg font-bold">
                                                             {
                                                                 shop.currency_symbol
                                                             }
@@ -636,7 +636,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                 <span className="text-xl font-bold">
                                                     Total:
                                                 </span>
-                                                <span className="text-primary-600 text-2xl font-bold">
+                                                <span className="text-brand-600 text-2xl font-bold">
                                                     {shop.currency_symbol}
                                                     {calculateTotal().toFixed(
                                                         2,

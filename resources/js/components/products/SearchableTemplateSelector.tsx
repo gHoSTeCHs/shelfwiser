@@ -205,7 +205,7 @@ export default function SearchableTemplateSelector({
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 placeholder="Type to search templates..."
-                                className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                                className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
                                 autoComplete="off"
                             />
                         </div>
@@ -237,11 +237,11 @@ export default function SearchableTemplateSelector({
                                     aria-selected={selectedTemplateId === template.id}
                                     className={`cursor-pointer px-3 py-2.5 ${
                                         index === highlightedIndex
-                                            ? 'bg-primary-50 dark:bg-primary-900/20'
+                                            ? 'bg-brand-50 dark:bg-brand-900/20'
                                             : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
                                     } ${
                                         selectedTemplateId === template.id
-                                            ? 'bg-primary-50 dark:bg-primary-900/20'
+                                            ? 'bg-brand-50 dark:bg-brand-900/20'
                                             : ''
                                     }`}
                                 >
@@ -252,7 +252,7 @@ export default function SearchableTemplateSelector({
                                                     {template.name}
                                                 </span>
                                                 {selectedTemplateId === template.id && (
-                                                    <Check className="h-4 w-4 text-primary-600 flex-shrink-0" />
+                                                    <Check className="h-4 w-4 text-brand-600 flex-shrink-0" />
                                                 )}
                                             </div>
                                             <div className="mt-1 flex items-center gap-2 flex-wrap">

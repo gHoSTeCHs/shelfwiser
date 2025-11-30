@@ -176,7 +176,7 @@ export default function Index({ tenants, filters }: Props) {
                                                 <div>
                                                     <Link
                                                         href={`/admin/tenants/${tenant.id}`}
-                                                        className="font-medium text-gray-900 hover:text-primary-600 dark:text-white dark:hover:text-primary-400"
+                                                        className="font-medium text-gray-900 hover:text-brand-600 dark:text-white dark:hover:text-brand-400"
                                                     >
                                                         {tenant.name}
                                                     </Link>
@@ -240,7 +240,7 @@ export default function Index({ tenants, filters }: Props) {
                                             disabled={!link.url}
                                             className={`rounded px-3 py-1 text-sm ${
                                                 link.active
-                                                    ? 'bg-primary-600 text-white'
+                                                    ? 'bg-brand-600 text-white'
                                                     : link.url
                                                     ? 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
                                                     : 'cursor-not-allowed text-gray-300 dark:text-gray-600'

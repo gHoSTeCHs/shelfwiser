@@ -434,10 +434,10 @@ export default function Create({ shops, productTypes, categories, templates = []
                                     </div>
 
                                     {templates.length > 0 && (
-                                        <div className="rounded-lg border border-primary-200 bg-primary-50 p-4 dark:border-primary-800 dark:bg-primary-900/20">
+                                        <div className="rounded-lg border border-brand-200 bg-brand-50 p-4 dark:border-brand-800 dark:bg-brand-900/20">
                                             <div className="flex items-center gap-2 mb-3">
-                                                <LayoutTemplate className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                                                <span className="text-sm font-medium text-primary-900 dark:text-primary-100">
+                                                <LayoutTemplate className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                                                <span className="text-sm font-medium text-brand-900 dark:text-brand-100">
                                                     Quick Start from Template
                                                 </span>
                                             </div>
@@ -446,7 +446,7 @@ export default function Create({ shops, productTypes, categories, templates = []
                                                 onSelect={handleTemplateSelect}
                                                 selectedTemplateId={selectedTemplateId}
                                             />
-                                            <p className="mt-2 text-xs text-primary-700 dark:text-primary-300">
+                                            <p className="mt-2 text-xs text-brand-700 dark:text-brand-300">
                                                 Selecting a template will pre-fill the product details. You only need to add prices and SKUs.
                                             </p>
                                         </div>

@@ -189,7 +189,7 @@ export default function NotificationDropdown() {
                         {unreadCount > 0 && (
                             <button
                                 onClick={handleMarkAllAsRead}
-                                className="text-primary-600 hover:text-primary-700 text-xs"
+                                className="text-brand-600 hover:text-brand-700 text-xs"
                             >
                                 Mark all read
                             </button>
@@ -244,7 +244,7 @@ export default function NotificationDropdown() {
                                         }
                                         className={`flex w-full gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 text-left transition hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
                                             !notification.is_read
-                                                ? 'bg-primary-50/30'
+                                                ? 'bg-brand-50/30'
                                                 : ''
                                         }`}
                                     >
@@ -286,7 +286,7 @@ export default function NotificationDropdown() {
                                         </span>
 
                                         {!notification.is_read && (
-                                            <span className="bg-primary-600 mt-2 h-2 w-2 flex-shrink-0 rounded-full"></span>
+                                            <span className="bg-brand-600 mt-2 h-2 w-2 flex-shrink-0 rounded-full"></span>
                                         )}
                                     </button>
                                 </li>

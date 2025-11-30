@@ -528,7 +528,7 @@ export default function Show({
                                                 href={PayrollController.showPayslip.url({
                                                     payslip: payslip.id,
                                                 })}
-                                                className="text-sm font-medium text-primary-600 hover:text-primary-700"
+                                                className="text-sm font-medium text-brand-600 hover:text-brand-700"
                                             >
                                                 View
                                             </Link>

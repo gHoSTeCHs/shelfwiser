@@ -125,6 +125,8 @@ class User extends Authenticatable
     public function shops(): BelongsToMany
     {
         return $this->belongsToMany(Shop::class, 'shop_user')
+            ->using(ShopUser::class)
+            ->withPivot('tenant_id')
             ->withTimestamps();
     }
 

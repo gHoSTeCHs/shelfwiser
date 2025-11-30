@@ -91,8 +91,8 @@ export default function Dashboard({
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <Card className="p-4">
                         <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-primary-100 p-3 dark:bg-primary-900/30">
-                                <Building2 className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                            <div className="rounded-lg bg-brand-100 p-3 dark:bg-brand-900/30">
+                                <Building2 className="h-5 w-5 text-brand-600 dark:text-brand-400" />
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -225,7 +225,7 @@ export default function Dashboard({
                                             <td className="py-2">
                                                 <Link
                                                     href={`/admin/tenants/${tenant.id}`}
-                                                    className="font-medium text-gray-900 hover:text-primary-600 dark:text-white dark:hover:text-primary-400"
+                                                    className="font-medium text-gray-900 hover:text-brand-600 dark:text-white dark:hover:text-brand-400"
                                                 >
                                                     {tenant.name}
                                                 </Link>
@@ -277,7 +277,7 @@ export default function Dashboard({
                                     <div>
                                         <Link
                                             href={`/admin/tenants/${tenant.id}`}
-                                            className="font-medium text-gray-900 hover:text-primary-600 dark:text-white dark:hover:text-primary-400"
+                                            className="font-medium text-gray-900 hover:text-brand-600 dark:text-white dark:hover:text-brand-400"
                                         >
                                             {tenant.name}
                                         </Link>

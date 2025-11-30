@@ -116,7 +116,7 @@ const Login: React.FC<AuthLoginProps> = ({ shop }) => {
                                             href={CustomerAuthController.showRegister.url(
                                                 { shop: shop.slug },
                                             )}
-                                            className="text-primary-600 hover:text-primary-700 font-medium"
+                                            className="text-brand-600 hover:text-brand-700 font-medium"
                                         >
                                             Sign up
                                         </Link>

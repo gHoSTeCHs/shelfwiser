@@ -261,7 +261,7 @@ export default function MyPayslips({ payslips }: Props) {
                                                     payslip: payslip.id,
                                                 },
                                             )}
-                                            className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                                            className="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                                         >
                                             View Details
                                         </Link>

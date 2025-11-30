@@ -152,8 +152,8 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                                 {formatCurrency(totalGrossPay)}
                             </p>
                         </div>
-                        <div className="rounded-lg bg-primary-100 p-3 dark:bg-primary-900/20">
-                            <DollarSign className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                        <div className="rounded-lg bg-brand-100 p-3 dark:bg-brand-900/20">
+                            <DollarSign className="h-6 w-6 text-brand-600 dark:text-brand-400" />
                         </div>
                     </div>
                 </Card>
@@ -344,7 +344,7 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                                                 href={PayrollController.show.url({
                                                     payrollPeriod: period.id,
                                                 })}
-                                                className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                                                className="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                                             >
                                                 View Details
                                             </Link>

@@ -284,7 +284,7 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
                                                 className={`cursor-pointer rounded-lg border p-3 transition ${
                                                     materialOption ===
                                                     option.value
-                                                        ? 'border-primary-500 bg-primary-50'
+                                                        ? 'border-brand-500 bg-brand-50'
                                                         : 'border-gray-200 hover:border-gray-300'
                                                 }`}
                                                 onClick={() =>

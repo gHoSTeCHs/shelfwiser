@@ -108,7 +108,7 @@ const CryptoPayment: React.FC<CryptoPaymentProps> = ({
                     <button
                         type="button"
                         onClick={copyAddress}
-                        className="flex items-center text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
+                        className="flex items-center text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400"
                     >
                         {copied ? (
                             <>

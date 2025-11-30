@@ -283,7 +283,7 @@ export default function Create({ productTypes, categories }: Props) {
                                             >
                                                 <div className="flex items-center justify-between mb-4">
                                                     <div className="flex items-center gap-2">
-                                                        <Package className="h-4 w-4 text-primary-500" />
+                                                        <Package className="h-4 w-4 text-brand-500" />
                                                         <span className="font-medium text-gray-900 dark:text-white">
                                                             Variant {variantIndex + 1}
                                                         </span>

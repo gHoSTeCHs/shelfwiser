@@ -145,7 +145,7 @@ const Profile: React.FC<AccountProfileProps> = ({ shop, customer, addresses }) =
                                                         {address.first_name} {address.last_name}
                                                     </p>
                                                     {address.is_default && (
-                                                        <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs rounded">
+                                                        <span className="px-2 py-0.5 bg-brand-100 text-brand-700 text-xs rounded">
                                                             Default
                                                         </span>
                                                     )}

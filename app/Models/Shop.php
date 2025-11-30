@@ -49,7 +49,10 @@ class Shop extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class)->withTimestamps();
+        return $this->belongsToMany(User::class, 'shop_user')
+            ->using(ShopUser::class)
+            ->withPivot('tenant_id')
+            ->withTimestamps();
     }
 
     public function products(): HasMany

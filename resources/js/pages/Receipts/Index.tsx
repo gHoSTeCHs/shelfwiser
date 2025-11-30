@@ -54,8 +54,8 @@ const Index: React.FC<ReceiptsIndexProps> = ({ receipts, filters, stats }) => {
                                 <p className="text-sm text-gray-600">Total Receipts</p>
                                 <p className="text-3xl font-bold mt-2">{stats.total_receipts}</p>
                             </div>
-                            <div className="bg-primary-100 p-3 rounded-full">
-                                <Receipt className="w-8 h-8 text-primary-600" />
+                            <div className="bg-brand-100 p-3 rounded-full">
+                                <Receipt className="w-8 h-8 text-brand-600" />
                             </div>
                         </div>
                     </Card>
