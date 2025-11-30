@@ -5,6 +5,7 @@ import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import useToast from '@/hooks/useToast.ts';
 import AppLayout from '@/layouts/AppLayout.tsx';
 import { Shop } from '@/types/shop';
 import { Form, Head } from '@inertiajs/react';
@@ -20,7 +21,6 @@ import {
     X,
 } from 'lucide-react';
 import React from 'react';
-import useToast from '@/hooks/useToast.ts';
 
 interface POSProps {
     shop: Shop;
@@ -91,7 +91,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
         new AbortController(),
     );
 
-    const toast = useToast()
+    const toast = useToast();
 
     const searchProducts = async () => {
         if (searchQuery.length < 1) {
@@ -113,7 +113,6 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
             );
 
             if (!response.ok) {
-
                 toast.error('Failed to search products');
             }
 
@@ -148,7 +147,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
             );
 
             if (!response.ok) {
-                 toast.error('Failed to search customers');
+                toast.error('Failed to search customers');
             }
 
             const data = await response.json();
@@ -269,15 +268,16 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
             <Head title={`POS - ${shop.name}`} />
 
             <div className="flex h-[calc(100vh-4rem)] flex-col">
-                <div className="bg-brand-600 flex items-center justify-between px-6 py-4 text-white">
+                {/* Header */}
+                <div className="flex items-center justify-between bg-brand-600 px-6 py-4 text-white shadow-theme-md dark:bg-brand-700">
                     <div>
                         <h1 className="text-2xl font-bold">{shop.name}</h1>
-                        <p className="text-brand-100 text-sm">
+                        <p className="text-sm text-brand-100 dark:text-brand-200">
                             Point of Sale
                         </p>
                     </div>
                     <div className="text-right">
-                        <p className="text-brand-100 text-sm">
+                        <p className="text-sm text-brand-100 dark:text-brand-200">
                             Session Active
                         </p>
                         <p className="font-semibold">
@@ -289,13 +289,15 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                     </div>
                 </div>
 
-                <div className="grid flex-1 grid-cols-12 gap-4 overflow-hidden p-4">
+                <div className="grid flex-1 grid-cols-12 gap-4  bg-gray-50 p-4 dark:bg-gray-950">
+                    {/* Left Panel - Product Search & Cart */}
                     <div className="col-span-7 flex flex-col gap-4 overflow-hidden">
-                        <Card className="p-4">
+                        {/* Search Bar */}
+                        <Card className="border-gray-200 bg-white p-4 shadow-theme-sm dark:border-gray-800 dark:bg-gray-900">
                             <div className="relative">
-                                <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
+                                <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 transform text-gray-400 dark:text-gray-500" />
                                 {isSearching && (
-                                    <Loader2 className="absolute top-1/2 right-3 h-5 w-5 -translate-y-1/2 animate-spin text-gray-400" />
+                                    <Loader2 className="absolute top-1/2 right-3 h-5 w-5 -translate-y-1/2 animate-spin text-gray-400 dark:text-gray-500" />
                                 )}
                                 <Input
                                     type="text"
@@ -304,7 +306,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                     onChange={(e) =>
                                         setSearchQuery(e.target.value)
                                     }
-                                    className="pr-10 pl-10"
+                                    className="border-gray-300 bg-white pr-10 pl-10 text-gray-900 placeholder:text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
                                 />
                             </div>
                             {searchError && (
@@ -312,30 +314,30 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                             )}
 
                             {searchResults.length > 0 && (
-                                <div className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-gray-200">
+                                <div className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-gray-200 shadow-theme-sm dark:border-gray-700">
                                     {searchResults.map((product) => (
                                         <button
                                             key={product.id}
                                             onClick={() => addToCart(product)}
-                                            className="flex w-full items-center justify-between border-b px-4 py-3 last:border-b-0 hover:bg-gray-50"
+                                            className="flex w-full items-center justify-between border-b border-gray-100 bg-white px-4 py-3 transition-colors last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
                                         >
                                             <div className="text-left">
-                                                <p className="font-medium">
+                                                <p className="font-medium text-gray-900 dark:text-white">
                                                     {product.product.name}
                                                 </p>
-                                                <p className="text-sm text-gray-600">
+                                                <p className="text-sm text-gray-600 dark:text-gray-400">
                                                     SKU: {product.sku}
                                                 </p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-brand-600 font-bold">
+                                                <p className="font-bold text-brand-600 dark:text-brand-400">
                                                     {shop.currency_symbol}
                                                     {Number(
                                                         product.price,
                                                     ).toFixed(2)}
                                                 </p>
                                                 {product.track_stock && (
-                                                    <p className="text-xs text-gray-500">
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
                                                         Stock:{' '}
                                                         {product.stock_quantity}
                                                     </p>
@@ -347,9 +349,10 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                             )}
                         </Card>
 
-                        <Card className="flex flex-1 flex-col overflow-hidden">
-                            <div className="border-b bg-gray-50 p-4">
-                                <h2 className="flex items-center gap-2 text-lg font-semibold">
+                        {/* Cart */}
+                        <Card className="flex flex-1 flex-col overflow-hidden border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-900">
+                            <div className="border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800">
+                                <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
                                     <ShoppingCart className="h-5 w-5" />
                                     Cart ({cart.length} items)
                                 </h2>
@@ -357,9 +360,11 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
 
                             <div className="flex-1 overflow-y-auto p-4">
                                 {cart.length === 0 ? (
-                                    <div className="flex h-full flex-col items-center justify-center text-gray-400">
+                                    <div className="flex h-full flex-col items-center justify-center text-gray-400 dark:text-gray-600">
                                         <ShoppingCart className="mb-4 h-16 w-16" />
-                                        <p>Cart is empty</p>
+                                        <p className="font-medium">
+                                            Cart is empty
+                                        </p>
                                         <p className="text-sm">
                                             Search and add products to cart
                                         </p>
@@ -369,14 +374,14 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                         {cart.map((item) => (
                                             <div
                                                 key={item.variant_id}
-                                                className="rounded-lg border border-gray-200 bg-white p-4"
+                                                className="rounded-lg border border-gray-200 bg-white p-4 shadow-theme-xs transition-shadow hover:shadow-theme-sm dark:border-gray-700 dark:bg-gray-800"
                                             >
-                                                <div className="mb-2 flex items-start justify-between">
+                                                <div className="mb-3 flex items-start justify-between">
                                                     <div className="flex-1">
-                                                        <p className="font-medium">
+                                                        <p className="font-medium text-gray-900 dark:text-white">
                                                             {item.name}
                                                         </p>
-                                                        <p className="text-sm text-gray-600">
+                                                        <p className="text-sm text-gray-600 dark:text-gray-400">
                                                             SKU: {item.sku}
                                                         </p>
                                                     </div>
@@ -388,8 +393,9 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                                 item.variant_id,
                                                             )
                                                         }
+                                                        className="hover:bg-error-50 dark:hover:bg-error-500/10"
                                                     >
-                                                        <Trash2 className="h-4 w-4 text-error-500" />
+                                                        <Trash2 className="h-4 w-4 text-error-500 dark:text-error-400" />
                                                     </Button>
                                                 </div>
 
@@ -405,10 +411,11 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                                         1,
                                                                 )
                                                             }
+                                                            className="border-gray-300 bg-white hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
                                                         >
-                                                            <Minus className="h-4 w-4" />
+                                                            <Minus className="h-4 w-4 text-gray-700 dark:text-gray-300" />
                                                         </Button>
-                                                        <span className="w-12 text-center font-semibold">
+                                                        <span className="w-12 text-center font-semibold text-gray-900 dark:text-white">
                                                             {item.quantity}
                                                         </span>
                                                         <Button
@@ -421,12 +428,13 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                                         1,
                                                                 )
                                                             }
+                                                            className="border-gray-300 bg-white hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
                                                         >
-                                                            <Plus className="h-4 w-4" />
+                                                            <Plus className="h-4 w-4 text-gray-700 dark:text-gray-300" />
                                                         </Button>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-sm text-gray-600">
+                                                        <p className="text-sm text-gray-600 dark:text-gray-400">
                                                             {
                                                                 shop.currency_symbol
                                                             }
@@ -435,7 +443,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                             ).toFixed(2)}{' '}
                                                             each
                                                         </p>
-                                                        <p className="text-brand-600 text-lg font-bold">
+                                                        <p className="text-lg font-bold text-brand-600 dark:text-brand-400">
                                                             {
                                                                 shop.currency_symbol
                                                             }
@@ -458,10 +466,12 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                         </Card>
                     </div>
 
+                    {/* Right Panel - Customer & Checkout */}
                     <div className="col-span-5 flex flex-col gap-4">
-                        <Card className="p-4">
+                        {/* Customer Selection */}
+                        <Card className="border-gray-200 bg-white p-4 shadow-theme-sm dark:border-gray-800 dark:bg-gray-900">
                             <div className="mb-3 flex items-center justify-between">
-                                <Label className="flex items-center gap-2">
+                                <Label className="flex items-center gap-2 text-gray-900 dark:text-white">
                                     <User className="h-4 w-4" />
                                     Customer
                                 </Label>
@@ -472,19 +482,20 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                         onClick={() =>
                                             setSelectedCustomer(null)
                                         }
+                                        className="hover:bg-gray-100 dark:hover:bg-gray-800"
                                     >
-                                        <X className="h-4 w-4" />
+                                        <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                                     </Button>
                                 )}
                             </div>
 
                             {selectedCustomer ? (
-                                <div className="rounded-lg border border-success-200 bg-success-50 p-3">
-                                    <p className="font-medium">
+                                <div className="rounded-lg border border-success-200 bg-success-50 p-3 dark:border-success-800 dark:bg-success-950">
+                                    <p className="font-medium text-success-900 dark:text-success-100">
                                         {selectedCustomer.first_name}{' '}
                                         {selectedCustomer.last_name}
                                     </p>
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-success-700 dark:text-success-300">
                                         {selectedCustomer.email}
                                     </p>
                                 </div>
@@ -504,9 +515,10 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                             onFocus={() =>
                                                 setShowCustomerSearch(true)
                                             }
+                                            className="border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
                                         />
                                         {isSearchingCustomers && (
-                                            <Loader2 className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
+                                            <Loader2 className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400 dark:text-gray-500" />
                                         )}
                                     </div>
                                     {customerSearchError && (
@@ -516,7 +528,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                     )}
                                     {showCustomerSearch &&
                                         customerResults.length > 0 && (
-                                            <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-gray-200">
+                                            <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-gray-200 shadow-theme-sm dark:border-gray-700">
                                                 {customerResults.map(
                                                     (customer) => (
                                                         <button
@@ -535,9 +547,9 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                                     [],
                                                                 );
                                                             }}
-                                                            className="w-full border-b px-3 py-2 text-left last:border-b-0 hover:bg-gray-50"
+                                                            className="w-full border-b border-gray-100 bg-white px-3 py-2 text-left transition-colors last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
                                                         >
-                                                            <p className="text-sm font-medium">
+                                                            <p className="text-sm font-medium text-gray-900 dark:text-white">
                                                                 {
                                                                     customer.first_name
                                                                 }{' '}
@@ -545,7 +557,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                                     customer.last_name
                                                                 }
                                                             </p>
-                                                            <p className="text-xs text-gray-600">
+                                                            <p className="text-xs text-gray-600 dark:text-gray-400">
                                                                 {customer.email}
                                                             </p>
                                                         </button>
@@ -557,7 +569,8 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                             )}
                         </Card>
 
-                        <Card className="flex flex-1 flex-col p-4">
+                        {/* Checkout Panel */}
+                        <Card className="flex flex-1 flex-col border-gray-200 bg-white p-4 shadow-theme-sm dark:border-gray-800 dark:bg-gray-900">
                             <Form
                                 action={POSController.completeSale.url({
                                     shop: shop.id,
@@ -588,10 +601,13 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                             value={notes || ''}
                                         />
 
-                                        <div className="mb-4 space-y-3">
+                                        {/* Summary */}
+                                        <div className="mb-4 space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
                                             <div className="flex justify-between text-sm">
-                                                <span>Subtotal:</span>
-                                                <span className="font-medium">
+                                                <span className="text-gray-600 dark:text-gray-400">
+                                                    Subtotal:
+                                                </span>
+                                                <span className="font-medium text-gray-900 dark:text-white">
                                                     {shop.currency_symbol}
                                                     {calculateSubtotal().toFixed(
                                                         2,
@@ -601,10 +617,10 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
 
                                             {shop.vat_enabled && (
                                                 <div className="flex justify-between text-sm">
-                                                    <span>
+                                                    <span className="text-gray-600 dark:text-gray-400">
                                                         Tax ({shop.vat_rate}%):
                                                     </span>
-                                                    <span className="font-medium">
+                                                    <span className="font-medium text-gray-900 dark:text-white">
                                                         {shop.currency_symbol}
                                                         {calculateTax().toFixed(
                                                             2,
@@ -614,7 +630,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                             )}
 
                                             <div className="flex items-center justify-between">
-                                                <span className="text-sm">
+                                                <span className="text-sm text-gray-600 dark:text-gray-400">
                                                     Discount:
                                                 </span>
                                                 <Input
@@ -626,17 +642,17 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                             e.target.value,
                                                         )
                                                     }
-                                                    className="w-32 text-right"
+                                                    className="w-32 border-gray-300 bg-white text-right text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                                     min="0"
                                                     step="0.01"
                                                 />
                                             </div>
 
-                                            <div className="flex items-center justify-between border-t pt-3">
-                                                <span className="text-xl font-bold">
+                                            <div className="flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-700">
+                                                <span className="text-xl font-bold text-gray-900 dark:text-white">
                                                     Total:
                                                 </span>
-                                                <span className="text-brand-600 text-2xl font-bold">
+                                                <span className="text-2xl font-bold text-brand-600 dark:text-brand-400">
                                                     {shop.currency_symbol}
                                                     {calculateTotal().toFixed(
                                                         2,
@@ -645,9 +661,12 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                             </div>
                                         </div>
 
+                                        {/* Payment */}
                                         <div className="space-y-3">
                                             <div>
-                                                <Label>Payment Method</Label>
+                                                <Label className="text-gray-900 dark:text-white">
+                                                    Payment Method
+                                                </Label>
                                                 <Select
                                                     name="payment_method"
                                                     options={Object.entries(
@@ -672,7 +691,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
 
                                             {paymentMethod === 'cash' && (
                                                 <div>
-                                                    <Label>
+                                                    <Label className="text-gray-900 dark:text-white">
                                                         Amount Tendered
                                                     </Label>
                                                     <Input
@@ -693,6 +712,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                         error={
                                                             !!errors.amount_tendered
                                                         }
+                                                        className="border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                                     />
                                                     {errors.amount_tendered && (
                                                         <InputError
@@ -702,22 +722,25 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                         />
                                                     )}
                                                     {amountTendered > 0 && (
-                                                        <p className="mt-1 text-sm text-gray-600">
-                                                            Change:{' '}
-                                                            <span className="font-semibold text-success-600">
-                                                                {
-                                                                    shop.currency_symbol
-                                                                }
-                                                                {calculateChange().toFixed(
-                                                                    2,
-                                                                )}
-                                                            </span>
-                                                        </p>
+                                                        <div className="mt-2 rounded-lg border border-success-200 bg-success-50 p-3 dark:border-success-800 dark:bg-success-950">
+                                                            <p className="text-sm text-success-700 dark:text-success-300">
+                                                                Change:{' '}
+                                                                <span className="font-semibold text-success-600 dark:text-success-400">
+                                                                    {
+                                                                        shop.currency_symbol
+                                                                    }
+                                                                    {calculateChange().toFixed(
+                                                                        2,
+                                                                    )}
+                                                                </span>
+                                                            </p>
+                                                        </div>
                                                     )}
                                                 </div>
                                             )}
                                         </div>
 
+                                        {/* Actions */}
                                         <div className="mt-auto space-y-2 pt-4">
                                             <Button
                                                 type="submit"
@@ -730,6 +753,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                 }
                                                 loading={processing}
                                                 startIcon={<Check />}
+                                                className="bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600"
                                             >
                                                 Complete Sale
                                             </Button>
@@ -740,6 +764,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                 onClick={clearCart}
                                                 disabled={cart.length === 0}
                                                 startIcon={<X />}
+                                                className="border-gray-300 bg-white hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700"
                                             >
                                                 Clear Cart
                                             </Button>

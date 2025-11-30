@@ -15,7 +15,7 @@ return new class extends Migration
 
             $table->string('deduction_name');
             $table->string('deduction_type');
-            $table->decimal('amount', 10, 2)->default(0);
+            $table->decimal('amount', 10, 2)->nullable();
             $table->decimal('percentage', 5, 2)->nullable();
 
             $table->boolean('is_active')->default(true);
