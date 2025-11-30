@@ -37,6 +37,7 @@ const navItems: NavItem[] = [
             { name: 'Products', path: '/products' },
             { name: 'Categories', path: '/categories' },
             { name: 'Stock Movements', path: '/stock-movements' },
+            { name: 'Reorder Alerts', path: '/reorder-alerts' },
         ],
     },
     {
@@ -52,6 +53,7 @@ const navItems: NavItem[] = [
         name: 'Sales & Orders',
         subItems: [
             { name: 'Orders', path: '/orders' },
+            { name: 'Returns', path: '/returns' },
             { name: 'Receipts', path: '/receipts' },
             { name: 'Purchase Orders', path: '/purchase-orders' },
         ],

@@ -6,6 +6,7 @@ import { User } from '@/types';
 import { Shop } from '@/types/shop';
 import { Head, Link } from '@inertiajs/react';
 import {
+    AlertTriangle,
     Building2,
     Calendar,
     ChevronLeft,
@@ -353,15 +354,29 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                             </Link>
 
                             {can_manage && (
-                                <Link href={`/shops/${shop.id}/stock-take`}>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full gap-2"
+                                <>
+                                    <Link href={`/shops/${shop.id}/stock-take`}>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full gap-2"
+                                        >
+                                            <ClipboardList className="h-4 w-4" />
+                                            Stock Take
+                                        </Button>
+                                    </Link>
+
+                                    <Link
+                                        href={`/shops/${shop.id}/reorder-alerts`}
                                     >
-                                        <ClipboardList className="h-4 w-4" />
-                                        Stock Take
-                                    </Button>
-                                </Link>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full gap-2"
+                                        >
+                                            <AlertTriangle className="h-4 w-4" />
+                                            Reorder Alerts
+                                        </Button>
+                                    </Link>
+                                </>
                             )}
 
                             <Link href={`/shops/${shop.id}/reports`}>

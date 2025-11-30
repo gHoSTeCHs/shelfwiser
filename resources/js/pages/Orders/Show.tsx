@@ -217,6 +217,22 @@ export default function Show({
                                             </Button>
                                         </>
                                     )}
+                                {(order.status === 'delivered' ||
+                                    order.status === 'completed') &&
+                                    order.status !== 'refunded' && (
+                                        <Link
+                                            href={`/orders/${order.id}/return`}
+                                        >
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-warning-600 hover:text-warning-700"
+                                            >
+                                                <Package className="mr-2 h-4 w-4" />
+                                                Process Return
+                                            </Button>
+                                        </Link>
+                                    )}
                             </>
                         )}
                     </div>
