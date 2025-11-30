@@ -36,6 +36,11 @@ class StockMovementService
 
         try {
             return DB::transaction(function () use ($variant, $location, $quantity, $type, $user, $reason, $notes) {
+                // Use pessimistic locking to prevent race conditions
+                $location = InventoryLocation::where('id', $location->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
                 $quantityBefore = $location->quantity;
 
                 if ($type->isIncrease()) {
@@ -104,6 +109,19 @@ class StockMovementService
 
         try {
             return DB::transaction(function () use ($variant, $fromLocation, $toLocation, $quantity, $user, $reason, $notes) {
+                // Lock both locations to prevent race conditions
+                // Lock in ID order to prevent deadlocks
+                $lockIds = [$fromLocation->id, $toLocation->id];
+                sort($lockIds);
+
+                $lockedLocations = InventoryLocation::whereIn('id', $lockIds)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id');
+
+                $fromLocation = $lockedLocations[$fromLocation->id];
+                $toLocation = $lockedLocations[$toLocation->id];
+
                 if ($fromLocation->quantity < $quantity) {
                     throw new Exception('Insufficient stock at source location. Available: '.$fromLocation->quantity);
                 }

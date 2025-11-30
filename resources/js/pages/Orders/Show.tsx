@@ -512,11 +512,27 @@ export default function Show({
                                         </span>
                                     </div>
                                 )}
+                                {order.packed_at && (
+                                    <div className="flex items-center text-sm">
+                                        <Package className="mr-2 h-4 w-4 text-gray-400" />
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            Packed
+                                        </span>
+                                        <span className="ml-auto text-gray-900 dark:text-white">
+                                            {formatDate(order.packed_at)}
+                                        </span>
+                                    </div>
+                                )}
                                 {order.shipped_at && (
                                     <div className="flex items-center text-sm">
                                         <Truck className="mr-2 h-4 w-4 text-gray-400" />
                                         <span className="text-gray-500 dark:text-gray-400">
                                             Shipped
+                                            {order.tracking_number && (
+                                                <span className="ml-2 text-xs text-gray-400">
+                                                    ({order.tracking_number})
+                                                </span>
+                                            )}
                                         </span>
                                         <span className="ml-auto text-gray-900 dark:text-white">
                                             {formatDate(order.shipped_at)}
@@ -525,12 +541,23 @@ export default function Show({
                                 )}
                                 {order.delivered_at && (
                                     <div className="flex items-center text-sm">
-                                        <Package className="mr-2 h-4 w-4 text-gray-400" />
+                                        <CheckCircle className="mr-2 h-4 w-4 text-gray-400" />
                                         <span className="text-gray-500 dark:text-gray-400">
                                             Delivered
                                         </span>
                                         <span className="ml-auto text-gray-900 dark:text-white">
                                             {formatDate(order.delivered_at)}
+                                        </span>
+                                    </div>
+                                )}
+                                {order.refunded_at && (
+                                    <div className="flex items-center text-sm">
+                                        <XCircle className="mr-2 h-4 w-4 text-gray-400" />
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            Refunded
+                                        </span>
+                                        <span className="ml-auto text-gray-900 dark:text-white">
+                                            {formatDate(order.refunded_at)}
                                         </span>
                                     </div>
                                 )}

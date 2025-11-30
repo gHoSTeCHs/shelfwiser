@@ -57,10 +57,18 @@ export interface Order {
     internal_notes: string | null;
     shipping_address: string | null;
     billing_address: string | null;
+    tracking_number: string | null;
+    shipping_carrier: string | null;
     confirmed_at: string | null;
+    packed_at: string | null;
     shipped_at: string | null;
     delivered_at: string | null;
+    refunded_at: string | null;
     created_by: number;
+    packed_by: number | null;
+    shipped_by: number | null;
+    delivered_by: number | null;
+    refunded_by: number | null;
     created_at: string;
     updated_at: string;
     shop?: Shop;

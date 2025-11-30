@@ -272,6 +272,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');
         Route::post('/{order}/payment', [OrderController::class, 'updatePaymentStatus'])->name('update-payment');
+        Route::post('/{order}/refund', [OrderController::class, 'refund'])->name('refund');
         Route::post('/{order}/payments', [OrderPaymentController::class, 'store'])->name('payments.store');
         Route::delete('/payments/{orderPayment}', [OrderPaymentController::class, 'destroy'])->name('payments.destroy');
     });
