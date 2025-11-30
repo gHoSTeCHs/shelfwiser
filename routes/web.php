@@ -13,6 +13,7 @@ use App\Http\Controllers\ImageController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderPaymentController;
+use App\Http\Controllers\OrderReturnController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\POSController;
@@ -30,7 +31,9 @@ use App\Http\Controllers\ServiceVariantController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\ShopSettingsController;
 use App\Http\Controllers\StaffPayrollController;
+use App\Http\Controllers\ReorderAlertController;
 use App\Http\Controllers\StockMovementController;
+use App\Http\Controllers\StockTakeController;
 use App\Http\Controllers\SupplierCatalogController;
 use App\Http\Controllers\SupplierConnectionController;
 use App\Http\Controllers\SupplierProfileController;
@@ -203,6 +206,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('shops', ShopController::class);
 
+    Route::prefix('shops/{shop}/stock-take')->name('shops.stock-take.')->group(function () {
+        Route::get('/', [StockTakeController::class, 'index'])->name('index');
+        Route::post('/', [StockTakeController::class, 'store'])->name('store');
+    });
+
+    Route::get('/reorder-alerts', [ReorderAlertController::class, 'index'])->name('reorder-alerts.index');
+    Route::get('/shops/{shop}/reorder-alerts', [ReorderAlertController::class, 'index'])->name('shops.reorder-alerts.index');
+
     Route::prefix('shops/{shop}/storefront-settings')->name('shops.storefront-settings.')->group(function () {
         Route::get('/', [ShopController::class, 'editStorefrontSettings'])->name('edit');
         Route::patch('/', [ShopController::class, 'updateStorefrontSettings'])->name('update');
@@ -276,6 +287,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{order}/payments', [OrderPaymentController::class, 'store'])->name('payments.store');
         Route::delete('/payments/{orderPayment}', [OrderPaymentController::class, 'destroy'])->name('payments.destroy');
     });
+
+    // Order Returns
+    Route::prefix('returns')->name('returns.')->group(function () {
+        Route::get('/', [OrderReturnController::class, 'index'])->name('index');
+        Route::get('/{return}', [OrderReturnController::class, 'show'])->name('show');
+        Route::post('/{return}/approve', [OrderReturnController::class, 'approve'])->name('approve');
+        Route::post('/{return}/reject', [OrderReturnController::class, 'reject'])->name('reject');
+        Route::post('/{return}/complete', [OrderReturnController::class, 'complete'])->name('complete');
+    });
+
+    Route::get('/orders/{order}/return', [OrderReturnController::class, 'create'])->name('orders.return.create');
+    Route::post('/orders/{order}/return', [OrderReturnController::class, 'store'])->name('orders.return.store');
 
     Route::prefix('customers/{shop}')->name('customers.')->group(function () {
         Route::get('/credit', [CustomerCreditController::class, 'index'])->name('credit.index');

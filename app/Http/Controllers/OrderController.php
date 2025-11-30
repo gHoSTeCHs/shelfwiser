@@ -164,6 +164,20 @@ class OrderController extends Controller
             'payments.recordedBy',
         ]);
 
+        // Load lifecycle user relationships if they exist
+        if ($order->packed_by) {
+            $order->load('packedByUser');
+        }
+        if ($order->shipped_by) {
+            $order->load('shippedByUser');
+        }
+        if ($order->delivered_by) {
+            $order->load('deliveredByUser');
+        }
+        if ($order->refunded_by) {
+            $order->load('refundedByUser');
+        }
+
         return Inertia::render('Orders/Show', [
             'order' => $order,
             'can_manage' => auth()->user()->can('manage', $order),

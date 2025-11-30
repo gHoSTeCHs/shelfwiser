@@ -115,6 +115,26 @@ class Order extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function packedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'packed_by');
+    }
+
+    public function shippedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'shipped_by');
+    }
+
+    public function deliveredByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'delivered_by');
+    }
+
+    public function refundedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'refunded_by');
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(OrderPayment::class);

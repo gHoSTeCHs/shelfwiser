@@ -9,6 +9,7 @@ import {
     Building2,
     Calendar,
     ChevronLeft,
+    ClipboardList,
     Code,
     Edit,
     Mail,
@@ -350,6 +351,18 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                                     View Products
                                 </Button>
                             </Link>
+
+                            {can_manage && (
+                                <Link href={`/shops/${shop.id}/stock-take`}>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full gap-2"
+                                    >
+                                        <ClipboardList className="h-4 w-4" />
+                                        Stock Take
+                                    </Button>
+                                </Link>
+                            )}
 
                             <Link href={`/shops/${shop.id}/reports`}>
                                 <Button
