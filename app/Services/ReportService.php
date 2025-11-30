@@ -23,6 +23,37 @@ use Illuminate\Support\Facades\DB;
 class ReportService
 {
     /**
+     * Get database-agnostic DATEDIFF expression
+     * MySQL: DATEDIFF(date1, date2)
+     * SQLite: JULIANDAY(date1) - JULIANDAY(date2)
+     */
+    private function dateDiff(string $date1, string $date2): string
+    {
+        $driver = DB::getDriverName();
+
+        if ($driver === 'sqlite') {
+            return "CAST(JULIANDAY($date1) - JULIANDAY($date2) AS INTEGER)";
+        }
+
+        // MySQL, PostgreSQL, etc.
+        return "DATEDIFF($date1, $date2)";
+    }
+
+    /**
+     * Get database-agnostic NOW() expression
+     */
+    private function now(): string
+    {
+        $driver = DB::getDriverName();
+
+        if ($driver === 'sqlite') {
+            return "datetime('now')";
+        }
+
+        return 'NOW()';
+    }
+
+    /**
      * Get detailed sales report with pagination and filters
      */
     public function getSalesReport(
@@ -343,7 +374,7 @@ class ReportService
             ->selectRaw('AVG(total_amount) as avg_po_value')
             ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed_count', [PurchaseOrderStatus::COMPLETED->value])
             ->selectRaw('SUM(CASE WHEN payment_status = ? THEN 1 ELSE 0 END) as paid_count', [PurchaseOrderPaymentStatus::PAID->value])
-            ->selectRaw('AVG(DATEDIFF(COALESCE(expected_delivery_date, NOW()), created_at)) as avg_lead_time')
+            ->selectRaw('AVG('.$this->dateDiff('COALESCE(expected_delivery_date, '.$this->now().')', 'created_at').') as avg_lead_time')
             ->groupBy('supplier_tenant_id')
             ->with('supplierTenant:id,name')
             ->orderByDesc('total_spend')
@@ -576,7 +607,7 @@ class ReportService
                 DB::raw('AVG(total_amount) as avg_order_value'),
                 DB::raw('MAX(created_at) as last_order_date'),
                 DB::raw('MIN(created_at) as first_order_date'),
-                DB::raw('DATEDIFF(NOW(), MAX(created_at)) as days_since_last_order'),
+                DB::raw($this->dateDiff($this->now(), 'MAX(created_at)').' as days_since_last_order'),
             ])
             ->whereIn('shop_id', $shopIds)
             ->whereBetween('created_at', [$startDate, $endDate])
@@ -591,9 +622,9 @@ class ReportService
         if ($segment === 'high_value') {
             $query->havingRaw('SUM(total_amount) > ?', [10000]); // Customers with >10k revenue
         } elseif ($segment === 'at_risk') {
-            $query->havingRaw('DATEDIFF(NOW(), MAX(created_at)) BETWEEN 30 AND 90'); // No orders in 30-90 days
+            $query->havingRaw($this->dateDiff($this->now(), 'MAX(created_at)').' BETWEEN 30 AND 90'); // No orders in 30-90 days
         } elseif ($segment === 'inactive') {
-            $query->havingRaw('DATEDIFF(NOW(), MAX(created_at)) > 90'); // No orders in >90 days
+            $query->havingRaw($this->dateDiff($this->now(), 'MAX(created_at)').' > 90'); // No orders in >90 days
         }
 
         $query->orderByDesc('total_revenue');
@@ -642,7 +673,7 @@ class ReportService
             ->whereIn('shop_id', $shopIds)
             ->whereNotNull('customer_id')
             ->groupBy('customer_id')
-            ->havingRaw('DATEDIFF(NOW(), MAX(created_at)) BETWEEN 30 AND 90')
+            ->havingRaw($this->dateDiff($this->now(), 'MAX(created_at)').' BETWEEN 30 AND 90')
             ->count();
 
         $inactiveCustomers = DB::table('orders')
@@ -651,7 +682,7 @@ class ReportService
             ->whereIn('shop_id', $shopIds)
             ->whereNotNull('customer_id')
             ->groupBy('customer_id')
-            ->havingRaw('DATEDIFF(NOW(), MAX(created_at)) > 90')
+            ->havingRaw($this->dateDiff($this->now(), 'MAX(created_at)').' > 90')
             ->count();
 
         return [

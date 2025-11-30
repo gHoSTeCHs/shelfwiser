@@ -21,6 +21,7 @@ class Order extends Model
         'customer_id',
         'order_number',
         'tracking_number',
+        'shipping_carrier',
         'status',
         'payment_status',
         'payment_method',
@@ -37,11 +38,17 @@ class Order extends Model
         'customer_shipping_address_id',
         'customer_billing_address_id',
         'confirmed_at',
+        'packed_at',
         'shipped_at',
         'delivered_at',
+        'refunded_at',
         'estimated_delivery_date',
         'actual_delivery_date',
         'created_by',
+        'packed_by',
+        'shipped_by',
+        'delivered_by',
+        'refunded_by',
     ];
 
     protected $casts = [
@@ -54,8 +61,10 @@ class Order extends Model
         'total_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'confirmed_at' => 'datetime',
+        'packed_at' => 'datetime',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
+        'refunded_at' => 'datetime',
         'estimated_delivery_date' => 'date',
         'actual_delivery_date' => 'date',
     ];

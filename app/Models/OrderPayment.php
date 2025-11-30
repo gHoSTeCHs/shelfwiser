@@ -27,14 +27,23 @@ class OrderPayment extends Model
         'reference_number',
         'notes',
         'recorded_by',
+        'refund_amount',
+        'refund_status',
+        'refund_reference',
+        'refund_reason',
+        'refund_notes',
+        'refunded_at',
+        'refunded_by',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'refund_amount' => 'decimal:2',
         'gateway_fee' => 'decimal:2',
         'gateway_response' => 'array',
         'payment_date' => 'date',
         'verified_at' => 'datetime',
+        'refunded_at' => 'datetime',
     ];
 
     /**

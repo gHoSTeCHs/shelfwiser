@@ -468,6 +468,128 @@ class OrderService
         }
     }
 
+    /**
+     * @throws Throwable
+     */
+    public function packOrder(Order $order, User $user): Order
+    {
+        if (! $order->status->canTransitionTo(OrderStatus::PACKED)) {
+            throw new Exception('Cannot pack order in current status: '.$order->status->value);
+        }
+
+        try {
+            return DB::transaction(function () use ($order, $user) {
+                $order->status = OrderStatus::PACKED;
+                $order->packed_at = now();
+                $order->packed_by = $user->id;
+                $order->save();
+
+                Log::info('Order packed successfully.', [
+                    'order_id' => $order->id,
+                    'packed_by' => $user->id,
+                ]);
+
+                return $order;
+            });
+        } catch (Throwable $e) {
+            Log::error('Order packing failed.', [
+                'order_id' => $order->id,
+                'exception' => $e,
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function shipOrder(Order $order, User $user, ?array $shippingData = null): Order
+    {
+        if (! $order->status->canTransitionTo(OrderStatus::SHIPPED)) {
+            throw new Exception('Cannot ship order in current status: '.$order->status->value);
+        }
+
+        try {
+            return DB::transaction(function () use ($order, $user, $shippingData) {
+                $order->status = OrderStatus::SHIPPED;
+                $order->shipped_at = now();
+                $order->shipped_by = $user->id;
+
+                if ($shippingData) {
+                    if (isset($shippingData['tracking_number'])) {
+                        $order->tracking_number = $shippingData['tracking_number'];
+                    }
+                    if (isset($shippingData['carrier'])) {
+                        $order->shipping_carrier = $shippingData['carrier'];
+                    }
+                    if (isset($shippingData['notes'])) {
+                        $order->internal_notes = ($order->internal_notes ? $order->internal_notes."\n\n" : '').
+                            "Shipped by {$user->name} at ".now()->format('Y-m-d H:i:s').
+                            "\n{$shippingData['notes']}";
+                    }
+                }
+
+                $order->save();
+
+                Log::info('Order shipped successfully.', [
+                    'order_id' => $order->id,
+                    'shipped_by' => $user->id,
+                    'tracking_number' => $shippingData['tracking_number'] ?? null,
+                ]);
+
+                return $order;
+            });
+        } catch (Throwable $e) {
+            Log::error('Order shipping failed.', [
+                'order_id' => $order->id,
+                'exception' => $e,
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function deliverOrder(Order $order, User $user, ?string $notes = null): Order
+    {
+        if (! $order->status->canTransitionTo(OrderStatus::DELIVERED)) {
+            throw new Exception('Cannot mark order as delivered in current status: '.$order->status->value);
+        }
+
+        try {
+            return DB::transaction(function () use ($order, $user, $notes) {
+                $order->status = OrderStatus::DELIVERED;
+                $order->delivered_at = now();
+                $order->delivered_by = $user->id;
+
+                if ($notes) {
+                    $order->internal_notes = ($order->internal_notes ? $order->internal_notes."\n\n" : '').
+                        "Delivered by {$user->name} at ".now()->format('Y-m-d H:i:s').
+                        "\n{$notes}";
+                }
+
+                $order->save();
+
+                Log::info('Order delivered successfully.', [
+                    'order_id' => $order->id,
+                    'delivered_by' => $user->id,
+                ]);
+
+                return $order;
+            });
+        } catch (Throwable $e) {
+            Log::error('Order delivery failed.', [
+                'order_id' => $order->id,
+                'exception' => $e,
+            ]);
+
+            throw $e;
+        }
+    }
+
     public function updatePaymentStatus(Order $order, PaymentStatus $newStatus, ?string $paymentMethod = null): Order
     {
         if (! $order->payment_status->canTransitionTo($newStatus)) {
