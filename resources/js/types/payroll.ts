@@ -122,6 +122,44 @@ export interface WageAdvance {
     shop?: Shop;
     approvedBy?: User;
     disbursedBy?: User;
+    repayments?: WageAdvanceRepayment[];
+}
+
+export interface WageAdvanceRepayment {
+    id: number;
+    wage_advance_id: number;
+    tenant_id: number;
+    payroll_period_id: number | null;
+    amount: number;
+    repayment_date: string;
+    payment_method: string | null;
+    reference_number: string | null;
+    notes: string | null;
+    recorded_by: number;
+    created_at: string;
+    updated_at: string;
+    wageAdvance?: WageAdvance;
+    recordedBy?: User;
+    payrollPeriod?: PayrollPeriod;
+}
+
+export interface RepaymentStatistics {
+    approved_amount: number;
+    amount_repaid: number;
+    remaining_balance: number;
+    percentage_repaid: number;
+    total_repayments: number;
+    last_repayment_date: string | null;
+    last_repayment_amount: number | null;
+    average_repayment_amount: number;
+    expected_installments: number;
+    installment_amount: number;
+}
+
+export interface RepaymentSchedule {
+    installment_number: number;
+    amount: number;
+    due_date: string;
 }
 
 export interface EmployeeCustomDeduction {

@@ -186,6 +186,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{wageAdvance}/reject', [WageAdvanceController::class, 'reject'])->name('reject');
         Route::post('/{wageAdvance}/disburse', [WageAdvanceController::class, 'disburse'])->name('disburse');
         Route::post('/{wageAdvance}/record-repayment', [WageAdvanceController::class, 'recordRepayment'])->name('record-repayment');
+        Route::delete('/{wageAdvance}/repayments/{repayment}', [WageAdvanceController::class, 'deleteRepayment'])->name('delete-repayment');
         Route::post('/{wageAdvance}/cancel', [WageAdvanceController::class, 'cancel'])->name('cancel');
 
         Route::delete('/{wageAdvance}', [WageAdvanceController::class, 'destroy'])->name('destroy');
