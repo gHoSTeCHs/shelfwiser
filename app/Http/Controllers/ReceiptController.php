@@ -15,7 +15,9 @@ class ReceiptController extends Controller
 {
     public function __construct(
         protected ReceiptService $receiptService
-    ) {}
+    )
+    {
+    }
 
     /**
      * Display receipt list
@@ -27,14 +29,14 @@ class ReceiptController extends Controller
         $receipts = Receipt::query()
             ->where('tenant_id', auth()->user()->tenant_id)
             ->with(['order', 'orderPayment', 'customer', 'shop', 'generatedBy'])
-            ->when($request->type, fn ($q, $type) => $q->where('type', $type))
+            ->when($request->type, fn($q, $type) => $q->where('type', $type))
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('receipt_number', 'like', "%{$search}%")
+                    $q->where('receipt_number', 'like', "%$search%")
                         ->orWhereHas('customer', function ($q) use ($search) {
-                            $q->where('first_name', 'like', "%{$search}%")
-                                ->orWhere('last_name', 'like', "%{$search}%")
-                                ->orWhere('email', 'like', "%{$search}%");
+                            $q->where('first_name', 'like', "%$search%")
+                                ->orWhere('last_name', 'like', "%$search%")
+                                ->orWhere('email', 'like', "%$search%");
                         });
                 });
             })
@@ -46,9 +48,9 @@ class ReceiptController extends Controller
             'receipts' => $receipts,
             'filters' => $request->only(['search', 'type']),
             'stats' => [
-                'total_receipts' => Receipt::where('tenant_id', auth()->user()->tenant_id)->count(),
-                'order_receipts' => Receipt::where('tenant_id', auth()->user()->tenant_id)->where('type', 'order')->count(),
-                'payment_receipts' => Receipt::where('tenant_id', auth()->user()->tenant_id)->where('type', 'payment')->count(),
+                'total_receipts' => Receipt::query()->where('tenant_id', auth()->user()->tenant_id)->count(),
+                'order_receipts' => Receipt::query()->where('tenant_id', auth()->user()->tenant_id)->where('type', 'order')->count(),
+                'payment_receipts' => Receipt::query()->where('tenant_id', auth()->user()->tenant_id)->where('type', 'payment')->count(),
             ],
         ]);
     }
@@ -60,11 +62,11 @@ class ReceiptController extends Controller
     {
         $this->authorize('view', $order);
 
-        $receipt = Receipt::where('order_id', $order->id)
+        $receipt = Receipt::query()->where('order_id', $order->id)
             ->where('type', 'order')
             ->first();
 
-        if (! $receipt) {
+        if (!$receipt) {
             $receipt = $this->receiptService->generateOrderReceipt($order);
         }
 
@@ -78,15 +80,15 @@ class ReceiptController extends Controller
     {
         $this->authorize('view', $order);
 
-        $receipt = Receipt::where('order_id', $order->id)
+        $receipt = Receipt::query()->where('order_id', $order->id)
             ->where('type', 'order')
             ->first();
 
-        if (! $receipt) {
+        if (!$receipt) {
             $receipt = $this->receiptService->generateOrderReceipt($order, true);
         }
 
-        $filename = "receipt-{$order->order_number}.pdf";
+        $filename = "receipt-$order->order_number.pdf";
 
         return $this->receiptService->generateOrderPdf($order, $receipt)->download($filename);
     }
@@ -98,11 +100,11 @@ class ReceiptController extends Controller
     {
         $this->authorize('view', $payment->order);
 
-        $receipt = Receipt::where('order_payment_id', $payment->id)
+        $receipt = Receipt::query()->where('order_payment_id', $payment->id)
             ->where('type', 'payment')
             ->first();
 
-        if (! $receipt) {
+        if (!$receipt) {
             $receipt = $this->receiptService->generatePaymentReceipt($payment);
         }
 
@@ -116,15 +118,15 @@ class ReceiptController extends Controller
     {
         $this->authorize('view', $payment->order);
 
-        $receipt = Receipt::where('order_payment_id', $payment->id)
+        $receipt = Receipt::query()->where('order_payment_id', $payment->id)
             ->where('type', 'payment')
             ->first();
 
-        if (! $receipt) {
+        if (!$receipt) {
             $receipt = $this->receiptService->generatePaymentReceipt($payment, true);
         }
 
-        $filename = "payment-receipt-{$payment->id}.pdf";
+        $filename = "payment-receipt-$payment->id.pdf";
 
         return $this->receiptService->generatePaymentPdf($payment, $receipt)->download($filename);
     }
@@ -143,7 +145,7 @@ class ReceiptController extends Controller
         $sent = $this->receiptService->emailReceipt($receipt, $request->email);
 
         if ($sent) {
-            return back()->with('success', "Receipt emailed to {$request->email}");
+            return back()->with('success', "Receipt emailed to $request->email");
         }
 
         return back()->with('error', 'Failed to email receipt');
