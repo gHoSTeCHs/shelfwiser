@@ -24,7 +24,7 @@ class ReorderAlertService
                 }
             })
             ->with([
-                'product:id,name,sku,shop_id',
+                'product:id,name,shop_id',
                 'product.shop:id,name',
                 'inventoryLocations',
             ])
