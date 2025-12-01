@@ -153,9 +153,16 @@ const AppSidebar: React.FC = () => {
 
     useEffect(() => {
         let submenuMatched = false;
-        const menuTypes = isSuperAdmin ? ['main', 'others', 'admin'] : ['main', 'others'];
+        const menuTypes = isSuperAdmin
+            ? ['main', 'others', 'admin']
+            : ['main', 'others'];
         menuTypes.forEach((menuType) => {
-            const items = menuType === 'main' ? navItems : menuType === 'admin' ? adminItems : othersItems;
+            const items =
+                menuType === 'main'
+                    ? navItems
+                    : menuType === 'admin'
+                      ? adminItems
+                      : othersItems;
             items.forEach((nav, index) => {
                 if (nav.subItems) {
                     nav.subItems.forEach((subItem) => {
@@ -204,7 +211,10 @@ const AppSidebar: React.FC = () => {
         });
     };
 
-    const renderMenuItems = (items: NavItem[], menuType: 'main' | 'others' | 'admin') => (
+    const renderMenuItems = (
+        items: NavItem[],
+        menuType: 'main' | 'others' | 'admin',
+    ) => (
         <ul className="flex flex-col gap-4">
             {items.map((nav, index) => (
                 <li key={nav.name}>
