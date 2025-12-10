@@ -29,7 +29,8 @@ const STORES: StoreConfig[] = [
             { name: 'tenant_id', keyPath: 'tenant_id' },
             { name: 'shop_id', keyPath: 'shop_id' },
             { name: 'sku', keyPath: 'sku' },
-            { name: 'name', keyPath: 'name' },
+            { name: 'barcode', keyPath: 'barcode' },
+            { name: 'product_name', keyPath: 'product_name' },
         ],
     },
     {
@@ -328,6 +329,107 @@ export async function setLastSyncTime(entity: string): Promise<void> {
     await setSyncMetadata(`lastSync_${entity}`, Date.now());
 }
 
+/**
+ * Search products by barcode (exact match)
+ * Filters by both shop_id and tenant_id for security
+ */
+export async function searchProductByBarcode<T>(
+    barcode: string,
+    shopId: number,
+    tenantId?: number
+): Promise<T | undefined> {
+    const products = await getItemsByIndex<T & { barcode: string | null; shop_id: number; tenant_id: number }>('products', 'barcode', barcode);
+    return products.find(p =>
+        p.shop_id === shopId &&
+        (tenantId === undefined || p.tenant_id === tenantId)
+    ) as T | undefined;
+}
+
+/**
+ * Search products by SKU (exact match)
+ * Filters by both shop_id and tenant_id for security
+ */
+export async function searchProductBySku<T>(
+    sku: string,
+    shopId: number,
+    tenantId?: number
+): Promise<T | undefined> {
+    const products = await getItemsByIndex<T & { sku: string; shop_id: number; tenant_id: number }>('products', 'sku', sku);
+    return products.find(p =>
+        p.shop_id === shopId &&
+        (tenantId === undefined || p.tenant_id === tenantId)
+    ) as T | undefined;
+}
+
+/**
+ * Search products by name (partial match)
+ * Filters by both shop_id and tenant_id for security
+ */
+export async function searchProductsByName<T>(
+    query: string,
+    shopId: number,
+    tenantId?: number,
+    limit: number = 20
+): Promise<T[]> {
+    const allProducts = await getItemsByIndex<T & { product_name: string; display_name: string; shop_id: number; tenant_id: number }>('products', 'shop_id', shopId);
+    const lowerQuery = query.toLowerCase();
+
+    return allProducts
+        .filter(p =>
+            (tenantId === undefined || p.tenant_id === tenantId) &&
+            (p.product_name?.toLowerCase().includes(lowerQuery) ||
+                p.display_name?.toLowerCase().includes(lowerQuery))
+        )
+        .slice(0, limit) as T[];
+}
+
+/**
+ * Search products by any field (barcode, SKU, or name)
+ * Returns matches in priority order: exact barcode > exact SKU > name contains
+ * Filters by both shop_id and tenant_id for security
+ */
+export async function searchProducts<T>(
+    query: string,
+    shopId: number,
+    tenantId?: number,
+    limit: number = 20
+): Promise<T[]> {
+    // First, try exact barcode match
+    const barcodeMatch = await searchProductByBarcode<T>(query, shopId, tenantId);
+    if (barcodeMatch) {
+        return [barcodeMatch];
+    }
+
+    // Then, try exact SKU match
+    const skuMatch = await searchProductBySku<T>(query, shopId, tenantId);
+    if (skuMatch) {
+        return [skuMatch];
+    }
+
+    // Finally, search by name
+    return searchProductsByName<T>(query, shopId, tenantId, limit);
+}
+
+/**
+ * Get all products for a shop
+ * Optionally filter by tenant_id for extra security
+ */
+export async function getProductsForShop<T>(shopId: number, tenantId?: number): Promise<T[]> {
+    const products = await getItemsByIndex<T & { tenant_id: number }>('products', 'shop_id', shopId);
+    if (tenantId === undefined) {
+        return products as T[];
+    }
+    return products.filter(p => p.tenant_id === tenantId) as T[];
+}
+
+/**
+ * Get product count for a shop
+ */
+export async function getProductCountForShop(shopId: number): Promise<number> {
+    const products = await getItemsByIndex('products', 'shop_id', shopId);
+    return products.length;
+}
+
 export default {
     openDB,
     getItem,
@@ -345,4 +447,10 @@ export default {
     getSyncMetadata,
     getLastSyncTime,
     setLastSyncTime,
+    searchProductByBarcode,
+    searchProductBySku,
+    searchProductsByName,
+    searchProducts,
+    getProductsForShop,
+    getProductCountForShop,
 };

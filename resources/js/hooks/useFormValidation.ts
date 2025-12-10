@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 interface ValidationRules {
     [field: string]: {
@@ -27,7 +27,10 @@ export function useFormValidation(rules: ValidationRules) {
             if (!fieldRules) return null;
 
             // Required validation
-            if (fieldRules.required && (!value || value.toString().trim() === '')) {
+            if (
+                fieldRules.required &&
+                (!value || value.toString().trim() === '')
+            ) {
                 return 'This field is required';
             }
 
@@ -37,17 +40,26 @@ export function useFormValidation(rules: ValidationRules) {
             }
 
             // Min length validation
-            if (fieldRules.minLength && value.toString().length < fieldRules.minLength) {
+            if (
+                fieldRules.minLength &&
+                value.toString().length < fieldRules.minLength
+            ) {
                 return `Must be at least ${fieldRules.minLength} characters`;
             }
 
             // Max length validation
-            if (fieldRules.maxLength && value.toString().length > fieldRules.maxLength) {
+            if (
+                fieldRules.maxLength &&
+                value.toString().length > fieldRules.maxLength
+            ) {
                 return `Must be no more than ${fieldRules.maxLength} characters`;
             }
 
             // Pattern validation
-            if (fieldRules.pattern && !fieldRules.pattern.test(value.toString())) {
+            if (
+                fieldRules.pattern &&
+                !fieldRules.pattern.test(value.toString())
+            ) {
                 return 'Invalid format';
             }
 
@@ -58,7 +70,7 @@ export function useFormValidation(rules: ValidationRules) {
 
             return null;
         },
-        [rules]
+        [rules],
     );
 
     const validateField = useCallback(
@@ -70,7 +82,7 @@ export function useFormValidation(rules: ValidationRules) {
             }));
             return error === null;
         },
-        [validate]
+        [validate],
     );
 
     const validateAll = useCallback(
@@ -87,7 +99,7 @@ export function useFormValidation(rules: ValidationRules) {
             setErrors(newErrors);
             return isValid;
         },
-        [rules, validate]
+        [rules, validate],
     );
 
     const clearError = useCallback((field: string) => {

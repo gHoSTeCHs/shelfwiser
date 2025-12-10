@@ -2,17 +2,22 @@
 
 namespace App\Services;
 
-use App\Enums\StockMovementType;
 use App\Models\Customer;
+use App\Models\InventoryLocation;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
+use App\Models\ProductPackagingType;
 use App\Models\ProductVariant;
 use App\Models\Shop;
 use Illuminate\Support\Facades\DB;
 
 class POSService
 {
+    public function __construct(
+        private readonly StockMovementService $stockMovementService
+    ) {
+    }
     /**
      * Search products for POS by SKU, barcode, or name
      */
@@ -93,19 +98,36 @@ class POSService
                 $subtotal += $lineTotal;
                 $taxAmount += $lineTax;
 
-                if ($variant->track_stock) {
-                    $variant->decrement('stock_quantity', $quantity);
+                // Decrement stock if product tracks inventory
+                if ($variant->product->track_stock ?? true) {
+                    // Get or create shop inventory location for this variant
+                    $location = InventoryLocation::firstOrCreate(
+                        [
+                            'product_variant_id' => $variant->id,
+                            'location_type' => Shop::class,
+                            'location_id' => $shop->id,
+                        ],
+                        [
+                            'quantity' => 0,
+                            'reserved_quantity' => 0,
+                        ]
+                    );
 
-                    app(StockMovementService::class)->recordMovement([
-                        'tenant_id' => auth()->user()->tenant_id,
-                        'shop_id' => $shop->id,
-                        'product_variant_id' => $variant->id,
-                        'type' => StockMovementType::SALE,
-                        'quantity' => -$quantity,
-                        'reference_number' => "POS-{$order->order_number}",
-                        'notes' => "POS Sale - Order {$order->order_number}",
-                        'created_by' => auth()->id(),
-                    ]);
+                    // Get packaging type if provided
+                    $packagingType = isset($item['packaging_type_id'])
+                        ? ProductPackagingType::find($item['packaging_type_id'])
+                        : null;
+
+                    // Use StockMovementService for proper audit trail
+                    $this->stockMovementService->recordSale(
+                        variant: $variant,
+                        location: $location,
+                        quantity: $quantity,
+                        packagingType: $packagingType,
+                        user: auth()->user(),
+                        referenceNumber: "POS-{$order->order_number}",
+                        notes: "POS Sale - Order {$order->order_number}"
+                    );
                 }
             }
 

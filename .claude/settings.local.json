@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(php artisan route:list:*)",
+      "Bash(\"C:\\laragon\\bin\\php\\php-8.2.12-nts-Win32-vs16-x64\\php.exe\" -l app/Services/BarcodeGeneratorService.php)",
+      "Bash(where:*)",
+      "Bash(\"C:\\Users\\hp\\.config\\herd\\bin\\php.bat\" -l app/Services/BarcodeGeneratorService.php)",
+      "Bash(\"C:\\Users\\hp\\.config\\herd\\bin\\php.bat\" -l app/Http/Controllers/Api/SyncController.php)",
+      "Bash(\"C:\\Users\\hp\\.config\\herd\\bin\\php.bat\" -l app/Http/Controllers/ProductVariantController.php)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(\"C:\\Users\\hp\\.config\\herd\\bin\\php.bat\" artisan migrate --force)",
+      "Bash(\"C:\\Users\\hp\\.config\\herd\\bin\\php.bat\" -l app/Services/POSService.php)",
+      "Bash(\"C:\\Users\\hp\\.config\\herd\\bin\\php.bat\" -l app/Models/Product.php)"
+    ]
+  }
+}

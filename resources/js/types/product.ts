@@ -28,11 +28,19 @@ export interface ProductCategory {
 
 export interface Product {
     id: number;
+    tenant_id: number;
+    shop_id: number;
+    template_id: number | null;
+    product_type_id: number;
+    category_id: number | null;
     name: string;
     slug: string;
     description: string | null;
+    custom_attributes: Record<string, unknown> | null;
     has_variants: boolean;
     is_active: boolean;
+    track_stock: boolean;
+    is_taxable: boolean;
     is_featured: boolean;
     display_order: number;
     seo_title: string | null;
@@ -45,6 +53,7 @@ export interface Product {
     variants_count: number;
     images?: Image[];
     created_at: string;
+    updated_at: string;
 }
 
 export interface ProductListResponse {

@@ -3,18 +3,22 @@ import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
+import BarcodeScanner from '@/components/pos/BarcodeScanner';
+import OfflineIndicator from '@/components/pos/OfflineIndicator';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import useOfflinePOS from '@/hooks/useOfflinePOS';
+import useOfflineProducts from '@/hooks/useOfflineProducts';
 import useToast from '@/hooks/useToast.ts';
 import AppLayout from '@/layouts/AppLayout.tsx';
 import { Shop } from '@/types/shop';
-import { Form, Head } from '@inertiajs/react';
+import { SyncProduct } from '@/types/sync';
+import { Head } from '@inertiajs/react';
 import {
     Check,
     Loader2,
     Minus,
     Plus,
-    Search,
     ShoppingCart,
     Trash2,
     User,
@@ -27,16 +31,6 @@ interface POSProps {
     paymentMethods: Record<string, string>;
 }
 
-interface CartItem {
-    variant_id: number;
-    name: string;
-    sku: string;
-    quantity: number;
-    unit_price: number;
-    packaging_type_id?: number;
-    discount_amount?: number;
-}
-
 interface Customer {
     id: number;
     first_name: string;
@@ -45,88 +39,98 @@ interface Customer {
     phone: string | null;
 }
 
-interface Product {
-    id: number;
-    sku: string;
-    barcode: string | null;
-    price: number;
-    track_stock: boolean;
-    stock_quantity: number;
-    product: {
-        id: number;
-        name: string;
-        is_taxable: boolean;
-    };
-}
-
 const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
-    const [cart, setCart] = React.useState<CartItem[]>([]);
-    const [searchQuery, setSearchQuery] = React.useState('');
-    const [searchResults, setSearchResults] = React.useState<Product[]>([]);
-    const [isSearching, setIsSearching] = React.useState(false);
+    // Offline products hook
+    const {
+        searchProducts,
+        isSearching: isSearchingProducts,
+        syncProducts,
+        isSyncing: isSyncingProducts,
+        lastSyncTime,
+        productCount,
+        isOnline,
+    } = useOfflineProducts({
+        shopId: shop.id,
+        tenantId: shop.tenant_id,
+        autoSync: true,
+    });
+
+    // Offline POS hook (cart management + offline orders)
+    const {
+        cart,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
+        completeSale,
+        pendingOrdersCount,
+        syncPendingOrders,
+        isSyncing: isSyncingOrders,
+        isCartLoaded,
+    } = useOfflinePOS({
+        shopId: shop.id,
+        tenantId: shop.tenant_id,
+        onOrderSynced: (offlineId, orderId, orderNumber) => {
+            toast.success(`Order ${orderNumber} synced successfully`);
+        },
+        onSyncError: (offlineId, error) => {
+            toast.error(`Failed to sync order: ${error}`);
+        },
+    });
+
+    const [searchResults, setSearchResults] = React.useState<SyncProduct[]>([]);
     const [searchError, setSearchError] = React.useState<string | null>(null);
 
-    const [selectedCustomer, setSelectedCustomer] =
-        React.useState<Customer | null>(null);
+    const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
     const [customerSearch, setCustomerSearch] = React.useState('');
-    const [customerResults, setCustomerResults] = React.useState<Customer[]>(
-        [],
-    );
-    const [isSearchingCustomers, setIsSearchingCustomers] =
-        React.useState(false);
-    const [customerSearchError, setCustomerSearchError] = React.useState<
-        string | null
-    >(null);
+    const [customerResults, setCustomerResults] = React.useState<Customer[]>([]);
+    const [isSearchingCustomers, setIsSearchingCustomers] = React.useState(false);
+    const [customerSearchError, setCustomerSearchError] = React.useState<string | null>(null);
     const [showCustomerSearch, setShowCustomerSearch] = React.useState(false);
 
     const [discount, setDiscount] = React.useState('');
     const [notes, setNotes] = React.useState('');
     const [paymentMethod, setPaymentMethod] = React.useState('cash');
     const [amountTendered, setAmountTendered] = React.useState(0);
+    const [isProcessing, setIsProcessing] = React.useState(false);
 
-    const searchAbortControllerRef = React.useRef<AbortController>(
-        new AbortController(),
-    );
-    const customerSearchAbortControllerRef = React.useRef<AbortController>(
-        new AbortController(),
-    );
+    const customerSearchAbortControllerRef = React.useRef<AbortController>(new AbortController());
+    const searchInputRef = React.useRef<HTMLInputElement>(null);
 
     const toast = useToast();
 
-    const searchProducts = async () => {
-        if (searchQuery.length < 1) {
+    // Handle barcode scan or search query
+    const handleSearch = async (query: string) => {
+        if (query.length < 1) {
             setSearchResults([]);
             return;
         }
 
-        searchAbortControllerRef.current.abort();
-        searchAbortControllerRef.current = new AbortController();
-
-        setIsSearching(true);
         setSearchError(null);
 
         try {
-            const response = await fetch(
-                POSController.searchProducts.url({ shop: shop.id }) +
-                    `?query=${encodeURIComponent(searchQuery)}`,
-                { signal: searchAbortControllerRef.current.signal },
-            );
+            const results = await searchProducts(query);
+            setSearchResults(results);
 
-            if (!response.ok) {
-                toast.error('Failed to search products');
+            // If exact match (barcode/SKU), auto-add to cart
+            if (results.length === 1 && (results[0].barcode === query || results[0].sku === query)) {
+                handleAddToCart(results[0]);
+                setSearchResults([]);
             }
-
-            const data = await response.json();
-            setSearchResults(data.products || []);
         } catch (error) {
             if (error instanceof Error && error.name !== 'AbortError') {
                 setSearchError('Failed to search products. Please try again.');
             }
-        } finally {
-            setIsSearching(false);
         }
     };
 
+    // Handle barcode scan
+    const handleBarcodeScan = async (barcode: string) => {
+        console.log('[POS] Barcode scanned:', barcode);
+        await handleSearch(barcode);
+    };
+
+    // Customer search
     const searchCustomers = async () => {
         if (customerSearch.length < 1) {
             setCustomerResults([]);
@@ -154,22 +158,12 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
             setCustomerResults(data.customers || []);
         } catch (error) {
             if (error instanceof Error && error.name !== 'AbortError') {
-                setCustomerSearchError(
-                    'Failed to search customers. Please try again.',
-                );
+                setCustomerSearchError('Failed to search customers. Please try again.');
             }
         } finally {
             setIsSearchingCustomers(false);
         }
     };
-
-    React.useEffect(() => {
-        const timer = setTimeout(searchProducts, 300);
-        return () => {
-            clearTimeout(timer);
-            searchAbortControllerRef.current.abort();
-        };
-    }, [searchQuery]);
 
     React.useEffect(() => {
         const timer = setTimeout(searchCustomers, 300);
@@ -179,60 +173,15 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
         };
     }, [customerSearch]);
 
-    const addToCart = (product: Product) => {
-        const existingItem = cart.find(
-            (item) => item.variant_id === product.id,
-        );
-
-        if (existingItem) {
-            setCart(
-                cart.map((item) =>
-                    item.variant_id === product.id
-                        ? { ...item, quantity: item.quantity + 1 }
-                        : item,
-                ),
-            );
-        } else {
-            setCart([
-                ...cart,
-                {
-                    variant_id: product.id,
-                    name: product.product.name,
-                    sku: product.sku,
-                    quantity: 1,
-                    unit_price: product.price,
-                },
-            ]);
-        }
-
-        setSearchQuery('');
+    const handleAddToCart = (product: SyncProduct) => {
+        addToCart(product);
         setSearchResults([]);
-    };
-
-    const updateQuantity = (variantId: number, newQuantity: number) => {
-        if (newQuantity <= 0) {
-            removeFromCart(variantId);
-            return;
-        }
-
-        setCart(
-            cart.map((item) =>
-                item.variant_id === variantId
-                    ? { ...item, quantity: newQuantity }
-                    : item,
-            ),
-        );
-    };
-
-    const removeFromCart = (variantId: number) => {
-        setCart(cart.filter((item) => item.variant_id !== variantId));
+        // Focus back on scanner input
+        setTimeout(() => searchInputRef.current?.focus(), 100);
     };
 
     const calculateSubtotal = () => {
-        return cart.reduce(
-            (sum, item) => sum + item.unit_price * item.quantity,
-            0,
-        );
+        return cart.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
     };
 
     const calculateTax = () => {
@@ -254,13 +203,60 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
         return Math.max(0, tendered - total);
     };
 
-    const clearCart = () => {
-        setCart([]);
+    const handleClearCart = () => {
+        clearCart();
         setSelectedCustomer(null);
         setPaymentMethod('cash');
         setAmountTendered(0);
         setDiscount('');
         setNotes('');
+    };
+
+    const handleCompleteSale = async () => {
+        if (cart.length === 0) {
+            toast.error('Cart is empty');
+            return;
+        }
+
+        setIsProcessing(true);
+
+        try {
+            const result = await completeSale({
+                customerId: selectedCustomer?.id || null,
+                paymentMethod,
+                amountTendered: amountTendered || 0,
+                discount: parseFloat(discount) || 0,
+                notes: notes || '',
+                taxRate: shop.vat_rate || 0,
+                taxEnabled: shop.vat_enabled || false,
+            });
+
+            if (result.success) {
+                if (result.isOffline) {
+                    toast.success(`Sale queued for sync (ID: ${result.offlineId?.slice(-8)})`);
+                } else {
+                    toast.success(`Sale completed! Order: ${result.orderNumber}`);
+                }
+
+                // Reset form
+                setSelectedCustomer(null);
+                setPaymentMethod('cash');
+                setAmountTendered(0);
+                setDiscount('');
+                setNotes('');
+            } else {
+                toast.error(result.error || 'Failed to complete sale');
+            }
+        } catch (error) {
+            toast.error('An unexpected error occurred');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleSync = () => {
+        syncProducts();
+        syncPendingOrders();
     };
 
     return (
@@ -276,70 +272,80 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                             Point of Sale
                         </p>
                     </div>
-                    <div className="text-right">
-                        <p className="text-sm text-brand-100 dark:text-brand-200">
-                            Session Active
-                        </p>
-                        <p className="font-semibold">
-                            {new Date().toLocaleTimeString('en-US', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                            })}
-                        </p>
+                    <div className="flex items-center gap-4">
+                        {/* Offline indicator */}
+                        <OfflineIndicator
+                            isOnline={isOnline}
+                            pendingCount={pendingOrdersCount}
+                            isSyncing={isSyncingProducts || isSyncingOrders}
+                            lastSyncTime={lastSyncTime}
+                            productCount={productCount}
+                            onSync={handleSync}
+                        />
+                        <div className="text-right">
+                            <p className="text-sm text-brand-100 dark:text-brand-200">
+                                Session Active
+                            </p>
+                            <p className="font-semibold">
+                                {new Date().toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                })}
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                <div className="grid flex-1 grid-cols-12 gap-4  bg-gray-50 p-4 dark:bg-gray-950">
+                <div className="grid flex-1 grid-cols-12 gap-4 bg-gray-50 p-4 dark:bg-gray-950">
                     {/* Left Panel - Product Search & Cart */}
                     <div className="col-span-7 flex flex-col gap-4 overflow-hidden">
-                        {/* Search Bar */}
+                        {/* Barcode Scanner / Search Bar */}
                         <Card className="border-gray-200 bg-white p-4 shadow-theme-sm dark:border-gray-800 dark:bg-gray-900">
-                            <div className="relative">
-                                <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 transform text-gray-400 dark:text-gray-500" />
-                                {isSearching && (
-                                    <Loader2 className="absolute top-1/2 right-3 h-5 w-5 -translate-y-1/2 animate-spin text-gray-400 dark:text-gray-500" />
-                                )}
-                                <Input
-                                    type="text"
-                                    placeholder="Search products by SKU, barcode, or name..."
-                                    value={searchQuery}
-                                    onChange={(e) =>
-                                        setSearchQuery(e.target.value)
-                                    }
-                                    className="border-gray-300 bg-white pr-10 pl-10 text-gray-900 placeholder:text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
-                                />
-                            </div>
-                            {searchError && (
-                                <InputError message={searchError} />
+                            <BarcodeScanner
+                                onScan={handleBarcodeScan}
+                                onError={(error) => setSearchError(error)}
+                                placeholder="Scan barcode or search by SKU, name..."
+                                disabled={!isCartLoaded}
+                                autoFocus={true}
+                                showCameraButton={true}
+                            />
+
+                            {searchError && <InputError message={searchError} />}
+
+                            {/* Search loading indicator */}
+                            {isSearchingProducts && (
+                                <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span>Searching...</span>
+                                </div>
                             )}
 
+                            {/* Search results dropdown */}
                             {searchResults.length > 0 && (
                                 <div className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-gray-200 shadow-theme-sm dark:border-gray-700">
                                     {searchResults.map((product) => (
                                         <button
                                             key={product.id}
-                                            onClick={() => addToCart(product)}
+                                            onClick={() => handleAddToCart(product)}
                                             className="flex w-full items-center justify-between border-b border-gray-100 bg-white px-4 py-3 transition-colors last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
                                         >
                                             <div className="text-left">
                                                 <p className="font-medium text-gray-900 dark:text-white">
-                                                    {product.product.name}
+                                                    {product.display_name || product.product_name}
                                                 </p>
                                                 <p className="text-sm text-gray-600 dark:text-gray-400">
                                                     SKU: {product.sku}
+                                                    {product.barcode && ` | Barcode: ${product.barcode}`}
                                                 </p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-bold text-brand-600 dark:text-brand-400">
                                                     {shop.currency_symbol}
-                                                    {Number(
-                                                        product.price,
-                                                    ).toFixed(2)}
+                                                    {Number(product.price).toFixed(2)}
                                                 </p>
                                                 {product.track_stock && (
                                                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                        Stock:{' '}
-                                                        {product.stock_quantity}
+                                                        Stock: {product.stock_quantity}
                                                     </p>
                                                 )}
                                             </div>
@@ -359,15 +365,16 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-4">
-                                {cart.length === 0 ? (
+                                {!isCartLoaded ? (
+                                    <div className="flex h-full flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+                                        <Loader2 className="mb-4 h-8 w-8 animate-spin" />
+                                        <p className="text-sm">Loading cart...</p>
+                                    </div>
+                                ) : cart.length === 0 ? (
                                     <div className="flex h-full flex-col items-center justify-center text-gray-400 dark:text-gray-600">
                                         <ShoppingCart className="mb-4 h-16 w-16" />
-                                        <p className="font-medium">
-                                            Cart is empty
-                                        </p>
-                                        <p className="text-sm">
-                                            Search and add products to cart
-                                        </p>
+                                        <p className="font-medium">Cart is empty</p>
+                                        <p className="text-sm">Scan a barcode to add products</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-2">
@@ -388,11 +395,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() =>
-                                                            removeFromCart(
-                                                                item.variant_id,
-                                                            )
-                                                        }
+                                                        onClick={() => removeFromCart(item.variant_id)}
                                                         className="hover:bg-error-50 dark:hover:bg-error-500/10"
                                                     >
                                                         <Trash2 className="h-4 w-4 text-error-500 dark:text-error-400" />
@@ -404,13 +407,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
-                                                            onClick={() =>
-                                                                updateQuantity(
-                                                                    item.variant_id,
-                                                                    item.quantity -
-                                                                        1,
-                                                                )
-                                                            }
+                                                            onClick={() => updateQuantity(item.variant_id, item.quantity - 1)}
                                                             className="border-gray-300 bg-white hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
                                                         >
                                                             <Minus className="h-4 w-4 text-gray-700 dark:text-gray-300" />
@@ -421,13 +418,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
-                                                            onClick={() =>
-                                                                updateQuantity(
-                                                                    item.variant_id,
-                                                                    item.quantity +
-                                                                        1,
-                                                                )
-                                                            }
+                                                            onClick={() => updateQuantity(item.variant_id, item.quantity + 1)}
                                                             className="border-gray-300 bg-white hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
                                                         >
                                                             <Plus className="h-4 w-4 text-gray-700 dark:text-gray-300" />
@@ -435,26 +426,12 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                            {
-                                                                shop.currency_symbol
-                                                            }
-                                                            {Number(
-                                                                item.unit_price,
-                                                            ).toFixed(2)}{' '}
-                                                            each
+                                                            {shop.currency_symbol}
+                                                            {Number(item.unit_price).toFixed(2)} each
                                                         </p>
                                                         <p className="text-lg font-bold text-brand-600 dark:text-brand-400">
-                                                            {
-                                                                shop.currency_symbol
-                                                            }
-                                                            {(
-                                                                Number(
-                                                                    item.unit_price,
-                                                                ) *
-                                                                Number(
-                                                                    item.quantity,
-                                                                )
-                                                            ).toFixed(2)}
+                                                            {shop.currency_symbol}
+                                                            {(Number(item.unit_price) * Number(item.quantity)).toFixed(2)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -479,9 +456,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() =>
-                                            setSelectedCustomer(null)
-                                        }
+                                        onClick={() => setSelectedCustomer(null)}
                                         className="hover:bg-gray-100 dark:hover:bg-gray-800"
                                     >
                                         <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
@@ -492,8 +467,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                             {selectedCustomer ? (
                                 <div className="rounded-lg border border-success-200 bg-success-50 p-3 dark:border-success-800 dark:bg-success-950">
                                     <p className="font-medium text-success-900 dark:text-success-100">
-                                        {selectedCustomer.first_name}{' '}
-                                        {selectedCustomer.last_name}
+                                        {selectedCustomer.first_name} {selectedCustomer.last_name}
                                     </p>
                                     <p className="text-sm text-success-700 dark:text-success-300">
                                         {selectedCustomer.email}
@@ -507,271 +481,158 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                                             placeholder="Search customer..."
                                             value={customerSearch}
                                             onChange={(e) => {
-                                                setCustomerSearch(
-                                                    e.target.value,
-                                                );
+                                                setCustomerSearch(e.target.value);
                                                 setShowCustomerSearch(true);
                                             }}
-                                            onFocus={() =>
-                                                setShowCustomerSearch(true)
-                                            }
+                                            onFocus={() => setShowCustomerSearch(true)}
                                             className="border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
                                         />
                                         {isSearchingCustomers && (
                                             <Loader2 className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400 dark:text-gray-500" />
                                         )}
                                     </div>
-                                    {customerSearchError && (
-                                        <InputError
-                                            message={customerSearchError}
-                                        />
+                                    {customerSearchError && <InputError message={customerSearchError} />}
+                                    {showCustomerSearch && customerResults.length > 0 && (
+                                        <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-gray-200 shadow-theme-sm dark:border-gray-700">
+                                            {customerResults.map((customer) => (
+                                                <button
+                                                    key={customer.id}
+                                                    onClick={() => {
+                                                        setSelectedCustomer(customer);
+                                                        setCustomerSearch('');
+                                                        setShowCustomerSearch(false);
+                                                        setCustomerResults([]);
+                                                    }}
+                                                    className="w-full border-b border-gray-100 bg-white px-3 py-2 text-left transition-colors last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
+                                                >
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {customer.first_name} {customer.last_name}
+                                                    </p>
+                                                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                        {customer.email}
+                                                    </p>
+                                                </button>
+                                            ))}
+                                        </div>
                                     )}
-                                    {showCustomerSearch &&
-                                        customerResults.length > 0 && (
-                                            <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-gray-200 shadow-theme-sm dark:border-gray-700">
-                                                {customerResults.map(
-                                                    (customer) => (
-                                                        <button
-                                                            key={customer.id}
-                                                            onClick={() => {
-                                                                setSelectedCustomer(
-                                                                    customer,
-                                                                );
-                                                                setCustomerSearch(
-                                                                    '',
-                                                                );
-                                                                setShowCustomerSearch(
-                                                                    false,
-                                                                );
-                                                                setCustomerResults(
-                                                                    [],
-                                                                );
-                                                            }}
-                                                            className="w-full border-b border-gray-100 bg-white px-3 py-2 text-left transition-colors last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
-                                                        >
-                                                            <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                                {
-                                                                    customer.first_name
-                                                                }{' '}
-                                                                {
-                                                                    customer.last_name
-                                                                }
-                                                            </p>
-                                                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                                                                {customer.email}
-                                                            </p>
-                                                        </button>
-                                                    ),
-                                                )}
-                                            </div>
-                                        )}
                                 </div>
                             )}
                         </Card>
 
                         {/* Checkout Panel */}
                         <Card className="flex flex-1 flex-col border-gray-200 bg-white p-4 shadow-theme-sm dark:border-gray-800 dark:bg-gray-900">
-                            <Form
-                                action={POSController.completeSale.url({
-                                    shop: shop.id,
-                                })}
-                                method="post"
-                                onSuccess={clearCart}
-                            >
-                                {({ processing, errors }) => (
-                                    <>
-                                        <input
-                                            type="hidden"
-                                            name="items"
-                                            value={JSON.stringify(cart)}
-                                        />
-                                        <input
-                                            type="hidden"
-                                            name="customer_id"
-                                            value={selectedCustomer?.id || ''}
-                                        />
-                                        <input
-                                            type="hidden"
-                                            name="discount_amount"
-                                            value={discount || '0'}
-                                        />
-                                        <input
-                                            type="hidden"
-                                            name="notes"
-                                            value={notes || ''}
-                                        />
+                            {/* Summary */}
+                            <div className="mb-4 space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
+                                    <span className="font-medium text-gray-900 dark:text-white">
+                                        {shop.currency_symbol}
+                                        {calculateSubtotal().toFixed(2)}
+                                    </span>
+                                </div>
 
-                                        {/* Summary */}
-                                        <div className="mb-4 space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                                            <div className="flex justify-between text-sm">
-                                                <span className="text-gray-600 dark:text-gray-400">
-                                                    Subtotal:
-                                                </span>
-                                                <span className="font-medium text-gray-900 dark:text-white">
-                                                    {shop.currency_symbol}
-                                                    {calculateSubtotal().toFixed(
-                                                        2,
-                                                    )}
-                                                </span>
-                                            </div>
-
-                                            {shop.vat_enabled && (
-                                                <div className="flex justify-between text-sm">
-                                                    <span className="text-gray-600 dark:text-gray-400">
-                                                        Tax ({shop.vat_rate}%):
-                                                    </span>
-                                                    <span className="font-medium text-gray-900 dark:text-white">
-                                                        {shop.currency_symbol}
-                                                        {calculateTax().toFixed(
-                                                            2,
-                                                        )}
-                                                    </span>
-                                                </div>
-                                            )}
-
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                    Discount:
-                                                </span>
-                                                <Input
-                                                    type="number"
-                                                    placeholder="0.00"
-                                                    value={discount}
-                                                    onChange={(e) =>
-                                                        setDiscount(
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    className="w-32 border-gray-300 bg-white text-right text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                                    min="0"
-                                                    step="0.01"
-                                                />
-                                            </div>
-
-                                            <div className="flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-700">
-                                                <span className="text-xl font-bold text-gray-900 dark:text-white">
-                                                    Total:
-                                                </span>
-                                                <span className="text-2xl font-bold text-brand-600 dark:text-brand-400">
-                                                    {shop.currency_symbol}
-                                                    {calculateTotal().toFixed(
-                                                        2,
-                                                    )}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Payment */}
-                                        <div className="space-y-3">
-                                            <div>
-                                                <Label className="text-gray-900 dark:text-white">
-                                                    Payment Method
-                                                </Label>
-                                                <Select
-                                                    name="payment_method"
-                                                    options={Object.entries(
-                                                        paymentMethods,
-                                                    ).map(([value, label]) => ({
-                                                        value,
-                                                        label,
-                                                    }))}
-                                                    value={paymentMethod}
-                                                    onChange={(value) =>
-                                                        setPaymentMethod(value)
-                                                    }
-                                                />
-                                                {errors.payment_method && (
-                                                    <InputError
-                                                        message={
-                                                            errors.payment_method
-                                                        }
-                                                    />
-                                                )}
-                                            </div>
-
-                                            {paymentMethod === 'cash' && (
-                                                <div>
-                                                    <Label className="text-gray-900 dark:text-white">
-                                                        Amount Tendered
-                                                    </Label>
-                                                    <Input
-                                                        type="number"
-                                                        name="amount_tendered"
-                                                        placeholder="0.00"
-                                                        value={amountTendered}
-                                                        onChange={(e) =>
-                                                            setAmountTendered(
-                                                                parseFloat(
-                                                                    e.target
-                                                                        .value,
-                                                                ) || 0,
-                                                            )
-                                                        }
-                                                        min="0"
-                                                        step="0.01"
-                                                        error={
-                                                            !!errors.amount_tendered
-                                                        }
-                                                        className="border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                                                    />
-                                                    {errors.amount_tendered && (
-                                                        <InputError
-                                                            message={
-                                                                errors.amount_tendered
-                                                            }
-                                                        />
-                                                    )}
-                                                    {amountTendered > 0 && (
-                                                        <div className="mt-2 rounded-lg border border-success-200 bg-success-50 p-3 dark:border-success-800 dark:bg-success-950">
-                                                            <p className="text-sm text-success-700 dark:text-success-300">
-                                                                Change:{' '}
-                                                                <span className="font-semibold text-success-600 dark:text-success-400">
-                                                                    {
-                                                                        shop.currency_symbol
-                                                                    }
-                                                                    {calculateChange().toFixed(
-                                                                        2,
-                                                                    )}
-                                                                </span>
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Actions */}
-                                        <div className="mt-auto space-y-2 pt-4">
-                                            <Button
-                                                type="submit"
-                                                variant="primary"
-                                                fullWidth
-                                                size="lg"
-                                                disabled={
-                                                    cart.length === 0 ||
-                                                    processing
-                                                }
-                                                loading={processing}
-                                                startIcon={<Check />}
-                                                className="bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600"
-                                            >
-                                                Complete Sale
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                fullWidth
-                                                onClick={clearCart}
-                                                disabled={cart.length === 0}
-                                                startIcon={<X />}
-                                                className="border-gray-300 bg-white hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700"
-                                            >
-                                                Clear Cart
-                                            </Button>
-                                        </div>
-                                    </>
+                                {shop.vat_enabled && (
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600 dark:text-gray-400">
+                                            Tax ({shop.vat_rate}%):
+                                        </span>
+                                        <span className="font-medium text-gray-900 dark:text-white">
+                                            {shop.currency_symbol}
+                                            {calculateTax().toFixed(2)}
+                                        </span>
+                                    </div>
                                 )}
-                            </Form>
+
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">Discount:</span>
+                                    <Input
+                                        type="number"
+                                        placeholder="0.00"
+                                        value={discount}
+                                        onChange={(e) => setDiscount(e.target.value)}
+                                        className="w-32 border-gray-300 bg-white text-right text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                        min="0"
+                                        step="0.01"
+                                    />
+                                </div>
+
+                                <div className="flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-700">
+                                    <span className="text-xl font-bold text-gray-900 dark:text-white">Total:</span>
+                                    <span className="text-2xl font-bold text-brand-600 dark:text-brand-400">
+                                        {shop.currency_symbol}
+                                        {calculateTotal().toFixed(2)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Payment */}
+                            <div className="space-y-3">
+                                <div>
+                                    <Label className="text-gray-900 dark:text-white">Payment Method</Label>
+                                    <Select
+                                        options={Object.entries(paymentMethods).map(([value, label]) => ({
+                                            value,
+                                            label,
+                                        }))}
+                                        value={paymentMethod}
+                                        onChange={(value) => setPaymentMethod(value)}
+                                    />
+                                </div>
+
+                                {paymentMethod === 'cash' && (
+                                    <div>
+                                        <Label className="text-gray-900 dark:text-white">Amount Tendered</Label>
+                                        <Input
+                                            type="number"
+                                            placeholder="0.00"
+                                            value={amountTendered}
+                                            onChange={(e) => setAmountTendered(parseFloat(e.target.value) || 0)}
+                                            min="0"
+                                            step="0.01"
+                                            className="border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                        />
+                                        {amountTendered > 0 && (
+                                            <div className="mt-2 rounded-lg border border-success-200 bg-success-50 p-3 dark:border-success-800 dark:bg-success-950">
+                                                <p className="text-sm text-success-700 dark:text-success-300">
+                                                    Change:{' '}
+                                                    <span className="font-semibold text-success-600 dark:text-success-400">
+                                                        {shop.currency_symbol}
+                                                        {calculateChange().toFixed(2)}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="mt-auto space-y-2 pt-4">
+                                <Button
+                                    type="button"
+                                    variant="primary"
+                                    fullWidth
+                                    size="lg"
+                                    disabled={cart.length === 0 || isProcessing}
+                                    loading={isProcessing}
+                                    onClick={handleCompleteSale}
+                                    startIcon={<Check />}
+                                    className="bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600"
+                                >
+                                    {isOnline ? 'Complete Sale' : 'Complete Sale (Offline)'}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    fullWidth
+                                    onClick={handleClearCart}
+                                    disabled={cart.length === 0}
+                                    startIcon={<X />}
+                                    className="border-gray-300 bg-white hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                >
+                                    Clear Cart
+                                </Button>
+                            </div>
                         </Card>
                     </div>
                 </div>

@@ -53,12 +53,17 @@ export interface Order {
     discount_amount: number;
     shipping_cost: number;
     total_amount: number;
+    paid_amount: number;
     customer_notes: string | null;
     internal_notes: string | null;
     shipping_address: string | null;
     billing_address: string | null;
     tracking_number: string | null;
     shipping_carrier: string | null;
+    customer_shipping_address_id: number | null;
+    customer_billing_address_id: number | null;
+    estimated_delivery_date: string | null;
+    actual_delivery_date: string | null;
     confirmed_at: string | null;
     packed_at: string | null;
     shipped_at: string | null;

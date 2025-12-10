@@ -48,6 +48,8 @@ export interface StorefrontSettings {
 export interface Shop {
     products_count?: number;
     id: number;
+    tenant_id: number;
+    shop_type_id: number;
     name: string;
     slug: string;
     description?: string;

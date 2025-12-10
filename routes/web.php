@@ -245,7 +245,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('variants')->name('variants.')->group(function () {
         Route::get('/{variant}/edit', [ProductVariantController::class, 'edit'])->name('edit');
         Route::put('/{variant}', [ProductVariantController::class, 'update'])->name('update');
+        Route::post('/{variant}/generate-barcode', [ProductVariantController::class, 'generateBarcode'])->name('generate-barcode');
     });
+
+    // Batch barcode generation
+    Route::post('/variants/batch-generate-barcodes', [ProductVariantController::class, 'batchGenerateBarcodes'])
+        ->name('variants.batch-generate-barcodes');
 
     // Product Templates (for tenants)
     Route::prefix('product-templates')->name('product-templates.')->group(function () {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Webhooks\PaymentWebhookController;
 use Illuminate\Http\Request;
@@ -14,4 +15,11 @@ Route::post('/webhooks/payment/{gateway}', [PaymentWebhookController::class, 'ha
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payment/gateways', [PaymentController::class, 'gateways'])->name('api.payment.gateways');
+
+    // Sync endpoints for offline POS
+    Route::prefix('sync')->name('api.sync.')->group(function () {
+        Route::get('/products', [SyncController::class, 'syncProducts'])->name('products');
+        Route::get('/customers', [SyncController::class, 'syncCustomers'])->name('customers');
+        Route::post('/orders', [SyncController::class, 'syncOrders'])->name('orders');
+    });
 });

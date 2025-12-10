@@ -25,6 +25,8 @@ class Product extends Model
         'custom_attributes',
         'has_variants',
         'is_active',
+        'track_stock',
+        'is_taxable',
         'is_featured',
         'display_order',
         'seo_title',
@@ -36,6 +38,8 @@ class Product extends Model
         'custom_attributes' => 'array',
         'has_variants' => 'boolean',
         'is_active' => 'boolean',
+        'track_stock' => 'boolean',
+        'is_taxable' => 'boolean',
         'is_featured' => 'boolean',
         'display_order' => 'integer',
     ];
