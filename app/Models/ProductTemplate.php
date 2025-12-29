@@ -6,11 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class ProductTemplate extends Model
 {
-//    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
@@ -50,67 +51,41 @@ class ProductTemplate extends Model
         });
     }
 
-    /**
-     * Get the tenant that owns the template.
-     * Null for system templates.
-     */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
     }
 
-    /**
-     * Get the product type for this template.
-     */
     public function productType(): BelongsTo
     {
         return $this->belongsTo(ProductType::class);
     }
 
-    /**
-     * Get the category for this template.
-     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(ProductCategory::class, 'category_id');
     }
 
-    /**
-     * Get the user who created this template.
-     */
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_id');
     }
 
-    /**
-     * Get products created from this template.
-     */
     public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'template_id');
     }
 
-    /**
-     * Scope to get system templates.
-     */
     public function scopeSystem($query)
     {
         return $query->where('is_system', true);
     }
 
-    /**
-     * Scope to get active templates.
-     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 
-    /**
-     * Scope to get templates available for a tenant.
-     * Includes system templates and tenant's own templates.
-     */
     public function scopeAvailableFor($query, ?int $tenantId)
     {
         return $query->where(function ($q) use ($tenantId) {
@@ -119,25 +94,16 @@ class ProductTemplate extends Model
         });
     }
 
-    /**
-     * Check if template is a system template.
-     */
     public function isSystemTemplate(): bool
     {
         return $this->is_system && $this->tenant_id === null;
     }
 
-    /**
-     * Get the variant count from template structure.
-     */
     public function getVariantCountAttribute(): int
     {
         return count($this->template_structure['variants'] ?? []);
     }
 
-    /**
-     * Get usage count (products created from this template).
-     */
     public function getUsageCountAttribute(): int
     {
         return $this->products()->count();

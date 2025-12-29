@@ -50,7 +50,7 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({ shop, currencie
     const isWholesale = shop.inventory_model === 'wholesale_only';
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Storefront Settings - ${shop.name}`} />
 
             <div className="space-y-6">
@@ -499,8 +499,10 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({ shop, currencie
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 };
+
+StorefrontSettings.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
 
 export default StorefrontSettings;

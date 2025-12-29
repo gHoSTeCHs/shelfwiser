@@ -148,7 +148,7 @@ export default function Create({
 
     if (supplierConnections.length === 0) {
         return (
-            <AppLayout>
+            <>
                 <Head title="Create Purchase Order" />
                 <div className="space-y-6">
                     <EmptyState
@@ -162,12 +162,12 @@ export default function Create({
                         }
                     />
                 </div>
-            </AppLayout>
+            </>
         );
     }
 
     return (
-        <AppLayout>
+        <>
             <Head title="Create Purchase Order" />
 
             <div className="space-y-6">
@@ -553,6 +553,8 @@ export default function Create({
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

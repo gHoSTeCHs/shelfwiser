@@ -20,4 +20,20 @@ enum EmploymentType: string
             self::INTERN => 'Intern',
         };
     }
+
+    public function requiresEndDate(): bool
+    {
+        return match ($this) {
+            self::CONTRACT, self::SEASONAL, self::INTERN => true,
+            default => false,
+        };
+    }
+
+    public static function options(): array
+    {
+        return array_map(fn ($case) => [
+            'value' => $case->value,
+            'label' => $case->label(),
+        ], self::cases());
+    }
 }

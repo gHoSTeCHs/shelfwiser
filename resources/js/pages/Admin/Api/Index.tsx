@@ -21,7 +21,7 @@ interface Props {
 
 export default function Index({ apiKeys, stats, webhooks, rateLimits }: Props) {
     return (
-        <AppLayout>
+        <>
             <Head title="API Management" />
 
             <div className="space-y-6">
@@ -208,6 +208,8 @@ export default function Index({ apiKeys, stats, webhooks, rateLimits }: Props) {
                     </div>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

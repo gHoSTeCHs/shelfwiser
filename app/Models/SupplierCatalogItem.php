@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\Enums\CatalogVisibility;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SupplierCatalogItem extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'supplier_tenant_id',
         'product_id',

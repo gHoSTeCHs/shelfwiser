@@ -52,6 +52,8 @@ export interface ProductPackagingType {
     discount_percentage?: number;
 }
 
+export type ProductAttributeValue = string | number | boolean | null;
+
 export interface ProductVariant {
     id: number;
     product_id: number;
@@ -61,7 +63,7 @@ export interface ProductVariant {
     cost_price: number | null;
     reorder_level: number | null;
     barcode: string | null;
-    attributes: Record<string, any> | null;
+    attributes: Record<string, ProductAttributeValue> | null;
     base_unit_name: string;
     image_url: string | null;
     images: string[] | null;
@@ -113,7 +115,9 @@ export type StockMovementType =
     | 'return'
     | 'damage'
     | 'loss'
-    | 'stock_take';
+    | 'stock_take'
+    | 'purchase_order_shipped'
+    | 'purchase_order_received';
 
 export interface StockMovementTypeOption {
     value: StockMovementType;

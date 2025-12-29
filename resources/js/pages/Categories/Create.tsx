@@ -68,7 +68,7 @@ export default function Create({ parentCategories }: Props) {
     ];
 
     return (
-        <AppLayout>
+        <>
             <Head title="Create Category" />
 
             <div className="mx-auto max-w-3xl space-y-6">
@@ -232,6 +232,8 @@ export default function Create({ parentCategories }: Props) {
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

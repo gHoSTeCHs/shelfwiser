@@ -73,7 +73,7 @@ export default function Edit({ category, parentCategories }: Props) {
     ];
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit ${category.name}`} />
 
             <div className="mx-auto max-w-3xl space-y-6">
@@ -256,6 +256,8 @@ export default function Edit({ category, parentCategories }: Props) {
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

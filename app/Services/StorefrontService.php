@@ -12,12 +12,10 @@ use Illuminate\Database\Eloquent\Collection;
 
 class StorefrontService
 {
-    /**
-     * Get featured products for the shop.
-     */
     public function getFeaturedProducts(Shop $shop, int $limit = 8): Collection
     {
-        return Product::where('shop_id', $shop->id)
+        return Product::where('tenant_id', $shop->tenant_id)
+            ->where('shop_id', $shop->id)
             ->where('is_active', true)
             ->where('is_featured', true)
             ->with(['variants' => fn ($q) => $q->where('is_available_online', true)
@@ -29,9 +27,6 @@ class StorefrontService
             ->get();
     }
 
-    /**
-     * Get products with filters, search, and sorting.
-     */
     public function getProducts(
         Shop $shop,
         ?string $search = null,
@@ -39,7 +34,8 @@ class StorefrontService
         string $sortBy = 'name',
         int $perPage = 12
     ): LengthAwarePaginator {
-        $query = Product::where('shop_id', $shop->id)
+        $query = Product::where('tenant_id', $shop->tenant_id)
+            ->where('shop_id', $shop->id)
             ->where('is_active', true)
             ->with([
                 'variants' => fn ($q) => $q->where('is_available_online', true)
@@ -80,12 +76,10 @@ class StorefrontService
         return $query->paginate($perPage);
     }
 
-    /**
-     * Get product by slug with full details.
-     */
     public function getProductBySlug(Shop $shop, string $slug): ?Product
     {
-        return Product::where('shop_id', $shop->id)
+        return Product::where('tenant_id', $shop->tenant_id)
+            ->where('shop_id', $shop->id)
             ->where('slug', $slug)
             ->where('is_active', true)
             ->with([
@@ -98,12 +92,10 @@ class StorefrontService
             ->first();
     }
 
-    /**
-     * Get related products (same category).
-     */
     public function getRelatedProducts(Product $product, int $limit = 4): Collection
     {
-        return Product::where('shop_id', $product->shop_id)
+        return Product::where('tenant_id', $product->tenant_id)
+            ->where('shop_id', $product->shop_id)
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
@@ -114,9 +106,6 @@ class StorefrontService
             ->get();
     }
 
-    /**
-     * Get categories for the shop.
-     */
     public function getCategories(Shop $shop): Collection
     {
         return ProductCategory::where('tenant_id', $shop->tenant_id)
@@ -126,9 +115,6 @@ class StorefrontService
             ->get();
     }
 
-    /**
-     * Get products by category.
-     */
     public function getProductsByCategory(
         Shop $shop,
         ProductCategory $category,
@@ -138,9 +124,6 @@ class StorefrontService
         return $this->getProducts($shop, null, $category->id, $sortBy, $perPage);
     }
 
-    /**
-     * Get services with filters, search, and sorting.
-     */
     public function getServices(
         Shop $shop,
         ?string $search = null,
@@ -148,7 +131,8 @@ class StorefrontService
         string $sortBy = 'name',
         int $perPage = 12
     ): LengthAwarePaginator {
-        $query = Service::where('shop_id', $shop->id)
+        $query = Service::where('tenant_id', $shop->tenant_id)
+            ->where('shop_id', $shop->id)
             ->where('is_active', true)
             ->where('is_available_online', true)
             ->with([
@@ -186,9 +170,6 @@ class StorefrontService
         return $query->paginate($perPage);
     }
 
-    /**
-     * Get service categories for the shop.
-     */
     public function getServiceCategories(Shop $shop): Collection
     {
         return ServiceCategory::where('tenant_id', $shop->tenant_id)
@@ -202,12 +183,10 @@ class StorefrontService
             ->get();
     }
 
-    /**
-     * Get related services (same category).
-     */
     public function getRelatedServices(Service $service, int $limit = 4): Collection
     {
-        return Service::where('shop_id', $service->shop_id)
+        return Service::where('tenant_id', $service->tenant_id)
+            ->where('shop_id', $service->shop_id)
             ->where('service_category_id', $service->service_category_id)
             ->where('id', '!=', $service->id)
             ->where('is_active', true)

@@ -67,7 +67,7 @@ export default function Index({
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Supplier Connections" />
 
             <div className="space-y-8">
@@ -278,6 +278,8 @@ export default function Index({
                     )}
                 </section>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

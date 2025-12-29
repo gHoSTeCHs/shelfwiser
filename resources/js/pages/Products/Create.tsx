@@ -314,7 +314,7 @@ export default function Create({ shops, productTypes, categories, templates = []
 
 
     return (
-        <AppLayout>
+        <>
             <Head title="Create Product" />
 
             <div className="space-y-6">
@@ -1476,6 +1476,8 @@ export default function Create({ shops, productTypes, categories, templates = []
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

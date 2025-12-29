@@ -26,4 +26,12 @@ enum DeductionType: string
             self::OTHER => 'Other Deduction',
         };
     }
+
+    public static function options(): array
+    {
+        return collect(self::cases())->map(fn ($case) => [
+            'value' => $case->value,
+            'label' => $case->label(),
+        ])->all();
+    }
 }

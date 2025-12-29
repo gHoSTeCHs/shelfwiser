@@ -264,7 +264,7 @@ export default function Show({
         100;
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Wage Advance #${wageAdvance.id}`} />
 
             <div className="space-y-6">
@@ -995,6 +995,8 @@ export default function Show({
                     </div>
                 </form>
             </Modal>
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

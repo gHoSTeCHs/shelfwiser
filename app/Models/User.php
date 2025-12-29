@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\OnboardingStatus;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,6 +35,9 @@ class User extends Authenticatable
         'is_super_admin',
         'role',
         'is_active',
+        'onboarding_status',
+        'onboarded_at',
+        'onboarded_by',
         'is_customer',
         'marketing_opt_in',
         'password',
@@ -60,9 +64,11 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'onboarding_status' => OnboardingStatus::class,
             'is_tenant_owner' => 'boolean',
             'is_super_admin' => 'boolean',
             'is_active' => 'boolean',
+            'onboarded_at' => 'datetime',
             'is_customer' => 'boolean',
             'marketing_opt_in' => 'boolean',
         ];
@@ -122,48 +128,17 @@ class User extends Authenticatable
         return $this->belongsTo(Tenant::class);
     }
 
+    public function onboardedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'onboarded_by');
+    }
+
     public function shops(): BelongsToMany
     {
         return $this->belongsToMany(Shop::class, 'shop_user')
             ->using(ShopUser::class)
             ->withPivot('tenant_id')
             ->withTimestamps();
-    }
-
-    /**
-     * Get the customer's cart for a specific shop.
-     */
-    public function carts(): HasMany
-    {
-        return $this->hasMany(Cart::class, 'customer_id');
-    }
-
-    /**
-     * Get the customer's addresses.
-     */
-    public function addresses(): HasMany
-    {
-        return $this->hasMany(CustomerAddress::class, 'customer_id');
-    }
-
-    /**
-     * Get the customer's default shipping address.
-     */
-    public function defaultShippingAddress(): HasOne
-    {
-        return $this->hasOne(CustomerAddress::class, 'customer_id')
-            ->where('is_default', true)
-            ->ofType('shipping');
-    }
-
-    /**
-     * Get the customer's default billing address.
-     */
-    public function defaultBillingAddress(): HasOne
-    {
-        return $this->hasOne(CustomerAddress::class, 'customer_id')
-            ->where('is_default', true)
-            ->ofType('billing');
     }
 
     public function employeePayrollDetail(): HasOne
@@ -174,6 +149,16 @@ class User extends Authenticatable
     public function customDeductions(): HasMany
     {
         return $this->hasMany(EmployeeCustomDeduction::class);
+    }
+
+    public function employeeEarnings(): HasMany
+    {
+        return $this->hasMany(EmployeeEarning::class);
+    }
+
+    public function employeeDeductions(): HasMany
+    {
+        return $this->hasMany(EmployeeDeduction::class);
     }
 
     public function timesheets(): HasMany
@@ -194,6 +179,11 @@ class User extends Authenticatable
     public function payslips(): HasMany
     {
         return $this->hasMany(Payslip::class);
+    }
+
+    public function taxSettings(): HasOne
+    {
+        return $this->hasOne(EmployeeTaxSetting::class);
     }
 
     public function notifications(): HasMany

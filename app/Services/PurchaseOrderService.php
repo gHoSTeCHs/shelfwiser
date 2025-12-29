@@ -331,19 +331,19 @@ class PurchaseOrderService
 
         $location = $variant->inventoryLocations()
             ->where('location_type', Shop::class)
-            ->where('location_id', $po->supplierTenant->shops()->first()->id)
+            ->whereHas('location', fn ($q) => $q->where('tenant_id', $po->supplier_tenant_id))
+            ->where('quantity', '>=', $item->quantity)
+            ->orderBy('quantity', 'desc')
             ->first();
 
         if (! $location) {
-            throw new \Exception("Supplier inventory location not found for variant {$variant->sku}");
+            throw new \Exception("Supplier inventory location not found or insufficient stock for variant {$variant->sku}");
         }
 
         $quantityBefore = $location->quantity;
         $location->decrement('quantity', $item->quantity);
 
-        $supplierShopId = $location->location_type === Shop::class
-            ? $location->location_id
-            : $po->supplierTenant->shops()->first()->id;
+        $supplierShopId = $location->location_id;
 
         $this->stockMovementService->recordMovement([
             'tenant_id' => $po->supplier_tenant_id,
@@ -372,6 +372,7 @@ class PurchaseOrderService
 
         if (! $location) {
             $location = $variant->inventoryLocations()->create([
+                'tenant_id' => $po->buyer_tenant_id,
                 'location_type' => Shop::class,
                 'location_id' => $po->shop_id,
                 'quantity' => 0,

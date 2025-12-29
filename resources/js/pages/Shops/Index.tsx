@@ -52,7 +52,7 @@ export default function Index({ shops, shopTypes }: Props) {
     });
 
     return (
-        <AppLayout>
+        <>
             <Head title="Shops" />
 
             <div className="space-y-6">
@@ -255,6 +255,8 @@ export default function Index({ shops, shopTypes }: Props) {
                     </div>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CreateProductRequest extends FormRequest
 {
@@ -13,10 +14,18 @@ class CreateProductRequest extends FormRequest
 
     public function rules(): array
     {
+        $tenantId = $this->user()->tenant_id;
+
         $rules = [
-            'shop_id' => ['required', 'exists:shops,id'],
+            'shop_id' => [
+                'required',
+                Rule::exists('shops', 'id')->where('tenant_id', $tenantId),
+            ],
             'product_type_slug' => ['required', 'exists:product_types,slug'],
-            'category_id' => ['nullable', 'exists:product_categories,id'],
+            'category_id' => [
+                'nullable',
+                Rule::exists('product_categories', 'id')->where('tenant_id', $tenantId),
+            ],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'has_variants' => ['boolean'],
@@ -37,11 +46,27 @@ class CreateProductRequest extends FormRequest
 
         if ($this->boolean('has_variants')) {
             $rules['variants'] = ['required', 'array', 'min:1'];
-            $rules['variants.*.sku'] = ['required', 'string', 'unique:product_variants,sku'];
+            $rules['variants.*.sku'] = [
+                'required',
+                'string',
+                Rule::unique('product_variants', 'sku')
+                    ->where(fn ($query) => $query->whereIn(
+                        'product_id',
+                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    )),
+            ];
             $rules['variants.*.name'] = ['nullable', 'string'];
             $rules['variants.*.price'] = ['required', 'numeric', 'min:0'];
             $rules['variants.*.cost_price'] = ['nullable', 'numeric', 'min:0'];
-            $rules['variants.*.barcode'] = ['nullable', 'string', 'unique:product_variants,barcode'];
+            $rules['variants.*.barcode'] = [
+                'nullable',
+                'string',
+                Rule::unique('product_variants', 'barcode')
+                    ->where(fn ($query) => $query->whereIn(
+                        'product_id',
+                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    )),
+            ];
             $rules['variants.*.attributes'] = ['nullable', 'array'];
             $rules['variants.*.base_unit_name'] = ['required', 'string', 'max:50'];
             $rules['variants.*.packaging_types'] = ['nullable', 'array'];
@@ -56,10 +81,26 @@ class CreateProductRequest extends FormRequest
             $rules['variants.*.packaging_types.*.min_order_quantity'] = ['nullable', 'integer', 'min:1'];
             $rules['variants.*.packaging_types.*.display_order'] = ['nullable', 'integer', 'min:0'];
         } else {
-            $rules['sku'] = ['required', 'string', 'unique:product_variants,sku'];
+            $rules['sku'] = [
+                'required',
+                'string',
+                Rule::unique('product_variants', 'sku')
+                    ->where(fn ($query) => $query->whereIn(
+                        'product_id',
+                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    )),
+            ];
             $rules['price'] = ['required', 'numeric', 'min:0'];
             $rules['cost_price'] = ['nullable', 'numeric', 'min:0'];
-            $rules['barcode'] = ['nullable', 'string', 'unique:product_variants,barcode'];
+            $rules['barcode'] = [
+                'nullable',
+                'string',
+                Rule::unique('product_variants', 'barcode')
+                    ->where(fn ($query) => $query->whereIn(
+                        'product_id',
+                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    )),
+            ];
             $rules['base_unit_name'] = ['required', 'string', 'max:50'];
             $rules['packaging_types'] = ['nullable', 'array'];
             $rules['packaging_types.*.name'] = ['required', 'string', 'max:100'];

@@ -68,7 +68,7 @@ export default function Edit({ catalogItem }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit ${catalogItem.product?.name} in Catalog`} />
 
             <div className="space-y-6">
@@ -341,6 +341,8 @@ export default function Edit({ catalogItem }: Props) {
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

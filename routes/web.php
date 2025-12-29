@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminProductTemplateController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Admin\AdminTenantController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerCreditController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeCustomDeductionController;
@@ -17,6 +18,9 @@ use App\Http\Controllers\OrderPaymentController;
 use App\Http\Controllers\OrderReturnController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\PayrollReportController;
+use App\Http\Controllers\PayrollSettingsController;
+use App\Http\Controllers\PayRunController;
 use App\Http\Controllers\POSController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
@@ -206,7 +210,57 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{payrollPeriod}/cancel', [PayrollController::class, 'cancel'])->name('cancel');
 
         Route::delete('/{payrollPeriod}', [PayrollController::class, 'destroy'])->name('destroy');
+
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/summary', [PayrollReportController::class, 'summary'])->name('summary');
+            Route::get('/summary/export', [PayrollReportController::class, 'exportSummary'])->name('summary.export');
+            Route::get('/tax', [PayrollReportController::class, 'taxRemittance'])->name('tax');
+            Route::get('/tax/export', [PayrollReportController::class, 'exportTaxRemittance'])->name('tax.export');
+            Route::get('/pension', [PayrollReportController::class, 'pension'])->name('pension');
+            Route::get('/pension/export', [PayrollReportController::class, 'exportPension'])->name('pension.export');
+            Route::get('/bank-schedule', [PayrollReportController::class, 'bankSchedule'])->name('bank-schedule');
+            Route::get('/bank-schedule/export', [PayrollReportController::class, 'exportBankSchedule'])->name('bank-schedule.export');
+        });
+
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::get('/earning-types', [PayrollSettingsController::class, 'earningTypes'])->name('earning-types');
+            Route::post('/earning-types', [PayrollSettingsController::class, 'storeEarningType'])->name('earning-types.store');
+            Route::put('/earning-types/{earningType}', [PayrollSettingsController::class, 'updateEarningType'])->name('earning-types.update');
+            Route::delete('/earning-types/{earningType}', [PayrollSettingsController::class, 'deleteEarningType'])->name('earning-types.destroy');
+
+            Route::get('/deduction-types', [PayrollSettingsController::class, 'deductionTypes'])->name('deduction-types');
+            Route::post('/deduction-types', [PayrollSettingsController::class, 'storeDeductionType'])->name('deduction-types.store');
+            Route::put('/deduction-types/{deductionType}', [PayrollSettingsController::class, 'updateDeductionType'])->name('deduction-types.update');
+            Route::delete('/deduction-types/{deductionType}', [PayrollSettingsController::class, 'deleteDeductionType'])->name('deduction-types.destroy');
+
+            Route::get('/pay-calendars', [PayrollSettingsController::class, 'payCalendars'])->name('pay-calendars');
+            Route::post('/pay-calendars', [PayrollSettingsController::class, 'storePayCalendar'])->name('pay-calendars.store');
+            Route::put('/pay-calendars/{payCalendar}', [PayrollSettingsController::class, 'updatePayCalendar'])->name('pay-calendars.update');
+            Route::delete('/pay-calendars/{payCalendar}', [PayrollSettingsController::class, 'deletePayCalendar'])->name('pay-calendars.destroy');
+
+            Route::get('/tax', [PayrollSettingsController::class, 'taxSettings'])->name('tax');
+        });
     });
+
+    Route::prefix('pay-runs')->name('pay-runs.')->group(function () {
+        Route::get('/', [PayRunController::class, 'index'])->name('index');
+        Route::get('/create', [PayRunController::class, 'create'])->name('create');
+        Route::post('/', [PayRunController::class, 'store'])->name('store');
+        Route::get('/{payRun}', [PayRunController::class, 'show'])->name('show');
+        Route::post('/{payRun}/calculate', [PayRunController::class, 'calculate'])->name('calculate');
+        Route::post('/{payRun}/items/{item}/recalculate', [PayRunController::class, 'recalculateItem'])->name('recalculate-item');
+        Route::post('/{payRun}/submit', [PayRunController::class, 'submitForApproval'])->name('submit');
+        Route::post('/{payRun}/approve', [PayRunController::class, 'approve'])->name('approve');
+        Route::post('/{payRun}/reject', [PayRunController::class, 'reject'])->name('reject');
+        Route::post('/{payRun}/complete', [PayRunController::class, 'complete'])->name('complete');
+        Route::post('/{payRun}/cancel', [PayRunController::class, 'cancel'])->name('cancel');
+        Route::post('/{payRun}/exclude/{user}', [PayRunController::class, 'excludeEmployee'])->name('exclude');
+        Route::post('/{payRun}/include/{user}', [PayRunController::class, 'includeEmployee'])->name('include');
+        Route::post('/{payRun}/payslips/download', [PayrollReportController::class, 'downloadBulkPayslips'])->name('download-payslips');
+        Route::get('/{payRun}/validate-nibss', [PayrollReportController::class, 'validateNibss'])->name('validate-nibss');
+    });
+
+    Route::get('/payslips/{payslip}/download', [PayrollReportController::class, 'downloadPayslip'])->name('payslips.download');
 
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
@@ -317,6 +371,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/orders/{order}/return', [OrderReturnController::class, 'create'])->name('orders.return.create');
     Route::post('/orders/{order}/return', [OrderReturnController::class, 'store'])->name('orders.return.store');
+
+    Route::get('customers/generate-data', [CustomerController::class, 'generateData'])
+        ->name('customers.generate-data');
+    Route::resource('customers', CustomerController::class);
+    Route::patch('customers/{customer}/toggle-status', [CustomerController::class, 'toggleStatus'])
+        ->name('customers.toggle-status');
+    Route::patch('customers/{customer}/credit-limit', [CustomerController::class, 'updateCreditLimit'])
+        ->name('customers.update-credit-limit');
 
     Route::prefix('customers/{shop}')->name('customers.')->group(function () {
         Route::get('/credit', [CustomerCreditController::class, 'index'])->name('credit.index');

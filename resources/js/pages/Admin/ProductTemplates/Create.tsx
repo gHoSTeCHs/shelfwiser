@@ -160,7 +160,7 @@ export default function Create({ productTypes, categories }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Create Product Template" />
 
             <div className="space-y-6">
@@ -585,6 +585,8 @@ export default function Create({ productTypes, categories }: Props) {
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

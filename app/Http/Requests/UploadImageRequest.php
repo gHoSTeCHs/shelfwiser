@@ -6,17 +6,39 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UploadImageRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return auth()->check();
+        if (! auth()->check()) {
+            return false;
+        }
+
+        $modelType = $this->input('model_type');
+        $modelId = $this->input('model_id');
+
+        if (! $modelType || ! $modelId) {
+            return false;
+        }
+
+        $tenantId = auth()->user()->tenant_id;
+
+        return match ($modelType) {
+            'Product' => \App\Models\Product::where('id', $modelId)
+                ->where('tenant_id', $tenantId)
+                ->exists(),
+            'ProductVariant' => \App\Models\ProductVariant::where('id', $modelId)
+                ->whereHas('product', fn ($q) => $q->where('tenant_id', $tenantId))
+                ->exists(),
+            'Service' => \App\Models\Service::where('id', $modelId)
+                ->where('tenant_id', $tenantId)
+                ->exists(),
+            'User' => \App\Models\User::where('id', $modelId)
+                ->where('tenant_id', $tenantId)
+                ->exists(),
+            default => false,
+        };
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array

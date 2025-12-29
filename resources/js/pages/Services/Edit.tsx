@@ -42,7 +42,7 @@ export default function Edit({ service, categories }: Props) {
     const flatCategories = flattenCategories(categories);
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit ${service.name}`} />
 
             <div className="space-y-6">
@@ -293,6 +293,8 @@ export default function Edit({ service, categories }: Props) {
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

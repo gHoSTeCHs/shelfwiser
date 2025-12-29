@@ -36,7 +36,7 @@ export default function Show({ movement }: Props) {
     const isTransfer = movement.type.includes('transfer');
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Stock Movement #${movement.id}`} />
 
             <div className="mx-auto max-w-4xl space-y-6">
@@ -265,6 +265,8 @@ export default function Show({ movement }: Props) {
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

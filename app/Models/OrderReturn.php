@@ -2,14 +2,21 @@
 
 namespace App\Models;
 
+use App\Enums\OrderReturnStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrderReturn extends Model
 {
+    use HasFactory;
+
     protected $table = 'returns';
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'tenant_id',
         'order_id',
@@ -29,7 +36,11 @@ class OrderReturn extends Model
         'completed_at',
     ];
 
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
+        'status' => OrderReturnStatus::class,
         'refund_amount' => 'decimal:2',
         'restocked' => 'boolean',
         'approved_at' => 'datetime',
@@ -79,21 +90,21 @@ class OrderReturn extends Model
 
     public function isPending(): bool
     {
-        return $this->status === 'pending';
+        return $this->status === OrderReturnStatus::PENDING;
     }
 
     public function isApproved(): bool
     {
-        return $this->status === 'approved';
+        return $this->status === OrderReturnStatus::APPROVED;
     }
 
     public function isRejected(): bool
     {
-        return $this->status === 'rejected';
+        return $this->status === OrderReturnStatus::REJECTED;
     }
 
     public function isCompleted(): bool
     {
-        return $this->status === 'completed';
+        return $this->status === OrderReturnStatus::COMPLETED;
     }
 }

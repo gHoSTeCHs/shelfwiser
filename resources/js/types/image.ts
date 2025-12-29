@@ -1,3 +1,5 @@
+export type ImageMetadataValue = string | number | boolean | null;
+
 export interface Image {
     id: number;
     tenant_id: number;
@@ -15,7 +17,7 @@ export interface Image {
     caption: string | null;
     is_primary: boolean;
     sort_order: number;
-    metadata: Record<string, any> | null;
+    metadata: Record<string, ImageMetadataValue> | null;
     created_at: string;
     updated_at: string;
     url?: string;

@@ -37,7 +37,7 @@ export default function Index({ purchaseOrders, shops }: Props) {
         : purchaseOrders.data;
 
     return (
-        <AppLayout>
+        <>
             <Head title="Purchase Orders" />
 
             <div className="space-y-6">
@@ -201,6 +201,8 @@ export default function Index({ purchaseOrders, shops }: Props) {
                     </div>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

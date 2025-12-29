@@ -55,7 +55,7 @@ const Select: React.FC<SelectProps> = ({
 
     const currentValue = controlledValue ?? selectedValue;
 
-    let selectClasses = `h-11 w-full appearance-none rounded-lg border bg-transparent px-4 py-2.5 pr-11 text-sm shadow-theme-xs focus:ring-3 focus:outline-hidden dark:bg-gray-900 ${className}`;
+    let selectClasses = `h-11 w-full appearance-none rounded-lg border bg-transparent px-4 py-2.5 pr-11 text-base shadow-theme-xs focus:ring-3 focus:outline-hidden dark:bg-gray-900 ${className}`;
 
     if (disabled) {
         selectClasses += ` text-gray-500 border-gray-300 opacity-40 bg-gray-100 cursor-not-allowed dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700`;

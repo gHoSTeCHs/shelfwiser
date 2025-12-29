@@ -121,7 +121,7 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
     );
 
     return (
-        <AppLayout>
+        <>
             <Head title="Payroll Management" />
 
             <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -251,19 +251,19 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Period
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Shop
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Dates
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th className="hidden lg:table-cell px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Employees
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th className="hidden lg:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Gross Pay
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th className="hidden lg:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Deductions
                                     </th>
                                     <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -290,19 +290,19 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="hidden md:table-cell px-4 py-3">
                                             <span className="text-sm text-gray-600 dark:text-gray-300">
                                                 {period.shop ? period.shop.name : 'All Shops'}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="hidden md:table-cell px-4 py-3">
                                             <div className="flex flex-col text-sm text-gray-600 dark:text-gray-300">
                                                 <span>{formatDate(period.start_date)}</span>
                                                 <span className="text-gray-400 dark:text-gray-500">to</span>
                                                 <span>{formatDate(period.end_date)}</span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="hidden lg:table-cell px-4 py-3">
                                             <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300">
                                                 <Users className="h-4 w-4" />
                                                 <span>{period.employee_count}</span>
@@ -313,10 +313,10 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
+                                        <td className="hidden lg:table-cell px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
                                             {formatCurrency(period.total_gross_pay)}
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
+                                        <td className="hidden lg:table-cell px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
                                             {formatCurrency(period.total_deductions)}
                                         </td>
                                         <td className="px-4 py-3 text-right text-sm font-semibold text-success-600 dark:text-success-400">
@@ -356,6 +356,8 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                     )}
                 </div>
             </Card>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

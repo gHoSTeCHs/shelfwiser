@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateServiceRequest extends FormRequest
 {
@@ -21,8 +22,13 @@ class UpdateServiceRequest extends FormRequest
      */
     public function rules(): array
     {
+        $tenantId = $this->user()->tenant_id;
+
         return [
-            'service_category_id' => ['nullable', 'exists:service_categories,id'],
+            'service_category_id' => [
+                'nullable',
+                Rule::exists('service_categories', 'id')->where('tenant_id', $tenantId),
+            ],
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'image_url' => ['nullable', 'string', 'url', 'max:500'],

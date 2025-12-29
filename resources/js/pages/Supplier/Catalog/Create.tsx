@@ -65,7 +65,7 @@ export default function Create({ products }: Props) {
 
     if (products.length === 0) {
         return (
-            <AppLayout>
+            <>
                 <Head title="Add Product to Catalog" />
                 <div className="space-y-6">
                     <EmptyState
@@ -79,12 +79,12 @@ export default function Create({ products }: Props) {
                         }
                     />
                 </div>
-            </AppLayout>
+            </>
         );
     }
 
     return (
-        <AppLayout>
+        <>
             <Head title="Add Product to Catalog" />
 
             <div className="space-y-6">
@@ -350,6 +350,8 @@ export default function Create({ products }: Props) {
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

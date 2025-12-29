@@ -91,7 +91,7 @@ export default function Show({ tenant }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Tenant: ${tenant.name}`} />
 
             <div className="space-y-6">
@@ -426,6 +426,8 @@ export default function Show({ tenant }: Props) {
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

@@ -60,6 +60,10 @@ class Customer extends Authenticatable
         'last_purchase_at' => 'datetime',
     ];
 
+    protected $appends = [
+        'full_name',
+    ];
+
     /**
      * Get the tenant that owns the customer.
      */

@@ -1,3 +1,6 @@
+import { User } from './index';
+import { Shop } from './shop';
+
 export interface PayrollPeriod {
     id: number;
     tenant_id: number;
@@ -33,7 +36,7 @@ export interface Payslip {
     user_id: number;
     tenant_id: number;
     shop_id: number;
-    base_salary: number;
+    basic_salary: number;
     regular_hours: number;
     regular_pay: number;
     overtime_hours: number;
@@ -68,13 +71,17 @@ export interface EmployeePayrollDetail {
     tenant_id: number;
     employment_type: EmploymentType;
     pay_type: PayType;
-    pay_amount: number;
+    pay_amount: string;
     pay_frequency: PayFrequency;
+    pay_calendar_id: number | null;
+    standard_hours_per_week: string;
+    commission_rate: string | null;
+    commission_cap: string | null;
     tax_handling: TaxHandling;
     enable_tax_calculations: boolean;
     tax_id_number: string | null;
     pension_enabled: boolean;
-    pension_employee_rate: number;
+    pension_employee_rate: string;
     pension_employer_rate: number;
     nhf_enabled: boolean;
     nhf_rate: number;
@@ -179,7 +186,7 @@ export interface EmployeeCustomDeduction {
 }
 
 export interface EarningsBreakdown {
-    base_salary: number;
+    basic_salary: number;
     regular_hours: number;
     regular_pay: number;
     overtime_hours: number;
@@ -219,13 +226,30 @@ export type PayrollStatus = 'draft' | 'processing' | 'processed' | 'approved' | 
 
 export type WageAdvanceStatus = 'pending' | 'approved' | 'rejected' | 'disbursed' | 'repaying' | 'repaid' | 'cancelled';
 
-export type EmploymentType = 'full_time' | 'part_time' | 'contract' | 'freelance';
+export type EmploymentType =
+    | 'full_time'
+    | 'part_time'
+    | 'contract'
+    | 'seasonal'
+    | 'intern';
 
-export type PayType = 'salary' | 'hourly' | 'daily' | 'commission_based';
+export type PayType =
+    | 'salary'
+    | 'hourly'
+    | 'daily'
+    | 'commission_based';
 
-export type PayFrequency = 'weekly' | 'bi_weekly' | 'monthly' | 'quarterly' | 'annually';
+export type PayFrequency =
+    | 'daily'
+    | 'weekly'
+    | 'bi_weekly'
+    | 'semi_monthly'
+    | 'monthly';
 
-export type TaxHandling = 'employee_calculates' | 'shop_calculates';
+export type TaxHandling =
+    | 'shop_calculates'
+    | 'employee_calculates'
+    | 'exempt';
 
 export type DeductionType =
     | 'fixed_amount'
@@ -237,22 +261,301 @@ export type DeductionType =
     | 'savings'
     | 'other';
 
-export interface User {
+export interface PayRun {
     id: number;
-    name: string;
-    email: string;
     tenant_id: number;
-    role: string;
+    payroll_period_id: number;
+    pay_calendar_id: number | null;
+    reference: string;
+    name: string;
+    status: PayRunStatus;
+    employee_count: number;
+    total_gross: string;
+    total_deductions: string;
+    total_net: string;
+    total_employer_costs: string;
+    calculated_by: number | null;
+    calculated_at: string | null;
+    approved_by: number | null;
+    approved_at: string | null;
+    completed_by: number | null;
+    completed_at: string | null;
+    notes: string | null;
+    metadata: Record<string, unknown> | null;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+    payroll_period?: PayrollPeriod;
+    pay_calendar?: PayCalendar;
+    items?: PayRunItem[];
+    payslips?: Payslip[];
+    calculated_by_user?: User;
+    approved_by_user?: User;
+    completed_by_user?: User;
+    status_label?: string;
+    status_color?: string;
+}
+
+export interface PayRunItem {
+    id: number;
+    pay_run_id: number;
+    user_id: number;
+    payslip_id: number | null;
+    status: PayRunItemStatus;
+    basic_salary: string;
+    gross_earnings: string;
+    taxable_earnings: string;
+    total_deductions: string;
+    net_pay: string;
+    employer_pension: string;
+    employer_nhf: string;
+    total_employer_cost: string;
+    earnings_breakdown: EarningBreakdownItem[] | null;
+    deductions_breakdown: DeductionBreakdownItem[] | null;
+    tax_calculation: TaxCalculation | null;
+    error_message: string | null;
+    created_at: string;
+    updated_at: string;
+    user?: User;
+    pay_run?: PayRun;
+    payslip?: Payslip;
+    status_label?: string;
+    status_color?: string;
+}
+
+export interface EarningBreakdownItem {
+    type: string;
+    code: string;
+    category: string;
+    amount: number;
+    hours?: number;
+    rate?: number;
+    is_taxable?: boolean;
+    is_pensionable?: boolean;
+}
+
+export interface DeductionBreakdownItem {
+    type: string;
+    code: string;
+    category: string;
+    amount: number;
+    deduction_id?: number;
+    is_pre_tax?: boolean;
+}
+
+export interface TaxCalculation {
+    gross_income: number;
+    taxable_income: number;
+    consolidated_relief: number;
+    annual_tax: number;
+    monthly_tax: number;
+    tax: number;
+    effective_rate: number;
+    bands?: TaxBandCalculation[];
+}
+
+export interface TaxBandCalculation {
+    band_name: string;
+    lower_limit: number;
+    upper_limit: number | null;
+    rate: number;
+    taxable_in_band: number;
+    tax_in_band: number;
+}
+
+export interface PayCalendar {
+    id: number;
+    tenant_id: number;
+    name: string;
+    description: string | null;
+    frequency: PayFrequency;
+    pay_day: number;
+    cutoff_day: number | null;
+    is_default: boolean;
     is_active: boolean;
     created_at: string;
     updated_at: string;
+    deleted_at: string | null;
+    employees_count?: number;
 }
 
-export interface Shop {
+export interface EarningTypeModel {
     id: number;
     tenant_id: number;
+    code: string;
     name: string;
-    slug: string;
+    description: string | null;
+    category: EarningCategory;
+    calculation_type: EarningCalculationType;
+    default_amount: string;
+    default_rate: string;
+    is_taxable: boolean;
+    is_pensionable: boolean;
+    is_recurring: boolean;
+    is_system: boolean;
+    is_active: boolean;
+    display_order: number;
+    metadata: Record<string, unknown> | null;
     created_at: string;
     updated_at: string;
+    deleted_at: string | null;
+}
+
+export interface DeductionTypeModel {
+    id: number;
+    tenant_id: number;
+    code: string;
+    name: string;
+    description: string | null;
+    category: DeductionCategory;
+    calculation_type: DeductionCalculationType;
+    calculation_base: DeductionCalculationBase;
+    default_amount: string;
+    default_rate: string;
+    max_amount: string | null;
+    annual_cap: string | null;
+    is_pre_tax: boolean;
+    is_mandatory: boolean;
+    is_system: boolean;
+    is_active: boolean;
+    priority: number;
+    metadata: Record<string, unknown> | null;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+}
+
+export interface TaxTable {
+    id: number;
+    name: string;
+    description: string | null;
+    country_code: string;
+    tax_year: number;
+    effective_from: string;
+    effective_to: string | null;
+    is_active: boolean;
+    bands?: TaxTableBand[];
+    reliefs?: TaxRelief[];
+}
+
+export interface TaxTableBand {
+    id: number;
+    tax_table_id: number;
+    band_name: string;
+    lower_limit: number;
+    upper_limit: number | null;
+    rate: number;
+    cumulative_tax: number;
+}
+
+export interface TaxRelief {
+    id: number;
+    tax_table_id: number;
+    name: string;
+    type: string;
+    value: number;
+    is_percentage: boolean;
+    max_amount: number | null;
+    description: string | null;
+}
+
+export interface PayRunSummary {
+    total_employees: number;
+    calculated: number;
+    pending: number;
+    errors: number;
+    excluded: number;
+    totals: {
+        gross: string;
+        deductions: string;
+        net: string;
+        employer_costs: string;
+    };
+}
+
+export interface PayrollReportData {
+    summary: Record<string, number | string>;
+    breakdown: Record<string, unknown>[];
+    generated_at: string;
+}
+
+export interface BankScheduleValidation {
+    valid_count: number;
+    invalid_count: number;
+    valid: BankScheduleItem[];
+    invalid: BankScheduleInvalidItem[];
+    total_valid_amount: number;
+    can_generate: boolean;
+}
+
+export interface BankScheduleItem {
+    employee_id: number;
+    employee_name: string;
+    bank_name: string;
+    bank_code: string;
+    account_number: string;
+    amount: number;
+}
+
+export interface BankScheduleInvalidItem {
+    employee_id: number;
+    employee_name: string;
+    errors: string[];
+    amount: number;
+}
+
+export type PayRunStatus =
+    | 'draft'
+    | 'calculating'
+    | 'pending_review'
+    | 'pending_approval'
+    | 'approved'
+    | 'processing'
+    | 'completed'
+    | 'cancelled';
+
+export type PayRunItemStatus =
+    | 'pending'
+    | 'calculated'
+    | 'error'
+    | 'excluded';
+
+export type EarningCategory =
+    | 'base'
+    | 'allowance'
+    | 'bonus'
+    | 'commission'
+    | 'overtime'
+    | 'other';
+
+export type EarningCalculationType =
+    | 'fixed'
+    | 'percentage'
+    | 'hourly'
+    | 'formula';
+
+export type DeductionCategory =
+    | 'statutory'
+    | 'voluntary'
+    | 'loan'
+    | 'advance'
+    | 'other';
+
+export type DeductionCalculationType =
+    | 'fixed'
+    | 'percentage'
+    | 'tiered'
+    | 'formula';
+
+export type DeductionCalculationBase =
+    | 'gross'
+    | 'basic'
+    | 'taxable'
+    | 'pensionable'
+    | 'net';
+
+export interface EnumOption {
+    value: string;
+    label: string;
+    description?: string;
 }

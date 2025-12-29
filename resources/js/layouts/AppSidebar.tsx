@@ -6,12 +6,15 @@ import {
     Box,
     Briefcase,
     Building2,
+    Calculator,
+    FileSpreadsheet,
     FileUser,
     LayoutTemplate,
     Network,
     Settings,
     ShoppingBag,
     Store,
+    Users,
     Wrench,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -59,6 +62,11 @@ const navItems: NavItem[] = [
         ],
     },
     {
+        icon: <Users />,
+        name: 'Customers',
+        path: '/customers',
+    },
+    {
         icon: <BarChart3 />,
         name: 'Reports & Analytics',
         subItems: [
@@ -67,10 +75,7 @@ const navItems: NavItem[] = [
             { name: 'Suppliers Report', path: '/reports/suppliers' },
             { name: 'Financials', path: '/reports/financials' },
             { name: 'Customer Analytics', path: '/reports/customer-analytics' },
-            {
-                name: 'Product Profitability',
-                path: '/reports/product-profitability',
-            },
+            { name: 'Product Profitability', path: '/reports/product-profitability' },
         ],
     },
     {
@@ -97,11 +102,32 @@ const navItems: NavItem[] = [
         icon: <Briefcase />,
         name: 'HR & Payroll',
         subItems: [
-            { name: 'Payroll', path: '/payroll' },
-            { name: 'My Payslips', path: '/payroll/my-payslips' },
+            { name: 'Overview', path: '/payroll' },
+            { name: 'Pay Runs', path: '/pay-runs', new: true },
             { name: 'Timesheets', path: '/timesheets' },
-            { name: 'Fund Requests', path: '/fund-requests' },
             { name: 'Wage Advances', path: '/wage-advances' },
+            { name: 'Fund Requests', path: '/fund-requests' },
+            { name: 'My Payslips', path: '/payroll/my-payslips' },
+        ],
+    },
+    {
+        icon: <FileSpreadsheet />,
+        name: 'Payroll Reports',
+        subItems: [
+            { name: 'Summary Report', path: '/payroll/reports/summary' },
+            { name: 'Tax Remittance', path: '/payroll/reports/tax' },
+            { name: 'Pension Report', path: '/payroll/reports/pension' },
+            { name: 'Bank Schedule', path: '/payroll/reports/bank-schedule' },
+        ],
+    },
+    {
+        icon: <Calculator />,
+        name: 'Payroll Settings',
+        subItems: [
+            { name: 'Earning Types', path: '/payroll/settings/earning-types' },
+            { name: 'Deduction Types', path: '/payroll/settings/deduction-types' },
+            { name: 'Pay Calendars', path: '/payroll/settings/pay-calendars' },
+            { name: 'Tax Settings', path: '/payroll/settings/tax' },
         ],
     },
 ];

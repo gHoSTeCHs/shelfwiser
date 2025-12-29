@@ -92,7 +92,7 @@ export default function Index({
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Stock Movements" />
 
             <div className="space-y-6">
@@ -337,6 +337,8 @@ export default function Index({
                     </>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

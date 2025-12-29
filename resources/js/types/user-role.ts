@@ -1,4 +1,5 @@
 export type UserRoleValue =
+    | 'super_admin'
     | 'owner'
     | 'general_manager'
     | 'store_manager'
@@ -15,9 +16,9 @@ export interface UserRole {
     permissions: string[];
 }
 
-
 export function isValidUserRole(role: string): role is UserRoleValue {
     return [
+        'super_admin',
         'owner',
         'general_manager',
         'store_manager',

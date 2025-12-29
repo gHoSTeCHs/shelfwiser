@@ -87,7 +87,7 @@ export default function Index({ templates, productTypes, categories, filters, st
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Product Templates" />
 
             <div className="space-y-6">
@@ -316,6 +316,8 @@ export default function Index({ templates, productTypes, categories, filters, st
                     </Card>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

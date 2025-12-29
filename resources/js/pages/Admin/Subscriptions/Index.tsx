@@ -61,7 +61,7 @@ export default function Index({ subscriptions, stats, filters, plans }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Subscription Management" />
 
             <div className="space-y-6">
@@ -258,6 +258,8 @@ export default function Index({ subscriptions, stats, filters, plans }: Props) {
                     </div>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

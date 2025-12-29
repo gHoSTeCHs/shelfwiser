@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Receipt extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'tenant_id',
         'shop_id',
@@ -29,57 +31,36 @@ class Receipt extends Model
         'emailed_at' => 'datetime',
     ];
 
-    /**
-     * Get the tenant this receipt belongs to
-     */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
     }
 
-    /**
-     * Get the shop this receipt belongs to
-     */
     public function shop(): BelongsTo
     {
         return $this->belongsTo(Shop::class);
     }
 
-    /**
-     * Get the order this receipt is for
-     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    /**
-     * Get the payment this receipt is for
-     */
     public function orderPayment(): BelongsTo
     {
         return $this->belongsTo(OrderPayment::class);
     }
 
-    /**
-     * Get the customer this receipt is for
-     */
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
     }
 
-    /**
-     * Get the user who generated this receipt
-     */
     public function generatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'generated_by');
     }
 
-    /**
-     * Generate unique receipt number
-     */
     public static function generateReceiptNumber(): string
     {
         $prefix = 'REC';

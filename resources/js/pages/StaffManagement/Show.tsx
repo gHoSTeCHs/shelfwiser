@@ -5,6 +5,8 @@ import AppLayout from '@/layouts/AppLayout';
 import { User } from '@/types';
 import { EmployeeCustomDeduction, EmployeePayrollDetail } from '@/types/payroll';
 import { Head, Link, router } from '@inertiajs/react';
+import StaffManagementController from '@/actions/App/Http/Controllers/Web/StaffManagementController.ts';
+import ShopController from '@/actions/App/Http/Controllers/ShopController';
 import {
     Building2,
     Calendar,
@@ -84,14 +86,14 @@ export default function Show({ staff, canManagePayroll, canManageDeductions }: P
     const totalActiveDeductions = activeCustomDeductions.length;
 
     return (
-        <AppLayout>
+        <>
             <Head title={`${staff.name} - Staff Details`} />
 
             <div className="mx-auto max-w-7xl space-y-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link
-                            href={'/staff'}
+                            href={StaffManagementController.index.url()}
                             className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ChevronLeft className="mr-1 h-4 w-4" />
@@ -99,7 +101,7 @@ export default function Show({ staff, canManagePayroll, canManageDeductions }: P
                         </Link>
                     </div>
 
-                    <Link href={`/staff/${staff.id}/edit`}>
+                    <Link href={StaffManagementController.edit.url({ staff: staff.id })}>
                         <Button size="sm" className="gap-2">
                             <Edit className="h-4 w-4" />
                             Edit Staff
@@ -134,6 +136,24 @@ export default function Show({ staff, canManagePayroll, canManageDeductions }: P
                                 >
                                     {staff.is_active ? 'Active' : 'Inactive'}
                                 </Badge>
+                                {staff.onboarding_status && (
+                                    <Badge
+                                        variant="light"
+                                        color={
+                                            staff.onboarding_status === 'completed'
+                                                ? 'success'
+                                                : staff.onboarding_status === 'in_progress'
+                                                  ? 'warning'
+                                                  : 'light'
+                                        }
+                                    >
+                                        {staff.onboarding_status === 'completed'
+                                            ? 'Onboarded'
+                                            : staff.onboarding_status === 'in_progress'
+                                              ? 'Onboarding'
+                                              : 'Pending Setup'}
+                                    </Badge>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -199,7 +219,7 @@ export default function Show({ staff, canManagePayroll, canManageDeductions }: P
                                             size="sm"
                                             variant="outline"
                                             onClick={() =>
-                                                router.visit(`/staff/${staff.id}/edit#payroll`)
+                                                router.visit(StaffManagementController.edit.url({ staff: staff.id }) + '#payroll')
                                             }
                                         >
                                             {hasPayrollDetails ? 'Edit' : 'Set Up'}
@@ -275,6 +295,42 @@ export default function Show({ staff, canManagePayroll, canManageDeductions }: P
                                             </div>
                                         )}
 
+                                        {staff.employeePayrollDetail.standard_hours_per_week && (
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                    Weekly Hours
+                                                </label>
+                                                <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                    {staff.employeePayrollDetail.standard_hours_per_week} hrs/week
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {staff.employeePayrollDetail.commission_rate && (
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                    Commission Rate
+                                                </label>
+                                                <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                    {staff.employeePayrollDetail.commission_rate}%
+                                                    {staff.employeePayrollDetail.commission_cap && (
+                                                        <span className="text-gray-500"> (cap: {formatCurrency(staff.employeePayrollDetail.commission_cap)})</span>
+                                                    )}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {staff.employeePayrollDetail.pay_calendar && (
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                    Pay Calendar
+                                                </label>
+                                                <p className="mt-1 text-sm text-gray-900 dark:text-white">
+                                                    {staff.employeePayrollDetail.pay_calendar.name}
+                                                </p>
+                                            </div>
+                                        )}
+
                                         <div className="sm:col-span-2">
                                             <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                                 Deductions Enabled
@@ -289,8 +345,10 @@ export default function Show({ staff, canManagePayroll, canManageDeductions }: P
                                                 )}
                                                 {staff.employeePayrollDetail.nhf_enabled && (
                                                     <Badge color="info" size="sm">
-                                                        NHF (
-                                                        {staff.employeePayrollDetail.nhf_rate}%)
+                                                        NHF
+                                                        {staff.employeePayrollDetail.nhf_rate != null && (
+                                                            <> ({staff.employeePayrollDetail.nhf_rate}%)</>
+                                                        )}
                                                     </Badge>
                                                 )}
                                                 {staff.employeePayrollDetail.nhis_enabled && (
@@ -324,7 +382,7 @@ export default function Show({ staff, canManagePayroll, canManageDeductions }: P
                                                 variant="outline"
                                                 className="mt-4"
                                                 onClick={() =>
-                                                    router.visit(`/staff/${staff.id}/edit#payroll`)
+                                                    router.visit(StaffManagementController.edit.url({ staff: staff.id }) + '#payroll')
                                                 }
                                             >
                                                 Set Up Payroll
@@ -354,7 +412,7 @@ export default function Show({ staff, canManagePayroll, canManageDeductions }: P
                                             variant="outline"
                                             startIcon={<Plus className="h-4 w-4" />}
                                             onClick={() =>
-                                                router.visit(`/staff/${staff.id}/deductions`)
+                                                router.visit(StaffManagementController.deductions.url({ staff: staff.id }))
                                             }
                                         >
                                             Manage
@@ -398,7 +456,7 @@ export default function Show({ staff, canManagePayroll, canManageDeductions }: P
                                                 size="sm"
                                                 fullWidth
                                                 onClick={() =>
-                                                    router.visit(`/staff/${staff.id}/deductions`)
+                                                    router.visit(StaffManagementController.deductions.url({ staff: staff.id }))
                                                 }
                                             >
                                                 View all {staff.customDeductions.length} deductions
@@ -484,7 +542,7 @@ export default function Show({ staff, canManagePayroll, canManageDeductions }: P
                                         {staff.shops.map((shop) => (
                                             <Link
                                                 key={shop.id}
-                                                href={`/shops/${shop.id}`}
+                                                href={ShopController.show.url({ shop: shop.id })}
                                                 className="block"
                                             >
                                                 <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800">
@@ -574,7 +632,7 @@ export default function Show({ staff, canManagePayroll, canManageDeductions }: P
 
                         {/* Quick Actions */}
                         <div className="space-y-3">
-                            <Link href={`/staff/${staff.id}/edit`}>
+                            <Link href={StaffManagementController.edit.url({ staff: staff.id })}>
                                 <Button className="w-full gap-2">
                                     <Edit className="h-4 w-4" />
                                     Edit Staff Member
@@ -582,7 +640,7 @@ export default function Show({ staff, canManagePayroll, canManageDeductions }: P
                             </Link>
 
                             {canManageDeductions && (
-                                <Link href={`/staff/${staff.id}/deductions`}>
+                                <Link href={StaffManagementController.deductions.url({ staff: staff.id })}>
                                     <Button variant="outline" className="w-full gap-2">
                                         <CreditCard className="h-4 w-4" />
                                         Manage Deductions
@@ -593,6 +651,8 @@ export default function Show({ staff, canManagePayroll, canManageDeductions }: P
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

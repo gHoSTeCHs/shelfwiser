@@ -39,7 +39,7 @@ export default function Create({ subscriptionPlans }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Create Tenant" />
 
             <div className="space-y-6">
@@ -256,6 +256,8 @@ export default function Create({ subscriptionPlans }: Props) {
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

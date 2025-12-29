@@ -174,14 +174,22 @@ class POSController extends Controller
     /**
      * Retrieve held sale
      */
-    public function retrieveHeldSale(string $holdId): JsonResponse
+    public function retrieveHeldSale(Shop $shop, string $holdId): JsonResponse
     {
+        $this->authorize('view', $shop);
+
         $heldSale = session()->get("pos_hold_$holdId");
 
         if (!$heldSale) {
             return response()->json([
                 'error' => 'Held sale not found',
             ], 404);
+        }
+
+        if (($heldSale['shop_id'] ?? null) !== $shop->id) {
+            return response()->json([
+                'error' => 'Held sale does not belong to this shop',
+            ], 403);
         }
 
         session()->forget("pos_hold_$holdId");
@@ -193,16 +201,21 @@ class POSController extends Controller
     }
 
     /**
-     * Get list of held sales
+     * Get list of held sales for a shop
      */
-    public function heldSales(): JsonResponse
+    public function heldSales(Shop $shop): JsonResponse
     {
+        $this->authorize('view', $shop);
+
         $allSessions = session()->all();
         $heldSales = [];
 
         foreach ($allSessions as $key => $value) {
             if (str_starts_with($key, 'pos_hold_')) {
-                $heldSales[] = array_merge($value, ['hold_id' => str_replace('pos_hold_', '', $key)]);
+                // Only include held sales for this shop
+                if (($value['shop_id'] ?? null) === $shop->id) {
+                    $heldSales[] = array_merge($value, ['hold_id' => str_replace('pos_hold_', '', $key)]);
+                }
             }
         }
 

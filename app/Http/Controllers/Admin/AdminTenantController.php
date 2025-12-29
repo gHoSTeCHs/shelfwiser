@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -18,6 +19,8 @@ class AdminTenantController extends Controller
      */
     public function index(Request $request): Response
     {
+        Gate::authorize('admin.tenants.viewAny');
+
         $query = Tenant::query()
             ->withCount(['users', 'shops']);
 
@@ -67,6 +70,8 @@ class AdminTenantController extends Controller
      */
     public function create(): Response
     {
+        Gate::authorize('admin.tenants.create');
+
         return Inertia::render('Admin/Tenants/Create', [
             'subscriptionPlans' => $this->getSubscriptionPlans(),
         ]);
@@ -77,6 +82,8 @@ class AdminTenantController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        Gate::authorize('admin.tenants.create');
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'unique:tenants,slug'],
@@ -111,6 +118,8 @@ class AdminTenantController extends Controller
      */
     public function show(Tenant $tenant): Response
     {
+        Gate::authorize('admin.tenants.view');
+
         $tenant->loadCount(['users', 'shops']);
         $tenant->load(['users' => fn ($q) => $q->select('id', 'tenant_id', 'first_name', 'last_name', 'email', 'role', 'is_active', 'created_at')->latest()->take(10)]);
         $tenant->load(['shops' => fn ($q) => $q->select('id', 'tenant_id', 'name', 'is_active', 'created_at')->latest()->take(10)]);
@@ -161,6 +170,8 @@ class AdminTenantController extends Controller
      */
     public function edit(Tenant $tenant): Response
     {
+        Gate::authorize('admin.tenants.update');
+
         return Inertia::render('Admin/Tenants/Edit', [
             'tenant' => [
                 'id' => $tenant->id,
@@ -186,6 +197,8 @@ class AdminTenantController extends Controller
      */
     public function update(Request $request, Tenant $tenant): RedirectResponse
     {
+        Gate::authorize('admin.tenants.update');
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', Rule::unique('tenants', 'slug')->ignore($tenant->id)],
@@ -216,6 +229,8 @@ class AdminTenantController extends Controller
      */
     public function destroy(Tenant $tenant): RedirectResponse
     {
+        Gate::authorize('admin.tenants.delete');
+
         $tenant->delete();
 
         return redirect()
@@ -228,6 +243,8 @@ class AdminTenantController extends Controller
      */
     public function toggleActive(Tenant $tenant): RedirectResponse
     {
+        Gate::authorize('admin.tenants.update');
+
         $tenant->update(['is_active' => ! $tenant->is_active]);
 
         $status = $tenant->is_active ? 'activated' : 'deactivated';
@@ -240,6 +257,8 @@ class AdminTenantController extends Controller
      */
     public function extendSubscription(Request $request, Tenant $tenant): RedirectResponse
     {
+        Gate::authorize('admin.tenants.update');
+
         $validated = $request->validate([
             'days' => ['required', 'integer', 'min:1', 'max:365'],
         ]);
@@ -262,6 +281,8 @@ class AdminTenantController extends Controller
      */
     public function updateLimits(Request $request, Tenant $tenant): RedirectResponse
     {
+        Gate::authorize('admin.tenants.update');
+
         $validated = $request->validate([
             'max_shops' => ['required', 'integer', 'min:1'],
             'max_users' => ['required', 'integer', 'min:1'],

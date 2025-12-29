@@ -56,7 +56,7 @@ const WageAdvancesCreate = ({ shop, eligibility }: Props) => {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Request Wage Advance" />
 
             <div className="space-y-6">
@@ -338,8 +338,10 @@ const WageAdvancesCreate = ({ shop, eligibility }: Props) => {
                     </>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 };
+
+WageAdvancesCreate.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
 
 export default WageAdvancesCreate;

@@ -71,7 +71,7 @@ export default function Index({ tenants, filters }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Manage Tenants" />
 
             <div className="space-y-6">
@@ -254,6 +254,8 @@ export default function Index({ tenants, filters }: Props) {
                     </Card>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

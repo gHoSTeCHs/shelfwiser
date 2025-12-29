@@ -53,7 +53,7 @@ export default function Edit({ variant, product }: Props) {
     );
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit Variant - ${product.name}`} />
 
             <div className="space-y-6">
@@ -455,6 +455,8 @@ export default function Edit({ variant, product }: Props) {
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

@@ -60,3 +60,64 @@ export interface ProductListResponse {
     data: Product[];
     total: number;
 }
+
+export interface TemplatePackagingType {
+    name: string;
+    display_name?: string;
+    units_per_package: number;
+    is_sealed_package?: boolean;
+    price?: number;
+    cost_price?: number;
+    is_base_unit?: boolean;
+    can_break_down?: boolean;
+    min_order_quantity?: number;
+    display_order?: number;
+}
+
+export interface TemplateVariant {
+    name: string;
+    sku_suffix?: string;
+    attributes?: Record<string, string | number | boolean>;
+    packaging_types?: TemplatePackagingType[];
+}
+
+export interface TemplateStructure {
+    variants: TemplateVariant[];
+}
+
+export interface TemplateSeoMetadata {
+    title?: string;
+    description?: string;
+    keywords?: string[];
+}
+
+export interface ProductTemplate {
+    id: number;
+    tenant_id: number | null;
+    product_type_id: number;
+    category_id: number | null;
+    created_by_id: number | null;
+    name: string;
+    slug: string;
+    description: string | null;
+    custom_attributes: Record<string, unknown> | null;
+    template_structure: TemplateStructure;
+    images: string[] | null;
+    seo_metadata: TemplateSeoMetadata | null;
+    has_variants: boolean;
+    is_system: boolean;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+
+    productType?: ProductType;
+    category?: ProductCategory;
+    variant_count?: number;
+    usage_count?: number;
+}
+
+export interface ProductTemplateListResponse {
+    data: ProductTemplate[];
+    total: number;
+}

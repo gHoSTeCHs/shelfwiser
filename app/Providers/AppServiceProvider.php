@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\FundRequest;
 use App\Models\Notification;
 use App\Models\PayrollPeriod;
+use App\Models\PayRun;
 use App\Models\ProductVariant;
 use App\Models\Receipt;
 use App\Models\Service;
@@ -18,6 +19,7 @@ use App\Policies\DashboardPolicy;
 use App\Policies\FundRequestPolicy;
 use App\Policies\NotificationPolicy;
 use App\Policies\PayrollPolicy;
+use App\Policies\PayRunPolicy;
 use App\Policies\ProductVariantPolicy;
 use App\Policies\PurchaseOrderPolicy;
 use App\Policies\ReceiptPolicy;
@@ -58,7 +60,14 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(FundRequest::class, FundRequestPolicy::class);
         Gate::policy(WageAdvance::class, WageAdvancePolicy::class);
         Gate::policy(PayrollPeriod::class, PayrollPolicy::class);
+        Gate::policy(PayRun::class, PayRunPolicy::class);
         Gate::policy(Notification::class, NotificationPolicy::class);
+
+        Gate::define('payRun.viewAny', [PayRunPolicy::class, 'viewAny']);
+        Gate::define('payRun.create', [PayRunPolicy::class, 'create']);
+        Gate::define('payRun.viewReports', [PayRunPolicy::class, 'viewReports']);
+        Gate::define('payRun.exportReports', [PayRunPolicy::class, 'exportReports']);
+        Gate::define('payRun.manageSettings', [PayRunPolicy::class, 'manageSettings']);
 
         // Dashboard polices
         Gate::define('dashboard.view', [DashboardPolicy::class, 'view']);
@@ -98,5 +107,12 @@ class AppServiceProvider extends ServiceProvider
 
         // TimeSheet
         Gate::define('timesheet.viewAny', [TimesheetPolicy::class, 'viewAny']);
+
+        // Admin gates - super admin only actions
+        Gate::define('admin.tenants.viewAny', fn (User $user) => $user->isSuperAdmin());
+        Gate::define('admin.tenants.view', fn (User $user) => $user->isSuperAdmin());
+        Gate::define('admin.tenants.create', fn (User $user) => $user->isSuperAdmin());
+        Gate::define('admin.tenants.update', fn (User $user) => $user->isSuperAdmin());
+        Gate::define('admin.tenants.delete', fn (User $user) => $user->isSuperAdmin());
     }
 }

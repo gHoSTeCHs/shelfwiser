@@ -74,7 +74,7 @@ const Index: React.FC<Props> = ({ shop, customers, filters, stats }) => {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Customer Credit - ${shop.name}`} />
 
             <div className="space-y-6">
@@ -335,8 +335,10 @@ const Index: React.FC<Props> = ({ shop, customers, filters, stats }) => {
                     )}
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 };
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
 
 export default Index;

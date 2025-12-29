@@ -110,33 +110,35 @@ class WageAdvanceService
         ?int $installments = null,
         ?string $notes = null
     ): WageAdvance {
-        if (! $wageAdvance->status->canApprove()) {
-            throw new \RuntimeException('Wage advance cannot be approved in current status');
-        }
-
         $approvedAmount = $amountApproved ?? $wageAdvance->amount_requested;
 
         return DB::transaction(function () use ($wageAdvance, $approver, $approvedAmount, $installments, $notes) {
-            $lockedUser = User::lockForUpdate()->find($wageAdvance->user_id);
+            $lockedAdvance = WageAdvance::lockForUpdate()->find($wageAdvance->id);
 
-            $eligibility = $this->calculateEligibility($lockedUser, $wageAdvance->shop);
+            if (! $lockedAdvance->status->canApprove()) {
+                throw new \RuntimeException('Wage advance cannot be approved in current status');
+            }
+
+            $lockedUser = User::lockForUpdate()->find($lockedAdvance->user_id);
+
+            $eligibility = $this->calculateEligibility($lockedUser, $lockedAdvance->shop);
             if ($approvedAmount > $eligibility['available_amount']) {
                 throw new \RuntimeException('Approved amount exceeds available limit');
             }
 
-            $wageAdvance->update([
+            $lockedAdvance->update([
                 'status' => WageAdvanceStatus::APPROVED,
                 'amount_approved' => $approvedAmount,
                 'approved_by_user_id' => $approver->id,
                 'approved_at' => now(),
                 'rejection_reason' => null,
-                'repayment_installments' => $installments ?? $wageAdvance->repayment_installments,
-                'notes' => $notes ?? $wageAdvance->notes,
+                'repayment_installments' => $installments ?? $lockedAdvance->repayment_installments,
+                'notes' => $notes ?? $lockedAdvance->notes,
             ]);
 
-            $this->clearCache($wageAdvance->tenant_id);
+            $this->clearCache($lockedAdvance->tenant_id);
 
-            $freshAdvance = $wageAdvance->fresh(['user', 'shop', 'approvedBy']);
+            $freshAdvance = $lockedAdvance->fresh(['user', 'shop', 'approvedBy']);
 
             $this->notificationService->notifyWageAdvanceApproved($freshAdvance, $approver);
 

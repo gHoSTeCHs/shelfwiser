@@ -35,7 +35,7 @@ interface Payslip {
     gross_pay: string;
     total_deductions: string;
     net_pay: string;
-    base_salary: string;
+    basic_salary: string;
     regular_hours: string;
     regular_pay: string;
     overtime_hours: string;
@@ -220,7 +220,7 @@ export default function Show({
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Payroll - ${payrollPeriod.period_name}`} />
 
             <div className="mb-6">
@@ -459,19 +459,19 @@ export default function Show({
                                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
                                         Employee
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="hidden lg:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
                                         Base/Salary
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="hidden md:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
                                         Regular Hours
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="hidden md:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
                                         Overtime
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="hidden lg:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
                                         Gross Pay
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th className="hidden lg:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
                                         Deductions
                                     </th>
                                     <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
@@ -495,10 +495,10 @@ export default function Show({
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm text-dark-900">
-                                            {formatCurrency(payslip.base_salary)}
+                                        <td className="hidden lg:table-cell px-4 py-3 text-right text-sm text-dark-900">
+                                            {formatCurrency(payslip.basic_salary)}
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm text-dark-900">
+                                        <td className="hidden md:table-cell px-4 py-3 text-right text-sm text-dark-900">
                                             <div className="flex flex-col">
                                                 <span>{parseFloat(payslip.regular_hours).toFixed(2)}h</span>
                                                 <span className="text-xs text-dark-500">
@@ -506,7 +506,7 @@ export default function Show({
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm text-dark-900">
+                                        <td className="hidden md:table-cell px-4 py-3 text-right text-sm text-dark-900">
                                             <div className="flex flex-col">
                                                 <span>{parseFloat(payslip.overtime_hours).toFixed(2)}h</span>
                                                 <span className="text-xs text-dark-500">
@@ -514,10 +514,10 @@ export default function Show({
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm font-medium text-dark-900">
+                                        <td className="hidden lg:table-cell px-4 py-3 text-right text-sm font-medium text-dark-900">
                                             {formatCurrency(payslip.gross_pay)}
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm text-warning-600">
+                                        <td className="hidden lg:table-cell px-4 py-3 text-right text-sm text-warning-600">
                                             {formatCurrency(payslip.total_deductions)}
                                         </td>
                                         <td className="px-4 py-3 text-right text-sm font-semibold text-success-600">
@@ -609,6 +609,8 @@ export default function Show({
                     </Card>
                 </div>
             )}
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

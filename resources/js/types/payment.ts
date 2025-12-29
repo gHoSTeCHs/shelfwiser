@@ -18,6 +18,8 @@ export interface PaymentGateway {
     supportsRefunds: boolean;
 }
 
+export type PaymentMetadataValue = string | number | boolean | null;
+
 export interface PaymentInitiationResult {
     success: boolean;
     reference: string;
@@ -30,7 +32,7 @@ export interface PaymentInitiationResult {
     qrCode?: string;
     expiresAt?: number;
     errorMessage?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, PaymentMetadataValue>;
 }
 
 export interface PaystackInlineData {
@@ -114,7 +116,7 @@ export interface PaystackPaymentProps {
     publicKey: string;
     onSuccess: (response: PaystackCallbackResponse) => void;
     onClose: () => void;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, PaymentMetadataValue>;
     channels?: string[];
     label?: string;
     disabled?: boolean;

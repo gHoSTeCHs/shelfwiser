@@ -139,6 +139,8 @@ class EmployeePayrollService
         if (! $payrollDetail) {
             return [
                 'eligible' => false,
+                'max_amount' => 0,
+                'available_amount' => 0,
                 'reason' => 'No payroll details configured',
             ];
         }
@@ -148,11 +150,13 @@ class EmployeePayrollService
         if (! $shop || ! $shop->taxSettings) {
             return [
                 'eligible' => false,
-                'reason' => 'No shop tax settings configured',
+                'max_amount' => 0,
+                'available_amount' => 0,
+                'reason' => 'Shop or tax settings not configured',
             ];
         }
 
-        $maxPercentage = $shop->taxSettings->wage_advance_max_percentage;
+        $maxPercentage = $shop->taxSettings->wage_advance_max_percentage ?? 50;
 
         $maxAmount = match ($payrollDetail->pay_type->value) {
             'salary' => ($payrollDetail->pay_amount / 12) * ($maxPercentage / 100),

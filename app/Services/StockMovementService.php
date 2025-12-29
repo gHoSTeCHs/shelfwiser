@@ -419,6 +419,35 @@ class StockMovementService
      */
     public function recordMovement(array $data): StockMovement
     {
+        $requiredFields = ['tenant_id', 'product_variant_id', 'type', 'quantity'];
+        foreach ($requiredFields as $field) {
+            if (! isset($data[$field])) {
+                throw new Exception("Missing required field: {$field}");
+            }
+        }
+
+        if (! $data['type'] instanceof StockMovementType) {
+            throw new Exception('Invalid stock movement type');
+        }
+
+        $variant = ProductVariant::where('id', $data['product_variant_id'])
+            ->whereHas('product', fn ($q) => $q->where('tenant_id', $data['tenant_id']))
+            ->first();
+
+        if (! $variant) {
+            throw new Exception('Product variant not found or does not belong to tenant');
+        }
+
+        if (isset($data['shop_id'])) {
+            $shopBelongsToTenant = \App\Models\Shop::where('id', $data['shop_id'])
+                ->where('tenant_id', $data['tenant_id'])
+                ->exists();
+
+            if (! $shopBelongsToTenant) {
+                throw new Exception('Shop does not belong to tenant');
+            }
+        }
+
         return DB::transaction(function () use ($data) {
             $movement = StockMovement::create($data);
 

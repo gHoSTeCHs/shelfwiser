@@ -3,7 +3,7 @@ import { ProductCategory } from './product';
 import { Shop } from './shop';
 import { User } from './index';
 import { ProductVariant, ProductPackagingType } from './stockMovement';
-import { Service, ServiceCategory, ServiceVariant, MaterialOption } from './service';
+import { Service, ServiceAddon, ServiceCategory, ServiceVariant, MaterialOption } from './service';
 
 export interface Customer {
     id: number;
@@ -51,6 +51,12 @@ export interface Order {
     customer?: Customer;
 }
 
+export type SellableType = 'App\\Models\\ProductVariant' | 'App\\Models\\ServiceVariant';
+
+export type Sellable =
+    | (ProductVariant & { product?: Product })
+    | (ServiceVariant & { service?: Service });
+
 export interface OrderItem {
     id: number;
     order_id: number;
@@ -60,7 +66,7 @@ export interface OrderItem {
     product_packaging_type_id?: number | null;
 
     // Polymorphic fields
-    sellable_type: string; // 'App\\Models\\ProductVariant' | 'App\\Models\\ServiceVariant'
+    sellable_type: SellableType;
     sellable_id: number;
 
     quantity: number;
@@ -87,9 +93,7 @@ export interface OrderItem {
         product?: Product;
     };
     packagingType?: ProductPackagingType;
-    sellable?: ServiceVariant & {
-        service?: Service;
-    };
+    sellable?: Sellable;
 }
 
 // Cart Types
@@ -113,7 +117,7 @@ export interface CartItem {
     product_packaging_type_id?: number | null;
 
     // Polymorphic fields
-    sellable_type: string; // 'App\\Models\\ProductVariant' | 'App\\Models\\ServiceVariant'
+    sellable_type: SellableType;
     sellable_id: number;
 
     quantity: number;
@@ -137,9 +141,7 @@ export interface CartItem {
         product?: Product;
     };
     packagingType?: ProductPackagingType;
-    sellable?: ServiceVariant & {
-        service?: Service;
-    };
+    sellable?: Sellable;
     subtotal?: number;
 }
 
@@ -343,7 +345,7 @@ export interface StorefrontServicesProps {
 export interface StorefrontServiceDetailProps {
     shop: Shop;
     service: Service;
-    categoryAddons: any[];
+    categoryAddons: ServiceAddon[];
     relatedServices: Service[];
     cartSummary: CartSummary;
 }

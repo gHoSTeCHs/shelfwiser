@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { SchemaPropertyValue } from './index';
 
 export type InventoryModelType = 'simple_retail' | 'wholesale_only' | 'hybrid';
 export type ShopOfferingType = 'products' | 'services' | 'both';
@@ -12,21 +12,20 @@ export interface InventoryModelOption {
     features: string[];
 }
 
+export interface ShopConfigSchemaProperty {
+    type: string;
+    title?: string;
+    default?: SchemaPropertyValue;
+    enum?: SchemaPropertyValue[];
+}
+
 export interface ShopType {
     slug: string;
     label: string;
     description?: string;
     config_schema?: {
         type: 'object';
-        properties: Record<
-            string,
-            {
-                type: string;
-                title?: string;
-                default?: any;
-                enum?: any[];
-            }
-        >;
+        properties: Record<string, ShopConfigSchemaProperty>;
         required?: string[];
     };
 }
@@ -61,8 +60,7 @@ export interface Shop {
     phone?: string;
     email?: string;
     type: ShopType;
-    config: Record<string, any>;
-    // products: Product[]
+    config: Record<string, SchemaPropertyValue>;
     is_active: boolean;
     users_count?: number;
     can_manage: boolean;
@@ -90,6 +88,6 @@ export interface CreateShopRequest {
     country: string;
     phone?: string;
     email?: string;
-    config: Record<string, any>;
+    config: Record<string, SchemaPropertyValue>;
     is_active?: boolean;
 }

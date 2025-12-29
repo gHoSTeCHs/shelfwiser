@@ -357,13 +357,23 @@ export interface ProductProfitabilityItem {
     cost_price: number;
 }
 
+export interface TopProductSummary {
+    product_variant_id: number;
+    name: string;
+    sku: string;
+    total_quantity: number;
+    total_revenue: number;
+    gross_profit: number;
+    profit_margin: number;
+}
+
 export interface ProductProfitabilitySummary {
     total_units_sold: number;
     total_revenue: number;
     total_cogs: number;
     gross_profit: number;
     avg_margin: number;
-    top_products: any[];
+    top_products: TopProductSummary[];
 }
 
 export interface ProductProfitabilityData {

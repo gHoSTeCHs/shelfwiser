@@ -3,28 +3,44 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProductVariantRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return $this->user()->can('update', $this->route('variant'));
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         $variant = $this->route('variant');
+        $tenantId = $this->user()->tenant_id;
 
         return [
             'name' => ['nullable', 'string', 'max:255'],
-            'sku' => ['required', 'string', 'max:100', 'unique:product_variants,sku,' . $variant->id],
-            'barcode' => ['nullable', 'string', 'max:100', 'unique:product_variants,barcode,' . $variant->id],
+            'sku' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('product_variants', 'sku')
+                    ->ignore($variant->id)
+                    ->where(fn ($query) => $query->whereIn(
+                        'product_id',
+                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    )),
+            ],
+            'barcode' => [
+                'nullable',
+                'string',
+                'max:100',
+                Rule::unique('product_variants', 'barcode')
+                    ->ignore($variant->id)
+                    ->where(fn ($query) => $query->whereIn(
+                        'product_id',
+                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    )),
+            ],
             'price' => ['required', 'numeric', 'min:0'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
             'reorder_level' => ['nullable', 'integer', 'min:0'],

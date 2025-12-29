@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { InertiaLinkProps } from '@inertiajs/react';
 import { LucideIcon } from 'lucide-react';
 import { UserRoleValue } from '@/types/user-role.ts';
@@ -52,18 +50,21 @@ export interface User {
     [key: string]: unknown;
 }
 
+export type SchemaPropertyType = 'string' | 'integer' | 'number' | 'boolean' | 'array' | 'object';
+export type SchemaPropertyValue = string | number | boolean | null | string[] | number[];
+
 export interface SchemaProperty {
-    type: 'string' | 'integer' | 'number' | 'boolean' | 'array' | 'object';
+    type: SchemaPropertyType;
     title?: string;
-    default?: any;
-    enum?: any[];
+    default?: SchemaPropertyValue;
+    enum?: SchemaPropertyValue[];
     minimum?: number;
     maximum?: number;
     minLength?: number;
     maxLength?: number;
     items?: {
         type?: string;
-        enum?: any[];
+        enum?: SchemaPropertyValue[];
     };
 }
 

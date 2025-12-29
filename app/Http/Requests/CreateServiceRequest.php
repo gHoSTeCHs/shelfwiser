@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CreateServiceRequest extends FormRequest
 {
@@ -19,9 +20,17 @@ class CreateServiceRequest extends FormRequest
      */
     public function rules(): array
     {
+        $tenantId = $this->user()->tenant_id;
+
         $rules = [
-            'shop_id' => ['required', 'exists:shops,id'],
-            'service_category_id' => ['nullable', 'exists:service_categories,id'],
+            'shop_id' => [
+                'required',
+                Rule::exists('shops', 'id')->where('tenant_id', $tenantId),
+            ],
+            'service_category_id' => [
+                'nullable',
+                Rule::exists('service_categories', 'id')->where('tenant_id', $tenantId),
+            ],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'image_url' => ['nullable', 'string', 'url', 'max:500'],

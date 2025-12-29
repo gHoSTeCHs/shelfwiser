@@ -45,7 +45,7 @@ export default function History({ variant, movements }: Props) {
     const reservedStock = totalStock - availableStock;
 
     return (
-        <AppLayout>
+        <>
             <Head
                 title={`Stock History - ${variant.product?.name || 'Product'} ${variant.name ? `- ${variant.name}` : ''}`}
             />
@@ -174,6 +174,8 @@ export default function History({ variant, movements }: Props) {
                     />
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+History.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

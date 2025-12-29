@@ -11,6 +11,7 @@ class ProductPackagingType extends Model
     use HasFactory;
 
     protected $fillable = [
+        'tenant_id',
         'product_variant_id',
         'name',
         'display_name',
@@ -43,6 +44,11 @@ class ProductPackagingType extends Model
         'has_discount',
         'discount_percentage',
     ];
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
 
     public function productVariant(): BelongsTo
     {

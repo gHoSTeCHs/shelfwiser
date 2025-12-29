@@ -79,7 +79,7 @@ export default function Index({ employee, deductions, deductionTypes }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`${employee.name} - Custom Deductions`} />
 
             <div className="mb-6">
@@ -262,6 +262,8 @@ export default function Index({ employee, deductions, deductionTypes }: Props) {
                     </div>
                 </Card>
             )}
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

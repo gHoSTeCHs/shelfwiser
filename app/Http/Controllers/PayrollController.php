@@ -222,6 +222,8 @@ class PayrollController extends Controller
      */
     public function myPayslips(Request $request): Response
     {
+        Gate::authorize('viewOwn', Payslip::class);
+
         $user = $request->user();
 
         $payslips = $this->payrollService->getEmployeePayslips($user);
@@ -236,11 +238,7 @@ class PayrollController extends Controller
      */
     public function showPayslip(Payslip $payslip): Response
     {
-        $user = auth()->user();
-
-        if ($payslip->user_id !== $user->id && ! Gate::allows('view', $payslip->payrollPeriod)) {
-            abort(403);
-        }
+        Gate::authorize('view', $payslip);
 
         $payslip->load(['user', 'shop', 'payrollPeriod']);
 

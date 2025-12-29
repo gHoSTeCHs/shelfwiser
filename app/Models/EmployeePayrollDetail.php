@@ -23,6 +23,14 @@ class EmployeePayrollDetail extends Model
         'pay_type',
         'pay_amount',
         'pay_frequency',
+        'pay_calendar_id',
+        'standard_hours_per_week',
+        'overtime_multiplier',
+        'weekend_multiplier',
+        'holiday_multiplier',
+        'commission_rate',
+        'commission_basis',
+        'commission_cap',
         'tax_handling',
         'enable_tax_calculations',
         'tax_id_number',
@@ -50,6 +58,12 @@ class EmployeePayrollDetail extends Model
         'pay_type' => PayType::class,
         'pay_amount' => 'decimal:2',
         'pay_frequency' => PayFrequency::class,
+        'standard_hours_per_week' => 'decimal:2',
+        'overtime_multiplier' => 'decimal:2',
+        'weekend_multiplier' => 'decimal:2',
+        'holiday_multiplier' => 'decimal:2',
+        'commission_rate' => 'decimal:2',
+        'commission_cap' => 'decimal:2',
         'tax_handling' => TaxHandling::class,
         'enable_tax_calculations' => 'boolean',
         'tax_id_number' => 'encrypted',
@@ -77,8 +91,84 @@ class EmployeePayrollDetail extends Model
         return $this->belongsTo(Tenant::class);
     }
 
+    public function payCalendar(): BelongsTo
+    {
+        return $this->belongsTo(PayCalendar::class);
+    }
+
     public function customDeductions(): HasMany
     {
         return $this->hasMany(EmployeeCustomDeduction::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Calculate monthly working hours based on standard hours per week
+     */
+    public function getMonthlyHours(): float
+    {
+        $weeksPerMonth = 4.33;
+        $standardHours = $this->standard_hours_per_week ?? 40;
+        return $standardHours * $weeksPerMonth;
+    }
+
+    /**
+     * Calculate effective hourly rate from salary or return hourly rate for hourly workers
+     */
+    public function calculateHourlyRate(): float
+    {
+        if ($this->pay_type?->value === 'hourly') {
+            return (float) $this->pay_amount;
+        }
+
+        $monthlyHours = $this->getMonthlyHours();
+        return $monthlyHours > 0 ? (float) $this->pay_amount / $monthlyHours : 0;
+    }
+
+    /**
+     * Calculate commission based on sales amount, applying rate and cap
+     */
+    public function calculateCommission(float $salesAmount): float
+    {
+        if (!$this->commission_rate || $this->commission_rate <= 0) {
+            return 0;
+        }
+
+        $commission = $salesAmount * ($this->commission_rate / 100);
+
+        if ($this->commission_cap && $commission > $this->commission_cap) {
+            return (float) $this->commission_cap;
+        }
+
+        return $commission;
+    }
+
+    /**
+     * Calculate overtime pay for given hours
+     */
+    public function calculateOvertimePay(float $overtimeHours): float
+    {
+        $hourlyRate = $this->calculateHourlyRate();
+        $multiplier = $this->overtime_multiplier ?? 1.5;
+        return $overtimeHours * $hourlyRate * $multiplier;
+    }
+
+    /**
+     * Calculate weekend pay for given hours
+     */
+    public function calculateWeekendPay(float $weekendHours): float
+    {
+        $hourlyRate = $this->calculateHourlyRate();
+        $multiplier = $this->weekend_multiplier ?? 2.0;
+        return $weekendHours * $hourlyRate * $multiplier;
+    }
+
+    /**
+     * Calculate holiday pay for given hours
+     */
+    public function calculateHolidayPay(float $holidayHours): float
+    {
+        $hourlyRate = $this->calculateHourlyRate();
+        $multiplier = $this->holiday_multiplier ?? 2.5;
+        return $holidayHours * $hourlyRate * $multiplier;
     }
 }

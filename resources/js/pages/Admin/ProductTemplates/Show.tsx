@@ -79,7 +79,7 @@ export default function Show({ template, usageCount }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Template: ${template.name}`} />
 
             <div className="space-y-6">
@@ -312,6 +312,8 @@ export default function Show({ template, usageCount }: Props) {
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

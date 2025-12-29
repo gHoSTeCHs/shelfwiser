@@ -6,12 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class InventoryLocation extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
+        'tenant_id',
         'product_variant_id',
         'location_type',
         'location_id',
@@ -23,6 +28,11 @@ class InventoryLocation extends Model
         'quantity' => 'integer',
         'reserved_quantity' => 'integer',
     ];
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
 
     public function productVariant(): BelongsTo
     {

@@ -14,7 +14,7 @@ interface Props {
 
 export default function Index({ categories }: Props) {
     return (
-        <AppLayout>
+        <>
             <Head title="Service Categories" />
 
             <div className="space-y-6">
@@ -232,6 +232,8 @@ export default function Index({ categories }: Props) {
                     </div>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

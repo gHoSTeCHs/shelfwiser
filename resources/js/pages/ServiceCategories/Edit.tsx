@@ -34,7 +34,7 @@ export default function Edit({ category, parentCategories }: Props) {
     const [isActive, setIsActive] = useState<boolean>(category.is_active);
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit ${category.name}`} />
 
             <div className="space-y-6">
@@ -247,6 +247,8 @@ export default function Edit({ category, parentCategories }: Props) {
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProductRequest extends FormRequest
 {
@@ -13,10 +14,15 @@ class UpdateProductRequest extends FormRequest
 
     public function rules(): array
     {
+        $tenantId = $this->user()->tenant_id;
+
         $rules = [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'category_id' => ['nullable', 'exists:product_categories,id'],
+            'category_id' => [
+                'nullable',
+                Rule::exists('product_categories', 'id')->where('tenant_id', $tenantId),
+            ],
             'is_active' => ['sometimes', 'boolean'],
         ];
 

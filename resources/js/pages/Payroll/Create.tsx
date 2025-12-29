@@ -44,7 +44,7 @@ const PayrollCreate = ({ shops }: Props) => {
     }, [startDate, endDate]);
 
     return (
-        <AppLayout>
+        <>
             <Head title="Create Payroll Period" />
 
             <div className="space-y-6">
@@ -268,8 +268,10 @@ const PayrollCreate = ({ shops }: Props) => {
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 };
+
+PayrollCreate.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
 
 export default PayrollCreate;

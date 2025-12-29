@@ -8,8 +8,10 @@ use App\Enums\PaymentStatus;
 use App\Enums\StockMovementType;
 use App\Models\Cart;
 use App\Models\Customer;
+use App\Models\InventoryLocation;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Shop;
 use Illuminate\Support\Facades\DB;
 
 class CheckoutService
@@ -19,19 +21,6 @@ class CheckoutService
         protected StockMovementService $stockMovementService
     ) {}
 
-    /**
-     * Create order from cart with stock reservation.
-     *
-     * @param  Cart  $cart  The shopping cart
-     * @param  Customer  $customer  The customer placing the order
-     * @param  array  $shippingAddress  Shipping address details
-     * @param  array  $billingAddress  Billing address details
-     * @param  string  $paymentMethod  Payment method (default: cash_on_delivery)
-     * @param  string|null  $customerNotes  Optional customer notes
-     * @return Order The created order with loaded relationships
-     *
-     * @throws \Exception If cart is empty or stock is insufficient
-     */
     public function createOrderFromCart(
         Cart $cart,
         Customer $customer,
@@ -54,13 +43,26 @@ class CheckoutService
                 throw new \Exception('Cannot checkout with empty cart');
             }
 
-            // Validate stock availability for products only (services don't require stock)
-            foreach ($cartSummary['items'] as $item) {
-                if ($item->isProduct()) {
-                    if ($item->productVariant->available_stock < $item->quantity) {
+            $productItems = collect($cartSummary['items'])->filter(fn ($item) => $item->isProduct());
+
+            if ($productItems->isNotEmpty()) {
+                $variantIds = $productItems->pluck('product_variant_id')->toArray();
+
+                $locations = InventoryLocation::where('location_type', Shop::class)
+                    ->where('location_id', $cart->shop_id)
+                    ->whereIn('product_variant_id', $variantIds)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('product_variant_id');
+
+                foreach ($productItems as $item) {
+                    $location = $locations->get($item->product_variant_id);
+                    $availableStock = $location ? $location->quantity - $location->reserved_quantity : 0;
+
+                    if ($availableStock < $item->quantity) {
                         throw new \Exception(
                             "Insufficient stock for {$item->productVariant->product->name}. ".
-                            "Only {$item->productVariant->available_stock} available."
+                            "Only {$availableStock} available."
                         );
                     }
                 }
@@ -82,29 +84,29 @@ class CheckoutService
                 'shipping_address' => json_encode($shippingAddress),
                 'billing_address' => json_encode($billingAddress),
                 'customer_notes' => $customerNotes,
-                'created_by' => null, // E-commerce orders have no staff creator
+                'created_by' => null,
             ]);
+
+            $locations = $locations ?? collect();
 
             foreach ($cartSummary['items'] as $cartItem) {
                 $orderItemData = [
                     'order_id' => $order->id,
+                    'tenant_id' => $cart->tenant_id,
                     'quantity' => $cartItem->quantity,
                     'unit_price' => $cartItem->price,
                     'total_amount' => $cartItem->price * $cartItem->quantity,
                 ];
 
                 if ($cartItem->isProduct()) {
-                    // Product-specific fields
                     $orderItemData['product_variant_id'] = $cartItem->product_variant_id;
                     $orderItemData['product_packaging_type_id'] = $cartItem->product_packaging_type_id;
                     $orderItemData['sellable_type'] = \App\Models\ProductVariant::class;
                     $orderItemData['sellable_id'] = $cartItem->product_variant_id;
                 } else {
-                    // Service-specific fields
                     $orderItemData['sellable_type'] = $cartItem->sellable_type;
                     $orderItemData['sellable_id'] = $cartItem->sellable_id;
 
-                    // Store service metadata (material option, addons, etc.)
                     $metadata = [];
                     if ($cartItem->material_option) {
                         $metadata['material_option'] = $cartItem->material_option;
@@ -120,22 +122,28 @@ class CheckoutService
                     }
                 }
 
-                OrderItem::create($orderItemData);
+                $orderItem = OrderItem::create($orderItemData);
 
-                // Only record stock movements for products (services don't affect inventory)
                 if ($cartItem->isProduct()) {
-                    $this->stockMovementService->recordMovement(
-                        $cartItem->productVariant,
-                        -$cartItem->quantity,
-                        StockMovementType::SALE,
-                        "E-commerce order {$order->order_number}",
-                        $customer->id,
-                        null,
-                        null,
-                        null,
-                        0,
-                        $order->id
-                    );
+                    $location = $locations->get($cartItem->product_variant_id);
+                    if ($location) {
+                        $quantityBefore = $location->quantity;
+                        $location->decrement('quantity', $cartItem->quantity);
+
+                        $this->stockMovementService->recordMovement([
+                            'tenant_id' => $cart->tenant_id,
+                            'shop_id' => $cart->shop_id,
+                            'product_variant_id' => $cartItem->product_variant_id,
+                            'from_location_id' => $location->id,
+                            'type' => StockMovementType::SALE,
+                            'quantity' => -$cartItem->quantity,
+                            'quantity_before' => $quantityBefore,
+                            'quantity_after' => $location->quantity,
+                            'reference_number' => $order->order_number,
+                            'reason' => "E-commerce order {$order->order_number}",
+                            'order_id' => $order->id,
+                        ]);
+                    }
                 }
             }
 
@@ -145,16 +153,11 @@ class CheckoutService
             return $order->fresh([
                 'items.productVariant.product',
                 'items.packagingType',
-                'items.sellable.service', // For service items
+                'items.sellable.service',
             ]);
         });
     }
 
-    /**
-     * Generate unique order number with ORD prefix.
-     *
-     * @return string The generated order number
-     */
     protected function generateOrderNumber(): string
     {
         return 'ORD-'.strtoupper(uniqid());

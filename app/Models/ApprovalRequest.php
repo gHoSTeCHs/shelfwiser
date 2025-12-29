@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ApprovalRequestStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,9 @@ class ApprovalRequest extends Model
 {
     use HasFactory;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'tenant_id',
         'approval_chain_id',
@@ -27,7 +31,11 @@ class ApprovalRequest extends Model
         'rejection_reason',
     ];
 
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
+        'status' => ApprovalRequestStatus::class,
         'current_step' => 'integer',
         'approval_history' => 'array',
         'approved_at' => 'datetime',
@@ -64,33 +72,21 @@ class ApprovalRequest extends Model
         return $this->belongsTo(User::class, 'rejected_by');
     }
 
-    /**
-     * Check if approval is pending
-     */
     public function isPending(): bool
     {
-        return $this->status === 'pending';
+        return $this->status === ApprovalRequestStatus::PENDING;
     }
 
-    /**
-     * Check if approval is approved
-     */
     public function isApproved(): bool
     {
-        return $this->status === 'approved';
+        return $this->status === ApprovalRequestStatus::APPROVED;
     }
 
-    /**
-     * Check if approval is rejected
-     */
     public function isRejected(): bool
     {
-        return $this->status === 'rejected';
+        return $this->status === ApprovalRequestStatus::REJECTED;
     }
 
-    /**
-     * Add approval action to history
-     */
     public function recordApprovalAction(User $user, string $action, ?string $notes = null): void
     {
         $history = $this->approval_history ?? [];
@@ -98,7 +94,7 @@ class ApprovalRequest extends Model
             'step' => $this->current_step,
             'user_id' => $user->id,
             'user_name' => $user->name,
-            'action' => $action, // 'approved', 'rejected'
+            'action' => $action,
             'notes' => $notes,
             'timestamp' => now()->toIso8601String(),
         ];
@@ -106,39 +102,25 @@ class ApprovalRequest extends Model
         $this->save();
     }
 
-    /**
-     * Scope to filter by tenant
-     */
     public function scopeForTenant($query, int $tenantId)
     {
         return $query->where('tenant_id', $tenantId);
     }
 
-    /**
-     * Scope to filter by status
-     */
-    public function scopeWithStatus($query, string $status)
+    public function scopeWithStatus($query, ApprovalRequestStatus $status)
     {
         return $query->where('status', $status);
     }
 
-    /**
-     * Scope to get pending requests
-     */
     public function scopePending($query)
     {
-        return $query->where('status', 'pending');
+        return $query->where('status', ApprovalRequestStatus::PENDING);
     }
 
-    /**
-     * Scope to get requests for a specific user to approve
-     */
     public function scopeForApprover($query, User $user)
     {
-        return $query->where('status', 'pending')
+        return $query->where('status', ApprovalRequestStatus::PENDING)
             ->whereHas('approvalChain', function ($q) use ($user) {
-                // This would need more complex logic to check if user can approve current step
-                // For now, we'll handle this in the service layer
             });
     }
 }

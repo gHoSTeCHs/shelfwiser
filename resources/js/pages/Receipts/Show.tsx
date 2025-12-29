@@ -44,7 +44,7 @@ const Show: React.FC<ReceiptShowProps> = ({ receipt }) => {
             : null;
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Receipt ${receipt.receipt_number}`} />
 
             <div className="space-y-6 max-w-4xl mx-auto">
@@ -281,8 +281,10 @@ const Show: React.FC<ReceiptShowProps> = ({ receipt }) => {
                     </Card>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 };
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
 
 export default Show;

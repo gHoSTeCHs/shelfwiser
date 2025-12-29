@@ -6,8 +6,27 @@ import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
 import { ThemeProvider } from '@/context/ThemeContext.tsx';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { ErrorProvider } from '@/context/ErrorContext';
+import { ErrorBoundary, ChunkLoadErrorFallback } from '@/components/error';
+import { isChunkLoadError } from '@/types/error';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+/**
+ * Global error handler for unhandled errors
+ */
+const handleGlobalError = (error: Error, errorInfo: React.ErrorInfo) => {
+    // Log error to console in development
+    if (import.meta.env.DEV) {
+        console.error('[App] Unhandled error:', error);
+        console.error('[App] Component stack:', errorInfo.componentStack);
+    }
+
+    // TODO: Send to error tracking service (Sentry, etc.)
+    // if (import.meta.env.PROD) {
+    //     Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
+    // }
+};
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -20,11 +39,38 @@ createInertiaApp({
         const root = createRoot(el);
 
         root.render(
-            <ThemeProvider>
-                <ToastProvider>
-                    <App {...props} />
-                </ToastProvider>
-            </ThemeProvider>
+            <ErrorBoundary
+                onError={handleGlobalError}
+                fallbackRender={({ error, errorInfo, resetError, isResetting }) => {
+                    // Use specialized fallback for chunk load errors
+                    if (isChunkLoadError(error)) {
+                        return (
+                            <ChunkLoadErrorFallback
+                                error={error}
+                                resetError={resetError}
+                                isResetting={isResetting}
+                            />
+                        );
+                    }
+                    // Default fallback will be rendered by ErrorBoundary
+                    return null;
+                }}
+            >
+                <ErrorProvider
+                    onError={(errorInfo) => {
+                        // Log reported errors
+                        if (import.meta.env.DEV) {
+                            console.info('[ErrorProvider] Error reported:', errorInfo);
+                        }
+                    }}
+                >
+                    <ThemeProvider>
+                        <ToastProvider>
+                            <App {...props} />
+                        </ToastProvider>
+                    </ThemeProvider>
+                </ErrorProvider>
+            </ErrorBoundary>
         );
     },
     progress: {

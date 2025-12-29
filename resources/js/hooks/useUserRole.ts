@@ -18,12 +18,16 @@ export function useUserRole(currentUserRole: UserRoleValue) {
     };
 
     const canAccessMultipleStores = useMemo(() => {
-        return ['owner', 'general_manager'].includes(currentUserRole);
+        return ['super_admin', 'owner', 'general_manager'].includes(currentUserRole);
     }, [currentUserRole]);
 
     const isManagement = useMemo(() => {
-        return ['owner', 'general_manager', 'store_manager', 'assistant_manager']
+        return ['super_admin', 'owner', 'general_manager', 'store_manager', 'assistant_manager']
             .includes(currentUserRole);
+    }, [currentUserRole]);
+
+    const isSuperAdmin = useMemo(() => {
+        return currentUserRole === 'super_admin';
     }, [currentUserRole]);
 
     return {
@@ -31,6 +35,7 @@ export function useUserRole(currentUserRole: UserRoleValue) {
         hasPermission,
         canAccessMultipleStores,
         isManagement,
+        isSuperAdmin,
         level: role?.level ?? 0,
         allRoles: userRoles,
     };

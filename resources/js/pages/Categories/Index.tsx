@@ -139,7 +139,7 @@ function CategoryTreeItem({
 export default function Index({ categories }: Props) {
 
     return (
-        <AppLayout>
+        <>
             <Head title="Product Categories" />
 
             <div className="space-y-6">
@@ -188,6 +188,8 @@ export default function Index({ categories }: Props) {
                     </Card>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

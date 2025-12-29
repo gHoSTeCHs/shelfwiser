@@ -190,7 +190,7 @@ export default function Show({
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Purchase Order ${po.po_number}`} />
 
             <div className="space-y-6">
@@ -562,6 +562,8 @@ export default function Show({
                     </Card>
                 </div>
             )}
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

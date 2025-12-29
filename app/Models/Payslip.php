@@ -13,10 +13,12 @@ class Payslip extends Model
 
     protected $fillable = [
         'payroll_period_id',
+        'pay_run_id',
         'user_id',
         'tenant_id',
         'shop_id',
-        'base_salary',
+        'basic_salary',
+        'gross_earnings',
         'regular_hours',
         'regular_pay',
         'overtime_hours',
@@ -33,14 +35,25 @@ class Payslip extends Model
         'other_deductions',
         'total_deductions',
         'net_pay',
+        'ytd_gross',
+        'ytd_tax',
+        'ytd_pension',
+        'ytd_net',
         'earnings_breakdown',
         'deductions_breakdown',
         'tax_breakdown',
+        'tax_calculation',
+        'employer_contributions',
         'notes',
+        'status',
+        'cancellation_reason',
+        'cancelled_by',
+        'cancelled_at',
     ];
 
     protected $casts = [
-        'base_salary' => 'decimal:2',
+        'basic_salary' => 'decimal:2',
+        'gross_earnings' => 'decimal:2',
         'regular_hours' => 'decimal:2',
         'regular_pay' => 'decimal:2',
         'overtime_hours' => 'decimal:2',
@@ -57,9 +70,16 @@ class Payslip extends Model
         'other_deductions' => 'decimal:2',
         'total_deductions' => 'decimal:2',
         'net_pay' => 'decimal:2',
+        'ytd_gross' => 'decimal:2',
+        'ytd_tax' => 'decimal:2',
+        'ytd_pension' => 'decimal:2',
+        'ytd_net' => 'decimal:2',
         'earnings_breakdown' => 'array',
         'deductions_breakdown' => 'array',
         'tax_breakdown' => 'array',
+        'tax_calculation' => 'array',
+        'employer_contributions' => 'array',
+        'cancelled_at' => 'datetime',
     ];
 
     /**
@@ -68,6 +88,14 @@ class Payslip extends Model
     public function payrollPeriod(): BelongsTo
     {
         return $this->belongsTo(PayrollPeriod::class);
+    }
+
+    /**
+     * Pay run this payslip was generated from
+     */
+    public function payRun(): BelongsTo
+    {
+        return $this->belongsTo(PayRun::class);
     }
 
     /**
@@ -132,5 +160,34 @@ class Payslip extends Model
     public function scopeForPeriod($query, int $periodId)
     {
         return $query->where('payroll_period_id', $periodId);
+    }
+
+    /**
+     * User who cancelled this payslip
+     */
+    public function cancelledByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    /**
+     * Cancel this payslip with a reason (soft-delete)
+     */
+    public function cancel(string $reason, int $cancelledBy): void
+    {
+        $this->update([
+            'status' => 'cancelled',
+            'cancellation_reason' => $reason,
+            'cancelled_by' => $cancelledBy,
+            'cancelled_at' => now(),
+        ]);
+    }
+
+    /**
+     * Check if this payslip is cancelled
+     */
+    public function isCancelled(): bool
+    {
+        return $this->status === 'cancelled' || $this->trashed();
     }
 }

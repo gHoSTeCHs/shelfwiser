@@ -67,7 +67,7 @@ interface Props {
 export default function Show({ category, breadcrumbs }: Props) {
 
     return (
-        <AppLayout>
+        <>
             <Head title={category.name} />
 
             <div className="mx-auto max-w-6xl space-y-6">
@@ -288,6 +288,8 @@ export default function Show({ category, breadcrumbs }: Props) {
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

@@ -70,7 +70,7 @@ export default function Show({ service, category_addons, can_manage }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={service.name} />
 
             <div className="space-y-6">
@@ -624,6 +624,8 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                     />
                 </>
             )}
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

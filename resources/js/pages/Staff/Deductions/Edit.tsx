@@ -38,7 +38,7 @@ export default function Edit({ employee, deduction, deductionTypes }: Props) {
     const requiresAmount = !isPercentageType && deductionType !== '';
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit Deduction - ${employee.name}`} />
 
             <div className="mb-6">
@@ -231,6 +231,8 @@ export default function Edit({ employee, deduction, deductionTypes }: Props) {
                     </Card>
                 )}
             </Form>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

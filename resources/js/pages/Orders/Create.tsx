@@ -170,7 +170,7 @@ export default function Create({ shops, products }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Create Order" />
 
             <div className="space-y-6">
@@ -550,6 +550,8 @@ export default function Create({ shops, products }: Props) {
                     </div>
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

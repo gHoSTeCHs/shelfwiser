@@ -28,7 +28,7 @@ interface PayrollPeriod {
 
 interface Payslip {
     id: number;
-    base_salary: string;
+    basic_salary: string;
     regular_hours: string;
     regular_pay: string;
     overtime_hours: string;
@@ -93,7 +93,7 @@ export default function Payslip({ payslip }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Payslip - ${payslip.payroll_period.period_name}`} />
 
             <div className="mb-6 print:hidden">
@@ -127,8 +127,8 @@ export default function Payslip({ payslip }: Props) {
             </div>
 
             <Card className="overflow-hidden">
-                <div className="border-b border-dark-200 bg-dark-50 p-6">
-                    <div className="grid gap-6 sm:grid-cols-2">
+                <div className="border-b border-dark-200 bg-dark-50 p-4 sm:p-6">
+                    <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
                         <div>
                             <h2 className="mb-4 text-lg font-semibold text-dark-900">
                                 Employee Information
@@ -182,17 +182,17 @@ export default function Payslip({ payslip }: Props) {
                 </div>
 
                 <div className="p-6">
-                    <div className="grid gap-6 lg:grid-cols-2">
+                    <div className="grid gap-6 md:grid-cols-2">
                         <div>
                             <h3 className="mb-4 text-base font-semibold text-dark-900">
                                 Earnings
                             </h3>
                             <div className="space-y-3 rounded-lg border border-dark-200 bg-dark-50 p-4">
-                                {parseFloat(payslip.base_salary) > 0 && (
+                                {parseFloat(payslip.basic_salary) > 0 && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-dark-600">Base Salary</span>
                                         <span className="font-medium text-dark-900">
-                                            {formatCurrency(payslip.base_salary)}
+                                            {formatCurrency(payslip.basic_salary)}
                                         </span>
                                     </div>
                                 )}
@@ -379,6 +379,8 @@ export default function Payslip({ payslip }: Props) {
                     </div>
                 </div>
             </Card>
-        </AppLayout>
+        </>
     );
 }
+
+Payslip.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

@@ -157,7 +157,7 @@ readonly class PayrollService
             'user_id' => $employee->id,
             'tenant_id' => $employee->tenant_id,
             'shop_id' => $shop->id,
-            'base_salary' => $earnings['base_salary'],
+            'basic_salary' => $earnings['basic_salary'],
             'regular_hours' => $earnings['regular_hours'],
             'regular_pay' => $earnings['regular_pay'],
             'overtime_hours' => $earnings['overtime_hours'],
@@ -206,7 +206,7 @@ readonly class PayrollService
             case PayType::SALARY:
                 $baseSalary = (float) $payrollDetail->pay_amount;
                 $regularPay = 0;
-                $hourlyRate = $baseSalary / 160;
+                $hourlyRate = $payrollDetail->calculateHourlyRate();
                 $overtimePay = $overtimeHours * $hourlyRate * $overtimeMultiplier;
                 break;
 
@@ -229,16 +229,18 @@ readonly class PayrollService
                 break;
         }
 
-        $grossPay = $baseSalary + $regularPay + $overtimePay;
+        $commission = $this->calculateCommission($payrollDetail, $payrollPeriod->start_date, $payrollPeriod->end_date);
+
+        $grossPay = $baseSalary + $regularPay + $overtimePay + $commission;
 
         return [
-            'base_salary' => round($baseSalary, 2),
+            'basic_salary' => round($baseSalary, 2),
             'regular_hours' => round($regularHours, 2),
             'regular_pay' => round($regularPay, 2),
             'overtime_hours' => round($overtimeHours, 2),
             'overtime_pay' => round($overtimePay, 2),
             'bonus' => 0,
-            'commission' => 0,
+            'commission' => round($commission, 2),
             'gross_pay' => round($grossPay, 2),
         ];
     }
@@ -250,6 +252,10 @@ readonly class PayrollService
     {
         $payrollDetail = $employee->employeePayrollDetail;
         $shop = $employee->shops()->first();
+
+        if (!$shop) {
+            throw new RuntimeException("Employee {$employee->name} is not assigned to any shop");
+        }
 
         $incomeTax = 0;
         $taxDetails = null;
@@ -300,14 +306,7 @@ readonly class PayrollService
             $wageAdvanceDeduction += $installmentAmount;
         }
 
-        $otherDeductions = $employee->customDeductions()
-            ->where('is_active', true)
-            ->where('effective_from', '<=', $payrollPeriod->end_date)
-            ->where(function ($q) use ($payrollPeriod) {
-                $q->whereNull('effective_to')
-                    ->orWhere('effective_to', '>=', $payrollPeriod->start_date);
-            })
-            ->sum('amount');
+        $otherDeductions = $this->calculateCustomDeductions($employee, $payrollPeriod, $grossPay);
 
         $totalDeductions = $incomeTax + $pensionEmployee + $nhf + $nhis + $wageAdvanceDeduction + $otherDeductions;
 
@@ -418,7 +417,7 @@ readonly class PayrollService
     }
 
     /**
-     * Cancel payroll
+     * Cancel payroll - uses soft-delete for payslips to maintain audit trail
      *
      * @throws Throwable
      */
@@ -429,7 +428,9 @@ readonly class PayrollService
         }
 
         return DB::transaction(function () use ($payrollPeriod, $reason) {
-            $payrollPeriod->payslips()->delete();
+            foreach ($payrollPeriod->payslips as $payslip) {
+                $payslip->cancel($reason, auth()->id());
+            }
 
             $payrollPeriod->update([
                 'status' => PayrollStatus::CANCELLED,
@@ -474,6 +475,68 @@ readonly class PayrollService
             ->with(['payrollPeriod', 'shop'])
             ->orderBy('created_at', 'desc')
             ->get();
+    }
+
+    /**
+     * Calculate commission for an employee based on their sales
+     */
+    protected function calculateCommission(
+        \App\Models\EmployeePayrollDetail $payrollDetail,
+        Carbon $startDate,
+        Carbon $endDate
+    ): float {
+        if ($payrollDetail->pay_type !== PayType::COMMISSION_BASED && !$payrollDetail->commission_rate) {
+            return 0;
+        }
+
+        $salesAmount = $this->getEmployeeSales($payrollDetail->user_id, $startDate, $endDate);
+
+        return $payrollDetail->calculateCommission($salesAmount);
+    }
+
+    /**
+     * Get total completed sales for an employee in a date range
+     */
+    protected function getEmployeeSales(int $userId, Carbon $startDate, Carbon $endDate): float
+    {
+        $user = User::find($userId);
+        return \App\Models\Order::where('created_by', $userId)
+            ->where('tenant_id', $user->tenant_id)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'completed')
+            ->sum('total_amount');
+    }
+
+    /**
+     * Calculate custom deductions for an employee, handling both fixed and percentage-based deductions
+     */
+    protected function calculateCustomDeductions(User $employee, PayrollPeriod $payrollPeriod, float $grossPay): float
+    {
+        $deductions = $employee->customDeductions()
+            ->where('is_active', true)
+            ->where('effective_from', '<=', $payrollPeriod->end_date)
+            ->where(function ($q) use ($payrollPeriod) {
+                $q->whereNull('effective_to')
+                    ->orWhere('effective_to', '>=', $payrollPeriod->start_date);
+            })
+            ->get();
+
+        $total = 0;
+
+        foreach ($deductions as $deduction) {
+            if ($deduction->is_percentage) {
+                $amount = $grossPay * ($deduction->amount / 100);
+                if ($deduction->max_amount && $amount > $deduction->max_amount) {
+                    $amount = (float) $deduction->max_amount;
+                }
+            } else {
+                $amount = (float) $deduction->amount;
+            }
+
+            $total += $amount;
+        }
+
+        return $total;
     }
 
     /**

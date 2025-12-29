@@ -39,7 +39,7 @@ const Index: React.FC<ReceiptsIndexProps> = ({ receipts, filters, stats }) => {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Receipts" />
 
             <div className="space-y-6">
@@ -280,8 +280,10 @@ const Index: React.FC<ReceiptsIndexProps> = ({ receipts, filters, stats }) => {
                     )}
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 };
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
 
 export default Index;

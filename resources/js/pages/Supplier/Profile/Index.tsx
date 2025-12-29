@@ -59,7 +59,7 @@ export default function Index({ profile, isSupplier }: Props) {
 
     if (!isSupplier) {
         return (
-            <AppLayout>
+            <>
                 <Head title="Supplier Profile" />
 
                 <div className="space-y-6">
@@ -268,12 +268,12 @@ export default function Index({ profile, isSupplier }: Props) {
                         </div>
                     </Card>
                 </div>
-            </AppLayout>
+            </>
         );
     }
 
     return (
-        <AppLayout>
+        <>
             <Head title="Supplier Profile" />
 
             <div className="space-y-6">
@@ -476,6 +476,8 @@ export default function Index({ profile, isSupplier }: Props) {
                     </Form>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

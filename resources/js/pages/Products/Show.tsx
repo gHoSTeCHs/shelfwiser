@@ -116,7 +116,7 @@ export default function Show({ product, can_manage, available_shops, recent_move
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`${product.name} - Product Details`} />
 
             <div className="mx-auto max-w-6xl space-y-6">
@@ -800,6 +800,8 @@ export default function Show({ product, can_manage, available_shops, recent_move
                     availableShops={available_shops}
                 />
             )}
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

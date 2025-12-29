@@ -35,7 +35,7 @@ export default function Create({ employee, deductionTypes }: Props) {
     const requiresAmount = !isPercentageType && deductionType !== '';
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Add Deduction - ${employee.name}`} />
 
             <div className="mb-6">
@@ -225,6 +225,8 @@ export default function Create({ employee, deductionTypes }: Props) {
                     </Card>
                 )}
             </Form>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

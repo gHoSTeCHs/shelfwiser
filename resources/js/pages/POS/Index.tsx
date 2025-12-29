@@ -260,7 +260,7 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`POS - ${shop.name}`} />
 
             <div className="flex h-[calc(100vh-4rem)] flex-col">
@@ -637,8 +637,10 @@ const Index: React.FC<POSProps> = ({ shop, paymentMethods }) => {
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 };
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
 
 export default Index;

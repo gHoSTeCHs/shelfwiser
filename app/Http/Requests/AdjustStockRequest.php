@@ -15,19 +15,28 @@ class AdjustStockRequest extends FormRequest
 
     public function rules(): array
     {
+        $tenantId = $this->user()->tenant_id;
+
         return [
-            'product_variant_id' => ['required', 'exists:product_variants,id'],
-            'inventory_location_id' => ['required', 'exists:inventory_locations,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'type' => [
+            'product_variant_id' => [
+                'bail',
                 'required',
-                Rule::in([
-                    StockMovementType::ADJUSTMENT_IN->value,
-                    StockMovementType::ADJUSTMENT_OUT->value,
-                    StockMovementType::DAMAGE->value,
-                    StockMovementType::LOSS->value,
-                    StockMovementType::RETURN->value,
-                ]),
+                Rule::exists('product_variants', 'id')
+                    ->where(fn ($query) => $query->whereIn(
+                        'product_id',
+                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    )),
+            ],
+            'inventory_location_id' => [
+                'bail',
+                'required',
+                Rule::exists('inventory_locations', 'id')->where('tenant_id', $tenantId),
+            ],
+            'quantity' => ['bail', 'required', 'integer', 'min:1'],
+            'type' => [
+                'bail',
+                'required',
+                Rule::enum(StockMovementType::class),
             ],
             'reason' => ['nullable', 'string', 'max:500'],
             'notes' => ['nullable', 'string', 'max:1000'],

@@ -75,7 +75,7 @@ export default function Dashboard({
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Admin Dashboard" />
 
             <div className="space-y-6">
@@ -297,6 +297,8 @@ export default function Dashboard({
                     </Card>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Dashboard.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

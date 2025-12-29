@@ -126,7 +126,7 @@ export default function Show({
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Order ${order.order_number}`} />
 
             <div className="space-y-6">
@@ -825,6 +825,8 @@ export default function Show({
                     </div>
                 </form>
             </Modal>
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

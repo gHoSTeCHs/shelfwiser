@@ -63,7 +63,7 @@ export default function Create({ products, locations }: Props) {
         costPerPackage > 0;
 
     return (
-        <AppLayout>
+        <>
             <Head title="Record Purchase" />
 
             <div className="space-y-6">
@@ -260,6 +260,8 @@ export default function Create({ products, locations }: Props) {
                     </div>
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

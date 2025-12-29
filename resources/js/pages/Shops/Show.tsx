@@ -33,7 +33,7 @@ export default function ShopsShow({ shop, can_manage }: Props) {
     console.log(shop, can_manage);
 
     return (
-        <AppLayout>
+        <>
             <Head title={`${shop.name} - Shop Details`} />
 
             <div className="mx-auto max-w-4xl space-y-6">
@@ -404,6 +404,8 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+ShopsShow.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
