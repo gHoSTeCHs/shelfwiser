@@ -8,6 +8,7 @@ import {
 } from '@/lib/indexeddb';
 import { OfflineOrder, POSCart, POSCartItem, SyncProduct } from '@/types/sync';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNetworkStatus } from './useNetworkStatus';
 
 interface UseOfflinePOSOptions {
     shopId: number;
@@ -71,29 +72,49 @@ export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSRetur
     const [isCartLoaded, setIsCartLoaded] = useState(false);
     const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
-    const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+    const isSyncingRef = useRef(false);
+    
+    const isOnline = useNetworkStatus();
 
     const isMountedRef = useRef(true);
     const cartId = `${CART_KEY_PREFIX}${shopId}`;
 
     // Sync pending orders - defined early so it can be used by online/offline handlers
     const syncPendingOrders = useCallback(async () => {
-        if (!isOnline || isSyncing) return;
+        if (!isOnline || isSyncingRef.current) return;
 
-        setIsSyncing(true);
+        isSyncingRef.current = true;
+        // Note: We deliberately DO NOT set setIsSyncing(true) yet.
+        // We only want to show the loading state if we actually have data to sync.
 
         try {
             const pending = await getPendingActions();
             const orderActions = pending.filter(a => a.entity === 'offline_order' && !a.synced);
 
             if (orderActions.length === 0) {
+                // No work to do.
                 return;
             }
 
+            // We have orders to sync, NOW show the loading state
+            setIsSyncing(true);
             console.log(`[useOfflinePOS] Syncing ${orderActions.length} pending orders`);
 
             // Batch sync orders
             const orders = orderActions.map(a => a.data as OfflineOrder);
+
+            // Get fresh CSRF token from cookies if possible, fallback to meta tag
+            const getCsrfToken = () => {
+                const name = 'XSRF-TOKEN=';
+                const decodedCookie = decodeURIComponent(document.cookie);
+                const ca = decodedCookie.split(';');
+                for (let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) === ' ') c = c.substring(1);
+                    if (c.indexOf(name) === 0) return c.substring(name.length, c.length);
+                }
+                return document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '';
+            };
 
             const response = await fetch('/api/sync/orders', {
                 method: 'POST',
@@ -102,7 +123,7 @@ export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSRetur
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    'X-CSRF-TOKEN': getCsrfToken(),
                 },
                 body: JSON.stringify({ orders }),
             });
@@ -143,29 +164,22 @@ export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSRetur
         } catch (error) {
             console.error('[useOfflinePOS] Sync error:', error);
         } finally {
+            isSyncingRef.current = false;
             if (isMountedRef.current) {
+                // Only toggle false if we were actually syncing (state was true)
+                // However, setting it to false repeatedly is harmless in React
                 setIsSyncing(false);
             }
         }
-    }, [isOnline, isSyncing, onOrderSynced, onSyncError]);
+    }, [isOnline, onOrderSynced, onSyncError]);
 
     // Update online status
     useEffect(() => {
-        const handleOnline = () => {
-            setIsOnline(true);
-            // Auto-sync when coming online
+        if (isOnline) {
+             // Auto-sync when coming online
             syncPendingOrders();
-        };
-        const handleOffline = () => setIsOnline(false);
-
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, [syncPendingOrders]);
+        }
+    }, [isOnline, syncPendingOrders]);
 
     // Load cart from IndexedDB on mount
     useEffect(() => {
@@ -257,6 +271,7 @@ export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSRetur
                     barcode: product.barcode,
                     quantity: 1,
                     unit_price: product.price,
+                    is_taxable: product.is_taxable,
                 },
             ];
         });
@@ -345,12 +360,14 @@ export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSRetur
                         'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
                     },
                     body: JSON.stringify({
-                        items: JSON.stringify(cart.map(item => ({
+                        items: cart.map(item => ({
                             variant_id: item.variant_id,
                             quantity: item.quantity,
                             unit_price: item.unit_price,
-                        }))),
-                        customer_id: saleOptions.customerId || '',
+                            packaging_type_id: item.packaging_type_id,
+                            discount_amount: item.discount_amount,
+                        })),
+                        customer_id: saleOptions.customerId || null,
                         payment_method: saleOptions.paymentMethod,
                         amount_tendered: saleOptions.amountTendered,
                         discount_amount: saleOptions.discount,

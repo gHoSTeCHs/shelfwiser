@@ -284,8 +284,9 @@ export async function queueOfflineAction(action: Omit<OfflineAction, 'id' | 'tim
  * Get pending offline actions
  */
 export async function getPendingActions(): Promise<OfflineAction[]> {
-    const actions = await getItemsByIndex<OfflineAction>('offlineQueue', 'synced', false);
-    return actions.sort((a, b) => a.timestamp - b.timestamp);
+    const allActions = await getAllItems<OfflineAction>('offlineQueue');
+    const pendingActions = allActions.filter(action => !action.synced);
+    return pendingActions.sort((a, b) => a.timestamp - b.timestamp);
 }
 
 /**

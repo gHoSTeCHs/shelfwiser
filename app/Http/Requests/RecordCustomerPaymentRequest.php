@@ -2,10 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PaymentMethod;
 use App\Models\Customer;
 use App\Models\Shop;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class RecordCustomerPaymentRequest extends FormRequest
 {
@@ -18,7 +20,7 @@ class RecordCustomerPaymentRequest extends FormRequest
         $customer = $this->route('customer');
 
         // Verify shop and customer are valid route model bindings
-        if (!$shop instanceof Shop || !$customer instanceof Customer) {
+        if (! $shop instanceof Shop || ! $customer instanceof Customer) {
             return false;
         }
 
@@ -45,7 +47,7 @@ class RecordCustomerPaymentRequest extends FormRequest
     {
         return [
             'amount' => ['bail', 'required', 'numeric', 'min:0.01', 'max:999999999.99'],
-            'payment_method' => ['bail', 'required', 'string', 'in:cash,bank_transfer,cheque,mobile_money,card'],
+            'payment_method' => ['bail', 'required', 'string', Rule::enum(PaymentMethod::class)],
             'reference_number' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:500'],
         ];

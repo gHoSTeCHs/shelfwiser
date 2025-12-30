@@ -4,6 +4,7 @@ namespace App\Enums;
 
 enum OrderType: string
 {
+    case POS = 'pos';
     case CUSTOMER = 'customer';
     case PURCHASE_ORDER = 'purchase_order';
     case INTERNAL = 'internal';
@@ -11,6 +12,7 @@ enum OrderType: string
     public function label(): string
     {
         return match ($this) {
+            self::POS => 'POS Sale',
             self::CUSTOMER => 'Customer Order',
             self::PURCHASE_ORDER => 'Purchase Order',
             self::INTERNAL => 'Internal Transfer',
@@ -23,6 +25,7 @@ enum OrderType: string
     public function description(): string
     {
         return match ($this) {
+            self::POS => 'In-store point of sale transaction',
             self::CUSTOMER => 'B2C order from a customer via storefront or direct sales',
             self::PURCHASE_ORDER => 'B2B order from a supplier for inventory procurement',
             self::INTERNAL => 'Internal transfer of goods between shops within the same tenant',
@@ -35,6 +38,7 @@ enum OrderType: string
     public function icon(): string
     {
         return match ($this) {
+            self::POS => 'scan-barcode',
             self::CUSTOMER => 'shopping-cart',
             self::PURCHASE_ORDER => 'package',
             self::INTERNAL => 'arrow-right-left',
@@ -47,6 +51,7 @@ enum OrderType: string
     public function color(): string
     {
         return match ($this) {
+            self::POS => 'success',
             self::CUSTOMER => 'primary',
             self::PURCHASE_ORDER => 'info',
             self::INTERNAL => 'warning',
@@ -58,7 +63,7 @@ enum OrderType: string
      */
     public function isCustomerFacing(): bool
     {
-        return $this === self::CUSTOMER;
+        return in_array($this, [self::CUSTOMER, self::POS]);
     }
 
     /**
@@ -78,6 +83,14 @@ enum OrderType: string
     }
 
     /**
+     * Check if this order type is a POS sale.
+     */
+    public function isPOS(): bool
+    {
+        return $this === self::POS;
+    }
+
+    /**
      * Get order types as options for select inputs.
      */
     public static function forSelect(): array
@@ -88,11 +101,23 @@ enum OrderType: string
     }
 
     /**
-     * Get customer-facing order types only.
+     * Get customer-facing order types only (includes POS and online orders).
      */
     public static function customerTypes(): array
     {
         return [
+            self::POS,
+            self::CUSTOMER,
+        ];
+    }
+
+    /**
+     * Get sales order types (orders that sell to customers).
+     */
+    public static function salesTypes(): array
+    {
+        return [
+            self::POS,
             self::CUSTOMER,
         ];
     }

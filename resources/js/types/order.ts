@@ -1,4 +1,4 @@
-import { ProductVariant, ProductPackagingType } from './stockMovement';
+import { ProductPackagingType, ProductVariant } from './stockMovement';
 import { Shop } from './shop';
 import { User } from '@/types/index';
 import { Customer } from './storefront';
@@ -20,7 +20,7 @@ export type PaymentStatus =
     | 'refunded'
     | 'failed';
 
-export type OrderType = 'pos' | 'customer' | 'online' | 'phone' | 'wholesale';
+export type OrderType = 'pos' | 'customer' | 'purchase_order' | 'internal';
 
 export interface OrderItem {
     id: number;

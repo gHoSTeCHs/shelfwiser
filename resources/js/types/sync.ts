@@ -110,6 +110,7 @@ export interface POSCartItem {
     barcode: string | null;
     quantity: number;
     unit_price: number;
+    is_taxable: boolean;
     packaging_type_id?: number;
     discount_amount?: number;
 }

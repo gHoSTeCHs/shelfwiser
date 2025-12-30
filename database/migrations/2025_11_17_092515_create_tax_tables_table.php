@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('tax_tables')) {
+        if (! Schema::hasTable('tax_tables')) {
             Schema::create('tax_tables', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('tenant_id')->nullable()->constrained()->cascadeOnDelete();
@@ -26,7 +26,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('tax_bands')) {
+        if (! Schema::hasTable('tax_bands')) {
             Schema::create('tax_bands', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('tax_table_id')->constrained()->cascadeOnDelete();
@@ -47,7 +47,7 @@ return new class extends Migration
             }
         }
 
-        if (!Schema::hasTable('tax_reliefs')) {
+        if (! Schema::hasTable('tax_reliefs')) {
             Schema::create('tax_reliefs', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('tax_table_id')->constrained()->cascadeOnDelete();

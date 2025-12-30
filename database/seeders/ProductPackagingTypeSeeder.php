@@ -35,6 +35,7 @@ class ProductPackagingTypeSeeder extends Seeder
     protected function createSimpleRetailPackaging(ProductVariant $variant): void
     {
         ProductPackagingType::create([
+            'tenant_id' => $variant->product->tenant_id,
             'product_variant_id' => $variant->id,
             'name' => 'individual',
             'display_name' => $this->getIndividualDisplayName($variant),
@@ -56,7 +57,10 @@ class ProductPackagingTypeSeeder extends Seeder
         $unitsPerCarton = $this->getUnitsPerCarton($variant);
         $unitsPerPack = $this->getUnitsPerPack($variant);
 
+        $tenantId = $variant->product->tenant_id;
+
         $individual = ProductPackagingType::create([
+            'tenant_id' => $tenantId,
             'product_variant_id' => $variant->id,
             'name' => 'individual',
             'display_name' => $this->getIndividualDisplayName($variant),
@@ -76,6 +80,7 @@ class ProductPackagingTypeSeeder extends Seeder
         $packCost = $this->calculateBulkPrice($variant->cost_price, $unitsPerPack, 0.03);
 
         $pack = ProductPackagingType::create([
+            'tenant_id' => $tenantId,
             'product_variant_id' => $variant->id,
             'name' => 'pack',
             'display_name' => "Pack of {$unitsPerPack}",
@@ -95,6 +100,7 @@ class ProductPackagingTypeSeeder extends Seeder
         $cartonCost = $this->calculateBulkPrice($variant->cost_price, $unitsPerCarton, 0.05);
 
         ProductPackagingType::create([
+            'tenant_id' => $tenantId,
             'product_variant_id' => $variant->id,
             'name' => 'carton',
             'display_name' => "Carton of {$unitsPerCarton}",
@@ -115,8 +121,10 @@ class ProductPackagingTypeSeeder extends Seeder
     {
         $unitsPerCarton = $this->getUnitsPerCarton($variant);
         $unitsPerPack = $this->getUnitsPerPack($variant);
+        $tenantId = $variant->product->tenant_id;
 
         $individual = ProductPackagingType::create([
+            'tenant_id' => $tenantId,
             'product_variant_id' => $variant->id,
             'name' => 'individual',
             'display_name' => $this->getIndividualDisplayName($variant),
@@ -136,6 +144,7 @@ class ProductPackagingTypeSeeder extends Seeder
         $packCost = $this->calculateBulkPrice($variant->cost_price, $unitsPerPack, 0.04);
 
         $pack = ProductPackagingType::create([
+            'tenant_id' => $tenantId,
             'product_variant_id' => $variant->id,
             'name' => 'pack',
             'display_name' => "Pack of {$unitsPerPack}",
@@ -155,6 +164,7 @@ class ProductPackagingTypeSeeder extends Seeder
         $cartonCost = $this->calculateBulkPrice($variant->cost_price, $unitsPerCarton, 0.08);
 
         ProductPackagingType::create([
+            'tenant_id' => $tenantId,
             'product_variant_id' => $variant->id,
             'name' => 'carton',
             'display_name' => "Carton of {$unitsPerCarton}",

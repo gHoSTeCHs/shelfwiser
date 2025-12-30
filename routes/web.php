@@ -28,6 +28,7 @@ use App\Http\Controllers\ProductTemplateController;
 use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\ReorderAlertController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\ServiceAddonController;
 use App\Http\Controllers\ServiceCategoryController;
@@ -36,7 +37,6 @@ use App\Http\Controllers\ServiceVariantController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\ShopSettingsController;
 use App\Http\Controllers\StaffPayrollController;
-use App\Http\Controllers\ReorderAlertController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\StockTakeController;
 use App\Http\Controllers\SupplierCatalogController;
@@ -406,7 +406,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/session-summary', [POSController::class, 'sessionSummary'])->name('session-summary');
         Route::post('/hold', [POSController::class, 'holdSale'])->name('hold');
         Route::get('/held-sales', [POSController::class, 'heldSales'])->name('held-sales');
-        Route::get('/held-sales/{holdId}', [POSController::class, 'retrieveHeldSale'])->name('retrieve-held-sale');
+        Route::get('/held-sales/count', [POSController::class, 'heldSalesCount'])->name('held-sales.count');
+        Route::post('/held-sales/{heldSale}/retrieve', [POSController::class, 'retrieveHeldSale'])->name('held-sales.retrieve');
+        Route::delete('/held-sales/{heldSale}', [POSController::class, 'deleteHeldSale'])->name('held-sales.delete');
+    });
+
+    // Sync endpoints for offline POS (moved from api.php for session auth)
+    Route::prefix('api/sync')->name('api.sync.')->group(function () {
+        Route::get('/products', [App\Http\Controllers\Api\SyncController::class, 'syncProducts'])->name('products');
+        Route::get('/customers', [App\Http\Controllers\Api\SyncController::class, 'syncCustomers'])->name('customers');
+        Route::post('/orders', [App\Http\Controllers\Api\SyncController::class, 'syncOrders'])->name('orders');
     });
 
     Route::prefix('stock-movements')->name('stock-movements.')->group(function () {
@@ -466,7 +475,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 });
 
-require __DIR__ . '/storefront.php';
-require __DIR__ . '/settings.php';
-require __DIR__ . '/auth.php';
-
+require __DIR__.'/storefront.php';
+require __DIR__.'/settings.php';
+require __DIR__.'/auth.php';

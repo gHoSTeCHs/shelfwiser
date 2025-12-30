@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\MaterialOption;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Customer;
 use App\Models\ProductVariant;
 use App\Models\ServiceVariant;
 use App\Models\Shop;
@@ -15,10 +16,17 @@ class CartService
 {
     /**
      * Get or create a cart for the current session/customer.
+     *
+     * @throws \InvalidArgumentException If customer does not belong to shop tenant
      */
     public function getCart(Shop $shop, ?int $customerId = null): Cart
     {
         if ($customerId) {
+            $customer = Customer::find($customerId);
+            if ($customer && $customer->tenant_id !== $shop->tenant_id) {
+                throw new \InvalidArgumentException('Customer does not belong to shop tenant');
+            }
+
             return Cart::firstOrCreate(
                 [
                     'customer_id' => $customerId,
@@ -198,12 +206,11 @@ class CartService
 
         $subtotal = $items->sum(fn ($item) => $item->price * $item->quantity);
 
-        // Calculate shipping only for products (services don't have shipping)
         $productSubtotal = $items->filter(fn ($item) => $item->isProduct())
             ->sum(fn ($item) => $item->price * $item->quantity);
         $shippingFee = $this->calculateShipping($cart, $productSubtotal);
 
-        $tax = $this->calculateTax($cart, $subtotal);
+        $tax = $this->calculateTaxFromItems($cart, $items);
         $total = $subtotal + $shippingFee + $tax;
 
         return [
@@ -312,12 +319,42 @@ class CartService
     }
 
     /**
-     * Calculate tax based on shop location (placeholder for now).
+     * Calculate tax based on shop VAT settings and product taxability.
+     * Uses the same logic as POSService for consistency.
      */
     protected function calculateTax(Cart $cart, float $subtotal): float
     {
-        // TODO: Implement tax calculation based on shop location and tax rules
-        // For now, return 0 (will be enhanced when tax system is implemented)
-        return 0;
+        $items = $cart->items()->with(['productVariant.product'])->get();
+
+        return $this->calculateTaxFromItems($cart, $items);
+    }
+
+    /**
+     * Calculate tax from pre-loaded items collection.
+     * Avoids duplicate queries when items are already loaded.
+     */
+    protected function calculateTaxFromItems(Cart $cart, $items): float
+    {
+        $shop = $cart->shop;
+
+        if (! ($shop->vat_enabled ?? false)) {
+            return 0;
+        }
+
+        $vatRate = $shop->vat_rate ?? 0;
+        if ($vatRate <= 0) {
+            return 0;
+        }
+
+        $taxAmount = 0;
+
+        foreach ($items as $item) {
+            if ($item->isProduct() && ($item->productVariant->product->is_taxable ?? false)) {
+                $itemTotal = $item->price * $item->quantity;
+                $taxAmount += $itemTotal * ($vatRate / 100);
+            }
+        }
+
+        return round($taxAmount, 2);
     }
 }

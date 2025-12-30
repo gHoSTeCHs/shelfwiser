@@ -23,7 +23,7 @@ return new class extends Migration
             $table->foreign('payroll_period_id')
                 ->references('id')
                 ->on('payroll_periods')
-                ->nullOnDelete();
+                ->restrictOnDelete();
 
             $table->dropColumn('base_salary');
         });

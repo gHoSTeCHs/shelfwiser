@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Enums\OrderType;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +22,7 @@ class Order extends Model
         'shop_id',
         'customer_id',
         'order_number',
+        'order_type',
         'tracking_number',
         'shipping_carrier',
         'status',
@@ -53,7 +56,9 @@ class Order extends Model
 
     protected $casts = [
         'status' => OrderStatus::class,
+        'order_type' => OrderType::class,
         'payment_status' => PaymentStatus::class,
+        'payment_method' => PaymentMethod::class,
         'subtotal' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
@@ -145,6 +150,11 @@ class Order extends Model
         return $this->hasMany(OrderReturn::class, 'order_id');
     }
 
+    public function receipts(): HasMany
+    {
+        return $this->hasMany(Receipt::class);
+    }
+
     public function scopeForTenant($query, int $tenantId)
     {
         return $query->where('tenant_id', $tenantId);
@@ -175,6 +185,26 @@ class Order extends Model
         return $query->whereIn('status', OrderStatus::activeStatuses());
     }
 
+    public function scopeWithType($query, OrderType $type)
+    {
+        return $query->where('order_type', $type);
+    }
+
+    public function scopePosSales($query)
+    {
+        return $query->where('order_type', OrderType::POS);
+    }
+
+    public function scopeCustomerOrders($query)
+    {
+        return $query->where('order_type', OrderType::CUSTOMER);
+    }
+
+    public function scopeSalesOrders($query)
+    {
+        return $query->whereIn('order_type', OrderType::salesTypes());
+    }
+
     public function canEdit(): bool
     {
         return $this->status->canEdit();
@@ -188,6 +218,21 @@ class Order extends Model
     public function isComplete(): bool
     {
         return $this->status === OrderStatus::DELIVERED;
+    }
+
+    public function isPOSSale(): bool
+    {
+        return $this->order_type === OrderType::POS;
+    }
+
+    public function isCustomerOrder(): bool
+    {
+        return $this->order_type === OrderType::CUSTOMER;
+    }
+
+    public function isSalesOrder(): bool
+    {
+        return in_array($this->order_type, OrderType::salesTypes());
     }
 
     public function calculateTotals(): void

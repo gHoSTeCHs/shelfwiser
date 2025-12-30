@@ -70,7 +70,13 @@ export const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({
 
             {/* Product count */}
             <div className="hidden items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 sm:flex">
-                <span>{productCount.toLocaleString()} products cached</span>
+                <span>{productCount.toLocaleString()} products</span>
+                {lastSyncTime && (
+                    <>
+                        <span className="h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+                        <span className="text-gray-400 dark:text-gray-500">Synced {formatSyncTime(lastSyncTime)}</span>
+                    </>
+                )}
             </div>
 
             {/* Sync button */}

@@ -64,6 +64,7 @@ enum UserRole: string
                 'platform_admin',
                 'manage_all_tenants',
                 'manage_subscriptions',
+
                 'manage_platform_settings',
                 'view_platform_analytics',
                 'manage_api_access',
@@ -260,8 +261,8 @@ enum UserRole: string
     public static function forSelect(): array
     {
         return collect(self::cases())
-            ->filter(fn($role) => $role !== self::SUPER_ADMIN)
-            ->mapWithKeys(fn($role) => [$role->value => $role->label()])
+            ->filter(fn ($role) => $role !== self::SUPER_ADMIN)
+            ->mapWithKeys(fn ($role) => [$role->value => $role->label()])
             ->toArray();
     }
 
@@ -271,7 +272,7 @@ enum UserRole: string
     public static function allForSelect(): array
     {
         return collect(self::cases())
-            ->mapWithKeys(fn($role) => [$role->value => $role->label()])
+            ->mapWithKeys(fn ($role) => [$role->value => $role->label()])
             ->toArray();
     }
 
@@ -281,7 +282,7 @@ enum UserRole: string
     public static function tenantRoles(): array
     {
         return collect(self::cases())
-            ->filter(fn($role) => $role !== self::SUPER_ADMIN)
+            ->filter(fn ($role) => $role !== self::SUPER_ADMIN)
             ->values()
             ->toArray();
     }

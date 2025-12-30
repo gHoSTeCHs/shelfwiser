@@ -2,10 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PaymentMethod;
 use App\Models\Order;
 use App\Models\OrderPayment;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class RecordOrderPaymentRequest extends FormRequest
 {
@@ -16,7 +18,7 @@ class RecordOrderPaymentRequest extends FormRequest
     {
         $order = $this->route('order');
 
-        if (!$order instanceof Order) {
+        if (! $order instanceof Order) {
             return false;
         }
 
@@ -32,7 +34,7 @@ class RecordOrderPaymentRequest extends FormRequest
     {
         return [
             'amount' => ['bail', 'required', 'numeric', 'min:0.01'],
-            'payment_method' => ['bail', 'required', 'string', 'in:cash,card,bank_transfer,mobile_money,customer_credit'],
+            'payment_method' => ['bail', 'required', 'string', Rule::enum(PaymentMethod::class)],
             'payment_date' => ['bail', 'required', 'date'],
             'reference_number' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -53,7 +55,7 @@ class RecordOrderPaymentRequest extends FormRequest
                 if ($this->input('amount') > $remainingBalance) {
                     $validator->errors()->add(
                         'amount',
-                        'Payment amount cannot exceed remaining balance of ₦' . number_format($remainingBalance, 2)
+                        'Payment amount cannot exceed remaining balance of ₦'.number_format($remainingBalance, 2)
                     );
                 }
             }

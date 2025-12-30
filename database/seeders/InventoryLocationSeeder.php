@@ -28,6 +28,7 @@ class InventoryLocationSeeder extends Seeder
         $reservedQuantity = $this->determineReservedQuantity($quantity);
 
         InventoryLocation::create([
+            'tenant_id' => $shop->tenant_id,
             'product_variant_id' => $variant->id,
             'location_type' => Shop::class,
             'location_id' => $shop->id,

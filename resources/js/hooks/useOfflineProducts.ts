@@ -7,6 +7,7 @@ import {
 } from '@/lib/indexeddb';
 import { SyncProduct } from '@/types/sync';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNetworkStatus } from './useNetworkStatus';
 
 interface UseOfflineProductsOptions {
     shopId: number;
@@ -49,28 +50,16 @@ export function useOfflineProducts(options: UseOfflineProductsOptions): UseOffli
 
     const [isSearching, setIsSearching] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+    const isSyncingRef = useRef(false);
     const [lastSyncTime, setLastSyncTimeState] = useState<number | null>(null);
     const [productCount, setProductCount] = useState(0);
     const [syncError, setSyncError] = useState<string | null>(null);
-    const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
     const [isReady, setIsReady] = useState(false);
+    
+    const isOnline = useNetworkStatus();
 
     const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const isMountedRef = useRef(true);
-
-    // Update online status
-    useEffect(() => {
-        const handleOnline = () => setIsOnline(true);
-        const handleOffline = () => setIsOnline(false);
-
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, []);
 
     // Sync products from server to IndexedDB
     const syncProducts = useCallback(async () => {
@@ -79,11 +68,12 @@ export function useOfflineProducts(options: UseOfflineProductsOptions): UseOffli
             return;
         }
 
-        if (isSyncing) {
+        if (isSyncingRef.current) {
             console.log('[useOfflineProducts] Sync already in progress');
             return;
         }
 
+        isSyncingRef.current = true;
         setIsSyncing(true);
         setSyncError(null);
 
@@ -142,11 +132,12 @@ export function useOfflineProducts(options: UseOfflineProductsOptions): UseOffli
                 setSyncError(message);
             }
         } finally {
+            isSyncingRef.current = false;
             if (isMountedRef.current) {
                 setIsSyncing(false);
             }
         }
-    }, [shopId, isOnline, isSyncing]);
+    }, [shopId, isOnline]);
 
     // Search products (IndexedDB first, API fallback)
     const searchProductsLocal = useCallback(async (query: string): Promise<SyncProduct[]> => {

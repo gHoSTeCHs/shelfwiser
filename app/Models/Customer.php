@@ -121,6 +121,25 @@ class Customer extends Authenticatable
     }
 
     /**
+     * Scope a query to filter customers associated with a specific shop.
+     * A customer is associated with a shop if:
+     * - Their preferred_shop_id matches the shop, OR
+     * - They have at least one order at the shop
+     */
+    public function scopeForShop($query, int $shopId)
+    {
+        return $query->where(function ($q) use ($shopId) {
+            $q->where('preferred_shop_id', $shopId)
+                ->orWhereExists(function ($subquery) use ($shopId) {
+                    $subquery->selectRaw('1')
+                        ->from('orders')
+                        ->whereColumn('orders.customer_id', 'customers.id')
+                        ->where('orders.shop_id', $shopId);
+                });
+        });
+    }
+
+    /**
      * Get the customer's full name.
      */
     public function getFullNameAttribute(): string

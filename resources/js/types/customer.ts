@@ -1,15 +1,22 @@
 import type { Shop } from './shop';
 import type { Order } from './order';
 
-export interface Customer {
+/**
+ * Minimal customer interface for search results and quick lookups.
+ * Use this when only basic customer info is needed (e.g., POS customer search).
+ */
+export interface CustomerBasic {
     id: number;
-    tenant_id: number;
-    preferred_shop_id: number | null;
     first_name: string;
     last_name: string;
-    full_name: string;
     email: string;
     phone: string | null;
+}
+
+export interface Customer extends CustomerBasic {
+    tenant_id: number;
+    preferred_shop_id: number | null;
+    full_name: string;
     is_active: boolean;
     marketing_opt_in: boolean;
     account_balance: string;

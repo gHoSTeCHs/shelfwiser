@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentMethod;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -42,6 +43,7 @@ class OrderPayment extends Model
         'refund_amount' => 'decimal:2',
         'gateway_fee' => 'decimal:2',
         'gateway_response' => 'array',
+        'payment_method' => PaymentMethod::class,
         'payment_date' => 'date',
         'verified_at' => 'datetime',
         'refunded_at' => 'datetime',

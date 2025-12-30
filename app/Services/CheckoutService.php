@@ -72,7 +72,6 @@ class CheckoutService
                 'tenant_id' => $cart->shop->tenant_id,
                 'shop_id' => $cart->shop_id,
                 'customer_id' => $customer->id,
-                'order_number' => $this->generateOrderNumber(),
                 'order_type' => OrderType::CUSTOMER->value,
                 'status' => OrderStatus::PENDING->value,
                 'payment_status' => PaymentStatus::UNPAID->value,
@@ -156,10 +155,5 @@ class CheckoutService
                 'items.sellable.service',
             ]);
         });
-    }
-
-    protected function generateOrderNumber(): string
-    {
-        return 'ORD-'.strtoupper(uniqid());
     }
 }

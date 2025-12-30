@@ -111,6 +111,7 @@ class OrderSeeder extends Seeder
             $taxAmount = $this->calculateTaxAmount($unitPrice, $quantity, $discountAmount);
 
             OrderItem::create([
+                'tenant_id' => $order->tenant_id,
                 'order_id' => $order->id,
                 'product_variant_id' => $variant->id,
                 'product_packaging_type_id' => $packaging->id,
