@@ -2,12 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\PayRunStatus;
 use App\Models\PayRun;
 use App\Models\Payslip;
-use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class PayrollReportService
 {
@@ -97,7 +95,7 @@ class PayrollReportService
         $payslips = $query->with([
             'user:id,name,email',
             'user.employeePayrollDetail:id,user_id,tax_id_number',
-            'payrollPeriod:id,period_name,start_date,end_date'
+            'payrollPeriod:id,period_name,start_date,end_date',
         ])->get();
 
         $summary = [
@@ -108,6 +106,7 @@ class PayrollReportService
 
         $breakdown = $payslips->map(function ($payslip) {
             $taxCalc = $payslip->tax_calculation ?? [];
+
             return [
                 'employee_id' => $payslip->user_id,
                 'employee_name' => $payslip->user?->name ?? 'Unknown',
@@ -162,7 +161,7 @@ class PayrollReportService
         $payslips = $query->with([
             'user:id,name,email',
             'user.employeePayrollDetail:id,user_id,pension_enabled',
-            'payrollPeriod:id,period_name,start_date,end_date'
+            'payrollPeriod:id,period_name,start_date,end_date',
         ])->get();
 
         $summary = [
@@ -205,12 +204,13 @@ class PayrollReportService
                 },
                 'items.user:id,name,email',
                 'items.user.employeePayrollDetail:id,user_id,bank_name,bank_account_number',
-                'payrollPeriod:id,period_name'
+                'payrollPeriod:id,period_name',
             ])
             ->firstOrFail();
 
         $schedule = $payRun->items->map(function ($item) {
             $bankDetails = $item->user?->employeePayrollDetail;
+
             return [
                 'employee_id' => $item->user_id,
                 'employee_name' => $item->user?->name ?? 'Unknown',
@@ -253,7 +253,7 @@ class PayrollReportService
         ?Carbon $endDate = null
     ): array {
         $query = PayRun::where('tenant_id', $tenantId)
-            ->where('status', PayRun::STATUS_COMPLETED);
+            ->where('status', PayRunStatus::COMPLETED);
 
         if ($periodId) {
             $query->where('payroll_period_id', $periodId);
@@ -280,7 +280,7 @@ class PayrollReportService
             $entries[] = [
                 'date' => $payRun->completed_at?->format('Y-m-d'),
                 'reference' => $payRun->reference,
-                'description' => "Employer Pension Contribution",
+                'description' => 'Employer Pension Contribution',
                 'account' => 'Pension Expense (Employer)',
                 'debit' => (float) $payRun->total_employer_costs - (float) $payRun->total_gross,
                 'credit' => 0,
@@ -289,7 +289,7 @@ class PayrollReportService
             $entries[] = [
                 'date' => $payRun->completed_at?->format('Y-m-d'),
                 'reference' => $payRun->reference,
-                'description' => "PAYE Tax Payable",
+                'description' => 'PAYE Tax Payable',
                 'account' => 'PAYE Tax Liability',
                 'debit' => 0,
                 'credit' => $this->getTotalPAYE($payRun),
@@ -298,7 +298,7 @@ class PayrollReportService
             $entries[] = [
                 'date' => $payRun->completed_at?->format('Y-m-d'),
                 'reference' => $payRun->reference,
-                'description' => "Pension Contribution Payable",
+                'description' => 'Pension Contribution Payable',
                 'account' => 'Pension Liability',
                 'debit' => 0,
                 'credit' => $this->getTotalPension($payRun),
@@ -307,7 +307,7 @@ class PayrollReportService
             $entries[] = [
                 'date' => $payRun->completed_at?->format('Y-m-d'),
                 'reference' => $payRun->reference,
-                'description' => "Net Salaries Payable",
+                'description' => 'Net Salaries Payable',
                 'account' => 'Salaries Payable / Bank',
                 'debit' => 0,
                 'credit' => (float) $payRun->total_net,
@@ -338,6 +338,7 @@ class PayrollReportService
     {
         $employee = $payRun->payslips()->sum('pension_employee');
         $employer = $payRun->payslips()->sum('pension_employer');
+
         return $employee + $employer;
     }
 
@@ -346,7 +347,7 @@ class PayrollReportService
         $year = $year ?? now()->year;
 
         $completedRuns = PayRun::where('tenant_id', $tenantId)
-            ->where('status', PayRun::STATUS_COMPLETED)
+            ->where('status', PayRunStatus::COMPLETED)
             ->whereYear('completed_at', $year)
             ->get();
 

@@ -66,10 +66,20 @@ class CreatePurchaseOrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'items.required' => 'Purchase order must contain at least one item.',
-            'items.*.catalog_item_id.exists' => 'Invalid catalog item selected.',
-            'items.*.product_variant_id.exists' => 'Invalid product variant selected.',
+            'supplier_tenant_id.required' => 'Please select a supplier for this purchase order.',
+            'supplier_tenant_id.exists' => 'The selected supplier does not exist.',
+            'shop_id.required' => 'Please select which shop will receive this order.',
             'shop_id.exists' => 'The selected shop does not exist or does not belong to your organization.',
+            'expected_delivery_date.after' => 'Expected delivery date must be in the future.',
+            'notes.max' => 'Notes cannot exceed 1000 characters.',
+            'items.required' => 'Purchase order must contain at least one item.',
+            'items.min' => 'Please add at least one item to this purchase order.',
+            'items.*.catalog_item_id.required' => 'Please select a product for each line item.',
+            'items.*.catalog_item_id.exists' => 'One or more selected products are not available from this supplier.',
+            'items.*.quantity.required' => 'Please specify the quantity for each item.',
+            'items.*.quantity.min' => 'Item quantity must be at least 1.',
+            'items.*.unit_price.required' => 'Please specify the unit price for each item.',
+            'items.*.unit_price.min' => 'Unit price cannot be negative.',
         ];
     }
 }

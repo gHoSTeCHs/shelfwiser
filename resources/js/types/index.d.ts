@@ -1,6 +1,6 @@
+import { UserRoleValue } from '@/types/user-role.ts';
 import { InertiaLinkProps } from '@inertiajs/react';
 import { LucideIcon } from 'lucide-react';
-import { UserRoleValue } from '@/types/user-role.ts';
 
 export interface Auth {
     user: User;
@@ -50,8 +50,20 @@ export interface User {
     [key: string]: unknown;
 }
 
-export type SchemaPropertyType = 'string' | 'integer' | 'number' | 'boolean' | 'array' | 'object';
-export type SchemaPropertyValue = string | number | boolean | null | string[] | number[];
+export type SchemaPropertyType =
+    | 'string'
+    | 'integer'
+    | 'number'
+    | 'boolean'
+    | 'array'
+    | 'object';
+export type SchemaPropertyValue =
+    | string
+    | number
+    | boolean
+    | null
+    | string[]
+    | number[];
 
 export interface SchemaProperty {
     type: SchemaPropertyType;
@@ -68,3 +80,22 @@ export interface SchemaProperty {
     };
 }
 
+export interface PaginatedResponse<T> {
+    data: T[];
+    current_page: number;
+    first_page_url: string;
+    from: number | null;
+    last_page: number;
+    last_page_url: string;
+    links: Array<{
+        url: string | null;
+        label: string;
+        active: boolean;
+    }>;
+    next_page_url: string | null;
+    path: string;
+    per_page: number;
+    prev_page_url: string | null;
+    to: number | null;
+    total: number;
+}

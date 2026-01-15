@@ -1,10 +1,10 @@
-import { DollarSign, TrendingUp, AlertTriangle, FileText } from 'lucide-react';
-import MetricCard from '../MetricCard';
-import { SupplierData } from '@/types/dashboard';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 import ReusableBarChart from '@/components/charts/ReusableBarChart';
 import ReusablePieChart from '@/components/charts/ReusablePieChart';
+import Badge from '@/components/ui/badge/Badge';
+import { Card } from '@/components/ui/card';
+import { SupplierData } from '@/types/dashboard';
+import { AlertTriangle, DollarSign, FileText, TrendingUp } from 'lucide-react';
+import MetricCard from '../MetricCard';
 
 interface SuppliersTabProps {
     data: SupplierData;
@@ -66,9 +66,9 @@ export default function SuppliersTab({ data }: SuppliersTabProps) {
                         data={Object.values(data.payment_status_breakdown).map(
                             (item) => item.count,
                         )}
-                        labels={Object.values(data.payment_status_breakdown).map(
-                            (item) => item.label,
-                        )}
+                        labels={Object.values(
+                            data.payment_status_breakdown,
+                        ).map((item) => item.label)}
                     />
                 </Card>
             </div>
@@ -79,19 +79,19 @@ export default function SuppliersTab({ data }: SuppliersTabProps) {
                     <table className="w-full">
                         <thead className="border-b border-gray-200 dark:border-gray-700">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     PO Number
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Supplier
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Shop
                                 </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Amount
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Status
                                 </th>
                             </tr>

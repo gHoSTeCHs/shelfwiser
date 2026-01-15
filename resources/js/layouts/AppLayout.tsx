@@ -1,3 +1,5 @@
+import FlashMessage from '@/components/FlashMessage.tsx';
+import { ErrorBoundary, ErrorFallbackMinimal } from '@/components/error';
 import { UserRoleProvider } from '@/context/UserRoleContext.tsx';
 import { SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
@@ -6,8 +8,6 @@ import { SidebarProvider, useSidebar } from '../context/SidebarContext';
 import AppHeader from './AppHeader';
 import AppSidebar from './AppSidebar';
 import Backdrop from './Backdrop';
-import FlashMessage from '@/components/FlashMessage.tsx';
-import { ErrorBoundary, ErrorFallbackMinimal } from '@/components/error';
 
 interface LayoutContentProps {
     children: React.ReactNode;
@@ -23,7 +23,7 @@ const PageErrorFallback: React.FC<{
     isResetting?: boolean;
 }> = ({ error, errorInfo, resetError, isResetting }) => {
     return (
-        <div className="flex items-center justify-center min-h-[50vh] p-4">
+        <div className="flex min-h-[50vh] items-center justify-center p-4">
             <div className="w-full max-w-lg">
                 <ErrorFallbackMinimal
                     error={error}
@@ -54,20 +54,25 @@ const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
             >
                 <AppHeader />
                 <FlashMessage />
-                <div className="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6 ">
+                <div className="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">
                     <UserRoleProvider userRole={auth.user.role}>
                         <ErrorBoundary
                             fallback={PageErrorFallback}
                             onError={(error, errorInfo) => {
                                 // Log page-level errors
                                 if (import.meta.env.DEV) {
-                                    console.error('[AppLayout] Page error:', error);
+                                    console.error(
+                                        '[AppLayout] Page error:',
+                                        error,
+                                    );
                                 }
                             }}
                             onReset={() => {
                                 // Optionally refresh data on reset
                                 if (import.meta.env.DEV) {
-                                    console.info('[AppLayout] Error boundary reset');
+                                    console.info(
+                                        '[AppLayout] Error boundary reset',
+                                    );
                                 }
                             }}
                         >

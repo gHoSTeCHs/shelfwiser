@@ -6,6 +6,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency } from '@/lib/utils';
 import { ProductListResponse } from '@/types/product.ts';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -113,7 +114,6 @@ export default function Index({ products }: Props) {
                 ) : (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         {filteredProducts.map((product) => {
-
                             const minPrice =
                                 product.variants.length > 0
                                     ? Math.min(
@@ -206,8 +206,12 @@ export default function Index({ products }: Props) {
                                                 <div className="flex items-center text-sm font-medium text-gray-900 dark:text-white">
                                                     <DollarSign className="mr-1 h-4 w-4" />
                                                     {product.has_variants
-                                                        ? `From ₦${minPrice.toLocaleString()}`
-                                                        : `₦${parseFloat(product.variants[0].price.toString()).toLocaleString()}`}
+                                                        ? `From ${formatCurrency(minPrice)}`
+                                                        : formatCurrency(
+                                                              product
+                                                                  .variants[0]
+                                                                  .price,
+                                                          )}
                                                 </div>
                                             )}
                                         </div>

@@ -1,3 +1,9 @@
+import ReusableBarChart from '@/components/charts/ReusableBarChart';
+import ReusableLineChart from '@/components/charts/ReusableLineChart';
+import ReusablePieChart from '@/components/charts/ReusablePieChart';
+import Badge from '@/components/ui/badge/Badge';
+import { Card } from '@/components/ui/card';
+import { DashboardMetrics } from '@/types/dashboard';
 import {
     AlertTriangle,
     DollarSign,
@@ -6,12 +12,6 @@ import {
     TrendingDown,
     TrendingUp,
 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
-import { DashboardMetrics } from '@/types/dashboard';
-import ReusableLineChart from '@/components/charts/ReusableLineChart';
-import ReusablePieChart from '@/components/charts/ReusablePieChart';
-import ReusableBarChart from '@/components/charts/ReusableBarChart';
 
 interface OverviewTabProps {
     data: DashboardMetrics;
@@ -39,7 +39,12 @@ export default function OverviewTab({
         data.orders.delivered_count,
     ];
 
-    const orderStatusLabels = ['Pending', 'Confirmed', 'Processing', 'Delivered'];
+    const orderStatusLabels = [
+        'Pending',
+        'Confirmed',
+        'Processing',
+        'Delivered',
+    ];
     const orderStatusColors = ['#fbbf24', '#60a5fa', '#a78bfa', '#34d399'];
 
     // Prepare payment status data
@@ -52,9 +57,9 @@ export default function OverviewTab({
     const paymentStatusColors = ['#34d399', '#f87171'];
 
     // Prepare top products chart data
-    const topProductsData = data.top_products.map(p => p.total_revenue);
-    const topProductsLabels = data.top_products.map(p =>
-        p.variant_name ? `${p.name} (${p.variant_name})` : p.name
+    const topProductsData = data.top_products.map((p) => p.total_revenue);
+    const topProductsLabels = data.top_products.map((p) =>
+        p.variant_name ? `${p.name} (${p.variant_name})` : p.name,
     );
 
     return (
@@ -151,7 +156,7 @@ export default function OverviewTab({
             {canViewFinancials && data.profit && (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <Card className="p-6">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="mb-4 flex items-center justify-between">
                             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                 Gross Profit
                             </h3>
@@ -163,13 +168,16 @@ export default function OverviewTab({
                             {formatCurrency(data.profit.profit)}
                         </p>
                         <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                            Margin: <span className="font-semibold">{data.profit.margin.toFixed(2)}%</span>
+                            Margin:{' '}
+                            <span className="font-semibold">
+                                {data.profit.margin.toFixed(2)}%
+                            </span>
                         </p>
                     </Card>
 
                     {data.profit.cogs !== undefined && (
                         <Card className="p-6">
-                            <div className="flex items-center justify-between mb-4">
+                            <div className="mb-4 flex items-center justify-between">
                                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                     Cost of Goods Sold
                                 </h3>
@@ -188,7 +196,7 @@ export default function OverviewTab({
 
                     {data.inventory_valuation !== undefined && (
                         <Card className="p-6">
-                            <div className="flex items-center justify-between mb-4">
+                            <div className="mb-4 flex items-center justify-between">
                                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                     Inventory Valuation
                                 </h3>
@@ -247,9 +255,9 @@ export default function OverviewTab({
                             type="donut"
                         />
                     ) : (
-                        <div className="flex items-center justify-center h-[280px] text-gray-400 dark:text-gray-500">
+                        <div className="flex h-[280px] items-center justify-center text-gray-400 dark:text-gray-500">
                             <div className="text-center">
-                                <ShoppingCart className="h-12 w-12 mx-auto mb-2" />
+                                <ShoppingCart className="mx-auto mb-2 h-12 w-12" />
                                 <p className="text-sm">No orders yet</p>
                             </div>
                         </div>
@@ -278,15 +286,19 @@ export default function OverviewTab({
                                 height={220}
                                 type="donut"
                             />
-                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <div className="grid grid-cols-2 gap-4 border-t border-gray-200 pt-4 dark:border-gray-700">
                                 <div className="text-center">
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Collected</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        Collected
+                                    </p>
                                     <p className="text-lg font-bold text-success-600 dark:text-success-400">
                                         {data.orders.paid_count}
                                     </p>
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Outstanding</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        Outstanding
+                                    </p>
                                     <p className="text-lg font-bold text-error-600 dark:text-error-400">
                                         {data.orders.unpaid_count}
                                     </p>
@@ -294,9 +306,9 @@ export default function OverviewTab({
                             </div>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-center h-[280px] text-gray-400 dark:text-gray-500">
+                        <div className="flex h-[280px] items-center justify-center text-gray-400 dark:text-gray-500">
                             <div className="text-center">
-                                <DollarSign className="h-12 w-12 mx-auto mb-2" />
+                                <DollarSign className="mx-auto mb-2 h-12 w-12" />
                                 <p className="text-sm">No payment data yet</p>
                             </div>
                         </div>
@@ -323,9 +335,9 @@ export default function OverviewTab({
                             title="Revenue"
                         />
                     ) : (
-                        <div className="flex items-center justify-center h-[280px] text-gray-400 dark:text-gray-500">
+                        <div className="flex h-[280px] items-center justify-center text-gray-400 dark:text-gray-500">
                             <div className="text-center">
-                                <Package className="h-12 w-12 mx-auto mb-2" />
+                                <Package className="mx-auto mb-2 h-12 w-12" />
                                 <p className="text-sm">No product data yet</p>
                             </div>
                         </div>
@@ -351,14 +363,14 @@ export default function OverviewTab({
                                 {data.low_stock.length}
                             </Badge>
                         </div>
-                        <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
+                        <div className="custom-scrollbar max-h-[300px] space-y-3 overflow-y-auto">
                             {data.low_stock.slice(0, 5).map((item) => (
                                 <div
                                     key={item.id}
-                                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                                    className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-800"
                                 >
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
                                             {item.product_name}
                                         </p>
                                         {item.variant_name && (
@@ -382,7 +394,7 @@ export default function OverviewTab({
                             ))}
                         </div>
                         {data.low_stock.length > 5 && (
-                            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                            <p className="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
                                 And {data.low_stock.length - 5} more items
                             </p>
                         )}
@@ -400,32 +412,43 @@ export default function OverviewTab({
                                 Latest transactions
                             </p>
                         </div>
-                        <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
+                        <div className="custom-scrollbar max-h-[300px] space-y-3 overflow-y-auto">
                             {data.recent_orders.slice(0, 5).map((order) => (
                                 <div
                                     key={order.id}
-                                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer"
+                                    className="flex cursor-pointer items-center justify-between rounded-lg bg-gray-50 p-3 transition hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
                                 >
-                                    <div className="flex-1 min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <p className="text-sm font-medium text-gray-900 dark:text-white">
                                             #{order.order_number}
                                         </p>
                                         <p className="text-xs text-gray-500 dark:text-gray-400">
                                             {order.customer_name}
                                         </p>
-                                        <div className="flex items-center gap-2 mt-1">
+                                        <div className="mt-1 flex items-center gap-2">
                                             <Badge
                                                 color={
-                                                    order.status === 'delivered' ? 'success' :
-                                                    order.status === 'pending' ? 'warning' :
-                                                    order.status === 'cancelled' ? 'error' : 'info'
+                                                    order.status === 'delivered'
+                                                        ? 'success'
+                                                        : order.status ===
+                                                            'pending'
+                                                          ? 'warning'
+                                                          : order.status ===
+                                                              'cancelled'
+                                                            ? 'error'
+                                                            : 'info'
                                                 }
                                                 size="sm"
                                             >
                                                 {order.status}
                                             </Badge>
                                             <Badge
-                                                color={order.payment_status === 'paid' ? 'success' : 'error'}
+                                                color={
+                                                    order.payment_status ===
+                                                    'paid'
+                                                        ? 'success'
+                                                        : 'error'
+                                                }
                                                 size="sm"
                                             >
                                                 {order.payment_status}
@@ -437,7 +460,9 @@ export default function OverviewTab({
                                             {formatCurrency(order.total_amount)}
                                         </p>
                                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                                            {new Date(order.created_at).toLocaleDateString('en-NG', {
+                                            {new Date(
+                                                order.created_at,
+                                            ).toLocaleDateString('en-NG', {
                                                 month: 'short',
                                                 day: 'numeric',
                                             })}
@@ -461,33 +486,43 @@ export default function OverviewTab({
                             Detailed revenue components
                         </p>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Subtotal</p>
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+                        <div className="rounded-lg bg-gray-50 p-4 text-center dark:bg-gray-800">
+                            <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
+                                Subtotal
+                            </p>
                             <p className="text-lg font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(data.sales.subtotal)}
                             </p>
                         </div>
-                        <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Tax</p>
+                        <div className="rounded-lg bg-gray-50 p-4 text-center dark:bg-gray-800">
+                            <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
+                                Tax
+                            </p>
                             <p className="text-lg font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(data.sales.tax_amount)}
                             </p>
                         </div>
-                        <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Shipping</p>
+                        <div className="rounded-lg bg-gray-50 p-4 text-center dark:bg-gray-800">
+                            <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
+                                Shipping
+                            </p>
                             <p className="text-lg font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(data.sales.shipping_cost)}
                             </p>
                         </div>
-                        <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Discounts</p>
+                        <div className="rounded-lg bg-gray-50 p-4 text-center dark:bg-gray-800">
+                            <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
+                                Discounts
+                            </p>
                             <p className="text-lg font-bold text-error-600 dark:text-error-400">
                                 -{formatCurrency(data.sales.discount_amount)}
                             </p>
                         </div>
-                        <div className="text-center p-4 bg-brand-50 dark:bg-brand-900/20 rounded-lg">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total</p>
+                        <div className="rounded-lg bg-brand-50 p-4 text-center dark:bg-brand-900/20">
+                            <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
+                                Total
+                            </p>
                             <p className="text-lg font-bold text-brand-600 dark:text-brand-400">
                                 {formatCurrency(data.sales.total_revenue)}
                             </p>

@@ -1,25 +1,23 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/AppLayout';
-import { Card } from '@/components/ui/card';
-import Button from '@/components/ui/button/Button';
+import PayrollController from '@/actions/App/Http/Controllers/PayrollController';
+import PayrollReportController from '@/actions/App/Http/Controllers/PayrollReportController';
 import Select from '@/components/form/Select';
 import Input from '@/components/form/input/InputField';
 import Badge from '@/components/ui/badge/Badge';
-import PayrollController from '@/actions/App/Http/Controllers/PayrollController';
-import PayrollReportController from '@/actions/App/Http/Controllers/PayrollReportController';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
+import type { PayrollPeriod } from '@/types/payroll';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
-    Download,
+    Building,
     FileSpreadsheet,
     FileText,
-    Wallet,
-    Users,
-    DollarSign,
-    Building,
     UserCircle,
+    Users,
+    Wallet,
 } from 'lucide-react';
-import type { PayrollPeriod } from '@/types/payroll';
+import { useState } from 'react';
 
 interface PensionReportData {
     summary: {
@@ -82,8 +80,13 @@ export default function Pension({ reportData, periods, filters }: Props) {
         if (dateFrom) params.date_from = dateFrom;
         if (dateTo) params.date_to = dateTo;
 
-        const url = new URL(PayrollReportController.exportPension.url(), window.location.origin);
-        Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
+        const url = new URL(
+            PayrollReportController.exportPension.url(),
+            window.location.origin,
+        );
+        Object.entries(params).forEach(([key, value]) =>
+            url.searchParams.append(key, value),
+        );
         window.location.href = url.toString();
     };
 
@@ -109,7 +112,8 @@ export default function Pension({ reportData, periods, filters }: Props) {
                         Pension Contributions Report
                     </h1>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Employee and employer pension contributions for PFA remittance
+                        Employee and employer pension contributions for PFA
+                        remittance
                     </p>
                 </div>
 
@@ -183,7 +187,11 @@ export default function Pension({ reportData, periods, filters }: Props) {
                     </div>
 
                     <div className="flex items-end">
-                        <Button variant="primary" onClick={handleFilter} fullWidth>
+                        <Button
+                            variant="primary"
+                            onClick={handleFilter}
+                            fullWidth
+                        >
                             Apply Filters
                         </Button>
                     </div>
@@ -216,11 +224,14 @@ export default function Pension({ reportData, periods, filters }: Props) {
                                         Employee Contribution
                                     </p>
                                     <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
-                                        {formatCurrency(reportData.summary.total_employee_contribution)}
+                                        {formatCurrency(
+                                            reportData.summary
+                                                .total_employee_contribution,
+                                        )}
                                     </p>
                                 </div>
-                                <div className="rounded-lg bg-info-100 p-3 dark:bg-info-900/20">
-                                    <UserCircle className="h-6 w-6 text-info-600 dark:text-info-400" />
+                                <div className="bg-info-100 dark:bg-info-900/20 rounded-lg p-3">
+                                    <UserCircle className="text-info-600 dark:text-info-400 h-6 w-6" />
                                 </div>
                             </div>
                         </Card>
@@ -232,7 +243,10 @@ export default function Pension({ reportData, periods, filters }: Props) {
                                         Employer Contribution
                                     </p>
                                     <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
-                                        {formatCurrency(reportData.summary.total_employer_contribution)}
+                                        {formatCurrency(
+                                            reportData.summary
+                                                .total_employer_contribution,
+                                        )}
                                     </p>
                                 </div>
                                 <div className="rounded-lg bg-warning-100 p-3 dark:bg-warning-900/20">
@@ -248,7 +262,10 @@ export default function Pension({ reportData, periods, filters }: Props) {
                                         Total Contribution
                                     </p>
                                     <p className="mt-1 text-xl font-bold text-success-600 dark:text-success-400">
-                                        {formatCurrency(reportData.summary.total_contribution)}
+                                        {formatCurrency(
+                                            reportData.summary
+                                                .total_contribution,
+                                        )}
                                     </p>
                                 </div>
                                 <div className="rounded-lg bg-success-100 p-3 dark:bg-success-900/20">
@@ -269,25 +286,46 @@ export default function Pension({ reportData, periods, filters }: Props) {
                             <table className="w-full">
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Employee
                                         </th>
-                                        <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
+                                        <th
+                                            scope="col"
+                                            className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400"
+                                        >
                                             RSA PIN
                                         </th>
-                                        <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
+                                        <th
+                                            scope="col"
+                                            className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400"
+                                        >
                                             PFA
                                         </th>
-                                        <th className="hidden px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 lg:table-cell">
+                                        <th
+                                            scope="col"
+                                            className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase lg:table-cell dark:text-gray-400"
+                                        >
                                             Basic Salary
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Employee (8%)
                                         </th>
-                                        <th className="hidden px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
+                                        <th
+                                            scope="col"
+                                            className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400"
+                                        >
                                             Employer (10%)
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Total
                                         </th>
                                     </tr>
@@ -304,31 +342,44 @@ export default function Pension({ reportData, periods, filters }: Props) {
                                                         {employee.employee_name}
                                                     </span>
                                                     <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {employee.employee_email}
+                                                        {
+                                                            employee.employee_email
+                                                        }
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="hidden px-4 py-3 text-sm text-gray-600 dark:text-gray-300 md:table-cell">
+                                            <td className="hidden px-4 py-3 text-sm text-gray-600 md:table-cell dark:text-gray-300">
                                                 {employee.pension_pin || (
-                                                    <Badge color="warning" size="sm">
+                                                    <Badge
+                                                        color="warning"
+                                                        size="sm"
+                                                    >
                                                         Not Set
                                                     </Badge>
                                                 )}
                                             </td>
-                                            <td className="hidden px-4 py-3 text-sm text-gray-600 dark:text-gray-300 md:table-cell">
+                                            <td className="hidden px-4 py-3 text-sm text-gray-600 md:table-cell dark:text-gray-300">
                                                 {employee.pfa_name || '-'}
                                             </td>
-                                            <td className="hidden px-4 py-3 text-right text-sm text-gray-600 dark:text-gray-300 lg:table-cell">
-                                                {formatCurrency(employee.basic_salary)}
+                                            <td className="hidden px-4 py-3 text-right text-sm text-gray-600 lg:table-cell dark:text-gray-300">
+                                                {formatCurrency(
+                                                    employee.basic_salary,
+                                                )}
                                             </td>
                                             <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">
-                                                {formatCurrency(employee.employee_contribution)}
+                                                {formatCurrency(
+                                                    employee.employee_contribution,
+                                                )}
                                             </td>
-                                            <td className="hidden px-4 py-3 text-right text-sm text-gray-900 dark:text-white md:table-cell">
-                                                {formatCurrency(employee.employer_contribution)}
+                                            <td className="hidden px-4 py-3 text-right text-sm text-gray-900 md:table-cell dark:text-white">
+                                                {formatCurrency(
+                                                    employee.employer_contribution,
+                                                )}
                                             </td>
                                             <td className="px-4 py-3 text-right text-sm font-semibold text-success-600 dark:text-success-400">
-                                                {formatCurrency(employee.total_contribution)}
+                                                {formatCurrency(
+                                                    employee.total_contribution,
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
@@ -342,13 +393,22 @@ export default function Pension({ reportData, periods, filters }: Props) {
                                             Totals
                                         </td>
                                         <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
-                                            {formatCurrency(reportData.summary.total_employee_contribution)}
+                                            {formatCurrency(
+                                                reportData.summary
+                                                    .total_employee_contribution,
+                                            )}
                                         </td>
-                                        <td className="hidden px-4 py-3 text-right font-bold text-gray-900 dark:text-white md:table-cell">
-                                            {formatCurrency(reportData.summary.total_employer_contribution)}
+                                        <td className="hidden px-4 py-3 text-right font-bold text-gray-900 md:table-cell dark:text-white">
+                                            {formatCurrency(
+                                                reportData.summary
+                                                    .total_employer_contribution,
+                                            )}
                                         </td>
                                         <td className="px-4 py-3 text-right text-lg font-bold text-success-600 dark:text-success-400">
-                                            {formatCurrency(reportData.summary.total_contribution)}
+                                            {formatCurrency(
+                                                reportData.summary
+                                                    .total_contribution,
+                                            )}
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -371,7 +431,9 @@ export default function Pension({ reportData, periods, filters }: Props) {
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Due Date</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        Due Date
+                                    </p>
                                     <p className="font-medium text-gray-900 dark:text-white">
                                         7 working days after salary payment
                                     </p>
@@ -389,14 +451,16 @@ export default function Pension({ reportData, periods, filters }: Props) {
                                         Reference Period
                                     </p>
                                     <p className="font-medium text-gray-900 dark:text-white">
-                                        {reportData.period?.period_name || 'Multiple Periods'}
+                                        {reportData.period?.period_name ||
+                                            'Multiple Periods'}
                                     </p>
                                 </div>
                             </div>
                         </div>
                         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                            Note: Remit contributions directly to each employee's PFA. Ensure all employees
-                            have valid RSA PINs registered before remittance.
+                            Note: Remit contributions directly to each
+                            employee's PFA. Ensure all employees have valid RSA
+                            PINs registered before remittance.
                         </p>
                     </Card>
                 </>
@@ -405,7 +469,8 @@ export default function Pension({ reportData, periods, filters }: Props) {
             {!reportData && (
                 <Card className="p-8 text-center">
                     <p className="text-gray-500 dark:text-gray-400">
-                        Select filters and click "Apply Filters" to generate the pension report.
+                        Select filters and click "Apply Filters" to generate the
+                        pension report.
                     </p>
                 </Card>
             )}

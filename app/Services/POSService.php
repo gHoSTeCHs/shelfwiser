@@ -76,16 +76,7 @@ class POSService
                     throw new \Exception("Product variant {$item['variant_id']} not found");
                 }
 
-                if ($variant->product->track_stock ?? true) {
-                    $location = $locations->get($variant->id);
-                    $available = $location ? $location->quantity : 0;
-
-                    if ($available < $item['quantity']) {
-                        throw new \Exception(
-                            "Insufficient stock for {$variant->sku}. Available: {$available}, Requested: {$item['quantity']}"
-                        );
-                    }
-                }
+                $this->validateStockAvailability($variant, $item['quantity'], $shop->id);
             }
 
             $subtotal = 0;
@@ -95,6 +86,7 @@ class POSService
                 'tenant_id' => auth()->user()->tenant_id,
                 'shop_id' => $shop->id,
                 'customer_id' => $customerId,
+                'offline_id' => $options['offline_id'] ?? null,
                 'order_type' => OrderType::POS->value,
                 'status' => OrderStatus::DELIVERED->value,
                 'payment_status' => PaymentStatus::PAID->value,
@@ -111,15 +103,19 @@ class POSService
                 'delivered_at' => now(),
             ]);
 
+            $totalLineDiscounts = 0;
+
             foreach ($items as $item) {
                 $variant = $variants->get($item['variant_id']);
                 $quantity = $item['quantity'];
                 $unitPrice = $item['unit_price'] ?? $variant->price;
                 $lineTotal = $unitPrice * $quantity;
+                $lineDiscount = $item['discount_amount'] ?? 0;
+                $taxableAmount = $lineTotal - $lineDiscount;
 
                 $lineTax = 0;
                 if (($shop->vat_enabled ?? false) && ($variant->product->is_taxable ?? false)) {
-                    $lineTax = $lineTotal * (($shop->vat_rate ?? 0) / 100);
+                    $lineTax = $taxableAmount * (($shop->vat_rate ?? 0) / 100);
                 }
 
                 OrderItem::create([
@@ -128,13 +124,14 @@ class POSService
                     'product_packaging_type_id' => $item['packaging_type_id'] ?? null,
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
-                    'discount_amount' => $item['discount_amount'] ?? 0,
+                    'discount_amount' => $lineDiscount,
                     'tax_amount' => $lineTax,
-                    'total_amount' => $lineTotal + $lineTax - ($item['discount_amount'] ?? 0),
+                    'total_amount' => $taxableAmount + $lineTax,
                 ]);
 
                 $subtotal += $lineTotal;
                 $taxAmount += $lineTax;
+                $totalLineDiscounts += $lineDiscount;
 
                 if ($variant->product->track_stock ?? true) {
                     $location = $locations->get($variant->id);
@@ -165,11 +162,14 @@ class POSService
                 }
             }
 
-            $totalAmount = $subtotal + $taxAmount - ($options['discount_amount'] ?? 0);
+            $orderDiscount = $options['discount_amount'] ?? 0;
+            $totalDiscount = $totalLineDiscounts + $orderDiscount;
+            $totalAmount = $subtotal - $totalLineDiscounts + $taxAmount - $orderDiscount;
 
             $order->update([
                 'subtotal' => $subtotal,
                 'tax_amount' => $taxAmount,
+                'discount_amount' => $totalDiscount,
                 'total_amount' => $totalAmount,
                 'paid_amount' => $totalAmount,
             ]);
@@ -259,5 +259,25 @@ class POSService
             'mobile_money_sales' => $orders->where('payment_method', 'mobile_money')->sum('total_amount'),
             'orders' => $orders,
         ];
+    }
+
+    /**
+     * Validate stock availability for a variant.
+     * Throws exception if stock is insufficient.
+     *
+     * @throws \Exception
+     */
+    private function validateStockAvailability(ProductVariant $variant, int $quantity, ?int $shopId = null): void
+    {
+        if (! ($variant->product->track_stock ?? true)) {
+            return;
+        }
+
+        if (! $this->stockMovementService->checkStockAvailability($variant, $quantity, $shopId)) {
+            $available = $this->stockMovementService->getAvailableStock($variant, $shopId);
+            throw new \Exception(
+                "Insufficient stock for {$variant->sku}. Available: {$available}, Requested: {$quantity}"
+            );
+        }
     }
 }

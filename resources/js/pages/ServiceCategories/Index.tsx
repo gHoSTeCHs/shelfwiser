@@ -57,13 +57,13 @@ export default function Index({ categories }: Props) {
                                     {/* Category Header */}
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-start gap-3">
-                                            <div className="bg-brand-100 dark:bg-brand-900/20 flex h-10 w-10 items-center justify-center rounded-lg">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-900/20">
                                                 {category.icon ? (
                                                     <span className="text-xl">
                                                         {category.icon}
                                                     </span>
                                                 ) : (
-                                                    <Folder className="text-brand-600 dark:text-brand-400 h-5 w-5" />
+                                                    <Folder className="h-5 w-5 text-brand-600 dark:text-brand-400" />
                                                 )}
                                             </div>
                                             <div>

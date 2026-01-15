@@ -9,13 +9,19 @@ use App\Models\Customer;
 use App\Models\ProductVariant;
 use App\Models\ServiceVariant;
 use App\Models\Shop;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
 class CartService
 {
+    public function __construct(
+        private readonly StockMovementService $stockMovementService
+    ) {}
+
     /**
      * Get or create a cart for the current session/customer.
+     * Regenerates session ID for new guest carts to prevent session fixation.
      *
      * @throws \InvalidArgumentException If customer does not belong to shop tenant
      */
@@ -27,30 +33,49 @@ class CartService
                 throw new \InvalidArgumentException('Customer does not belong to shop tenant');
             }
 
-            return Cart::firstOrCreate(
-                [
-                    'customer_id' => $customerId,
-                    'shop_id' => $shop->id,
-                ],
-                [
-                    'tenant_id' => $shop->tenant_id,
-                    'expires_at' => now()->addDays(30),
-                ]
-            );
+            $cacheKey = $this->getCartCacheKey($shop->tenant_id, $shop->id, $customerId);
+
+            return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($customerId, $shop) {
+                return Cart::firstOrCreate(
+                    [
+                        'customer_id' => $customerId,
+                        'shop_id' => $shop->id,
+                    ],
+                    [
+                        'tenant_id' => $shop->tenant_id,
+                        'expires_at' => now()->addDays(30),
+                    ]
+                );
+            });
         }
 
         $sessionId = Session::getId();
+        $cacheKey = $this->getCartCacheKey($shop->tenant_id, $shop->id, null, $sessionId);
 
-        return Cart::firstOrCreate(
-            [
-                'session_id' => $sessionId,
-                'shop_id' => $shop->id,
-            ],
-            [
-                'tenant_id' => $shop->tenant_id,
-                'expires_at' => now()->addDays(7),
-            ]
-        );
+        $existingCart = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($sessionId, $shop) {
+            return Cart::where('session_id', $sessionId)
+                ->where('shop_id', $shop->id)
+                ->first();
+        });
+
+        if ($existingCart) {
+            return $existingCart;
+        }
+
+        Session::regenerate();
+        $newSessionId = Session::getId();
+
+        $cart = Cart::create([
+            'session_id' => $newSessionId,
+            'shop_id' => $shop->id,
+            'tenant_id' => $shop->tenant_id,
+            'expires_at' => now()->addDays(7),
+        ]);
+
+        Cache::forget($cacheKey);
+        $this->invalidateCartCache($shop->tenant_id, $shop->id, null, $newSessionId);
+
+        return $cart;
     }
 
     /**
@@ -64,10 +89,7 @@ class CartService
     ): CartItem {
         $variant = ProductVariant::findOrFail($variantId);
 
-        // Check stock availability
-        if (! $this->checkStockAvailability($variant, $quantity)) {
-            throw new \Exception('Insufficient stock available. Only '.$variant->available_stock.' units in stock.');
-        }
+        $this->validateStockAvailabilityForStorefront($variant, $quantity, $cart->shop_id);
 
         return DB::transaction(function () use ($cart, $variant, $quantity, $packagingTypeId) {
             $cartItem = CartItem::where([
@@ -77,27 +99,27 @@ class CartService
             ])->first();
 
             if ($cartItem) {
-                // Update existing item
                 $newQuantity = $cartItem->quantity + $quantity;
 
-                // Check stock for new quantity
-                if (! $this->checkStockAvailability($variant, $newQuantity)) {
-                    throw new \Exception('Cannot add more items. Only '.$variant->available_stock.' units available.');
-                }
+                $this->validateStockAvailabilityForStorefront($variant, $newQuantity, $cart->shop_id);
 
                 $cartItem->update(['quantity' => $newQuantity]);
             } else {
-                // Create new item
                 $cartItem = CartItem::create([
                     'cart_id' => $cart->id,
+                    'tenant_id' => $cart->tenant_id,
                     'product_variant_id' => $variant->id,
                     'product_packaging_type_id' => $packagingTypeId,
+                    'sellable_type' => ProductVariant::class,
+                    'sellable_id' => $variant->id,
                     'quantity' => $quantity,
-                    'price' => $variant->price, // Snapshot current price
+                    'price' => $variant->price,
                 ]);
             }
 
-            $cart->touch(); // Update cart timestamp
+            $cart->touch();
+
+            $this->invalidateCartCache($cart->tenant_id, $cart->shop_id, $cart->customer_id, $cart->session_id);
 
             return $cartItem->fresh(['productVariant.product', 'packagingType']);
         });
@@ -115,20 +137,17 @@ class CartService
     ): CartItem {
         $variant = ServiceVariant::with('service')->findOrFail($serviceVariantId);
 
-        // Check if service is available online
         if (! $variant->service->is_available_online || ! $variant->is_active) {
             throw new \Exception('This service is not available for online booking.');
         }
 
         return DB::transaction(function () use ($cart, $variant, $quantity, $materialOption, $selectedAddons) {
-            // Calculate prices
             $basePrice = $variant->getPriceForMaterialOption($materialOption);
             $totalPrice = $variant->calculateTotalPrice($materialOption, $selectedAddons);
 
-            // For services, we create a new cart item each time (no merging by default)
-            // Services might have different add-ons or material options
             $cartItem = CartItem::create([
                 'cart_id' => $cart->id,
+                'tenant_id' => $cart->tenant_id,
                 'sellable_type' => ServiceVariant::class,
                 'sellable_id' => $variant->id,
                 'quantity' => $quantity,
@@ -140,6 +159,8 @@ class CartService
 
             $cart->touch();
 
+            $this->invalidateCartCache($cart->tenant_id, $cart->shop_id, $cart->customer_id, $cart->session_id);
+
             return $cartItem->fresh(['sellable']);
         });
     }
@@ -149,24 +170,25 @@ class CartService
      */
     public function updateQuantity(CartItem $item, int $quantity): ?CartItem
     {
+        $cart = $item->cart;
+
         if ($quantity <= 0) {
             $item->delete();
-            $item->cart->touch();
+            $cart->touch();
+            $this->invalidateCartCache($cart->tenant_id, $cart->shop_id, $cart->customer_id, $cart->session_id);
 
             return null;
         }
 
-        // Check stock availability for products only
         if ($item->isProduct()) {
-            if (! $this->checkStockAvailability($item->productVariant, $quantity)) {
-                throw new \Exception('Insufficient stock available. Only '.$item->productVariant->available_stock.' units in stock.');
-            }
+            $this->validateStockAvailabilityForStorefront($item->productVariant, $quantity, $cart->shop_id);
         }
 
         $item->update(['quantity' => $quantity]);
-        $item->cart->touch();
+        $cart->touch();
 
-        // Load appropriate relationships based on item type
+        $this->invalidateCartCache($cart->tenant_id, $cart->shop_id, $cart->customer_id, $cart->session_id);
+
         if ($item->isProduct()) {
             return $item->fresh(['productVariant.product', 'packagingType']);
         } else {
@@ -182,6 +204,8 @@ class CartService
         $cart = $item->cart;
         $item->delete();
         $cart->touch();
+
+        $this->invalidateCartCache($cart->tenant_id, $cart->shop_id, $cart->customer_id, $cart->session_id);
     }
 
     /**
@@ -191,6 +215,8 @@ class CartService
     {
         $cart->items()->delete();
         $cart->touch();
+
+        $this->invalidateCartCache($cart->tenant_id, $cart->shop_id, $cart->customer_id, $cart->session_id);
     }
 
     /**
@@ -198,53 +224,57 @@ class CartService
      */
     public function getCartSummary(Cart $cart): array
     {
-        $items = $cart->items()->with([
-            'productVariant.product',
-            'packagingType',
-            'sellable',
-        ])->get();
+        $cacheKey = $this->getCartSummaryCacheKey($cart->tenant_id, $cart->id);
 
-        $subtotal = $items->sum(fn ($item) => $item->price * $item->quantity);
+        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($cart) {
+            $items = $cart->items()->with([
+                'productVariant.product',
+                'packagingType',
+                'sellable',
+            ])->get();
 
-        $productSubtotal = $items->filter(fn ($item) => $item->isProduct())
-            ->sum(fn ($item) => $item->price * $item->quantity);
-        $shippingFee = $this->calculateShipping($cart, $productSubtotal);
+            $subtotal = $items->sum(fn ($item) => $item->price * $item->quantity);
 
-        $tax = $this->calculateTaxFromItems($cart, $items);
-        $total = $subtotal + $shippingFee + $tax;
+            $productSubtotal = $items->filter(fn ($item) => $item->isProduct())
+                ->sum(fn ($item) => $item->price * $item->quantity);
+            $shippingFee = $this->calculateShipping($cart, $productSubtotal);
 
-        return [
-            'items' => $items,
-            'subtotal' => round($subtotal, 2),
-            'shipping_fee' => round($shippingFee, 2),
-            'tax' => round($tax, 2),
-            'total' => round($total, 2),
-            'item_count' => $items->sum('quantity'),
-        ];
+            $tax = $this->calculateTaxFromItems($cart, $items);
+            $total = $subtotal + $shippingFee + $tax;
+
+            return [
+                'items' => $items,
+                'subtotal' => round($subtotal, 2),
+                'shipping_fee' => round($shippingFee, 2),
+                'tax' => round($tax, 2),
+                'total' => round($total, 2),
+                'item_count' => $items->sum('quantity'),
+            ];
+        });
     }
 
     /**
      * Merge guest cart into customer cart when logging in.
+     * Regenerates session ID to prevent session fixation attacks.
      */
     public function mergeGuestCartIntoCustomerCart(string $sessionId, int $customerId, int $shopId): Cart
     {
         return DB::transaction(function () use ($sessionId, $customerId, $shopId) {
-            // Get or create customer cart
-            $customerCart = $this->getCart(Shop::find($shopId), $customerId);
+            $shop = Shop::find($shopId);
+            $customerCart = $this->getCart($shop, $customerId);
 
-            // Get guest cart
             $guestCart = Cart::where('session_id', $sessionId)
                 ->where('shop_id', $shopId)
                 ->first();
 
             if (! $guestCart) {
+                Session::regenerate();
+
                 return $customerCart;
             }
 
-            // Merge items
             foreach ($guestCart->items as $guestItem) {
                 if ($guestItem->isProduct()) {
-                    // Handle product items
                     $existingItem = CartItem::where([
                         'cart_id' => $customerCart->id,
                         'product_variant_id' => $guestItem->product_variant_id,
@@ -252,21 +282,22 @@ class CartService
                     ])->first();
 
                     if ($existingItem) {
-                        // Merge quantities
                         $newQuantity = $existingItem->quantity + $guestItem->quantity;
                         $existingItem->update(['quantity' => $newQuantity]);
                     } else {
-                        // Move item to customer cart
                         $guestItem->update(['cart_id' => $customerCart->id]);
                     }
                 } else {
-                    // For services, always move to customer cart (no merging due to unique configurations)
                     $guestItem->update(['cart_id' => $customerCart->id]);
                 }
             }
 
-            // Delete guest cart
+            $this->invalidateCartCache($guestCart->tenant_id, $shopId, null, $sessionId);
+            $this->invalidateCartCache($customerCart->tenant_id, $shopId, $customerId);
+
             $guestCart->delete();
+
+            Session::regenerate();
 
             return $customerCart->fresh([
                 'items.productVariant.product',
@@ -277,26 +308,29 @@ class CartService
     }
 
     /**
-     * Check if sufficient stock is available.
+     * Validate stock availability for storefront purchases.
+     * Includes additional checks for online availability and max order quantity.
+     *
+     * @throws \Exception
      */
-    protected function checkStockAvailability(ProductVariant $variant, int $requestedQuantity): bool
+    protected function validateStockAvailabilityForStorefront(ProductVariant $variant, int $requestedQuantity, ?int $shopId = null): void
     {
-        // Check if variant is available online
         if (! $variant->is_available_online) {
-            return false;
+            throw new \Exception('This product is not available for online purchase.');
         }
 
-        // Check if we have enough stock
-        if ($variant->available_stock < $requestedQuantity) {
-            return false;
-        }
-
-        // Check max order quantity if set
         if ($variant->max_order_quantity && $requestedQuantity > $variant->max_order_quantity) {
-            return false;
+            throw new \Exception("Maximum order quantity for this product is {$variant->max_order_quantity} units.");
         }
 
-        return true;
+        if (! ($variant->product->track_stock ?? true)) {
+            return;
+        }
+
+        if (! $this->stockMovementService->checkStockAvailability($variant, $requestedQuantity, $shopId)) {
+            $available = $this->stockMovementService->getAvailableStock($variant, $shopId);
+            throw new \Exception("Insufficient stock available. Only {$available} units in stock.");
+        }
     }
 
     /**
@@ -356,5 +390,52 @@ class CartService
         }
 
         return round($taxAmount, 2);
+    }
+
+    /**
+     * Generate tenant-aware cart cache key.
+     */
+    protected function getCartCacheKey(int $tenantId, int $shopId, ?int $customerId = null, ?string $sessionId = null): string
+    {
+        if ($customerId) {
+            return "tenant:{$tenantId}:shop:{$shopId}:cart:customer:{$customerId}";
+        }
+
+        return "tenant:{$tenantId}:shop:{$shopId}:cart:session:{$sessionId}";
+    }
+
+    /**
+     * Generate tenant-aware cart summary cache key.
+     */
+    protected function getCartSummaryCacheKey(int $tenantId, int $cartId): string
+    {
+        return "tenant:{$tenantId}:cart:{$cartId}:summary";
+    }
+
+    /**
+     * Invalidate cart cache when cart is modified.
+     */
+    protected function invalidateCartCache(int $tenantId, int $shopId, ?int $customerId = null, ?string $sessionId = null): void
+    {
+        $cacheKey = $this->getCartCacheKey($tenantId, $shopId, $customerId, $sessionId);
+        Cache::forget($cacheKey);
+
+        if ($customerId) {
+            $cart = Cart::where('customer_id', $customerId)
+                ->where('shop_id', $shopId)
+                ->first();
+
+            if ($cart) {
+                Cache::forget($this->getCartSummaryCacheKey($tenantId, $cart->id));
+            }
+        } elseif ($sessionId) {
+            $cart = Cart::where('session_id', $sessionId)
+                ->where('shop_id', $shopId)
+                ->first();
+
+            if ($cart) {
+                Cache::forget($this->getCartSummaryCacheKey($tenantId, $cart->id));
+            }
+        }
     }
 }

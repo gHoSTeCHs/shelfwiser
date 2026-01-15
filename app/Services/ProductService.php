@@ -206,9 +206,8 @@ class ProductService
 
     private function createDefaultPackagingType(ProductVariant $variant, Shop $shop): ProductPackagingType
     {
-        // For simple_retail mode, create a simple base unit packaging type
-        // For wholesale_only and hybrid, this will be extended with more packaging types
         return ProductPackagingType::query()->create([
+            'tenant_id' => $variant->product->tenant_id,
             'product_variant_id' => $variant->id,
             'name' => 'Loose',
             'display_name' => $variant->base_unit_name,
@@ -229,6 +228,7 @@ class ProductService
     {
         foreach ($packagingTypesData as $index => $packagingData) {
             ProductPackagingType::query()->create([
+                'tenant_id' => $variant->product->tenant_id,
                 'product_variant_id' => $variant->id,
                 'name' => $packagingData['name'],
                 'display_name' => $packagingData['display_name'] ?? $packagingData['name'],

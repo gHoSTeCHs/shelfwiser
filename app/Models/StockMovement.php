@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Enums\StockMovementType;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class StockMovement extends Model
 {
-    use SoftDeletes;
+    use BelongsToTenant, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
@@ -54,7 +55,7 @@ class StockMovement extends Model
 
     public function productVariant(): BelongsTo
     {
-        return $this->belongsTo(ProductVariant::class);
+        return $this->belongsTo(ProductVariant::class)->withTrashed();
     }
 
     public function fromLocation(): BelongsTo
@@ -68,11 +69,6 @@ class StockMovement extends Model
     }
 
     public function createdBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function performedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }

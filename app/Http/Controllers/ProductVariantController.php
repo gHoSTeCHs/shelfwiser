@@ -19,8 +19,7 @@ class ProductVariantController extends Controller
     public function __construct(
         private readonly ProductService $productService,
         private readonly BarcodeGeneratorService $barcodeGenerator
-    ) {
-    }
+    ) {}
 
     /**
      * Show the form for editing the specified variant
@@ -29,7 +28,7 @@ class ProductVariantController extends Controller
     {
         Gate::authorize('update', $variant);
 
-        $variant->load(['product', 'packagingTypes']);
+        $variant->load(['product', 'packagingTypes', 'images']);
 
         return Inertia::render('Products/Variants/Edit', [
             'variant' => $variant,
@@ -91,13 +90,13 @@ class ProductVariantController extends Controller
 
         $results = $this->barcodeGenerator->batchGenerate($request->variant_ids);
 
-        $successCount = count(array_filter($results, fn($b) => $b !== null));
+        $successCount = count(array_filter($results, fn ($b) => $b !== null));
         $failedCount = count($results) - $successCount;
 
         return response()->json([
             'success' => true,
             'results' => $results,
-            'message' => "Generated {$successCount} barcodes" . ($failedCount > 0 ? ", {$failedCount} failed" : ''),
+            'message' => "Generated {$successCount} barcodes".($failedCount > 0 ? ", {$failedCount} failed" : ''),
         ]);
     }
 }

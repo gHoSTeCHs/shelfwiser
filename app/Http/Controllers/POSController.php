@@ -209,6 +209,12 @@ class POSController extends Controller
     {
         $this->authorize('shop.manage', $shop);
 
+        if ($heldSale->tenant_id !== auth()->user()->tenant_id) {
+            return response()->json([
+                'error' => 'Unauthorized access.',
+            ], 403);
+        }
+
         if ($heldSale->shop_id !== $shop->id) {
             return response()->json([
                 'error' => 'Held sale does not belong to this shop.',
@@ -267,6 +273,12 @@ class POSController extends Controller
     public function deleteHeldSale(Shop $shop, HeldSale $heldSale): JsonResponse
     {
         $this->authorize('shop.manage', $shop);
+
+        if ($heldSale->tenant_id !== auth()->user()->tenant_id) {
+            return response()->json([
+                'error' => 'Unauthorized access.',
+            ], 403);
+        }
 
         if ($heldSale->shop_id !== $shop->id) {
             return response()->json([

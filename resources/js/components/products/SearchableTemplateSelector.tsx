@@ -1,7 +1,6 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
-import Input from '@/components/form/input/InputField';
 import Badge from '@/components/ui/badge/Badge';
-import { LayoutTemplate, Search, X, Check, Package } from 'lucide-react';
+import { Check, LayoutTemplate, Package, Search, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 interface ProductType {
     id: number;
@@ -69,7 +68,7 @@ export default function SearchableTemplateSelector({
                 template.name.toLowerCase().includes(query) ||
                 template.product_type?.label.toLowerCase().includes(query) ||
                 template.category?.name.toLowerCase().includes(query) ||
-                template.description?.toLowerCase().includes(query)
+                template.description?.toLowerCase().includes(query),
         );
     }, [templates, searchQuery]);
 
@@ -81,13 +80,17 @@ export default function SearchableTemplateSelector({
     // Handle click outside to close
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+            if (
+                containerRef.current &&
+                !containerRef.current.contains(event.target as Node)
+            ) {
                 setIsOpen(false);
             }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        return () =>
+            document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     // Reset highlighted index when filtered results change
@@ -98,7 +101,9 @@ export default function SearchableTemplateSelector({
     // Scroll highlighted item into view
     useEffect(() => {
         if (isOpen && listRef.current) {
-            const highlightedElement = listRef.current.children[highlightedIndex] as HTMLElement;
+            const highlightedElement = listRef.current.children[
+                highlightedIndex
+            ] as HTMLElement;
             if (highlightedElement) {
                 highlightedElement.scrollIntoView({ block: 'nearest' });
             }
@@ -118,7 +123,7 @@ export default function SearchableTemplateSelector({
             case 'ArrowDown':
                 event.preventDefault();
                 setHighlightedIndex((prev) =>
-                    prev < filteredTemplates.length - 1 ? prev + 1 : prev
+                    prev < filteredTemplates.length - 1 ? prev + 1 : prev,
                 );
                 break;
             case 'ArrowUp':
@@ -157,12 +162,12 @@ export default function SearchableTemplateSelector({
                     setIsOpen(!isOpen);
                     setTimeout(() => inputRef.current?.focus(), 0);
                 }}
-                className="flex items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2.5 cursor-pointer hover:border-gray-400 transition-colors dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
+                className="flex cursor-pointer items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2.5 transition-colors hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
             >
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <LayoutTemplate className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <LayoutTemplate className="h-4 w-4 flex-shrink-0 text-gray-400" />
                     {selectedTemplate ? (
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
                             <span className="truncate text-gray-900 dark:text-white">
                                 {selectedTemplate.name}
                             </span>
@@ -182,12 +187,12 @@ export default function SearchableTemplateSelector({
                     <button
                         type="button"
                         onClick={clearSelection}
-                        className="p-1 hover:bg-gray-100 rounded dark:hover:bg-gray-700"
+                        className="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                         <X className="h-4 w-4 text-gray-400" />
                     </button>
                 ) : (
-                    <Search className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <Search className="h-4 w-4 flex-shrink-0 text-gray-400" />
                 )}
             </div>
 
@@ -195,9 +200,9 @@ export default function SearchableTemplateSelector({
             {isOpen && (
                 <div className="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
                     {/* Search input */}
-                    <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+                    <div className="border-b border-gray-200 p-2 dark:border-gray-700">
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                             <input
                                 ref={inputRef}
                                 type="text"
@@ -205,7 +210,7 @@ export default function SearchableTemplateSelector({
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 placeholder="Type to search templates..."
-                                className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                                className="w-full rounded-md border border-gray-300 bg-white py-2 pr-3 pl-9 text-sm placeholder:text-gray-400 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
                                 autoComplete="off"
                             />
                         </div>
@@ -220,9 +225,7 @@ export default function SearchableTemplateSelector({
                         {filteredTemplates.length === 0 ? (
                             <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                                 {searchQuery ? (
-                                    <>
-                                        No templates found for "{searchQuery}"
-                                    </>
+                                    <>No templates found for "{searchQuery}"</>
                                 ) : (
                                     'No templates available'
                                 )}
@@ -232,9 +235,13 @@ export default function SearchableTemplateSelector({
                                 <div
                                     key={template.id}
                                     onClick={() => handleSelect(template.id)}
-                                    onMouseEnter={() => setHighlightedIndex(index)}
+                                    onMouseEnter={() =>
+                                        setHighlightedIndex(index)
+                                    }
                                     role="option"
-                                    aria-selected={selectedTemplateId === template.id}
+                                    aria-selected={
+                                        selectedTemplateId === template.id
+                                    }
                                     className={`cursor-pointer px-3 py-2.5 ${
                                         index === highlightedIndex
                                             ? 'bg-brand-50 dark:bg-brand-900/20'
@@ -246,35 +253,51 @@ export default function SearchableTemplateSelector({
                                     }`}
                                 >
                                     <div className="flex items-start justify-between gap-2">
-                                        <div className="flex-1 min-w-0">
+                                        <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-medium text-gray-900 dark:text-white truncate">
+                                                <span className="truncate font-medium text-gray-900 dark:text-white">
                                                     {template.name}
                                                 </span>
-                                                {selectedTemplateId === template.id && (
-                                                    <Check className="h-4 w-4 text-brand-600 flex-shrink-0" />
+                                                {selectedTemplateId ===
+                                                    template.id && (
+                                                    <Check className="h-4 w-4 flex-shrink-0 text-brand-600" />
                                                 )}
                                             </div>
-                                            <div className="mt-1 flex items-center gap-2 flex-wrap">
+                                            <div className="mt-1 flex flex-wrap items-center gap-2">
                                                 {template.product_type && (
-                                                    <Badge color="light" size="sm">
-                                                        {template.product_type.label}
+                                                    <Badge
+                                                        color="light"
+                                                        size="sm"
+                                                    >
+                                                        {
+                                                            template
+                                                                .product_type
+                                                                .label
+                                                        }
                                                     </Badge>
                                                 )}
                                                 {template.category && (
-                                                    <Badge color="info" size="sm">
+                                                    <Badge
+                                                        color="info"
+                                                        size="sm"
+                                                    >
                                                         {template.category.name}
                                                     </Badge>
                                                 )}
                                                 {template.has_variants && (
                                                     <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                                                         <Package className="h-3 w-3" />
-                                                        {template.template_structure.variants.length} variants
+                                                        {
+                                                            template
+                                                                .template_structure
+                                                                .variants.length
+                                                        }{' '}
+                                                        variants
                                                     </span>
                                                 )}
                                             </div>
                                             {template.description && (
-                                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                                                <p className="mt-1 line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
                                                     {template.description}
                                                 </p>
                                             )}

@@ -10,7 +10,6 @@ import {
     Wrench,
 } from 'lucide-react';
 
-
 export const getMovementLabel = (type: string): string => {
     const labels: Record<string, string> = {
         purchase: 'Purchase',
@@ -26,7 +25,6 @@ export const getMovementLabel = (type: string): string => {
     };
     return labels[type] || type;
 };
-
 
 export const getMovementIcon = (type: string) => {
     switch (type) {

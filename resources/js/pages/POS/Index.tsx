@@ -531,13 +531,19 @@ const Index: React.FC<POSProps> = ({
                                     <p>Searching catalog...</p>
                                 </div>
                             ) : searchResults.length > 0 ? (
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                <div
+                                    role="list"
+                                    aria-label="Product search results"
+                                    className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                                >
                                     {searchResults.map((product) => (
                                         <button
                                             key={product.id}
+                                            role="listitem"
                                             onClick={() =>
                                                 handleAddToCart(product)
                                             }
+                                            aria-label={`Add ${product.display_name || product.product_name} to cart, ${shop.currency_symbol}${Number(product.price).toFixed(2)}`}
                                             className="group flex flex-col justify-between rounded-lg border border-gray-100 bg-white p-3 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-brand-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-brand-700"
                                         >
                                             <div className="mb-2 w-full">
@@ -634,6 +640,7 @@ const Index: React.FC<POSProps> = ({
                                         onClick={() =>
                                             setSelectedCustomer(null)
                                         }
+                                        aria-label={`Remove customer ${selectedCustomer.first_name} ${selectedCustomer.last_name}`}
                                         className="h-8 w-8 p-0 text-gray-500 hover:text-error-500 dark:text-gray-400 dark:hover:text-error-400"
                                     >
                                         <X className="h-4 w-4" />
@@ -656,6 +663,12 @@ const Index: React.FC<POSProps> = ({
                                             onFocus={() =>
                                                 setShowCustomerSearch(true)
                                             }
+                                            aria-label="Search for customer"
+                                            aria-autocomplete="list"
+                                            aria-expanded={
+                                                showCustomerSearch &&
+                                                customerResults.length > 0
+                                            }
                                             className="h-10 w-full rounded-lg border border-gray-300 bg-gray-50 pr-4 pl-9 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                                         />
                                         {isSearchingCustomers && (
@@ -665,13 +678,21 @@ const Index: React.FC<POSProps> = ({
 
                                     {showCustomerSearch &&
                                         customerResults.length > 0 && (
-                                            <div className="absolute top-full left-0 z-20 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                                            <div
+                                                role="listbox"
+                                                aria-label="Customer search results"
+                                                className="absolute top-full left-0 z-20 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
+                                            >
                                                 <div className="custom-scrollbar max-h-60 overflow-y-auto">
                                                     {customerResults.map(
                                                         (customer) => (
                                                             <button
                                                                 key={
                                                                     customer.id
+                                                                }
+                                                                role="option"
+                                                                aria-selected={
+                                                                    false
                                                                 }
                                                                 onClick={() => {
                                                                     setSelectedCustomer(
@@ -725,14 +746,23 @@ const Index: React.FC<POSProps> = ({
                                 </div>
                             ) : cart.length === 0 ? (
                                 <div className="flex h-full flex-col items-center justify-center text-center text-gray-400 opacity-60">
-                                    <ShoppingCart className="mb-4 h-12 w-12" />
+                                    <ShoppingCart
+                                        className="mb-4 h-12 w-12"
+                                        aria-hidden="true"
+                                    />
                                     <p className="font-medium">Cart is empty</p>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
+                                <div
+                                    role="list"
+                                    aria-label={`Shopping cart with ${cart.length} items`}
+                                    className="space-y-3"
+                                >
                                     {cart.map((item) => (
                                         <div
                                             key={item.variant_id}
+                                            role="listitem"
+                                            aria-label={`${item.name}, quantity ${item.quantity}, ${shop.currency_symbol}${(item.unit_price * item.quantity).toFixed(2)}`}
                                             className="group relative flex gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-all dark:border-gray-700 dark:bg-gray-800"
                                         >
                                             <div className="flex-1">
@@ -753,7 +783,11 @@ const Index: React.FC<POSProps> = ({
                                                 </p>
 
                                                 <div className="flex items-center justify-between">
-                                                    <div className="flex h-8 items-center rounded-md border border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700">
+                                                    <div
+                                                        className="flex h-8 items-center rounded-md border border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700"
+                                                        role="group"
+                                                        aria-label={`Quantity controls for ${item.name}`}
+                                                    >
                                                         <button
                                                             onClick={() =>
                                                                 updateQuantity(
@@ -762,11 +796,18 @@ const Index: React.FC<POSProps> = ({
                                                                         1,
                                                                 )
                                                             }
+                                                            aria-label={`Decrease quantity of ${item.name}`}
                                                             className="flex h-full w-8 items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
                                                         >
-                                                            <Minus className="h-3 w-3" />
+                                                            <Minus
+                                                                className="h-3 w-3"
+                                                                aria-hidden="true"
+                                                            />
                                                         </button>
-                                                        <span className="flex h-full w-10 items-center justify-center text-sm font-semibold text-gray-900 dark:text-white">
+                                                        <span
+                                                            className="flex h-full w-10 items-center justify-center text-sm font-semibold text-gray-900 dark:text-white"
+                                                            aria-live="polite"
+                                                        >
                                                             {item.quantity}
                                                         </span>
                                                         <button
@@ -777,9 +818,13 @@ const Index: React.FC<POSProps> = ({
                                                                         1,
                                                                 )
                                                             }
+                                                            aria-label={`Increase quantity of ${item.name}`}
                                                             className="flex h-full w-8 items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
                                                         >
-                                                            <Plus className="h-3 w-3" />
+                                                            <Plus
+                                                                className="h-3 w-3"
+                                                                aria-hidden="true"
+                                                            />
                                                         </button>
                                                     </div>
                                                     <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -798,9 +843,13 @@ const Index: React.FC<POSProps> = ({
                                                         item.variant_id,
                                                     )
                                                 }
+                                                aria-label={`Remove ${item.name} from cart`}
                                                 className="absolute -top-2 -right-2 hidden h-6 w-6 items-center justify-center rounded-full bg-error-500 text-white shadow-md transition-all group-hover:flex hover:bg-error-600"
                                             >
-                                                <X className="h-3 w-3" />
+                                                <X
+                                                    className="h-3 w-3"
+                                                    aria-hidden="true"
+                                                />
                                             </button>
                                         </div>
                                     ))}
@@ -912,18 +961,27 @@ const Index: React.FC<POSProps> = ({
                             )}
 
                             {/* Action Buttons */}
-                            <div className="grid grid-cols-4 gap-2">
+                            <div
+                                className="grid grid-cols-4 gap-2"
+                                role="group"
+                                aria-label="Cart actions"
+                            >
                                 <Button
                                     onClick={handleClearCart}
                                     variant="outline"
+                                    aria-label="Clear cart"
                                     className="col-span-1 border-error-200 text-error-600 hover:bg-error-50 hover:text-error-700 dark:border-error-900 dark:text-error-400 dark:hover:bg-error-900/20"
                                     disabled={cart.length === 0}
                                 >
-                                    <Trash2 className="h-5 w-5" />
+                                    <Trash2
+                                        className="h-5 w-5"
+                                        aria-hidden="true"
+                                    />
                                 </Button>
                                 <Button
                                     onClick={handleHoldSale}
                                     variant="outline"
+                                    aria-label="Hold sale for later"
                                     className="col-span-1 border-amber-200 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-900 dark:text-amber-400 dark:hover:bg-amber-900/20"
                                     disabled={
                                         cart.length === 0 ||
@@ -931,13 +989,16 @@ const Index: React.FC<POSProps> = ({
                                         isHolding
                                     }
                                     loading={isHolding}
-                                    title="Hold Sale"
                                 >
-                                    <Pause className="h-5 w-5" />
+                                    <Pause
+                                        className="h-5 w-5"
+                                        aria-hidden="true"
+                                    />
                                 </Button>
                                 <Button
                                     onClick={handleCompleteSale}
                                     variant="primary"
+                                    aria-label={`Complete payment of ${shop.currency_symbol}${calculateTotal().toFixed(2)}`}
                                     className="col-span-2 bg-brand-600 text-base font-semibold hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600"
                                     disabled={cart.length === 0 || isProcessing}
                                     loading={isProcessing}

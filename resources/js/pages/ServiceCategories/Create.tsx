@@ -102,7 +102,9 @@ export default function Create({ parentCategories }: Props) {
                                             name="parent_id"
                                             value={parentId}
                                         />
-                                        <InputError message={errors.parent_id} />
+                                        <InputError
+                                            message={errors.parent_id}
+                                        />
                                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                             Create a subcategory by selecting a
                                             parent
@@ -150,8 +152,8 @@ export default function Create({ parentCategories }: Props) {
                                         />
                                         <InputError message={errors.slug} />
                                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                            URL-friendly identifier (auto-generated
-                                            from name)
+                                            URL-friendly identifier
+                                            (auto-generated from name)
                                         </p>
                                     </div>
 
@@ -193,7 +195,8 @@ export default function Create({ parentCategories }: Props) {
                                         />
                                         <InputError message={errors.icon} />
                                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                            Single emoji to represent this category
+                                            Single emoji to represent this
+                                            category
                                         </p>
                                     </div>
 
@@ -212,7 +215,9 @@ export default function Create({ parentCategories }: Props) {
                                             }
                                             error={!!errors.sort_order}
                                         />
-                                        <InputError message={errors.sort_order} />
+                                        <InputError
+                                            message={errors.sort_order}
+                                        />
                                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                             Lower numbers appear first
                                         </p>

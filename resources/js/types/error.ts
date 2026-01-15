@@ -1,16 +1,16 @@
-import { ReactNode, ComponentType, ErrorInfo as ReactErrorInfo } from 'react';
+import { ComponentType, ErrorInfo as ReactErrorInfo, ReactNode } from 'react';
 
 /**
  * Types of errors that can be caught and handled
  */
 export type ErrorType =
-    | 'runtime'           // JavaScript runtime errors
-    | 'chunk_load'        // Dynamic import / code-splitting failures
-    | 'network'           // API / fetch failures
-    | 'auth'              // Authentication / authorization errors
-    | 'validation'        // Form / data validation errors
-    | 'timeout'           // Request timeout errors
-    | 'unknown';          // Unclassified errors
+    | 'runtime' // JavaScript runtime errors
+    | 'chunk_load' // Dynamic import / code-splitting failures
+    | 'network' // API / fetch failures
+    | 'auth' // Authentication / authorization errors
+    | 'validation' // Form / data validation errors
+    | 'timeout' // Request timeout errors
+    | 'unknown'; // Unclassified errors
 
 /**
  * Severity levels for error reporting and display
@@ -159,7 +159,7 @@ export function isChunkLoadError(error: Error): error is ChunkLoadError {
 export function isNetworkError(error: Error): boolean {
     return (
         error.name === 'NetworkError' ||
-        error.name === 'TypeError' && error.message.includes('fetch') ||
+        (error.name === 'TypeError' && error.message.includes('fetch')) ||
         error.message.includes('Network request failed') ||
         error.message.includes('Failed to fetch') ||
         error.message.includes('net::ERR_')
@@ -200,7 +200,8 @@ export function classifyError(error: Error): ErrorType {
     if (isAuthError(error)) return 'auth';
     if (isTimeoutError(error)) return 'timeout';
     if (error.name === 'ValidationError') return 'validation';
-    if (error instanceof TypeError || error instanceof ReferenceError) return 'runtime';
+    if (error instanceof TypeError || error instanceof ReferenceError)
+        return 'runtime';
     return 'unknown';
 }
 
@@ -234,7 +235,7 @@ export function getUserFriendlyMessage(type: ErrorType, error?: Error): string {
         case 'network':
             return 'Unable to connect to the server. Please check your internet connection and try again.';
         case 'auth':
-            return 'Your session has expired or you don\'t have permission to perform this action. Please log in again.';
+            return "Your session has expired or you don't have permission to perform this action. Please log in again.";
         case 'timeout':
             return 'The request took too long to complete. Please try again.';
         case 'validation':
@@ -266,7 +267,7 @@ export function generateErrorId(): string {
 export function createErrorInfo(
     error: Error,
     componentStack?: string,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
 ): ErrorInfo {
     const type = classifyError(error);
     const severity = getErrorSeverity(type);

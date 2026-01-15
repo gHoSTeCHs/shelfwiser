@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PayRunStatus;
+use App\Models\PayrollPeriod;
 use App\Models\PayRun;
 use App\Models\Payslip;
-use App\Models\PayrollPeriod;
-use App\Services\PayrollReportService;
-use App\Services\PayrollExportService;
-use App\Services\PayslipPdfService;
 use App\Services\NibssExportService;
+use App\Services\PayrollExportService;
+use App\Services\PayrollReportService;
+use App\Services\PayslipPdfService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -66,12 +67,12 @@ class PayrollReportController extends Controller
             $filters['shop_ids']
         );
 
-        $filename = 'payroll_summary_' . now()->format('Ymd');
+        $filename = 'payroll_summary_'.now()->format('Ymd');
 
         return match ($format) {
-            'excel' => $this->exportService->exportSummaryToExcel($reportData, $filename . '.xlsx'),
-            'pdf' => $this->exportService->exportSummaryToPdf($reportData, $filename . '.pdf', 'Payroll Summary Report'),
-            default => $this->exportService->exportSummaryToCsv($reportData, $filename . '.csv'),
+            'excel' => $this->exportService->exportSummaryToExcel($reportData, $filename.'.xlsx'),
+            'pdf' => $this->exportService->exportSummaryToPdf($reportData, $filename.'.pdf', 'Payroll Summary Report'),
+            default => $this->exportService->exportSummaryToCsv($reportData, $filename.'.csv'),
         };
     }
 
@@ -115,12 +116,12 @@ class PayrollReportController extends Controller
             $filters['end_date']
         );
 
-        $filename = 'tax_remittance_' . now()->format('Ymd');
+        $filename = 'tax_remittance_'.now()->format('Ymd');
 
         return match ($format) {
-            'excel' => $this->exportService->exportTaxToExcel($reportData, $filename . '.xlsx'),
-            'pdf' => $this->exportService->exportTaxToPdf($reportData, $filename . '.pdf', 'Tax Remittance Report'),
-            default => $this->exportService->exportTaxToCsv($reportData, $filename . '.csv'),
+            'excel' => $this->exportService->exportTaxToExcel($reportData, $filename.'.xlsx'),
+            'pdf' => $this->exportService->exportTaxToPdf($reportData, $filename.'.pdf', 'Tax Remittance Report'),
+            default => $this->exportService->exportTaxToCsv($reportData, $filename.'.csv'),
         };
     }
 
@@ -164,12 +165,12 @@ class PayrollReportController extends Controller
             $filters['end_date']
         );
 
-        $filename = 'pension_report_' . now()->format('Ymd');
+        $filename = 'pension_report_'.now()->format('Ymd');
 
         return match ($format) {
-            'excel' => $this->exportService->exportPensionToExcel($reportData, $filename . '.xlsx'),
-            'pdf' => $this->exportService->exportPensionToPdf($reportData, $filename . '.pdf', 'Pension Contributions Report'),
-            default => $this->exportService->exportPensionToCsv($reportData, $filename . '.csv'),
+            'excel' => $this->exportService->exportPensionToExcel($reportData, $filename.'.xlsx'),
+            'pdf' => $this->exportService->exportPensionToPdf($reportData, $filename.'.pdf', 'Pension Contributions Report'),
+            default => $this->exportService->exportPensionToCsv($reportData, $filename.'.csv'),
         };
     }
 
@@ -180,7 +181,7 @@ class PayrollReportController extends Controller
         $tenantId = auth()->user()->tenant_id;
 
         $payRuns = PayRun::forTenant($tenantId)
-            ->whereIn('status', [PayRun::STATUS_APPROVED, PayRun::STATUS_COMPLETED])
+            ->whereIn('status', [PayRunStatus::APPROVED, PayRunStatus::COMPLETED])
             ->with('payrollPeriod:id,period_name')
             ->orderByDesc('created_at')
             ->get(['id', 'reference', 'name', 'payroll_period_id', 'status', 'total_net']);
@@ -211,23 +212,23 @@ class PayrollReportController extends Controller
         $payRunId = $request->get('pay_run_id');
         $format = $request->get('format', 'csv');
 
-        if (!$payRunId) {
+        if (! $payRunId) {
             return back()->with('error', 'Please select a pay run.');
         }
 
         $reportData = $this->reportService->getBankSchedule($tenantId, $payRunId);
         $payRun = PayRun::findOrFail($payRunId);
 
-        $filename = 'bank_schedule_' . $payRun->reference . '_' . now()->format('Ymd');
+        $filename = 'bank_schedule_'.$payRun->reference.'_'.now()->format('Ymd');
 
         if ($format === 'nibss') {
             return $this->nibssService->downloadNibssFile($payRun);
         }
 
         return match ($format) {
-            'excel' => $this->exportService->exportBankScheduleToExcel($reportData, $filename . '.xlsx'),
-            'pdf' => $this->exportService->exportBankScheduleToPdf($reportData, $filename . '.pdf', 'Bank Payment Schedule'),
-            default => $this->exportService->exportBankScheduleToCsv($reportData, $filename . '.csv'),
+            'excel' => $this->exportService->exportBankScheduleToExcel($reportData, $filename.'.xlsx'),
+            'pdf' => $this->exportService->exportBankScheduleToPdf($reportData, $filename.'.pdf', 'Bank Payment Schedule'),
+            default => $this->exportService->exportBankScheduleToCsv($reportData, $filename.'.csv'),
         };
     }
 

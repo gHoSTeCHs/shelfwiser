@@ -1,14 +1,9 @@
-import { Head } from '@inertiajs/react';
-import AppLayout from '@/layouts/AppLayout';
-import { FinancialReportProps } from '@/types/reports';
 import FilterBar from '@/components/reports/FilterBar';
 import { Card } from '@/components/ui/card';
-import {
-    DollarSign,
-    TrendingUp,
-    TrendingDown,
-    Activity,
-} from 'lucide-react';
+import AppLayout from '@/layouts/AppLayout';
+import { FinancialReportProps } from '@/types/reports';
+import { Head } from '@inertiajs/react';
+import { Activity, DollarSign, TrendingDown, TrendingUp } from 'lucide-react';
 
 export default function FinancialReport({
     financialData,
@@ -86,7 +81,9 @@ export default function FinancialReport({
                                         Gross Sales
                                     </span>
                                     <span className="font-medium text-gray-900 dark:text-white">
-                                        {formatCurrency(profit_loss.gross_sales)}
+                                        {formatCurrency(
+                                            profit_loss.gross_sales,
+                                        )}
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-sm">
@@ -94,12 +91,15 @@ export default function FinancialReport({
                                         Discounts
                                     </span>
                                     <span className="font-medium text-error-600">
-                                        ({formatCurrency(profit_loss.discounts)})
+                                        ({formatCurrency(profit_loss.discounts)}
+                                        )
                                     </span>
                                 </div>
                                 <div className="flex justify-between border-t border-gray-200 pt-2 font-medium dark:border-gray-700">
                                     <span>Net Sales</span>
-                                    <span>{formatCurrency(profit_loss.net_sales)}</span>
+                                    <span>
+                                        {formatCurrency(profit_loss.net_sales)}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -118,7 +118,11 @@ export default function FinancialReport({
                                 <div className="flex items-center gap-2">
                                     <span>Gross Profit</span>
                                     <span className="text-xs text-gray-500">
-                                        ({formatPercent(profit_loss.gross_margin)} margin)
+                                        (
+                                        {formatPercent(
+                                            profit_loss.gross_margin,
+                                        )}{' '}
+                                        margin)
                                     </span>
                                 </div>
                                 <span
@@ -140,7 +144,11 @@ export default function FinancialReport({
                                     Operating Expenses
                                 </span>
                                 <span className="font-medium text-error-600">
-                                    ({formatCurrency(profit_loss.operating_expenses)})
+                                    (
+                                    {formatCurrency(
+                                        profit_loss.operating_expenses,
+                                    )}
+                                    )
                                 </span>
                             </div>
                         </div>
@@ -151,7 +159,8 @@ export default function FinancialReport({
                                 <div className="flex items-center gap-2">
                                     <span>Net Profit</span>
                                     <span className="text-sm font-normal text-gray-500">
-                                        ({formatPercent(profit_loss.net_margin)} margin)
+                                        ({formatPercent(profit_loss.net_margin)}{' '}
+                                        margin)
                                     </span>
                                 </div>
                                 <span
@@ -209,7 +218,9 @@ export default function FinancialReport({
                                                 : 'text-error-600'
                                         }
                                     >
-                                        {formatCurrency(cash_flow.net_cash_flow)}
+                                        {formatCurrency(
+                                            cash_flow.net_cash_flow,
+                                        )}
                                     </span>
                                 </div>
                             </div>
@@ -230,7 +241,9 @@ export default function FinancialReport({
                                             Inventory
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatCurrency(balance_sheet.assets.inventory)}
+                                            {formatCurrency(
+                                                balance_sheet.assets.inventory,
+                                            )}
                                         </span>
                                     </div>
                                     <div className="flex justify-between text-sm">
@@ -238,12 +251,20 @@ export default function FinancialReport({
                                             Accounts Receivable
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatCurrency(balance_sheet.assets.accounts_receivable)}
+                                            {formatCurrency(
+                                                balance_sheet.assets
+                                                    .accounts_receivable,
+                                            )}
                                         </span>
                                     </div>
                                     <div className="flex justify-between border-t border-gray-200 pt-2 font-medium dark:border-gray-700">
                                         <span>Total Current Assets</span>
-                                        <span>{formatCurrency(balance_sheet.assets.total_current_assets)}</span>
+                                        <span>
+                                            {formatCurrency(
+                                                balance_sheet.assets
+                                                    .total_current_assets,
+                                            )}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -259,12 +280,20 @@ export default function FinancialReport({
                                             Accounts Payable
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatCurrency(balance_sheet.liabilities.accounts_payable)}
+                                            {formatCurrency(
+                                                balance_sheet.liabilities
+                                                    .accounts_payable,
+                                            )}
                                         </span>
                                     </div>
                                     <div className="flex justify-between border-t border-gray-200 pt-2 font-medium dark:border-gray-700">
                                         <span>Total Current Liabilities</span>
-                                        <span>{formatCurrency(balance_sheet.liabilities.total_current_liabilities)}</span>
+                                        <span>
+                                            {formatCurrency(
+                                                balance_sheet.liabilities
+                                                    .total_current_liabilities,
+                                            )}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -283,7 +312,9 @@ export default function FinancialReport({
                                                 : 'text-error-600'
                                         }
                                     >
-                                        {formatCurrency(balance_sheet.working_capital)}
+                                        {formatCurrency(
+                                            balance_sheet.working_capital,
+                                        )}
                                     </span>
                                 </div>
                             </div>
@@ -295,4 +326,6 @@ export default function FinancialReport({
     );
 }
 
-FinancialReport.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
+FinancialReport.layout = (page: React.ReactNode) => (
+    <AppLayout>{page}</AppLayout>
+);

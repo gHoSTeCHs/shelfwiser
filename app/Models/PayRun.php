@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
+use App\Enums\PayRunItemStatus;
 use App\Enums\PayRunStatus;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 
 class PayRun extends Model
 {
-    use HasFactory, SoftDeletes;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
@@ -52,7 +54,7 @@ class PayRun extends Model
     protected static function booted(): void
     {
         static::creating(function (PayRun $payRun) {
-            if (!$payRun->reference) {
+            if (! $payRun->reference) {
                 $payRun->reference = self::generateReference($payRun->tenant_id);
             }
         });
@@ -165,7 +167,7 @@ class PayRun extends Model
         return in_array($this->status, [
             PayRunStatus::DRAFT,
             PayRunStatus::PENDING_REVIEW,
-            PayRunStatus::PENDING_APPROVAL
+            PayRunStatus::PENDING_APPROVAL,
         ]);
     }
 
@@ -186,7 +188,7 @@ class PayRun extends Model
 
     public function updateTotals(): void
     {
-        $items = $this->items()->where('status', 'calculated')->get();
+        $items = $this->items()->where('status', PayRunItemStatus::CALCULATED)->get();
 
         $this->update([
             'employee_count' => $items->count(),

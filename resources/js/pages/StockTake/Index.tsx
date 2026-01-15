@@ -91,7 +91,9 @@ export default function Index({ shop, variants }: Props) {
                     />
                 ) : (
                     <Form
-                        action={StockTakeController.store.url({ shop: shop.id })}
+                        action={StockTakeController.store.url({
+                            shop: shop.id,
+                        })}
                         method="post"
                         data={prepareSubmitData()}
                         onSuccess={() => {
@@ -108,19 +110,19 @@ export default function Index({ shop, variants }: Props) {
                                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                             <thead className="bg-gray-50 dark:bg-gray-800">
                                                 <tr>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                         SKU
                                                     </th>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                         Product
                                                     </th>
-                                                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                         System Count
                                                     </th>
-                                                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                         Physical Count
                                                     </th>
-                                                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                         Difference
                                                     </th>
                                                 </tr>
@@ -140,7 +142,7 @@ export default function Index({ shop, variants }: Props) {
                                                                     : ''
                                                             }
                                                         >
-                                                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                                            <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white">
                                                                 {variant.sku}
                                                             </td>
                                                             <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
@@ -159,12 +161,12 @@ export default function Index({ shop, variants }: Props) {
                                                                     )}
                                                                 </div>
                                                             </td>
-                                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900 dark:text-white">
+                                                            <td className="px-6 py-4 text-right text-sm whitespace-nowrap text-gray-900 dark:text-white">
                                                                 {
                                                                     variant.system_count
                                                                 }
                                                             </td>
-                                                            <td className="whitespace-nowrap px-6 py-4">
+                                                            <td className="px-6 py-4 whitespace-nowrap">
                                                                 <Input
                                                                     type="number"
                                                                     min="0"
@@ -189,7 +191,7 @@ export default function Index({ shop, variants }: Props) {
                                                                 />
                                                             </td>
                                                             <td
-                                                                className={`whitespace-nowrap px-6 py-4 text-right text-sm font-medium ${
+                                                                className={`px-6 py-4 text-right text-sm font-medium whitespace-nowrap ${
                                                                     difference >
                                                                     0
                                                                         ? 'text-success-600 dark:text-success-400'
@@ -199,8 +201,7 @@ export default function Index({ shop, variants }: Props) {
                                                                           : 'text-gray-900 dark:text-white'
                                                                 }`}
                                                             >
-                                                                {difference >
-                                                                0
+                                                                {difference > 0
                                                                     ? '+'
                                                                     : ''}
                                                                 {difference}

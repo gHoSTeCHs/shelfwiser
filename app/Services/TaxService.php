@@ -5,15 +5,69 @@ namespace App\Services;
 use App\Enums\CompanySizeCategory;
 use App\Models\CorporateTaxRate;
 use App\Models\Shop;
-use App\Models\TaxBracket;
 use App\Models\TaxJurisdiction;
 use App\Models\TaxRelief;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * TaxService - Tax calculation service
+ *
+ * CONSOLIDATION STATUS:
+ * - PAYE calculations have been migrated to TaxCalculationService (date-aware, NTA 2025 support)
+ * - Personal income tax methods are deprecated and delegate to TaxCalculationService
+ * - Duplicate relief calculations removed in favor of TaxCalculationService
+ *
+ * REMAINING UNIQUE FUNCTIONALITY:
+ * - Corporate tax calculations (calculateCorporateTax) - NOT duplicated elsewhere
+ * - Shop-specific tax jurisdiction lookups (getShopTaxJurisdiction) - Convenience method
+ * - Legacy personal income tax (calculatePersonalIncomeTax) - Deprecated, delegates to TaxCalculationService
+ *
+ * MIGRATION PATH FOR PAYE:
+ * - Old: TaxService::calculateEmployeePAYE() → New: TaxCalculationService::calculateMonthlyPAYE()
+ * - Old: TaxService::calculatePersonalIncomeTax() → New: TaxCalculationService::calculateMonthlyPAYE()
+ * - Old: TaxService::getTaxBrackets() → New: TaxCalculationService::getTaxBrackets()
+ * - Old: TaxService::getTaxReliefs() → New: TaxCalculationService::getTaxReliefs()
+ *
+ * CORPORATE TAX (NOT DEPRECATED):
+ * - calculateCorporateTax() - Unique to TaxService, not available in TaxCalculationService
+ * - getCorporateTaxRate() - Corporate-specific rate lookup
+ *
+ * @see TaxCalculationService For all PAYE/personal income tax calculations
+ */
 class TaxService
 {
+    public function __construct(
+        protected ?TaxCalculationService $taxCalculationService = null
+    ) {
+        $this->taxCalculationService = $taxCalculationService ?? app(TaxCalculationService::class);
+    }
+
+    /**
+     * Calculate employee PAYE tax using the modern TaxCalculationService.
+     * This method delegates to TaxCalculationService for proper date-aware tax law selection.
+     *
+     * @deprecated Use TaxCalculationService::calculateMonthlyPAYE() directly
+     */
+    public function calculateEmployeePAYE(
+        User $employee,
+        float $monthlyGrossIncome,
+        float $monthlyPreTaxDeductions = 0,
+        ?Carbon $effectiveDate = null
+    ): array {
+        trigger_error('TaxService::calculateEmployeePAYE() is deprecated. Use TaxCalculationService::calculateMonthlyPAYE() directly.', E_USER_DEPRECATED);
+
+        return $this->taxCalculationService->calculateMonthlyPAYE(
+            $employee,
+            $monthlyGrossIncome,
+            $monthlyPreTaxDeductions,
+            [],
+            $effectiveDate
+        );
+    }
+
     /**
      * Calculate personal income tax (PAYE) for an employee
      *
@@ -22,6 +76,8 @@ class TaxService
      * @param  Carbon  $taxDate  The date for which to calculate tax (determines which tax law applies)
      * @param  array  $reliefs  Additional reliefs to apply (e.g., ['rent_paid' => 500000])
      * @return array Tax calculation breakdown including total tax, brackets applied, and reliefs
+     *
+     * @deprecated Use TaxCalculationService::calculateMonthlyPAYE() for modern date-aware calculations
      */
     public function calculatePersonalIncomeTax(
         float $grossIncome,
@@ -29,6 +85,7 @@ class TaxService
         Carbon $taxDate,
         array $reliefs = []
     ): array {
+        trigger_error('TaxService::calculatePersonalIncomeTax() is deprecated. Use TaxCalculationService::calculateMonthlyPAYE() instead.', E_USER_DEPRECATED);
         if (! $taxJurisdictionId || $grossIncome <= 0) {
             return [
                 'gross_income' => $grossIncome,
@@ -137,41 +194,26 @@ class TaxService
 
     /**
      * Get tax brackets for a jurisdiction on a specific date
+     *
+     * @deprecated Use TaxCalculationService::getTaxBrackets() instead
      */
     public function getTaxBrackets(int $jurisdictionId, Carbon $date): Collection
     {
-        $cacheKey = "tax:brackets:{$jurisdictionId}:{$date->format('Y-m-d')}";
+        trigger_error('TaxService::getTaxBrackets() is deprecated. Use TaxCalculationService::getTaxBrackets() instead.', E_USER_DEPRECATED);
 
-        return Cache::tags(['tax', "jurisdiction:{$jurisdictionId}"])
-            ->remember($cacheKey, now()->addDay(), function () use ($jurisdictionId, $date) {
-                return TaxBracket::where('tax_jurisdiction_id', $jurisdictionId)
-                    ->where('effective_from', '<=', $date)
-                    ->where(function ($q) use ($date) {
-                        $q->whereNull('effective_to')
-                            ->orWhere('effective_to', '>=', $date);
-                    })
-                    ->orderBy('bracket_order')
-                    ->get();
-            });
+        return $this->taxCalculationService->getTaxBrackets($jurisdictionId, $date);
     }
 
     /**
      * Get tax reliefs for a jurisdiction on a specific date
+     *
+     * @deprecated Use TaxCalculationService::getTaxReliefs() instead
      */
     public function getTaxReliefs(int $jurisdictionId, Carbon $date): Collection
     {
-        $cacheKey = "tax:reliefs:{$jurisdictionId}:{$date->format('Y-m-d')}";
+        trigger_error('TaxService::getTaxReliefs() is deprecated. Use TaxCalculationService::getTaxReliefs() instead.', E_USER_DEPRECATED);
 
-        return Cache::tags(['tax', "jurisdiction:{$jurisdictionId}"])
-            ->remember($cacheKey, now()->addDay(), function () use ($jurisdictionId, $date) {
-                return TaxRelief::where('tax_jurisdiction_id', $jurisdictionId)
-                    ->where('effective_from', '<=', $date)
-                    ->where(function ($q) use ($date) {
-                        $q->whereNull('effective_to')
-                            ->orWhere('effective_to', '>=', $date);
-                    })
-                    ->get();
-            });
+        return $this->taxCalculationService->getTaxReliefs($jurisdictionId, $date);
     }
 
     /**
@@ -238,24 +280,30 @@ class TaxService
     }
 
     /**
-     * Calculate Consolidated Relief Allowance (Nigerian tax law pre-2026)
+     * Calculate Consolidated Relief Allowance with tax law version guard.
+     * Delegates to TaxCalculationService for consistent implementation.
+     *
+     * @deprecated Use TaxCalculationService::calculateCRA() directly
      */
     protected function calculateCRA(float $grossIncome, TaxRelief $relief): float
     {
-        $baseCRA = max(200000, $grossIncome * 0.01);
-        $additionalCRA = $grossIncome * 0.20;
+        trigger_error('TaxService::calculateCRA() is deprecated. Use TaxCalculationService::calculateCRA() instead.', E_USER_DEPRECATED);
 
-        return $baseCRA + $additionalCRA;
+        $taxLawVersion = $relief->taxTable?->getTaxLawVersion();
+
+        return $this->taxCalculationService->calculateCRA($grossIncome, $taxLawVersion);
     }
 
     /**
-     * Calculate Rent Relief (Nigerian tax law from 2026)
+     * Calculate Rent Relief - delegates to TaxCalculationService.
+     *
+     * @deprecated This method is deprecated. Use TaxCalculationService for all relief calculations.
      */
     protected function calculateRentRelief(float $annualRentPaid, TaxRelief $relief): float
     {
-        $reliefAmount = $annualRentPaid * 0.20;
+        trigger_error('TaxService::calculateRentRelief() is deprecated. Use TaxCalculationService for relief calculations.', E_USER_DEPRECATED);
 
-        return min($reliefAmount, $relief->cap_amount ?? 500000);
+        return $relief->calculateRentRelief($annualRentPaid);
     }
 
     /**
@@ -274,6 +322,8 @@ class TaxService
 
     /**
      * Calculate taxable income after applying all reliefs
+     *
+     * @deprecated Use TaxCalculationService methods instead
      */
     public function calculateTaxableIncome(
         float $grossIncome,
@@ -281,6 +331,8 @@ class TaxService
         int $jurisdictionId,
         Carbon $date
     ): float {
+        trigger_error('TaxService::calculateTaxableIncome() is deprecated. Use TaxCalculationService methods instead.', E_USER_DEPRECATED);
+
         $taxReliefs = $this->getTaxReliefs($jurisdictionId, $date);
         $totalReliefs = $this->calculateTotalReliefs($grossIncome, $taxReliefs, $reliefs);
 

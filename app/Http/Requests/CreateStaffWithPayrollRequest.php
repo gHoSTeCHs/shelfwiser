@@ -72,6 +72,8 @@ class CreateStaffWithPayrollRequest extends FormRequest
 
             'tax_handling' => ['nullable', Rule::enum(TaxHandling::class)],
             'tax_id_number' => ['nullable', 'string', 'max:50'],
+            'tax_state' => ['nullable', 'string', 'max:50'],
+            'is_homeowner' => ['boolean'],
             'pension_enabled' => ['boolean'],
             'pension_employee_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'nhf_enabled' => ['boolean'],
@@ -88,9 +90,34 @@ class CreateStaffWithPayrollRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'end_date.required_if' => 'End date is required for contract, seasonal, and intern positions.',
-            'commission_rate.required_if' => 'Commission rate is required for commission-based pay.',
+            'first_name.required' => 'Please provide the employee\'s first name.',
+            'last_name.required' => 'Please provide the employee\'s last name.',
+            'email.required' => 'Please provide an email address for this employee.',
+            'email.email' => 'Please enter a valid email address.',
             'email.unique' => 'An employee with this email already exists in your organization.',
+            'password.required' => 'Please create a password for the employee account.',
+            'password.confirmed' => 'Password confirmation does not match.',
+            'role.required' => 'Please select a role for this employee.',
+            'role.in' => 'The selected role is not valid.',
+            'shop_ids.*.exists' => 'One or more selected shops do not exist or are not accessible.',
+            'employment_type.required' => 'Please specify the employment type.',
+            'position_title.required' => 'Please provide a job title for this employee.',
+            'start_date.required' => 'Please specify the employment start date.',
+            'start_date.after_or_equal' => 'Start date cannot be in the past.',
+            'end_date.after' => 'End date must be after the start date.',
+            'end_date.required_if' => 'End date is required for contract, seasonal, and intern positions.',
+            'pay_type.required' => 'Please select a pay type for this employee.',
+            'pay_amount.required' => 'Please enter the employee\'s pay amount.',
+            'pay_amount.min' => 'Pay amount cannot be negative.',
+            'pay_frequency.required' => 'Please specify how often the employee will be paid.',
+            'pay_calendar_id.exists' => 'The selected pay calendar does not exist.',
+            'standard_hours_per_week.min' => 'Standard hours must be at least 1 hour per week.',
+            'standard_hours_per_week.max' => 'Standard hours cannot exceed 168 hours per week.',
+            'commission_rate.required_if' => 'Commission rate is required for commission-based pay.',
+            'commission_rate.min' => 'Commission rate cannot be negative.',
+            'commission_rate.max' => 'Commission rate cannot exceed 100%.',
+            'pension_employee_rate.min' => 'Pension contribution rate cannot be negative.',
+            'pension_employee_rate.max' => 'Pension contribution rate cannot exceed 100%.',
         ];
     }
 
@@ -110,7 +137,7 @@ class CreateStaffWithPayrollRequest extends FormRequest
     protected function requiresEndDate(): bool
     {
         $type = $this->input('employment_type');
-        if (!$type) {
+        if (! $type) {
             return false;
         }
 
@@ -133,6 +160,7 @@ class CreateStaffWithPayrollRequest extends FormRequest
         $data['standard_hours_per_week'] = $data['standard_hours_per_week'] ?? 40;
         $data['pension_employee_rate'] = $data['pension_employee_rate'] ?? 8;
         $data['tax_handling'] = $data['tax_handling'] ?? 'shop_calculates';
+        $data['is_homeowner'] = $data['is_homeowner'] ?? false;
 
         return $data;
     }

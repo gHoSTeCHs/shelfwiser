@@ -1,4 +1,3 @@
-
 import ServiceController from '@/actions/App/Http/Controllers/ServiceController';
 import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
@@ -6,10 +5,10 @@ import TextArea from '@/components/form/input/TextArea';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
-import Button from '@/components/ui/button/Button';
-import { Card } from '@/components/ui/card';
 import ImageGallery from '@/components/images/ImageGallery';
 import ImageUploader from '@/components/images/ImageUploader';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { flattenCategories } from '@/lib/utils';
 import { Service, ServiceCategory } from '@/types/service';
@@ -90,10 +89,12 @@ export default function Edit({ service, categories }: Props) {
                                                     value: '',
                                                     label: 'No Category',
                                                 },
-                                                ...flatCategories.map((cat) => ({
-                                                    value: cat.id.toString(),
-                                                    label: cat.name,
-                                                })),
+                                                ...flatCategories.map(
+                                                    (cat) => ({
+                                                        value: cat.id.toString(),
+                                                        label: cat.name,
+                                                    }),
+                                                ),
                                             ]}
                                             placeholder="Select a category"
                                             onChange={(value) =>
@@ -175,7 +176,9 @@ export default function Edit({ service, categories }: Props) {
                                             }
                                             error={!!errors.image_url}
                                         />
-                                        <InputError message={errors.image_url} />
+                                        <InputError
+                                            message={errors.image_url}
+                                        />
                                     </div>
 
                                     <div className="flex items-center gap-2">
@@ -192,8 +195,8 @@ export default function Edit({ service, categories }: Props) {
                                             htmlFor="has_material_options"
                                             className="mb-0 font-normal"
                                         >
-                                            Service has material options (customer
-                                            vs shop materials)
+                                            Service has material options
+                                            (customer vs shop materials)
                                         </Label>
                                     </div>
 
@@ -268,8 +271,8 @@ export default function Edit({ service, categories }: Props) {
 
                             {/* Info about variants */}
                             <Card title="Variants & Add-ons">
-                                <div className="rounded-lg bg-info-50 p-4 dark:bg-info-900/20">
-                                    <p className="text-sm text-info-700 dark:text-info-300">
+                                <div className="bg-info-50 dark:bg-info-900/20 rounded-lg p-4">
+                                    <p className="text-info-700 dark:text-info-300 text-sm">
                                         Variants and add-ons can be managed from
                                         the service details page after saving
                                         these changes.

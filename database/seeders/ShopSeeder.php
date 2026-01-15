@@ -19,9 +19,10 @@ class ShopSeeder extends Seeder
             $shops = $this->getShopsForTenant($tenant, $shopTypes);
 
             foreach ($shops as $shopData) {
-                Shop::create(array_merge($shopData, [
-                    'tenant_id' => $tenant->id,
-                ]));
+                Shop::updateOrCreate(
+                    ['tenant_id' => $tenant->id, 'slug' => $shopData['slug']],
+                    $shopData
+                );
             }
         }
     }

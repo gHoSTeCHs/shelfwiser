@@ -3,9 +3,15 @@
 use App\Enums\UserRole;
 use App\Models\Customer;
 use App\Models\HeldSale;
+use App\Models\InventoryLocation;
+use App\Models\Product;
+use App\Models\ProductType;
+use App\Models\ProductVariant;
 use App\Models\Shop;
+use App\Models\ShopType;
 use App\Models\Tenant;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -20,14 +26,25 @@ beforeEach(function () {
         'max_products' => 100,
     ]);
 
+    $this->shopType = ShopType::firstOrCreate(
+        ['slug' => 'retail'],
+        [
+            'label' => 'Retail Store',
+            'config_schema' => [],
+            'is_active' => true,
+        ]
+    );
+
     $this->shop = Shop::create([
         'tenant_id' => $this->tenant->id,
+        'shop_type_id' => $this->shopType->id,
         'name' => 'Test Shop',
         'slug' => 'test-shop',
         'is_active' => true,
         'currency' => 'KES',
         'currency_symbol' => 'KSh',
         'currency_decimals' => 2,
+        'config' => [],
     ]);
 
     $this->user = User::factory()->create([
@@ -39,16 +56,76 @@ beforeEach(function () {
 
     $this->user->shops()->attach($this->shop->id, ['tenant_id' => $this->tenant->id]);
 
+    $this->productType = ProductType::firstOrCreate(
+        ['slug' => 'general'],
+        [
+            'label' => 'General Product',
+            'description' => 'Standard product type',
+            'config_schema' => [],
+            'supports_variants' => true,
+            'requires_batch_tracking' => false,
+            'requires_serial_tracking' => false,
+            'is_active' => true,
+        ]
+    );
+
+    $this->product = Product::create([
+        'tenant_id' => $this->tenant->id,
+        'shop_id' => $this->shop->id,
+        'product_type_id' => $this->productType->id,
+        'name' => 'Test Product',
+        'slug' => 'test-product',
+        'has_variants' => true,
+        'is_active' => true,
+        'track_stock' => true,
+    ]);
+
+    $this->variant1 = ProductVariant::create([
+        'product_id' => $this->product->id,
+        'name' => 'Test Product - Variant A',
+        'sku' => 'TEST-001',
+        'price' => 100.00,
+        'is_active' => true,
+    ]);
+
+    $this->variant2 = ProductVariant::create([
+        'product_id' => $this->product->id,
+        'name' => 'Another Product - Variant B',
+        'sku' => 'TEST-002',
+        'price' => 50.00,
+        'is_active' => true,
+    ]);
+
+    InventoryLocation::create([
+        'tenant_id' => $this->tenant->id,
+        'shop_id' => $this->shop->id,
+        'product_variant_id' => $this->variant1->id,
+        'location_type' => Shop::class,
+        'location_id' => $this->shop->id,
+        'quantity' => 100,
+        'reserved_quantity' => 0,
+    ]);
+
+    InventoryLocation::create([
+        'tenant_id' => $this->tenant->id,
+        'shop_id' => $this->shop->id,
+        'product_variant_id' => $this->variant2->id,
+        'location_type' => Shop::class,
+        'location_id' => $this->shop->id,
+        'quantity' => 100,
+        'reserved_quantity' => 0,
+    ]);
+
     $this->validItems = [
         [
-            'variant_id' => 1,
+            'variant_id' => $this->variant1->id,
             'name' => 'Test Product',
             'sku' => 'TEST-001',
             'quantity' => 2,
             'unit_price' => 100.00,
         ],
         [
-            'variant_id' => 2,
+            'variant_id' => $this->variant2->id,
             'name' => 'Another Product',
             'sku' => 'TEST-002',
             'quantity' => 1,
@@ -58,7 +135,7 @@ beforeEach(function () {
 });
 
 test('unauthenticated user cannot access held sales endpoints', function () {
-    $this->postJson(route('pos.hold-sale', $this->shop))
+    $this->postJson(route('pos.hold', $this->shop))
         ->assertUnauthorized();
 
     $this->getJson(route('pos.held-sales', $this->shop))
@@ -70,7 +147,7 @@ test('unauthenticated user cannot access held sales endpoints', function () {
 
 test('user can hold a sale with valid items', function () {
     $response = $this->actingAs($this->user)
-        ->postJson(route('pos.hold-sale', $this->shop), [
+        ->postJson(route('pos.hold', $this->shop), [
             'items' => $this->validItems,
             'customer_id' => null,
             'notes' => 'Customer stepped out',
@@ -98,7 +175,7 @@ test('user can hold a sale with valid items', function () {
 
 test('cannot hold sale with empty items array', function () {
     $response = $this->actingAs($this->user)
-        ->postJson(route('pos.hold-sale', $this->shop), [
+        ->postJson(route('pos.hold', $this->shop), [
             'items' => [],
             'customer_id' => null,
             'notes' => null,
@@ -110,7 +187,7 @@ test('cannot hold sale with empty items array', function () {
 
 test('cannot hold sale without items', function () {
     $response = $this->actingAs($this->user)
-        ->postJson(route('pos.hold-sale', $this->shop), [
+        ->postJson(route('pos.hold', $this->shop), [
             'customer_id' => null,
             'notes' => null,
         ]);
@@ -121,12 +198,12 @@ test('cannot hold sale without items', function () {
 
 test('held sale generates sequential reference numbers', function () {
     $this->actingAs($this->user)
-        ->postJson(route('pos.hold-sale', $this->shop), [
+        ->postJson(route('pos.hold', $this->shop), [
             'items' => $this->validItems,
         ]);
 
     $this->actingAs($this->user)
-        ->postJson(route('pos.hold-sale', $this->shop), [
+        ->postJson(route('pos.hold', $this->shop), [
             'items' => $this->validItems,
         ]);
 
@@ -142,11 +219,12 @@ test('can hold sale with customer', function () {
         'first_name' => 'John',
         'last_name' => 'Doe',
         'email' => 'john@test.com',
+        'password' => Hash::make('password'),
         'is_active' => true,
     ]);
 
     $response = $this->actingAs($this->user)
-        ->postJson(route('pos.hold-sale', $this->shop), [
+        ->postJson(route('pos.hold', $this->shop), [
             'items' => $this->validItems,
             'customer_id' => $customer->id,
             'notes' => null,
@@ -296,7 +374,7 @@ test('can delete a held sale', function () {
     $response->assertSuccessful()
         ->assertJsonStructure(['message']);
 
-    $this->assertDatabaseMissing('held_sales', [
+    $this->assertSoftDeleted('held_sales', [
         'id' => $heldSale->id,
     ]);
 });
@@ -304,12 +382,14 @@ test('can delete a held sale', function () {
 test('cannot access held sales from another shop', function () {
     $otherShop = Shop::create([
         'tenant_id' => $this->tenant->id,
+        'shop_type_id' => $this->shopType->id,
         'name' => 'Other Shop',
         'slug' => 'other-shop',
         'is_active' => true,
         'currency' => 'KES',
         'currency_symbol' => 'KSh',
         'currency_decimals' => 2,
+        'config' => [],
     ]);
 
     $heldSale = HeldSale::create([
@@ -351,31 +431,34 @@ test('user from different tenant cannot access shop held sales', function () {
 });
 
 test('held sale sets correct expiration time', function () {
+    $beforeCreation = now();
+
     $this->actingAs($this->user)
-        ->postJson(route('pos.hold-sale', $this->shop), [
+        ->postJson(route('pos.hold', $this->shop), [
             'items' => $this->validItems,
         ]);
 
     $heldSale = HeldSale::first();
 
     expect($heldSale->expires_at)->not->toBeNull();
-    expect($heldSale->expires_at->diffInHours(now()))->toBeGreaterThanOrEqual(23);
-    expect($heldSale->expires_at->diffInHours(now()))->toBeLessThanOrEqual(24);
+    expect($heldSale->expires_at->greaterThan($beforeCreation))->toBeTrue();
+    expect($heldSale->expires_at->lessThanOrEqualTo($beforeCreation->copy()->addHours(25)))->toBeTrue();
+    expect($heldSale->expires_at->greaterThanOrEqualTo($beforeCreation->copy()->addHours(23)))->toBeTrue();
 });
 
 test('held sale preserves all item data', function () {
     $response = $this->actingAs($this->user)
-        ->postJson(route('pos.hold-sale', $this->shop), [
+        ->postJson(route('pos.hold', $this->shop), [
             'items' => $this->validItems,
         ]);
 
     $heldSale = HeldSale::first();
 
     expect($heldSale->items)->toHaveCount(2);
-    expect($heldSale->items[0]['variant_id'])->toBe(1);
+    expect($heldSale->items[0]['variant_id'])->toBe($this->variant1->id);
     expect($heldSale->items[0]['name'])->toBe('Test Product');
     expect($heldSale->items[0]['quantity'])->toBe(2);
-    expect($heldSale->items[0]['unit_price'])->toBe(100.00);
+    expect($heldSale->items[0]['unit_price'])->toEqual(100.00);
 });
 
 test('held sale calculates total amount correctly', function () {

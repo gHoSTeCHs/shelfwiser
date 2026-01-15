@@ -1,10 +1,10 @@
-import { router } from '@inertiajs/react';
-import { useState, useRef, useEffect } from 'react';
 import Select from '@/components/form/Select';
 import DatePicker from '@/components/form/date-picker';
 import Button from '@/components/ui/button/Button';
-import { Filter, Download, RefreshCw, ChevronDown } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { router } from '@inertiajs/react';
+import { ChevronDown, Download, Filter, RefreshCw } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface FilterOption {
     label: string;
@@ -22,8 +22,8 @@ interface FilterConfig {
 
 interface FilterBarProps {
     filters: FilterConfig[];
-    currentFilters: Record<string, any>;
-    onFilterChange?: (filters: Record<string, any>) => void;
+    currentFilters: Record<string, string | number | null>;
+    onFilterChange?: (filters: Record<string, string | number | null>) => void;
     onExport?: () => void;
     onReset?: () => void;
     exportUrl?: string;
@@ -48,16 +48,20 @@ export default function FilterBar({
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+            if (
+                exportMenuRef.current &&
+                !exportMenuRef.current.contains(event.target as Node)
+            ) {
                 setShowExportMenu(false);
             }
         }
 
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        return () =>
+            document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleFilterChange = (name: string, value: any) => {
+    const handleFilterChange = (name: string, value: string | number | null) => {
         const newFilters = { ...localFilters, [name]: value };
         setLocalFilters(newFilters);
 
@@ -70,7 +74,9 @@ export default function FilterBar({
         router.get(
             window.location.pathname,
             Object.fromEntries(
-                Object.entries(localFilters).filter(([_, value]) => value !== null && value !== ''),
+                Object.entries(localFilters).filter(
+                    ([_, value]) => value !== null && value !== '',
+                ),
             ),
             {
                 preserveState: true,
@@ -89,10 +95,14 @@ export default function FilterBar({
         if (onReset) {
             onReset();
         } else {
-            router.get(window.location.pathname, {}, {
-                preserveState: false,
-                preserveScroll: false,
-            });
+            router.get(
+                window.location.pathname,
+                {},
+                {
+                    preserveState: false,
+                    preserveScroll: false,
+                },
+            );
         }
     };
 
@@ -104,7 +114,9 @@ export default function FilterBar({
         } else if (exportUrl) {
             const params = new URLSearchParams(
                 Object.fromEntries(
-                    Object.entries(currentFilters).filter(([_, value]) => value !== null && value !== ''),
+                    Object.entries(currentFilters).filter(
+                        ([_, value]) => value !== null && value !== '',
+                    ),
                 ),
             );
             params.append('format', format);
@@ -131,7 +143,9 @@ export default function FilterBar({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => setShowExportMenu(!showExportMenu)}
+                                    onClick={() =>
+                                        setShowExportMenu(!showExportMenu)
+                                    }
                                 >
                                     <Download className="mr-2 h-4 w-4" />
                                     Export
@@ -142,21 +156,27 @@ export default function FilterBar({
                                     <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
                                         <div className="py-1">
                                             <button
-                                                onClick={() => handleExport('csv')}
+                                                onClick={() =>
+                                                    handleExport('csv')
+                                                }
                                                 className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                                             >
                                                 <Download className="mr-2 h-4 w-4" />
                                                 Export as CSV
                                             </button>
                                             <button
-                                                onClick={() => handleExport('excel')}
+                                                onClick={() =>
+                                                    handleExport('excel')
+                                                }
                                                 className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                                             >
                                                 <Download className="mr-2 h-4 w-4" />
                                                 Export as Excel
                                             </button>
                                             <button
-                                                onClick={() => handleExport('pdf')}
+                                                onClick={() =>
+                                                    handleExport('pdf')
+                                                }
                                                 className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                                             >
                                                 <Download className="mr-2 h-4 w-4" />
@@ -189,13 +209,19 @@ export default function FilterBar({
                                     {filter.type === 'select' && (
                                         <Select
                                             label={filter.label}
-                                            value={localFilters[filter.name] || ''}
+                                            value={
+                                                localFilters[filter.name] || ''
+                                            }
                                             onChange={(value) =>
-                                                handleFilterChange(filter.name, value)
+                                                handleFilterChange(
+                                                    filter.name,
+                                                    value,
+                                                )
                                             }
                                         >
                                             <option value="">
-                                                {filter.placeholder || `All ${filter.label}`}
+                                                {filter.placeholder ||
+                                                    `All ${filter.label}`}
                                             </option>
                                             {filter.options?.map((option) => (
                                                 <option
@@ -211,9 +237,14 @@ export default function FilterBar({
                                     {filter.type === 'date' && (
                                         <DatePicker
                                             label={filter.label}
-                                            value={localFilters[filter.name] || ''}
+                                            value={
+                                                localFilters[filter.name] || ''
+                                            }
                                             onChange={(value) =>
-                                                handleFilterChange(filter.name, value)
+                                                handleFilterChange(
+                                                    filter.name,
+                                                    value,
+                                                )
                                             }
                                         />
                                     )}
@@ -225,7 +256,10 @@ export default function FilterBar({
                                             </label>
                                             <input
                                                 type="text"
-                                                value={localFilters[filter.name] || ''}
+                                                value={
+                                                    localFilters[filter.name] ||
+                                                    ''
+                                                }
                                                 onChange={(e) =>
                                                     handleFilterChange(
                                                         filter.name,
@@ -233,7 +267,7 @@ export default function FilterBar({
                                                     )
                                                 }
                                                 placeholder={filter.placeholder}
-                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                             />
                                         </div>
                                     )}

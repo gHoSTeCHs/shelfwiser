@@ -104,7 +104,9 @@ export type InternalPaymentMethod =
     | 'mobile_money'
     | 'bank_transfer'
     | 'cheque'
-    | 'customer_credit';
+    | 'customer_credit'
+    | 'paystack'
+    | 'cash_on_delivery';
 
 export interface InternalPaymentMethodOption {
     value: InternalPaymentMethod;
@@ -116,7 +118,10 @@ export interface InternalPaymentMethodOption {
     isInstant?: boolean;
 }
 
-export const INTERNAL_PAYMENT_METHODS: Record<InternalPaymentMethod, InternalPaymentMethodOption> = {
+export const INTERNAL_PAYMENT_METHODS: Record<
+    InternalPaymentMethod,
+    InternalPaymentMethodOption
+> = {
     cash: {
         value: 'cash',
         label: 'Cash',
@@ -171,6 +176,24 @@ export const INTERNAL_PAYMENT_METHODS: Record<InternalPaymentMethod, InternalPay
         requiresReference: false,
         isInstant: true,
     },
+    paystack: {
+        value: 'paystack',
+        label: 'Paystack',
+        description: 'Online payment via Paystack',
+        color: 'primary',
+        icon: 'credit-card',
+        requiresReference: true,
+        isInstant: true,
+    },
+    cash_on_delivery: {
+        value: 'cash_on_delivery',
+        label: 'Cash on Delivery',
+        description: 'Pay when order is delivered',
+        color: 'warning',
+        icon: 'truck',
+        requiresReference: false,
+        isInstant: false,
+    },
 };
 
 export const POS_PAYMENT_METHODS: InternalPaymentMethod[] = [
@@ -180,11 +203,15 @@ export const POS_PAYMENT_METHODS: InternalPaymentMethod[] = [
     'bank_transfer',
 ];
 
-export function getInternalPaymentMethodLabel(method: InternalPaymentMethod): string {
+export function getInternalPaymentMethodLabel(
+    method: InternalPaymentMethod,
+): string {
     return INTERNAL_PAYMENT_METHODS[method]?.label ?? method;
 }
 
-export function getInternalPaymentMethodColor(method: InternalPaymentMethod): string {
+export function getInternalPaymentMethodColor(
+    method: InternalPaymentMethod,
+): string {
     return INTERNAL_PAYMENT_METHODS[method]?.color ?? 'gray';
 }
 

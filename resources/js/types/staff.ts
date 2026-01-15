@@ -1,11 +1,11 @@
-import type { Shop } from './shop';
 import type {
-    EmploymentType,
-    PayType,
-    PayFrequency,
-    TaxHandling,
     EmployeePayrollDetail,
+    EmploymentType,
+    PayFrequency,
+    PayType,
+    TaxHandling,
 } from './payroll';
+import type { Shop } from './shop';
 
 export interface Role {
     value: string;

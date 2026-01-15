@@ -26,4 +26,16 @@ class UpdateSupplierProfileRequest extends FormRequest
             'settings' => ['sometimes', 'nullable', 'array'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'business_registration.max' => 'Business registration number cannot exceed 255 characters.',
+            'tax_id.max' => 'Tax ID cannot exceed 255 characters.',
+            'payment_terms.max' => 'Payment terms cannot exceed 50 characters.',
+            'lead_time_days.min' => 'Lead time must be at least 1 day.',
+            'lead_time_days.max' => 'Lead time cannot exceed 365 days.',
+            'minimum_order_value.min' => 'Minimum order value cannot be negative.',
+        ];
+    }
 }

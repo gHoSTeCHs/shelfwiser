@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\EarningCategory;
+use App\Enums\PayType;
 use App\Models\EarningType;
 use App\Models\EmployeeEarning;
+use App\Models\Order;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -14,7 +17,7 @@ class EarningsService
     /**
      * Get active earnings for an employee as of a specific date
      */
-    public function getActiveEarnings(User $employee, Carbon $asOfDate = null): Collection
+    public function getActiveEarnings(User $employee, ?Carbon $asOfDate = null): Collection
     {
         $date = $asOfDate ?? now();
 
@@ -43,7 +46,7 @@ class EarningsService
         $totalPensionable = 0;
 
         $hasBaseEarning = $earnings->contains(fn ($e) => $e->earningType->category === 'base');
-        if (!$hasBaseEarning) {
+        if (! $hasBaseEarning) {
             $breakdown[] = [
                 'type' => 'Basic Salary',
                 'category' => 'base',
@@ -56,9 +59,31 @@ class EarningsService
             $totalPensionable += $baseSalary;
         }
 
+        $hasCommissionEarning = $earnings->contains(fn ($e) => $e->earningType->category === EarningCategory::COMMISSION);
+        if (! $hasCommissionEarning && $payrollDetail && ($payrollDetail->pay_type === PayType::COMMISSION_BASED || $payrollDetail->commission_rate > 0)) {
+            $commissionAmount = $this->calculateCommissionEarning($employee, $periodStart, $periodEnd);
+            if ($commissionAmount > 0) {
+                $breakdown[] = [
+                    'type' => 'Sales Commission',
+                    'category' => 'commission',
+                    'amount' => $commissionAmount,
+                    'is_taxable' => true,
+                    'is_pensionable' => true,
+                ];
+                $totalGross += $commissionAmount;
+                $totalTaxable += $commissionAmount;
+                $totalPensionable += $commissionAmount;
+            }
+        }
+
         foreach ($earnings as $earning) {
             $type = $earning->earningType;
-            $amount = $earning->calculateAmount($baseSalary, $context);
+
+            if ($type->category === EarningCategory::COMMISSION) {
+                $amount = $this->calculateCommissionEarning($employee, $periodStart, $periodEnd);
+            } else {
+                $amount = $earning->calculateAmount($baseSalary, $context);
+            }
 
             $breakdown[] = [
                 'type' => $type->name,
@@ -131,6 +156,7 @@ class EarningsService
     {
         return DB::transaction(function () use ($earning, $data) {
             $earning->update($data);
+
             return $earning->fresh();
         });
     }
@@ -138,13 +164,14 @@ class EarningsService
     /**
      * End an employee earning (set effective_to date)
      */
-    public function endEarning(EmployeeEarning $earning, Carbon $effectiveTo = null): EmployeeEarning
+    public function endEarning(EmployeeEarning $earning, ?Carbon $effectiveTo = null): EmployeeEarning
     {
         return DB::transaction(function () use ($earning, $effectiveTo) {
             $earning->update([
                 'effective_to' => $effectiveTo ?? now(),
                 'is_active' => false,
             ]);
+
             return $earning->fresh();
         });
     }
@@ -196,5 +223,31 @@ class EarningsService
             ->byCategory($category)
             ->orderBy('display_order')
             ->get();
+    }
+
+    /**
+     * Calculate commission earnings for an employee based on their sales in the period.
+     * Uses date filtering to only count sales within the specified period.
+     *
+     * @param  User  $employee  The employee to calculate commission for
+     * @param  Carbon  $periodStart  Start date of the pay period
+     * @param  Carbon  $periodEnd  End date of the pay period
+     * @return float Commission amount
+     */
+    protected function calculateCommissionEarning(User $employee, Carbon $periodStart, Carbon $periodEnd): float
+    {
+        $payrollDetail = $employee->employeePayrollDetail;
+
+        if (! $payrollDetail || (! $payrollDetail->commission_rate || $payrollDetail->commission_rate <= 0)) {
+            return 0;
+        }
+
+        $salesAmount = Order::where('created_by', $employee->id)
+            ->where('tenant_id', $employee->tenant_id)
+            ->whereBetween('created_at', [$periodStart, $periodEnd])
+            ->where('status', 'completed')
+            ->sum('total_amount');
+
+        return $payrollDetail->calculateCommission($salesAmount);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class HeldSale extends Model
 {
-    use HasFactory, SoftDeletes;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
@@ -35,10 +36,6 @@ class HeldSale extends Model
         parent::boot();
 
         static::creating(function ($heldSale) {
-            if (empty($heldSale->hold_reference)) {
-                $heldSale->hold_reference = self::generateHoldReference($heldSale->shop_id);
-            }
-
             if (empty($heldSale->expires_at)) {
                 $heldSale->expires_at = now()->addHours(24);
             }
@@ -119,20 +116,5 @@ class HeldSale extends Model
         return collect($this->items ?? [])->sum(function ($item) {
             return ($item['unit_price'] ?? 0) * ($item['quantity'] ?? 0);
         });
-    }
-
-    public static function generateHoldReference(int $shopId): string
-    {
-        $lastHold = self::where('shop_id', $shopId)
-            ->orderBy('id', 'desc')
-            ->lockForUpdate()
-            ->first();
-
-        $sequence = 1;
-        if ($lastHold && preg_match('/HOLD-(\d+)$/', $lastHold->hold_reference, $matches)) {
-            $sequence = (int) $matches[1] + 1;
-        }
-
-        return sprintf('HOLD-%03d', $sequence);
     }
 }

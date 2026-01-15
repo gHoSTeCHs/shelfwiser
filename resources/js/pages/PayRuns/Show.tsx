@@ -1,27 +1,27 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { Form } from '@inertiajs/react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/AppLayout';
-import { Card } from '@/components/ui/card';
-import Button from '@/components/ui/button/Button';
-import Badge from '@/components/ui/badge/Badge';
-import { Modal } from '@/components/ui/modal';
 import PayRunController from '@/actions/App/Http/Controllers/PayRunController';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import { Modal } from '@/components/ui/modal';
+import AppLayout from '@/layouts/AppLayout';
+import type { PayRun, PayRunItem, PayRunSummary } from '@/types/payroll';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import {
+    AlertTriangle,
     ArrowLeft,
     Calculator,
-    Send,
     CheckCircle,
-    XCircle,
-    Download,
-    Users,
     DollarSign,
-    AlertTriangle,
+    Download,
+    Receipt,
     RefreshCw,
+    Send,
     UserMinus,
     UserPlus,
+    Users,
+    XCircle,
 } from 'lucide-react';
-import type { PayRun, PayRunItem, PayRunSummary } from '@/types/payroll';
+import { useState } from 'react';
 
 interface Props {
     payRun: PayRun;
@@ -104,11 +104,23 @@ export default function Show({ payRun, summary }: Props) {
         return labels[status] || status;
     };
 
-    const canCalculate = payRun.status === 'draft' || payRun.status === 'pending_review';
-    const canSubmit = payRun.status === 'pending_review' && summary.errors === 0;
+    const canCalculate =
+        payRun.status === 'draft' || payRun.status === 'pending_review';
+    const canSubmit =
+        payRun.status === 'pending_review' && summary.errors === 0;
     const canApprove = payRun.status === 'pending_approval';
     const canComplete = payRun.status === 'approved';
-    const canCancel = ['draft', 'pending_review', 'pending_approval'].includes(payRun.status);
+    const canCancel = ['draft', 'pending_review', 'pending_approval'].includes(
+        payRun.status,
+    );
+
+    const isNTA2025 = payRun.tax_law_version === 'nta_2025';
+    const taxLawLabel =
+        payRun.tax_law_version === 'nta_2025'
+            ? 'NTA 2025'
+            : payRun.tax_law_version === 'pita_2011'
+              ? 'PITA 2011'
+              : null;
 
     return (
         <>
@@ -128,13 +140,22 @@ export default function Show({ payRun, summary }: Props) {
 
             <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                 <div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                             {payRun.reference}
                         </h1>
                         <Badge color={getStatusColor(payRun.status)} size="md">
                             {getStatusLabel(payRun.status)}
                         </Badge>
+                        {taxLawLabel && (
+                            <Badge
+                                color={isNTA2025 ? 'info' : 'light'}
+                                size="md"
+                            >
+                                <Receipt className="mr-1 h-3 w-3" />
+                                {taxLawLabel}
+                            </Badge>
+                        )}
                     </div>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         {payRun.name} • {payRun.payroll_period?.period_name}
@@ -143,12 +164,19 @@ export default function Show({ payRun, summary }: Props) {
 
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                     {canCalculate && (
-                        <Form action={PayRunController.calculate.url({ payRun: payRun.id })} method="post">
+                        <Form
+                            action={PayRunController.calculate.url({
+                                payRun: payRun.id,
+                            })}
+                            method="post"
+                        >
                             {({ processing }) => (
                                 <Button
                                     type="submit"
                                     variant="primary"
-                                    startIcon={<Calculator className="h-4 w-4" />}
+                                    startIcon={
+                                        <Calculator className="h-4 w-4" />
+                                    }
                                     disabled={processing}
                                     loading={processing}
                                     className="w-full sm:w-auto"
@@ -160,7 +188,12 @@ export default function Show({ payRun, summary }: Props) {
                     )}
 
                     {canSubmit && (
-                        <Form action={PayRunController.submitForApproval.url({ payRun: payRun.id })} method="post">
+                        <Form
+                            action={PayRunController.submitForApproval.url({
+                                payRun: payRun.id,
+                            })}
+                            method="post"
+                        >
                             {({ processing }) => (
                                 <Button
                                     type="submit"
@@ -178,12 +211,19 @@ export default function Show({ payRun, summary }: Props) {
 
                     {canApprove && (
                         <>
-                            <Form action={PayRunController.approve.url({ payRun: payRun.id })} method="post">
+                            <Form
+                                action={PayRunController.approve.url({
+                                    payRun: payRun.id,
+                                })}
+                                method="post"
+                            >
                                 {({ processing }) => (
                                     <Button
                                         type="submit"
                                         variant="primary"
-                                        startIcon={<CheckCircle className="h-4 w-4" />}
+                                        startIcon={
+                                            <CheckCircle className="h-4 w-4" />
+                                        }
                                         disabled={processing}
                                         loading={processing}
                                         className="w-full sm:w-auto"
@@ -204,12 +244,19 @@ export default function Show({ payRun, summary }: Props) {
                     )}
 
                     {canComplete && (
-                        <Form action={PayRunController.complete.url({ payRun: payRun.id })} method="post">
+                        <Form
+                            action={PayRunController.complete.url({
+                                payRun: payRun.id,
+                            })}
+                            method="post"
+                        >
                             {({ processing }) => (
                                 <Button
                                     type="submit"
                                     variant="primary"
-                                    startIcon={<CheckCircle className="h-4 w-4" />}
+                                    startIcon={
+                                        <CheckCircle className="h-4 w-4" />
+                                    }
                                     disabled={processing}
                                     loading={processing}
                                     className="w-full sm:w-auto"
@@ -221,7 +268,12 @@ export default function Show({ payRun, summary }: Props) {
                     )}
 
                     {payRun.status === 'completed' && (
-                        <Form action={PayRunController.downloadPayslips.url({ payRun: payRun.id })} method="post">
+                        <Form
+                            action={PayRunController.downloadPayslips.url({
+                                payRun: payRun.id,
+                            })}
+                            method="post"
+                        >
                             {({ processing }) => (
                                 <Button
                                     type="submit"
@@ -242,13 +294,28 @@ export default function Show({ payRun, summary }: Props) {
                             variant="destructive"
                             startIcon={<XCircle className="h-4 w-4" />}
                             onClick={() => {
-                                if (confirm('Are you sure you want to cancel this pay run?')) {
+                                if (
+                                    confirm(
+                                        'Are you sure you want to cancel this pay run?',
+                                    )
+                                ) {
                                     setErrorMessage(null);
-                                    router.post(PayRunController.cancel.url({ payRun: payRun.id }), {}, {
-                                        onError: (errors) => {
-                                            setErrorMessage(Object.values(errors).flat().join(', ') || 'Failed to cancel pay run');
+                                    router.post(
+                                        PayRunController.cancel.url({
+                                            payRun: payRun.id,
+                                        }),
+                                        {},
+                                        {
+                                            onError: (errors) => {
+                                                setErrorMessage(
+                                                    Object.values(errors)
+                                                        .flat()
+                                                        .join(', ') ||
+                                                        'Failed to cancel pay run',
+                                                );
+                                            },
                                         },
-                                    });
+                                    );
                                 }
                             }}
                             className="w-full sm:w-auto"
@@ -263,7 +330,9 @@ export default function Show({ payRun, summary }: Props) {
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Employees</p>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                Employees
+                            </p>
                             <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
                                 {summary.total_employees}
                             </p>
@@ -271,9 +340,13 @@ export default function Show({ payRun, summary }: Props) {
                         <Users className="h-8 w-8 text-gray-400" />
                     </div>
                     <div className="mt-2 flex gap-2 text-xs">
-                        <span className="text-success-600">{summary.calculated} calculated</span>
+                        <span className="text-success-600">
+                            {summary.calculated} calculated
+                        </span>
                         {summary.errors > 0 && (
-                            <span className="text-error-600">{summary.errors} errors</span>
+                            <span className="text-error-600">
+                                {summary.errors} errors
+                            </span>
                         )}
                     </div>
                 </Card>
@@ -281,7 +354,9 @@ export default function Show({ payRun, summary }: Props) {
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Gross</p>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                Total Gross
+                            </p>
                             <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(summary.totals.gross)}
                             </p>
@@ -293,7 +368,9 @@ export default function Show({ payRun, summary }: Props) {
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Deductions</p>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                Deductions
+                            </p>
                             <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(summary.totals.deductions)}
                             </p>
@@ -305,7 +382,9 @@ export default function Show({ payRun, summary }: Props) {
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Net</p>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                Total Net
+                            </p>
                             <p className="mt-1 text-xl font-bold text-success-600 dark:text-success-400">
                                 {formatCurrency(summary.totals.net)}
                             </p>
@@ -317,7 +396,9 @@ export default function Show({ payRun, summary }: Props) {
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Employer Costs</p>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                Employer Costs
+                            </p>
                             <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(summary.totals.employer_costs)}
                             </p>
@@ -327,11 +408,57 @@ export default function Show({ payRun, summary }: Props) {
                 </Card>
             </div>
 
+            {summary.totals.tax !== undefined && summary.totals.tax > 0 && (
+                <Card className="mb-6 border-error-200 bg-error-50/50 p-4 dark:border-error-800 dark:bg-error-900/10">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="rounded-lg bg-error-100 p-2 dark:bg-error-800">
+                                <Receipt className="h-5 w-5 text-error-600 dark:text-error-400" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-semibold text-error-800 dark:text-error-200">
+                                        Total PAYE Tax
+                                    </h3>
+                                    {taxLawLabel && (
+                                        <Badge
+                                            color={isNTA2025 ? 'info' : 'light'}
+                                            size="sm"
+                                        >
+                                            {taxLawLabel}
+                                        </Badge>
+                                    )}
+                                </div>
+                                <p className="text-2xl font-bold text-error-600 dark:text-error-400">
+                                    {formatCurrency(summary.totals.tax)}
+                                </p>
+                            </div>
+                        </div>
+                        {summary.low_income_exempt_count !== undefined &&
+                            summary.low_income_exempt_count > 0 && (
+                                <div className="flex items-center gap-2 rounded-lg bg-success-100 px-3 py-2 dark:bg-success-900/20">
+                                    <CheckCircle className="h-4 w-4 text-success-600 dark:text-success-400" />
+                                    <span className="text-sm text-success-700 dark:text-success-300">
+                                        {summary.low_income_exempt_count}{' '}
+                                        employee
+                                        {summary.low_income_exempt_count !== 1
+                                            ? 's'
+                                            : ''}{' '}
+                                        tax-exempt (low income)
+                                    </span>
+                                </div>
+                            )}
+                    </div>
+                </Card>
+            )}
+
             {errorMessage && (
                 <div className="mb-6 rounded-lg border border-error-200 bg-error-50 p-4 dark:border-error-800 dark:bg-error-900/20">
                     <div className="flex items-center gap-3">
                         <AlertTriangle className="h-5 w-5 text-error-600 dark:text-error-400" />
-                        <span className="text-error-600 dark:text-error-400">{errorMessage}</span>
+                        <span className="text-error-600 dark:text-error-400">
+                            {errorMessage}
+                        </span>
                         <button
                             onClick={() => setErrorMessage(null)}
                             className="ml-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-error-600 hover:text-error-800 dark:text-error-400"
@@ -344,32 +471,37 @@ export default function Show({ payRun, summary }: Props) {
 
             <Card className="overflow-hidden">
                 <div className="border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Employee Pay Details</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Employee Pay Details
+                    </h3>
                 </div>
 
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Employee
                                 </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Basic
                                 </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Gross
                                 </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Deductions
                                 </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase lg:table-cell dark:text-gray-400">
+                                    PAYE Tax
+                                </th>
+                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Net Pay
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Status
                                 </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Actions
                                 </th>
                             </tr>
@@ -379,7 +511,9 @@ export default function Show({ payRun, summary }: Props) {
                                 <tr
                                     key={item.id}
                                     className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                                        item.status === 'error' ? 'bg-error-50 dark:bg-error-900/10' : ''
+                                        item.status === 'error'
+                                            ? 'bg-error-50 dark:bg-error-900/10'
+                                            : ''
                                     }`}
                                 >
                                     <td className="px-4 py-3">
@@ -401,12 +535,36 @@ export default function Show({ payRun, summary }: Props) {
                                     <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">
                                         {formatCurrency(item.total_deductions)}
                                     </td>
+                                    <td className="hidden px-4 py-3 text-right lg:table-cell">
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span className="text-sm font-medium text-error-600 dark:text-error-400">
+                                                {formatCurrency(
+                                                    item.tax_calculation?.tax ||
+                                                        0,
+                                                )}
+                                            </span>
+                                            {item.tax_calculation
+                                                ?.is_low_income_exempt && (
+                                                <Badge
+                                                    color="success"
+                                                    size="sm"
+                                                >
+                                                    Exempt
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </td>
                                     <td className="px-4 py-3 text-right text-sm font-semibold text-success-600 dark:text-success-400">
                                         {formatCurrency(item.net_pay)}
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex flex-col gap-1">
-                                            <Badge color={getItemStatusColor(item.status)} size="sm">
+                                            <Badge
+                                                color={getItemStatusColor(
+                                                    item.status,
+                                                )}
+                                                size="sm"
+                                            >
                                                 {item.status}
                                             </Badge>
                                             {item.error_message && (
@@ -418,62 +576,82 @@ export default function Show({ payRun, summary }: Props) {
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex justify-end gap-2">
-                                            {canCalculate && (item.status === 'pending' || item.status === 'error') && (
-                                                <Form
-                                                    action={PayRunController.recalculateItem.url({
-                                                        payRun: payRun.id,
-                                                        item: item.id,
-                                                    })}
-                                                    method="post"
-                                                >
-                                                    {({ processing }) => (
-                                                        <Button
-                                                            type="submit"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            disabled={processing}
-                                                        >
-                                                            <RefreshCw className="h-4 w-4" />
-                                                        </Button>
-                                                    )}
-                                                </Form>
-                                            )}
-                                            {canCalculate && item.status === 'calculated' && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        setExcludeUserId(item.user_id);
-                                                        setShowExcludeModal(true);
-                                                    }}
-                                                >
-                                                    <UserMinus className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                            {canCalculate && item.status === 'excluded' && (
-                                                <Form
-                                                    action={PayRunController.include.url({
-                                                        payRun: payRun.id,
-                                                        user: item.user_id,
-                                                    })}
-                                                    method="post"
-                                                >
-                                                    {({ processing }) => (
-                                                        <Button
-                                                            type="submit"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            disabled={processing}
-                                                        >
-                                                            <UserPlus className="h-4 w-4" />
-                                                        </Button>
-                                                    )}
-                                                </Form>
-                                            )}
+                                            {canCalculate &&
+                                                (item.status === 'pending' ||
+                                                    item.status ===
+                                                        'error') && (
+                                                    <Form
+                                                        action={PayRunController.recalculateItem.url(
+                                                            {
+                                                                payRun: payRun.id,
+                                                                item: item.id,
+                                                            },
+                                                        )}
+                                                        method="post"
+                                                    >
+                                                        {({ processing }) => (
+                                                            <Button
+                                                                type="submit"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                disabled={
+                                                                    processing
+                                                                }
+                                                            >
+                                                                <RefreshCw className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                    </Form>
+                                                )}
+                                            {canCalculate &&
+                                                item.status ===
+                                                    'calculated' && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setExcludeUserId(
+                                                                item.user_id,
+                                                            );
+                                                            setShowExcludeModal(
+                                                                true,
+                                                            );
+                                                        }}
+                                                    >
+                                                        <UserMinus className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            {canCalculate &&
+                                                item.status === 'excluded' && (
+                                                    <Form
+                                                        action={PayRunController.include.url(
+                                                            {
+                                                                payRun: payRun.id,
+                                                                user: item.user_id,
+                                                            },
+                                                        )}
+                                                        method="post"
+                                                    >
+                                                        {({ processing }) => (
+                                                            <Button
+                                                                type="submit"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                disabled={
+                                                                    processing
+                                                                }
+                                                            >
+                                                                <UserPlus className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                    </Form>
+                                                )}
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => setSelectedItem(item)}
+                                                onClick={() =>
+                                                    setSelectedItem(item)
+                                                }
                                             >
                                                 Details
                                             </Button>
@@ -488,42 +666,61 @@ export default function Show({ payRun, summary }: Props) {
 
             {payRun.notes && (
                 <Card className="mt-6 p-6">
-                    <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Notes</h3>
-                    <p className="text-gray-600 dark:text-gray-300">{payRun.notes}</p>
+                    <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+                        Notes
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                        {payRun.notes}
+                    </p>
                 </Card>
             )}
 
             <Card className="mt-6 p-6">
-                <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Timeline</h3>
+                <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+                    Timeline
+                </h3>
                 <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
-                        <span className="text-gray-500 dark:text-gray-400">Created</span>
-                        <span className="text-gray-900 dark:text-white">{formatDate(payRun.created_at)}</span>
+                        <span className="text-gray-500 dark:text-gray-400">
+                            Created
+                        </span>
+                        <span className="text-gray-900 dark:text-white">
+                            {formatDate(payRun.created_at)}
+                        </span>
                     </div>
                     {payRun.calculated_at && (
                         <div className="flex justify-between">
-                            <span className="text-gray-500 dark:text-gray-400">Calculated</span>
+                            <span className="text-gray-500 dark:text-gray-400">
+                                Calculated
+                            </span>
                             <span className="text-gray-900 dark:text-white">
                                 {formatDate(payRun.calculated_at)}
-                                {payRun.calculated_by_user && ` by ${payRun.calculated_by_user.name}`}
+                                {payRun.calculated_by_user &&
+                                    ` by ${payRun.calculated_by_user.name}`}
                             </span>
                         </div>
                     )}
                     {payRun.approved_at && (
                         <div className="flex justify-between">
-                            <span className="text-gray-500 dark:text-gray-400">Approved</span>
+                            <span className="text-gray-500 dark:text-gray-400">
+                                Approved
+                            </span>
                             <span className="text-gray-900 dark:text-white">
                                 {formatDate(payRun.approved_at)}
-                                {payRun.approved_by_user && ` by ${payRun.approved_by_user.name}`}
+                                {payRun.approved_by_user &&
+                                    ` by ${payRun.approved_by_user.name}`}
                             </span>
                         </div>
                     )}
                     {payRun.completed_at && (
                         <div className="flex justify-between">
-                            <span className="text-gray-500 dark:text-gray-400">Completed</span>
+                            <span className="text-gray-500 dark:text-gray-400">
+                                Completed
+                            </span>
                             <span className="text-gray-900 dark:text-white">
                                 {formatDate(payRun.completed_at)}
-                                {payRun.completed_by_user && ` by ${payRun.completed_by_user.name}`}
+                                {payRun.completed_by_user &&
+                                    ` by ${payRun.completed_by_user.name}`}
                             </span>
                         </div>
                     )}
@@ -534,47 +731,81 @@ export default function Show({ payRun, summary }: Props) {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <Card className="max-h-[90vh] w-full max-w-2xl overflow-y-auto p-4 sm:p-6">
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-base font-semibold text-gray-900 dark:text-white sm:text-lg">
+                            <h3 className="text-base font-semibold text-gray-900 sm:text-lg dark:text-white">
                                 {selectedItem.user?.name} - Pay Details
                             </h3>
-                            <Button variant="ghost" size="sm" onClick={() => setSelectedItem(null)}>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedItem(null)}
+                            >
                                 <XCircle className="h-5 w-5" />
                             </Button>
                         </div>
 
                         <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
                             <div>
-                                <h4 className="mb-2 font-medium text-gray-900 dark:text-white">Earnings</h4>
+                                <h4 className="mb-2 font-medium text-gray-900 dark:text-white">
+                                    Earnings
+                                </h4>
                                 <div className="space-y-2">
-                                    {selectedItem.earnings_breakdown?.map((earning, idx) => (
-                                        <div key={idx} className="flex justify-between text-sm">
-                                            <span className="text-gray-600 dark:text-gray-300">{earning.type}</span>
-                                            <span className="font-medium text-gray-900 dark:text-white">
-                                                {formatCurrency(earning.amount)}
-                                            </span>
-                                        </div>
-                                    ))}
+                                    {selectedItem.earnings_breakdown?.map(
+                                        (earning, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="flex justify-between text-sm"
+                                            >
+                                                <span className="text-gray-600 dark:text-gray-300">
+                                                    {earning.type}
+                                                </span>
+                                                <span className="font-medium text-gray-900 dark:text-white">
+                                                    {formatCurrency(
+                                                        earning.amount,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        ),
+                                    )}
                                     <div className="flex justify-between border-t pt-2 text-sm font-semibold">
                                         <span>Total Gross</span>
-                                        <span>{formatCurrency(selectedItem.gross_earnings)}</span>
+                                        <span>
+                                            {formatCurrency(
+                                                selectedItem.gross_earnings,
+                                            )}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
 
                             <div>
-                                <h4 className="mb-2 font-medium text-gray-900 dark:text-white">Deductions</h4>
+                                <h4 className="mb-2 font-medium text-gray-900 dark:text-white">
+                                    Deductions
+                                </h4>
                                 <div className="space-y-2">
-                                    {selectedItem.deductions_breakdown?.map((deduction, idx) => (
-                                        <div key={idx} className="flex justify-between text-sm">
-                                            <span className="text-gray-600 dark:text-gray-300">{deduction.type}</span>
-                                            <span className="font-medium text-gray-900 dark:text-white">
-                                                {formatCurrency(deduction.amount)}
-                                            </span>
-                                        </div>
-                                    ))}
+                                    {selectedItem.deductions_breakdown?.map(
+                                        (deduction, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="flex justify-between text-sm"
+                                            >
+                                                <span className="text-gray-600 dark:text-gray-300">
+                                                    {deduction.type}
+                                                </span>
+                                                <span className="font-medium text-gray-900 dark:text-white">
+                                                    {formatCurrency(
+                                                        deduction.amount,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        ),
+                                    )}
                                     <div className="flex justify-between border-t pt-2 text-sm font-semibold">
                                         <span>Total Deductions</span>
-                                        <span>{formatCurrency(selectedItem.total_deductions)}</span>
+                                        <span>
+                                            {formatCurrency(
+                                                selectedItem.total_deductions,
+                                            )}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -593,24 +824,116 @@ export default function Show({ payRun, summary }: Props) {
 
                         {selectedItem.tax_calculation && (
                             <div className="mt-4">
-                                <h4 className="mb-2 font-medium text-gray-900 dark:text-white">Tax Calculation</h4>
+                                <div className="mb-2 flex items-center justify-between">
+                                    <h4 className="font-medium text-gray-900 dark:text-white">
+                                        Tax Calculation
+                                    </h4>
+                                    {selectedItem.tax_calculation
+                                        .tax_law_version && (
+                                        <Badge
+                                            color={
+                                                selectedItem.tax_calculation
+                                                    .tax_law_version ===
+                                                'nta_2025'
+                                                    ? 'info'
+                                                    : 'light'
+                                            }
+                                            size="sm"
+                                        >
+                                            {selectedItem.tax_calculation
+                                                .tax_law_version === 'nta_2025'
+                                                ? 'NTA 2025'
+                                                : 'PITA 2011'}
+                                        </Badge>
+                                    )}
+                                </div>
                                 <div className="rounded-lg bg-gray-50 p-3 text-sm dark:bg-gray-800">
                                     <div className="flex justify-between">
-                                        <span>Taxable Income</span>
-                                        <span>{formatCurrency(selectedItem.tax_calculation.taxable_income)}</span>
+                                        <span>Gross Annual Income</span>
+                                        <span>
+                                            {formatCurrency(
+                                                selectedItem.tax_calculation
+                                                    .gross_income || 0,
+                                            )}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span>Relief Applied</span>
-                                        <span>{formatCurrency(selectedItem.tax_calculation.consolidated_relief)}</span>
+                                        <span>Taxable Income</span>
+                                        <span>
+                                            {formatCurrency(
+                                                selectedItem.tax_calculation
+                                                    .taxable_income,
+                                            )}
+                                        </span>
                                     </div>
-                                    <div className="flex justify-between font-semibold">
-                                        <span>PAYE Tax</span>
-                                        <span>{formatCurrency(selectedItem.tax_calculation.tax)}</span>
+                                    <div className="flex justify-between">
+                                        <span>Total Reliefs</span>
+                                        <span className="text-success-600 dark:text-success-400">
+                                            -
+                                            {formatCurrency(
+                                                selectedItem.tax_calculation
+                                                    .total_reliefs ||
+                                                    selectedItem.tax_calculation
+                                                        .consolidated_relief ||
+                                                    0,
+                                            )}
+                                        </span>
                                     </div>
-                                    <div className="flex justify-between text-gray-500">
+                                    {selectedItem.tax_calculation
+                                        .cra_amount && (
+                                        <div className="flex justify-between text-gray-500 dark:text-gray-400">
+                                            <span className="ml-2">└ CRA</span>
+                                            <span>
+                                                {formatCurrency(
+                                                    selectedItem.tax_calculation
+                                                        .cra_amount,
+                                                )}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {selectedItem.tax_calculation.rent_relief &&
+                                        selectedItem.tax_calculation
+                                            .rent_relief > 0 && (
+                                            <div className="flex justify-between text-gray-500 dark:text-gray-400">
+                                                <span className="ml-2">
+                                                    └ Rent Relief (NTA)
+                                                </span>
+                                                <span>
+                                                    {formatCurrency(
+                                                        selectedItem
+                                                            .tax_calculation
+                                                            .rent_relief,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        )}
+                                    <div className="mt-2 flex justify-between border-t pt-2 font-semibold dark:border-gray-700">
+                                        <span>PAYE Tax (Monthly)</span>
+                                        <span className="text-error-600 dark:text-error-400">
+                                            {formatCurrency(
+                                                selectedItem.tax_calculation
+                                                    .tax,
+                                            )}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-500 dark:text-gray-400">
                                         <span>Effective Rate</span>
-                                        <span>{selectedItem.tax_calculation.effective_rate.toFixed(2)}%</span>
+                                        <span>
+                                            {selectedItem.tax_calculation.effective_rate?.toFixed(
+                                                2,
+                                            ) || '0.00'}
+                                            %
+                                        </span>
                                     </div>
+                                    {selectedItem.tax_calculation
+                                        .is_low_income_exempt && (
+                                        <div className="mt-2 flex items-center gap-2 rounded bg-success-100 p-2 dark:bg-success-900/20">
+                                            <CheckCircle className="h-4 w-4 text-success-600 dark:text-success-400" />
+                                            <span className="text-success-700 dark:text-success-300">
+                                                Low-income exemption (NTA 2025)
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -618,9 +941,13 @@ export default function Show({ payRun, summary }: Props) {
                 </div>
             )}
 
-            <Modal isOpen={showRejectModal} onClose={() => setShowRejectModal(false)} className="mx-4 w-full max-w-md">
+            <Modal
+                isOpen={showRejectModal}
+                onClose={() => setShowRejectModal(false)}
+                className="mx-4 w-full max-w-md"
+            >
                 <div className="p-4 sm:p-6">
-                    <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-white sm:text-lg">
+                    <h3 className="mb-4 text-base font-semibold text-gray-900 sm:text-lg dark:text-white">
                         Reject Pay Run
                     </h3>
                     <div className="mb-4">
@@ -631,21 +958,35 @@ export default function Show({ payRun, summary }: Props) {
                             value={rejectReason}
                             onChange={(e) => setRejectReason(e.target.value)}
                             rows={3}
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white sm:px-4"
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 sm:px-4 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             placeholder="Enter reason for rejection..."
                         />
                     </div>
                     <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
-                        <Button variant="outline" onClick={() => setShowRejectModal(false)} className="w-full sm:w-auto">
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowRejectModal(false)}
+                            className="w-full sm:w-auto"
+                        >
                             Cancel
                         </Button>
                         <Form
-                            action={PayRunController.reject.url({ payRun: payRun.id })}
+                            action={PayRunController.reject.url({
+                                payRun: payRun.id,
+                            })}
                             method="post"
                             className="w-full sm:w-auto"
                         >
-                            <input type="hidden" name="reason" value={rejectReason} />
-                            <Button type="submit" variant="destructive" className="w-full sm:w-auto">
+                            <input
+                                type="hidden"
+                                name="reason"
+                                value={rejectReason}
+                            />
+                            <Button
+                                type="submit"
+                                variant="destructive"
+                                className="w-full sm:w-auto"
+                            >
                                 Reject
                             </Button>
                         </Form>
@@ -653,9 +994,13 @@ export default function Show({ payRun, summary }: Props) {
                 </div>
             </Modal>
 
-            <Modal isOpen={showExcludeModal} onClose={() => setShowExcludeModal(false)} className="mx-4 w-full max-w-md">
+            <Modal
+                isOpen={showExcludeModal}
+                onClose={() => setShowExcludeModal(false)}
+                className="mx-4 w-full max-w-md"
+            >
                 <div className="p-4 sm:p-6">
-                    <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-white sm:text-lg">
+                    <h3 className="mb-4 text-base font-semibold text-gray-900 sm:text-lg dark:text-white">
                         Exclude Employee
                     </h3>
                     <div className="mb-4">
@@ -666,21 +1011,36 @@ export default function Show({ payRun, summary }: Props) {
                             value={excludeReason}
                             onChange={(e) => setExcludeReason(e.target.value)}
                             rows={3}
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white sm:px-4"
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 sm:px-4 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             placeholder="Enter reason for exclusion..."
                         />
                     </div>
                     <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
-                        <Button variant="outline" onClick={() => setShowExcludeModal(false)} className="w-full sm:w-auto">
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowExcludeModal(false)}
+                            className="w-full sm:w-auto"
+                        >
                             Cancel
                         </Button>
                         <Form
-                            action={PayRunController.excludeEmployee.url({ payRun: payRun.id, user: excludeUserId })}
+                            action={PayRunController.excludeEmployee.url({
+                                payRun: payRun.id,
+                                user: excludeUserId,
+                            })}
                             method="post"
                             className="w-full sm:w-auto"
                         >
-                            <input type="hidden" name="reason" value={excludeReason} />
-                            <Button type="submit" variant="destructive" className="w-full sm:w-auto">
+                            <input
+                                type="hidden"
+                                name="reason"
+                                value={excludeReason}
+                            />
+                            <Button
+                                type="submit"
+                                variant="destructive"
+                                className="w-full sm:w-auto"
+                            >
                                 Exclude
                             </Button>
                         </Form>

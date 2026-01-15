@@ -1,18 +1,18 @@
 import WageAdvanceController from '@/actions/App/Http/Controllers/WageAdvanceController.ts';
-import Button from '@/components/ui/button/Button';
-import { Card } from '@/components/ui/card';
 import Input from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
-import Label from '@/components/form/Label';
 import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
-import { Head, Link, Form } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import {
-    ArrowLeft,
-    DollarSign,
-    Calendar,
     AlertCircle,
+    ArrowLeft,
+    Calendar,
     CheckCircle,
+    DollarSign,
     XCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -124,7 +124,8 @@ const WageAdvancesCreate = ({ shop, eligibility }: Props) => {
                                                 Maximum Percentage
                                             </p>
                                             <p className="text-lg font-bold text-success-900 dark:text-success-100">
-                                                {eligibility.percentage_allowed}%
+                                                {eligibility.percentage_allowed}
+                                                %
                                             </p>
                                         </div>
                                         <div>
@@ -293,18 +294,19 @@ const WageAdvancesCreate = ({ shop, eligibility }: Props) => {
                                                     </p>
                                                     <ul className="mt-2 space-y-1">
                                                         <li>
-                                                            • Your request will be
-                                                            reviewed by management
+                                                            • Your request will
+                                                            be reviewed by
+                                                            management
                                                         </li>
                                                         <li>
-                                                            • Deductions will start
-                                                            after approval and
-                                                            disbursement
+                                                            • Deductions will
+                                                            start after approval
+                                                            and disbursement
                                                         </li>
                                                         <li>
                                                             • Monthly deductions
-                                                            will be taken from your
-                                                            salary
+                                                            will be taken from
+                                                            your salary
                                                         </li>
                                                     </ul>
                                                 </div>
@@ -342,6 +344,8 @@ const WageAdvancesCreate = ({ shop, eligibility }: Props) => {
     );
 };
 
-WageAdvancesCreate.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
+WageAdvancesCreate.layout = (page: React.ReactNode) => (
+    <AppLayout>{page}</AppLayout>
+);
 
 export default WageAdvancesCreate;

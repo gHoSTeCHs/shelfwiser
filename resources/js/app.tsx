@@ -1,14 +1,14 @@
 import '../css/app.css';
 
+import { ChunkLoadErrorFallback, ErrorBoundary } from '@/components/error';
+import { ErrorProvider } from '@/context/ErrorContext';
+import { ThemeProvider } from '@/context/ThemeContext.tsx';
+import { ToastProvider } from '@/contexts/ToastContext';
+import { isChunkLoadError } from '@/types/error';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
-import { ThemeProvider } from '@/context/ThemeContext.tsx';
-import { ToastProvider } from '@/contexts/ToastContext';
-import { ErrorProvider } from '@/context/ErrorContext';
-import { ErrorBoundary, ChunkLoadErrorFallback } from '@/components/error';
-import { isChunkLoadError } from '@/types/error';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -41,7 +41,12 @@ createInertiaApp({
         root.render(
             <ErrorBoundary
                 onError={handleGlobalError}
-                fallbackRender={({ error, errorInfo, resetError, isResetting }) => {
+                fallbackRender={({
+                    error,
+                    errorInfo,
+                    resetError,
+                    isResetting,
+                }) => {
                     // Use specialized fallback for chunk load errors
                     if (isChunkLoadError(error)) {
                         return (
@@ -60,7 +65,10 @@ createInertiaApp({
                     onError={(errorInfo) => {
                         // Log reported errors
                         if (import.meta.env.DEV) {
-                            console.info('[ErrorProvider] Error reported:', errorInfo);
+                            console.info(
+                                '[ErrorProvider] Error reported:',
+                                errorInfo,
+                            );
                         }
                     }}
                 >
@@ -70,7 +78,7 @@ createInertiaApp({
                         </ToastProvider>
                     </ThemeProvider>
                 </ErrorProvider>
-            </ErrorBoundary>
+            </ErrorBoundary>,
         );
     },
     progress: {

@@ -23,6 +23,7 @@ class UpdateProductRequest extends FormRequest
                 'nullable',
                 Rule::exists('product_categories', 'id')->where('tenant_id', $tenantId),
             ],
+            'product_type_slug' => ['prohibited'],
             'is_active' => ['sometimes', 'boolean'],
         ];
 
@@ -40,6 +41,16 @@ class UpdateProductRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Please provide a name for this product.',
+            'name.max' => 'Product name cannot exceed 255 characters.',
+            'category_id.exists' => 'The selected category does not exist in your organization.',
+            'product_type_slug.prohibited' => 'Product type cannot be changed after creation.',
+        ];
     }
 
     protected function getProductType(): \App\Models\ProductType

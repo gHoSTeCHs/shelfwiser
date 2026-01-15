@@ -24,41 +24,57 @@ interface TableRowProps {
   className?: string; // Optional className for styling
 }
 
-// Props for TableCell
+/**
+ * Props for TableCell component
+ */
 interface TableCellProps {
-  children: ReactNode; // Cell content
-  isHeader?: boolean; // If true, renders as <th>, otherwise <td>
-  className?: string; // Optional className for styling
+  children: ReactNode;
+  isHeader?: boolean;
+  scope?: 'col' | 'row';
+  className?: string;
 }
 
-// Table Component
+/**
+ * Table component with semantic HTML table element
+ */
 const Table: React.FC<TableProps> = ({ children, className }) => {
   return <table className={`min-w-full  ${className}`}>{children}</table>;
 };
 
-// TableHeader Component
+/**
+ * TableHeader component for table head section
+ */
 const TableHeader: React.FC<TableHeaderProps> = ({ children, className }) => {
   return <thead className={className}>{children}</thead>;
 };
 
-// TableBody Component
+/**
+ * TableBody component for table body section
+ */
 const TableBody: React.FC<TableBodyProps> = ({ children, className }) => {
   return <tbody className={className}>{children}</tbody>;
 };
 
-// TableRow Component
+/**
+ * TableRow component for table rows
+ */
 const TableRow: React.FC<TableRowProps> = ({ children, className }) => {
   return <tr className={className}>{children}</tr>;
 };
 
-// TableCell Component
+/**
+ * TableCell component that renders th or td with proper scope attribute
+ */
 const TableCell: React.FC<TableCellProps> = ({
   children,
   isHeader = false,
+  scope,
   className,
 }) => {
   const CellTag = isHeader ? "th" : "td";
-  return <CellTag className={` ${className}`}>{children}</CellTag>;
+  const scopeAttr = isHeader && scope ? { scope } : {};
+
+  return <CellTag className={` ${className}`} {...scopeAttr}>{children}</CellTag>;
 };
 
 export { Table, TableHeader, TableBody, TableRow, TableCell };

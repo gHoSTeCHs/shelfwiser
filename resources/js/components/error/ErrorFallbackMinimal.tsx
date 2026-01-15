@@ -1,7 +1,7 @@
-import React from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { ErrorFallbackProps } from '@/types/error';
 import Button from '@/components/ui/button/Button';
+import { ErrorFallbackProps } from '@/types/error';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+import React from 'react';
 
 interface ErrorFallbackMinimalProps extends ErrorFallbackProps {
     /** Compact mode with smaller padding */
@@ -43,26 +43,28 @@ const ErrorFallbackMinimal: React.FC<ErrorFallbackMinimalProps> = ({
 
     return (
         <div
-            className={`
-                rounded-xl border border-error-500 bg-error-50
-                dark:border-error-500/30 dark:bg-error-500/15
-                ${padding} ${className}
-            `}
+            className={`rounded-xl border border-error-500 bg-error-50 dark:border-error-500/30 dark:bg-error-500/15 ${padding} ${className} `}
             role="alert"
         >
             <div className="flex items-start gap-3">
                 {/* Icon */}
-                <div className="flex-shrink-0 -mt-0.5 text-error-500">
-                    <AlertTriangle className={compact ? 'h-4 w-4' : 'h-5 w-5'} />
+                <div className="-mt-0.5 flex-shrink-0 text-error-500">
+                    <AlertTriangle
+                        className={compact ? 'h-4 w-4' : 'h-5 w-5'}
+                    />
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0">
-                    <h4 className={`font-semibold text-gray-800 dark:text-white/90 ${compact ? 'text-xs' : 'text-sm'}`}>
+                <div className="min-w-0 flex-1">
+                    <h4
+                        className={`font-semibold text-gray-800 dark:text-white/90 ${compact ? 'text-xs' : 'text-sm'}`}
+                    >
                         Something went wrong
                     </h4>
 
-                    <p className={`text-gray-600 dark:text-gray-400 mt-1 ${compact ? 'text-xs' : 'text-sm'}`}>
+                    <p
+                        className={`mt-1 text-gray-600 dark:text-gray-400 ${compact ? 'text-xs' : 'text-sm'}`}
+                    >
                         {errorInfo.userMessage}
                     </p>
 
@@ -75,7 +77,11 @@ const ErrorFallbackMinimal: React.FC<ErrorFallbackMinimalProps> = ({
                                 onClick={resetError}
                                 disabled={isResetting}
                                 loading={isResetting}
-                                startIcon={!isResetting ? <RefreshCw className="h-3 w-3" /> : undefined}
+                                startIcon={
+                                    !isResetting ? (
+                                        <RefreshCw className="h-3 w-3" />
+                                    ) : undefined
+                                }
                             >
                                 {isResetting ? 'Retrying...' : retryText}
                             </Button>
@@ -84,7 +90,7 @@ const ErrorFallbackMinimal: React.FC<ErrorFallbackMinimalProps> = ({
 
                     {/* Error ID for support */}
                     {errorInfo.errorId && !compact && (
-                        <p className="mt-2 text-[10px] text-gray-400 dark:text-gray-500 font-mono">
+                        <p className="font-mono mt-2 text-[10px] text-gray-400 dark:text-gray-500">
                             ID: {errorInfo.errorId}
                         </p>
                     )}
@@ -101,18 +107,10 @@ export const ErrorFallbackTiny: React.FC<{
     resetError?: () => void;
     message?: string;
     className?: string;
-}> = ({
-    resetError,
-    message = 'Failed to load',
-    className = '',
-}) => {
+}> = ({ resetError, message = 'Failed to load', className = '' }) => {
     return (
         <div
-            className={`
-                flex items-center justify-center gap-2 py-4 px-3
-                text-sm text-error-600 dark:text-error-400
-                ${className}
-            `}
+            className={`flex items-center justify-center gap-2 px-3 py-4 text-sm text-error-600 dark:text-error-400 ${className} `}
             role="alert"
         >
             <AlertTriangle className="h-4 w-4 flex-shrink-0" />
@@ -120,7 +118,7 @@ export const ErrorFallbackTiny: React.FC<{
             {resetError && (
                 <button
                     onClick={resetError}
-                    className="ml-2 text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 underline text-sm"
+                    className="ml-2 text-sm text-brand-500 underline hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300"
                 >
                     Retry
                 </button>

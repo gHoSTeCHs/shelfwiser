@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Log;
 
 class SupplierService
 {
+    /** @var array<int, array<string, SupplierPricingTier|null>> */
+    private array $tierCache = [];
+
     public function enableSupplierMode(Tenant $tenant, array $data): SupplierProfile
     {
         return DB::transaction(function () use ($tenant, $data) {
@@ -179,6 +182,12 @@ class SupplierService
 
     protected function getAppliedTier(SupplierCatalogItem $catalogItem, int $quantity, ?int $connectionId): ?SupplierPricingTier
     {
+        $cacheKey = "{$quantity}:{$connectionId}";
+
+        if (isset($this->tierCache[$catalogItem->id][$cacheKey])) {
+            return $this->tierCache[$catalogItem->id][$cacheKey];
+        }
+
         $tiersQuery = $catalogItem->pricingTiers()
             ->where('min_quantity', '<=', $quantity)
             ->where(function ($query) use ($quantity) {
@@ -187,16 +196,51 @@ class SupplierService
             })
             ->orderBy('min_quantity', 'desc');
 
+        $tier = null;
+
         if ($connectionId) {
             $connectionTier = (clone $tiersQuery)
                 ->where('connection_id', $connectionId)
                 ->first();
 
             if ($connectionTier) {
-                return $connectionTier;
+                $tier = $connectionTier;
             }
         }
 
-        return $tiersQuery->whereNull('connection_id')->first();
+        if (! $tier) {
+            $tier = $tiersQuery->whereNull('connection_id')->first();
+        }
+
+        if (! isset($this->tierCache[$catalogItem->id])) {
+            $this->tierCache[$catalogItem->id] = [];
+        }
+        $this->tierCache[$catalogItem->id][$cacheKey] = $tier;
+
+        return $tier;
+    }
+
+    /**
+     * Clears the pricing tier cache. Call this when tier data might have changed.
+     */
+    public function clearTierCache(): void
+    {
+        $this->tierCache = [];
+    }
+
+    /**
+     * Preload pricing tiers for multiple catalog items to avoid N+1 queries.
+     *
+     * @param  array<int>  $catalogItemIds
+     */
+    public function preloadPricingTiers(array $catalogItemIds): void
+    {
+        $tiers = SupplierPricingTier::whereIn('catalog_item_id', $catalogItemIds)->get();
+
+        foreach ($tiers->groupBy('catalog_item_id') as $catalogItemId => $itemTiers) {
+            if (! isset($this->tierCache[$catalogItemId])) {
+                $this->tierCache[$catalogItemId] = ['_tiers' => $itemTiers];
+            }
+        }
     }
 }

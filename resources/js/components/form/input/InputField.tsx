@@ -24,32 +24,36 @@ interface InputProps {
     onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
     autoFocus?: boolean;
     required?: boolean;
+    ariaLabel?: string;
+    label?: string;
 }
 
 const Input: FC<InputProps> = ({
-                                   type = 'text',
-                                   id,
-                                   name,
-                                   placeholder,
-                                   value,
-                                   defaultValue,
-                                   onChange,
-                                   className = '',
-                                   min,
-                                   max,
-                                   step,
-                                   disabled = false,
-                                   success = false,
-                                   error = false,
-                                   hint,
-                                   onKeyDown,
-                                   onKeyUp,
-                                   onKeyPress,
-                                   onFocus,
-                                   onBlur,
-                                   autoFocus = false,
-                                   required = false,
-                               }) => {
+    type = 'text',
+    id,
+    name,
+    placeholder,
+    value,
+    defaultValue,
+    onChange,
+    className = '',
+    min,
+    max,
+    step,
+    disabled = false,
+    success = false,
+    error = false,
+    hint,
+    onKeyDown,
+    onKeyUp,
+    onKeyPress,
+    onFocus,
+    onBlur,
+    autoFocus = false,
+    required = false,
+    ariaLabel,
+    label,
+}) => {
     let inputClasses = ` h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-base shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3  dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
 
     if (disabled) {
@@ -61,6 +65,9 @@ const Input: FC<InputProps> = ({
     } else {
         inputClasses += ` bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:text-white/90  dark:focus:border-brand-800`;
     }
+
+    const errorId = error && id ? `${id}-error` : undefined;
+    const hintId = hint && id ? `${id}-hint` : undefined;
 
     return (
         <div className="relative">
@@ -84,16 +91,21 @@ const Input: FC<InputProps> = ({
                 className={inputClasses}
                 required={required}
                 autoFocus={autoFocus}
+                aria-label={ariaLabel || label}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={errorId || hintId}
             />
 
             {hint && (
                 <p
+                    id={hintId}
+                    role={error ? 'alert' : undefined}
                     className={`mt-1.5 text-xs ${
                         error
                             ? 'text-error-500'
                             : success
-                                ? 'text-success-500'
-                                : 'text-gray-500'
+                              ? 'text-success-500'
+                              : 'text-gray-500'
                     }`}
                 >
                     {hint}

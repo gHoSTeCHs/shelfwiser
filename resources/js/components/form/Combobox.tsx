@@ -1,7 +1,7 @@
-import type { FC } from 'react';
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Check, ChevronDown, X } from 'lucide-react';
 import { clsx } from 'clsx';
+import { Check, ChevronDown, X } from 'lucide-react';
+import type { FC } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface ComboboxOption {
     value: string;
@@ -20,6 +20,8 @@ interface ComboboxProps {
     className?: string;
     id?: string;
     name?: string;
+    ariaLabel?: string;
+    label?: string;
 }
 
 const Combobox: FC<ComboboxProps> = ({
@@ -33,6 +35,8 @@ const Combobox: FC<ComboboxProps> = ({
     className,
     id,
     name,
+    ariaLabel,
+    label,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -132,12 +136,15 @@ const Combobox: FC<ComboboxProps> = ({
         };
 
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        return () =>
+            document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     useEffect(() => {
         if (isOpen && listRef.current) {
-            const highlighted = listRef.current.children[highlightedIndex] as HTMLElement;
+            const highlighted = listRef.current.children[
+                highlightedIndex
+            ] as HTMLElement;
             highlighted?.scrollIntoView({ block: 'nearest' });
         }
     }, [highlightedIndex, isOpen]);
@@ -165,6 +172,13 @@ const Combobox: FC<ComboboxProps> = ({
                     placeholder={placeholder}
                     disabled={disabled}
                     autoComplete="off"
+                    role="combobox"
+                    aria-expanded={isOpen}
+                    aria-controls={
+                        isOpen ? `${id || 'combobox'}-listbox` : undefined
+                    }
+                    aria-label={ariaLabel || label}
+                    aria-invalid={error ? true : undefined}
                     className={clsx(
                         'h-full w-full rounded-lg bg-transparent px-4 py-2.5 text-sm',
                         'placeholder:text-gray-400 focus:outline-none',
@@ -197,6 +211,8 @@ const Combobox: FC<ComboboxProps> = ({
             {isOpen && !disabled && (
                 <ul
                     ref={listRef}
+                    id={`${id || 'combobox'}-listbox`}
+                    role="listbox"
                     className={clsx(
                         'absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg',
                         'border border-gray-200 bg-white shadow-lg',
@@ -213,6 +229,8 @@ const Combobox: FC<ComboboxProps> = ({
                         filteredOptions.map((option, index) => (
                             <li
                                 key={option.value}
+                                role="option"
+                                aria-selected={value === option.value}
                                 onClick={() => handleSelect(option.value)}
                                 onMouseEnter={() => setHighlightedIndex(index)}
                                 className={clsx(

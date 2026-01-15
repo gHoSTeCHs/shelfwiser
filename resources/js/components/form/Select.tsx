@@ -18,6 +18,9 @@ interface SelectProps {
     error?: boolean;
     success?: boolean;
     allowClear?: boolean;
+    ariaLabel?: string;
+    label?: string;
+    id?: string;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -32,6 +35,9 @@ const Select: React.FC<SelectProps> = ({
     error = false,
     success = false,
     allowClear = false,
+    ariaLabel,
+    label,
+    id,
 }) => {
     const [selectedValue, setSelectedValue] = useState<string>(
         controlledValue ?? defaultValue,
@@ -74,11 +80,14 @@ const Select: React.FC<SelectProps> = ({
     return (
         <div className="relative">
             <select
+                id={id}
                 className={selectClasses}
                 name={name}
                 value={currentValue}
                 onChange={handleChange}
                 disabled={disabled}
+                aria-label={ariaLabel || label}
+                aria-invalid={error ? true : undefined}
             >
                 <option
                     value=""

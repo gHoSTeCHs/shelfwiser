@@ -3,6 +3,8 @@ import { SchemaProperty } from '@/types/index';
 import { Shop } from '@/types/shop.ts';
 import { ProductVariant } from '@/types/stockMovement';
 
+export type { ProductVariant } from '@/types/stockMovement';
+
 export interface ProductType {
     id: number;
     slug: string;

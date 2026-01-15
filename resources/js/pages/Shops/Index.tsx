@@ -173,7 +173,8 @@ export default function Index({ shops, shopTypes }: Props) {
                                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                                                 <MapPin className="mr-2 h-4 w-4" />
                                                 {shop.city}
-                                                {shop.state && `, ${shop.state}`}
+                                                {shop.state &&
+                                                    `, ${shop.state}`}
                                             </div>
                                         )}
 
@@ -236,9 +237,7 @@ export default function Index({ shops, shopTypes }: Props) {
                                         </div>
                                         <Link
                                             href={`/shops/${shop.id}/storefront-settings`}
-                                            onClick={(e) =>
-                                                e.stopPropagation()
-                                            }
+                                            onClick={(e) => e.stopPropagation()}
                                         >
                                             <Button
                                                 variant="outline"

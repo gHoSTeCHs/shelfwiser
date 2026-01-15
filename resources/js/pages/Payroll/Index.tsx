@@ -1,13 +1,13 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/AppLayout';
-import { Card } from '@/components/ui/card';
-import Button from '@/components/ui/button/Button';
+import PayrollController from '@/actions/App/Http/Controllers/PayrollController';
 import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
-import PayrollController from '@/actions/App/Http/Controllers/PayrollController';
-import { Calendar, DollarSign, Users, Plus, FileText } from 'lucide-react';
+import AppLayout from '@/layouts/AppLayout';
+import { Head, Link, router } from '@inertiajs/react';
+import { Calendar, DollarSign, FileText, Plus, Users } from 'lucide-react';
+import { useState } from 'react';
 
 interface Shop {
     id: number;
@@ -48,7 +48,12 @@ interface Props {
     statusOptions: StatusOption[];
 }
 
-export default function Index({ payrollPeriods, filters, shops, statusOptions }: Props) {
+export default function Index({
+    payrollPeriods,
+    filters,
+    shops,
+    statusOptions,
+}: Props) {
     const [shopId, setShopId] = useState(filters.shop_id || '');
     const [status, setStatus] = useState(filters.status || '');
 
@@ -109,15 +114,15 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
 
     const totalGrossPay = payrollPeriods.reduce(
         (sum, period) => sum + parseFloat(period.total_gross_pay),
-        0
+        0,
     );
     const totalDeductions = payrollPeriods.reduce(
         (sum, period) => sum + parseFloat(period.total_deductions),
-        0
+        0,
     );
     const totalNetPay = payrollPeriods.reduce(
         (sum, period) => sum + parseFloat(period.total_net_pay),
-        0
+        0,
     );
 
     return (
@@ -126,7 +131,9 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
 
             <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Payroll Management</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        Payroll Management
+                    </h1>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         Manage payroll periods and process employee payments
                     </p>
@@ -136,7 +143,9 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                         variant="primary"
                         size="md"
                         startIcon={<Plus className="h-4 w-4" />}
-                        onClick={() => router.visit(PayrollController.create.url())}
+                        onClick={() =>
+                            router.visit(PayrollController.create.url())
+                        }
                     >
                         Create Payroll Period
                     </Button>
@@ -147,7 +156,9 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Gross Pay</p>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                Total Gross Pay
+                            </p>
                             <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(totalGrossPay)}
                             </p>
@@ -161,7 +172,9 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Deductions</p>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                Total Deductions
+                            </p>
                             <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(totalDeductions)}
                             </p>
@@ -175,7 +188,9 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Net Pay</p>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                Total Net Pay
+                            </p>
                             <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(totalNetPay)}
                             </p>
@@ -236,7 +251,9 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                                     <Button
                                         variant="primary"
                                         onClick={() =>
-                                            router.visit(PayrollController.create.url())
+                                            router.visit(
+                                                PayrollController.create.url(),
+                                            )
                                         }
                                     >
                                         Create Payroll Period
@@ -248,92 +265,155 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                         <table className="w-full">
                             <thead className="bg-gray-50 dark:bg-gray-800">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                    >
                                         Period
                                     </th>
-                                    <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400"
+                                    >
                                         Shop
                                     </th>
-                                    <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400"
+                                    >
                                         Dates
                                     </th>
-                                    <th className="hidden lg:table-cell px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase lg:table-cell dark:text-gray-400"
+                                    >
                                         Employees
                                     </th>
-                                    <th className="hidden lg:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase lg:table-cell dark:text-gray-400"
+                                    >
                                         Gross Pay
                                     </th>
-                                    <th className="hidden lg:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase lg:table-cell dark:text-gray-400"
+                                    >
                                         Deductions
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                    >
                                         Net Pay
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                    >
                                         Status
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                    >
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
                                 {payrollPeriods.map((period) => (
-                                    <tr key={period.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    <tr
+                                        key={period.id}
+                                        className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                                    >
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col">
                                                 <span className="font-medium text-gray-900 dark:text-white">
                                                     {period.period_name}
                                                 </span>
                                                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                    Payment: {formatDate(period.payment_date)}
+                                                    Payment:{' '}
+                                                    {formatDate(
+                                                        period.payment_date,
+                                                    )}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="hidden md:table-cell px-4 py-3">
+                                        <td className="hidden px-4 py-3 md:table-cell">
                                             <span className="text-sm text-gray-600 dark:text-gray-300">
-                                                {period.shop ? period.shop.name : 'All Shops'}
+                                                {period.shop
+                                                    ? period.shop.name
+                                                    : 'All Shops'}
                                             </span>
                                         </td>
-                                        <td className="hidden md:table-cell px-4 py-3">
+                                        <td className="hidden px-4 py-3 md:table-cell">
                                             <div className="flex flex-col text-sm text-gray-600 dark:text-gray-300">
-                                                <span>{formatDate(period.start_date)}</span>
-                                                <span className="text-gray-400 dark:text-gray-500">to</span>
-                                                <span>{formatDate(period.end_date)}</span>
+                                                <span>
+                                                    {formatDate(
+                                                        period.start_date,
+                                                    )}
+                                                </span>
+                                                <span className="text-gray-400 dark:text-gray-500">
+                                                    to
+                                                </span>
+                                                <span>
+                                                    {formatDate(
+                                                        period.end_date,
+                                                    )}
+                                                </span>
                                             </div>
                                         </td>
-                                        <td className="hidden lg:table-cell px-4 py-3">
+                                        <td className="hidden px-4 py-3 lg:table-cell">
                                             <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300">
                                                 <Users className="h-4 w-4" />
-                                                <span>{period.employee_count}</span>
+                                                <span>
+                                                    {period.employee_count}
+                                                </span>
                                                 {period.includes_general_manager && (
-                                                    <Badge color="info" size="sm">
+                                                    <Badge
+                                                        color="info"
+                                                        size="sm"
+                                                    >
                                                         +GM
                                                     </Badge>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="hidden lg:table-cell px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
-                                            {formatCurrency(period.total_gross_pay)}
+                                        <td className="hidden px-4 py-3 text-right text-sm font-medium text-gray-900 lg:table-cell dark:text-white">
+                                            {formatCurrency(
+                                                period.total_gross_pay,
+                                            )}
                                         </td>
-                                        <td className="hidden lg:table-cell px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
-                                            {formatCurrency(period.total_deductions)}
+                                        <td className="hidden px-4 py-3 text-right text-sm font-medium text-gray-900 lg:table-cell dark:text-white">
+                                            {formatCurrency(
+                                                period.total_deductions,
+                                            )}
                                         </td>
                                         <td className="px-4 py-3 text-right text-sm font-semibold text-success-600 dark:text-success-400">
-                                            {formatCurrency(period.total_net_pay)}
+                                            {formatCurrency(
+                                                period.total_net_pay,
+                                            )}
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col gap-1">
                                                 <Badge
-                                                    color={getStatusColor(period.status)}
+                                                    color={getStatusColor(
+                                                        period.status,
+                                                    )}
                                                     size="sm"
                                                 >
                                                     {statusOptions.find(
-                                                        (opt) => opt.value === period.status
+                                                        (opt) =>
+                                                            opt.value ===
+                                                            period.status,
                                                     )?.label || period.status}
                                                 </Badge>
                                                 {period.requires_owner_approval && (
-                                                    <Badge color="warning" size="sm">
+                                                    <Badge
+                                                        color="warning"
+                                                        size="sm"
+                                                    >
                                                         Needs Owner
                                                     </Badge>
                                                 )}
@@ -341,9 +421,12 @@ export default function Index({ payrollPeriods, filters, shops, statusOptions }:
                                         </td>
                                         <td className="px-4 py-3 text-right">
                                             <Link
-                                                href={PayrollController.show.url({
-                                                    payrollPeriod: period.id,
-                                                })}
+                                                href={PayrollController.show.url(
+                                                    {
+                                                        payrollPeriod:
+                                                            period.id,
+                                                    },
+                                                )}
                                                 className="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                                             >
                                                 View Details

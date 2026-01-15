@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Copy, Clock, CheckCircle, XCircle } from 'lucide-react';
 import Button from '@/components/ui/button/Button';
 import { CryptoPaymentProps } from '@/types/payment';
+import { CheckCircle, Clock, Copy, XCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 /**
  * Cryptocurrency payment component.
@@ -80,7 +80,7 @@ const CryptoPayment: React.FC<CryptoPaymentProps> = ({
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
                     Send {paymentData.amount} {paymentData.currency}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -90,18 +90,18 @@ const CryptoPayment: React.FC<CryptoPaymentProps> = ({
 
             {paymentData.qrCode && (
                 <div className="flex justify-center">
-                    <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <div className="rounded-lg bg-white p-4 shadow-sm">
                         <img
                             src={paymentData.qrCode}
                             alt="Payment QR Code"
-                            className="w-48 h-48"
+                            className="h-48 w-48"
                         />
                     </div>
                 </div>
             )}
 
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
+            <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+                <div className="mb-2 flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                         Wallet Address
                     </span>
@@ -112,41 +112,45 @@ const CryptoPayment: React.FC<CryptoPaymentProps> = ({
                     >
                         {copied ? (
                             <>
-                                <CheckCircle className="w-4 h-4 mr-1" />
+                                <CheckCircle className="mr-1 h-4 w-4" />
                                 Copied!
                             </>
                         ) : (
                             <>
-                                <Copy className="w-4 h-4 mr-1" />
+                                <Copy className="mr-1 h-4 w-4" />
                                 Copy
                             </>
                         )}
                     </button>
                 </div>
-                <p className="text-sm font-mono break-all text-gray-900 dark:text-white">
+                <p className="font-mono text-sm break-all text-gray-900 dark:text-white">
                     {paymentData.walletAddress}
                 </p>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                        <Clock className={`w-5 h-5 mr-2 ${getTimerColorClass()}`} />
+                        <Clock
+                            className={`mr-2 h-5 w-5 ${getTimerColorClass()}`}
+                        />
                         <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                             Time Remaining
                         </span>
                     </div>
-                    <span className={`text-lg font-bold ${getTimerColorClass()}`}>
+                    <span
+                        className={`text-lg font-bold ${getTimerColorClass()}`}
+                    >
                         {formatTime(timeRemaining)}
                     </span>
                 </div>
             </div>
 
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                    <strong>Important:</strong> Please send the exact amount shown above.
-                    The payment will be confirmed automatically once the blockchain
-                    transaction is verified.
+                    <strong>Important:</strong> Please send the exact amount
+                    shown above. The payment will be confirmed automatically
+                    once the blockchain transaction is verified.
                 </p>
             </div>
 
@@ -155,7 +159,7 @@ const CryptoPayment: React.FC<CryptoPaymentProps> = ({
                     type="button"
                     variant="outline"
                     onClick={onCancel}
-                    startIcon={<XCircle className="w-4 h-4" />}
+                    startIcon={<XCircle className="h-4 w-4" />}
                 >
                     Cancel Payment
                 </Button>

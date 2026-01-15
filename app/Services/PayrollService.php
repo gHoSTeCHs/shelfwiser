@@ -16,6 +16,26 @@ use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
 
+/**
+ * PayrollService - Legacy payroll calculation service
+ *
+ * @deprecated since v1.5.0, use PayRunService instead. Will be removed in v2.0.
+ *
+ * MIGRATION PATH:
+ * - All public methods have been marked as @deprecated with trigger_error() calls
+ * - Replacement methods are documented in each @deprecated annotation
+ * - Last remaining usage: PayrollPeriodSeeder (migrated to PayRunService)
+ *
+ * WHY DEPRECATED:
+ * - Uses legacy TaxService instead of modern TaxCalculationService
+ * - Does not support NTA 2025 tax law (effective Jan 1, 2026)
+ * - Missing YTD (Year-To-Date) calculations required for compliance
+ * - Lacks modern pay run workflow (draft → calculate → review → approve → complete)
+ *
+ * REPLACEMENT SERVICE:
+ * @see PayRunService Modern payroll service with NTA 2025 support and PayRun workflow
+ * @see TaxCalculationService Date-aware tax calculations supporting multiple tax law versions
+ */
 readonly class PayrollService
 {
     public function __construct(
@@ -28,6 +48,8 @@ readonly class PayrollService
     /**
      * Create a new payroll period
      *
+     * @deprecated Use PayRunService::createPayrollPeriod() instead
+     *
      * @throws Throwable
      */
     public function createPayrollPeriod(
@@ -38,6 +60,8 @@ readonly class PayrollService
         Carbon $paymentDate,
         ?string $periodName = null
     ): PayrollPeriod {
+        trigger_error('PayrollService::createPayrollPeriod() is deprecated. Use PayRunService::createPayrollPeriod() instead.', E_USER_DEPRECATED);
+
         return DB::transaction(function () use ($tenantId, $shopId, $startDate, $endDate, $paymentDate, $periodName) {
             $overlapping = PayrollPeriod::query()
                 ->where('tenant_id', $tenantId)
@@ -77,10 +101,15 @@ readonly class PayrollService
     /**
      * Process payroll for a period
      *
+     * @deprecated Use PayRunService::calculatePayRun() instead. PayRunService uses date-aware
+     *             TaxCalculationService for NTA 2025 compliance.
+     *
      * @throws Throwable
      */
     public function processPayroll(PayrollPeriod $payrollPeriod, User $processor): PayrollPeriod
     {
+        trigger_error('PayrollService::processPayroll() is deprecated. Use PayRunService::calculatePayRun() instead.', E_USER_DEPRECATED);
+
         if (! $payrollPeriod->status->canProcess()) {
             throw new RuntimeException('Payroll cannot be processed in current status');
         }
@@ -253,7 +282,7 @@ readonly class PayrollService
         $payrollDetail = $employee->employeePayrollDetail;
         $shop = $employee->shops()->first();
 
-        if (!$shop) {
+        if (! $shop) {
             throw new RuntimeException("Employee {$employee->name} is not assigned to any shop");
         }
 
@@ -335,10 +364,10 @@ readonly class PayrollService
                     $query->whereNull('start_date')
                         ->orWhere('start_date', '<=', $payrollPeriod->end_date);
                 })
-                ->where(function ($query) use ($payrollPeriod) {
-                    $query->whereNull('end_date')
-                        ->orWhere('end_date', '>=', $payrollPeriod->start_date);
-                });
+                    ->where(function ($query) use ($payrollPeriod) {
+                        $query->whereNull('end_date')
+                            ->orWhere('end_date', '>=', $payrollPeriod->start_date);
+                    });
             });
 
         if ($payrollPeriod->shop_id) {
@@ -353,10 +382,14 @@ readonly class PayrollService
     /**
      * Approve payroll
      *
+     * @deprecated Use PayRunService::approvePayRun() instead
+     *
      * @throws Throwable
      */
     public function approvePayroll(PayrollPeriod $payrollPeriod, User $approver): PayrollPeriod
     {
+        trigger_error('PayrollService::approvePayroll() is deprecated. Use PayRunService::approvePayRun() instead.', E_USER_DEPRECATED);
+
         if (! $payrollPeriod->status->canApprove()) {
             throw new RuntimeException('Payroll cannot be approved in current status');
         }
@@ -381,10 +414,14 @@ readonly class PayrollService
     /**
      * Mark payroll as paid
      *
+     * @deprecated Use PayRunService::completePayRun() instead
+     *
      * @throws Throwable
      */
     public function markAsPaid(PayrollPeriod $payrollPeriod): PayrollPeriod
     {
+        trigger_error('PayrollService::markAsPaid() is deprecated. Use PayRunService::completePayRun() instead.', E_USER_DEPRECATED);
+
         if (! $payrollPeriod->status->canPay()) {
             throw new RuntimeException('Payroll cannot be marked as paid in current status');
         }
@@ -419,10 +456,14 @@ readonly class PayrollService
     /**
      * Cancel payroll - uses soft-delete for payslips to maintain audit trail
      *
+     * @deprecated Use PayRunService::cancelPayRun() instead
+     *
      * @throws Throwable
      */
     public function cancelPayroll(PayrollPeriod $payrollPeriod, string $reason): PayrollPeriod
     {
+        trigger_error('PayrollService::cancelPayroll() is deprecated. Use PayRunService::cancelPayRun() instead.', E_USER_DEPRECATED);
+
         if (! $payrollPeriod->status->canCancel()) {
             throw new RuntimeException('Payroll cannot be cancelled in current status');
         }
@@ -446,12 +487,16 @@ readonly class PayrollService
 
     /**
      * Get payroll periods for tenant
+     *
+     * @deprecated Use PayRun queries directly or PayRunController::index() instead
      */
     public function getPayrollPeriods(
         int $tenantId,
         ?int $shopId = null,
         ?PayrollStatus $status = null
     ): Collection {
+        trigger_error('PayrollService::getPayrollPeriods() is deprecated. Use PayRun queries directly instead.', E_USER_DEPRECATED);
+
         $query = PayrollPeriod::query()->where('tenant_id', $tenantId)
             ->with(['shop', 'processedBy', 'approvedBy']);
 
@@ -468,9 +513,13 @@ readonly class PayrollService
 
     /**
      * Get employee payslips
+     *
+     * @deprecated Query Payslip model directly or use PayRunController methods
      */
     public function getEmployeePayslips(User $employee): Collection
     {
+        trigger_error('PayrollService::getEmployeePayslips() is deprecated. Query Payslip model directly instead.', E_USER_DEPRECATED);
+
         return Payslip::forUser($employee->id)
             ->with(['payrollPeriod', 'shop'])
             ->orderBy('created_at', 'desc')
@@ -485,7 +534,7 @@ readonly class PayrollService
         Carbon $startDate,
         Carbon $endDate
     ): float {
-        if ($payrollDetail->pay_type !== PayType::COMMISSION_BASED && !$payrollDetail->commission_rate) {
+        if ($payrollDetail->pay_type !== PayType::COMMISSION_BASED && ! $payrollDetail->commission_rate) {
             return 0;
         }
 
@@ -500,6 +549,7 @@ readonly class PayrollService
     protected function getEmployeeSales(int $userId, Carbon $startDate, Carbon $endDate): float
     {
         $user = User::find($userId);
+
         return \App\Models\Order::where('created_by', $userId)
             ->where('tenant_id', $user->tenant_id)
             ->whereBetween('created_at', [$startDate, $endDate])

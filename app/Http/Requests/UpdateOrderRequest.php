@@ -49,4 +49,20 @@ class UpdateOrderRequest extends FormRequest
             'billing_address' => ['nullable', 'string'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'items.min' => 'Order must contain at least one item.',
+            'items.*.product_variant_id.required' => 'Each item must have a product variant.',
+            'items.*.product_variant_id.exists' => 'One or more selected products are no longer available.',
+            'items.*.product_packaging_type_id.exists' => 'One or more selected packaging types are invalid.',
+            'items.*.quantity.required' => 'Please specify the quantity for each item.',
+            'items.*.quantity.min' => 'Item quantity must be at least 1.',
+            'items.*.unit_price.min' => 'Item price cannot be negative.',
+            'items.*.discount_amount.min' => 'Discount amount cannot be negative.',
+            'items.*.tax_amount.min' => 'Tax amount cannot be negative.',
+            'shipping_cost.min' => 'Shipping cost cannot be negative.',
+        ];
+    }
 }

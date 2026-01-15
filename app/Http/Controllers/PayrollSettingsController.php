@@ -2,17 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\EarningType;
+use App\Enums\DeductionCalculationBase;
+use App\Enums\DeductionCalculationType;
+use App\Enums\DeductionCategory;
+use App\Enums\EarningCalculationType;
+use App\Enums\EarningCategory;
+use App\Enums\PayFrequency;
+use App\Enums\TaxLawVersion;
 use App\Models\DeductionTypeModel;
+use App\Models\EarningType;
 use App\Models\PayCalendar;
 use App\Models\TaxTable;
 use App\Services\PayrollAuditService;
-use App\Enums\EarningCategory;
-use App\Enums\EarningCalculationType;
-use App\Enums\DeductionCategory;
-use App\Enums\DeductionCalculationType;
-use App\Enums\DeductionCalculationBase;
-use App\Enums\PayFrequency;
+use App\Services\TaxCalculationService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -21,7 +24,8 @@ use Inertia\Response;
 class PayrollSettingsController extends Controller
 {
     public function __construct(
-        protected PayrollAuditService $auditService
+        protected PayrollAuditService $auditService,
+        protected TaxCalculationService $taxCalculationService
     ) {}
 
     public function earningTypes(): Response
@@ -427,16 +431,120 @@ class PayrollSettingsController extends Controller
     {
         Gate::authorize('view_payroll_settings');
 
-        $taxTables = TaxTable::active()
+        $tenantId = auth()->user()->tenant_id;
+
+        $taxTables = TaxTable::forTenant($tenantId)
+            ->active()
             ->with(['bands' => function ($q) {
-                $q->orderBy('lower_limit');
+                $q->orderBy('band_order');
             }, 'reliefs'])
             ->orderByDesc('effective_from')
-            ->get();
+            ->get()
+            ->map(function ($table) {
+                $table->tax_law_version_label = $table->getTaxLawVersion()?->shortLabel();
+                $table->is_current = $this->isCurrentTaxTable($table);
+
+                return $table;
+            });
+
+        $currentTable = TaxTable::getActiveTableForDate($tenantId);
+        $nta2025Countdown = Carbon::parse('2026-01-01')->diffInDays(now());
 
         return Inertia::render('Payroll/Settings/TaxSettings', [
             'taxTables' => $taxTables,
+            'currentTable' => $currentTable,
+            'taxLawVersions' => TaxLawVersion::options(),
+            'nta2025Countdown' => $nta2025Countdown,
         ]);
+    }
+
+    /**
+     * Display a specific tax table.
+     */
+    public function showTaxTable(TaxTable $taxTable): Response
+    {
+        Gate::authorize('view_payroll_settings');
+
+        $this->authorizeTaxTable($taxTable);
+
+        $taxTable->load(['bands' => function ($q) {
+            $q->orderBy('band_order');
+        }, 'reliefs']);
+
+        $taxTable->tax_law_version_label = $taxTable->getTaxLawVersion()?->shortLabel();
+
+        return Inertia::render('Payroll/Settings/TaxTableShow', [
+            'taxTable' => $taxTable,
+        ]);
+    }
+
+    /**
+     * Compare tax calculations under different tax laws.
+     */
+    public function compareTaxLaws(Request $request): \Illuminate\Http\JsonResponse
+    {
+        Gate::authorize('view_payroll_settings');
+
+        $annualSalary = $request->input('annual_salary', 1200000);
+        $tenantId = auth()->user()->tenant_id;
+
+        $comparison = $this->taxCalculationService->compareTaxLaws($annualSalary, $tenantId);
+
+        return response()->json($comparison);
+    }
+
+    /**
+     * Estimate tax for a given salary.
+     */
+    public function estimateTax(Request $request): \Illuminate\Http\JsonResponse
+    {
+        Gate::authorize('view_payroll_settings');
+
+        $validated = $request->validate([
+            'annual_salary' => 'required|numeric|min:0',
+            'effective_date' => 'nullable|date',
+        ]);
+
+        $tenantId = auth()->user()->tenant_id;
+        $effectiveDate = isset($validated['effective_date'])
+            ? Carbon::parse($validated['effective_date'])
+            : null;
+
+        $estimate = $this->taxCalculationService->estimateTaxForSalary(
+            $validated['annual_salary'],
+            $tenantId,
+            $effectiveDate
+        );
+
+        return response()->json($estimate);
+    }
+
+    protected function isCurrentTaxTable(TaxTable $table): bool
+    {
+        $now = now();
+
+        if (! $table->effective_from) {
+            return true;
+        }
+
+        if ($table->effective_from > $now) {
+            return false;
+        }
+
+        if ($table->effective_to && $table->effective_to < $now) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function authorizeTaxTable(TaxTable $taxTable): void
+    {
+        $tenantId = auth()->user()->tenant_id;
+
+        if (! $taxTable->is_system && $taxTable->tenant_id !== $tenantId) {
+            abort(403);
+        }
     }
 
     protected function authorizeEarningType(EarningType $earningType): void

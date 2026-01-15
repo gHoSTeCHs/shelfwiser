@@ -1,18 +1,18 @@
-import type { FC } from 'react';
-import { Briefcase } from 'lucide-react';
-import CollapsibleSection from '@/components/ui/CollapsibleSection';
-import Label from '@/components/form/Label';
-import Input from '@/components/form/input/InputField';
-import Select from '@/components/form/Select';
 import Combobox from '@/components/form/Combobox';
+import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
+import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import type { CreateStaffFormData, Role } from '@/types/staff';
 import {
-    EMPLOYMENT_TYPE_OPTIONS,
-    COMMON_POSITIONS,
     COMMON_DEPARTMENTS,
+    COMMON_POSITIONS,
+    EMPLOYMENT_TYPE_OPTIONS,
     requiresEndDate,
 } from '@/types/staff';
+import { Briefcase } from 'lucide-react';
+import type { FC } from 'react';
 
 interface EmploymentSectionProps {
     data: CreateStaffFormData;
@@ -78,7 +78,10 @@ const EmploymentSection: FC<EmploymentSectionProps> = ({
                     <InputError message={errors.role} />
                     {data.role && (
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            {roles.find((r) => r.value === data.role)?.description}
+                            {
+                                roles.find((r) => r.value === data.role)
+                                    ?.description
+                            }
                         </p>
                     )}
                 </div>
@@ -112,7 +115,9 @@ const EmploymentSection: FC<EmploymentSectionProps> = ({
                             id="position_title"
                             name="position_title"
                             value={data.position_title}
-                            onChange={(value) => onChange('position_title', value)}
+                            onChange={(value) =>
+                                onChange('position_title', value)
+                            }
                             options={positionOptions}
                             placeholder="Select or enter position"
                             allowCustom
@@ -149,7 +154,9 @@ const EmploymentSection: FC<EmploymentSectionProps> = ({
                             name="start_date"
                             type="date"
                             value={data.start_date}
-                            onChange={(e) => onChange('start_date', e.target.value)}
+                            onChange={(e) =>
+                                onChange('start_date', e.target.value)
+                            }
                             error={!!errors.start_date}
                         />
                         <InputError message={errors.start_date} />
@@ -173,7 +180,8 @@ const EmploymentSection: FC<EmploymentSectionProps> = ({
                             />
                             <InputError message={errors.end_date} />
                             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Required for {data.employment_type.replace('_', ' ')}{' '}
+                                Required for{' '}
+                                {data.employment_type.replace('_', ' ')}{' '}
                                 employees
                             </p>
                         </div>

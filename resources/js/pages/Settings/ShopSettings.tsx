@@ -1,16 +1,16 @@
 import ShopSettingsController from '@/actions/App/Http/Controllers/ShopSettingsController';
+import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
-import Checkbox from '@/components/form/input/Checkbox';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import { useToast } from '@/hooks/useToast';
 import AppLayout from '@/layouts/AppLayout';
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Save, Settings } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { useState } from 'react';
-import { useToast } from '@/hooks/useToast';
 
 interface Shop {
     id: number;
@@ -117,7 +117,9 @@ export default function ShopSettings({
                 </div>
 
                 <Form
-                    action={ShopSettingsController.update.url({ shop: shop.id })}
+                    action={ShopSettingsController.update.url({
+                        shop: shop.id,
+                    })}
                     method="patch"
                     onSuccess={() => {
                         toast.success('Settings updated successfully');
@@ -200,11 +202,13 @@ export default function ShopSettings({
                                                     value={taxHandling}
                                                 />
                                                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
-                                                    {taxHandlingOptions.find(
-                                                        (o) =>
-                                                            o.value ===
-                                                            taxHandling,
-                                                    )?.description}
+                                                    {
+                                                        taxHandlingOptions.find(
+                                                            (o) =>
+                                                                o.value ===
+                                                                taxHandling,
+                                                        )?.description
+                                                    }
                                                 </p>
                                                 <InputError
                                                     message={

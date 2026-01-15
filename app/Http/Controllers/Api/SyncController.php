@@ -5,15 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\SyncProductResource;
 use App\Models\Customer;
+use App\Models\InventoryLocation;
 use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\OrderPayment;
 use App\Models\ProductVariant;
 use App\Models\Shop;
 use App\Services\POSService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class SyncController extends Controller
 {
@@ -33,12 +33,10 @@ class SyncController extends Controller
         ]);
 
         $shop = Shop::findOrFail($request->shop_id);
-        $tenantId = auth()->user()->tenant_id;
 
-        // Verify user has access to this shop
-        if ($shop->tenant_id !== $tenantId) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
+        Gate::authorize('syncProducts', [Shop::class, $shop]);
+
+        $tenantId = auth()->user()->tenant_id;
 
         $query = ProductVariant::query()
             ->whereHas('product', function ($q) use ($tenantId, $shop) {
@@ -73,6 +71,8 @@ class SyncController extends Controller
      */
     public function syncCustomers(Request $request): JsonResponse
     {
+        Gate::authorize('syncCustomers', Shop::class);
+
         $request->validate([
             'updated_since' => 'nullable|date',
         ]);
@@ -106,6 +106,7 @@ class SyncController extends Controller
     /**
      * Sync offline orders to the server.
      * Processes orders that were created offline and syncs them to the database.
+     * Implements idempotency to prevent duplicate order creation.
      */
     public function syncOrders(Request $request): JsonResponse
     {
@@ -115,7 +116,7 @@ class SyncController extends Controller
             'orders.*.shop_id' => 'required|exists:shops,id',
             'orders.*.items' => 'required|array',
             'orders.*.items.*.variant_id' => 'required|exists:product_variants,id',
-            'orders.*.items.*.quantity' => 'required|integer|min:1',
+            'orders.*.items.*.quantity' => 'required|numeric|min:0.01',
             'orders.*.items.*.unit_price' => 'required|decimal:0,2|min:0',
             'orders.*.items.*.packaging_type_id' => 'nullable|exists:product_packaging_types,id',
             'orders.*.items.*.discount_amount' => 'nullable|decimal:0,2|min:0',
@@ -131,36 +132,77 @@ class SyncController extends Controller
         $results = [];
 
         foreach ($request->orders as $offlineOrder) {
+            $existingOrder = Order::where('offline_id', $offlineOrder['offline_id'])
+                ->where('tenant_id', $tenantId)
+                ->first();
+
+            if ($existingOrder) {
+                $results[] = [
+                    'offline_id' => $offlineOrder['offline_id'],
+                    'success' => true,
+                    'order_id' => $existingOrder->id,
+                    'order_number' => $existingOrder->order_number,
+                    'duplicate' => true,
+                    'message' => 'Order already synced',
+                ];
+
+                continue;
+            }
+
             $shop = Shop::find($offlineOrder['shop_id']);
 
-            if (!$shop || $shop->tenant_id !== $tenantId) {
+            if (! $shop || $shop->tenant_id !== $tenantId) {
                 $results[] = [
                     'offline_id' => $offlineOrder['offline_id'],
                     'success' => false,
                     'reason' => 'unauthorized',
                     'message' => 'Shop not found or unauthorized',
                 ];
+
                 continue;
             }
 
-            // Check stock availability
-            $stockIssues = [];
-            foreach ($offlineOrder['items'] as $item) {
-                $variant = ProductVariant::with('inventoryLocations')->find($item['variant_id']);
-                if ($variant && $variant->available_stock < $item['quantity']) {
-                    $stockIssues[] = [
-                        'variant_id' => $item['variant_id'],
-                        'sku' => $variant->sku,
-                        'requested' => $item['quantity'],
-                        'available' => $variant->available_stock,
-                    ];
-                }
+            if (! Gate::allows('syncOrders', [Shop::class, $shop])) {
+                $results[] = [
+                    'offline_id' => $offlineOrder['offline_id'],
+                    'success' => false,
+                    'reason' => 'unauthorized',
+                    'message' => 'Not authorized to sync orders for this shop',
+                ];
+
+                continue;
             }
 
-            // We allow sales even with stock issues (per user preference)
-            // but flag them for review
             try {
-                $order = DB::transaction(function () use ($shop, $offlineOrder) {
+                $order = DB::transaction(function () use ($shop, $offlineOrder, &$stockIssues) {
+                    $stockIssues = [];
+                    $variantIds = collect($offlineOrder['items'])->pluck('variant_id')->toArray();
+
+                    $locations = InventoryLocation::where('location_type', Shop::class)
+                        ->where('location_id', $shop->id)
+                        ->whereIn('product_variant_id', $variantIds)
+                        ->lockForUpdate()
+                        ->get()
+                        ->keyBy('product_variant_id');
+
+                    foreach ($offlineOrder['items'] as $item) {
+                        $location = $locations->get($item['variant_id']);
+                        $variant = ProductVariant::find($item['variant_id']);
+
+                        if ($variant && $location) {
+                            $availableStock = $location->quantity - $location->reserved_quantity;
+
+                            if ($availableStock < $item['quantity']) {
+                                $stockIssues[] = [
+                                    'variant_id' => $item['variant_id'],
+                                    'sku' => $variant->sku,
+                                    'requested' => $item['quantity'],
+                                    'available' => $availableStock,
+                                ];
+                            }
+                        }
+                    }
+
                     return $this->posService->createQuickSale(
                         $shop,
                         $offlineOrder['items'],
@@ -168,6 +210,7 @@ class SyncController extends Controller
                         $offlineOrder['payment_method'],
                         $offlineOrder['amount_tendered'] ?? 0,
                         [
+                            'offline_id' => $offlineOrder['offline_id'],
                             'discount_amount' => $offlineOrder['discount_amount'] ?? 0,
                             'notes' => $offlineOrder['notes'] ?? null,
                         ]
@@ -179,7 +222,8 @@ class SyncController extends Controller
                     'success' => true,
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
-                    'has_stock_issues' => !empty($stockIssues),
+                    'duplicate' => false,
+                    'has_stock_issues' => ! empty($stockIssues),
                     'stock_issues' => $stockIssues,
                 ];
             } catch (\Exception $e) {

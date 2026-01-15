@@ -1,27 +1,24 @@
-import { useState, useCallback, useMemo } from 'react';
-import { Head, Link, Form } from '@inertiajs/react';
+import StaffManagementController from '@/actions/App/Http/Controllers/Web/StaffManagementController.ts';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
+import AppLayout from '@/layouts/AppLayout';
+import type { CreateStaffFormData, StaffEditPageProps } from '@/types/staff';
+import { Form, Head, Link } from '@inertiajs/react';
 import {
+    AlertTriangle,
     ArrowLeft,
     Save,
-    UserCog,
     ToggleLeft,
     ToggleRight,
-    AlertTriangle,
+    UserCog,
 } from 'lucide-react';
-import StaffManagementController from '@/actions/App/Http/Controllers/Web/StaffManagementController.ts';
-import AppLayout from '@/layouts/AppLayout';
-import Button from '@/components/ui/button/Button';
-import Badge from '@/components/ui/badge/Badge';
-import type {
-    StaffEditPageProps,
-    CreateStaffFormData,
-} from '@/types/staff';
+import { useCallback, useMemo, useState } from 'react';
 import {
-    PersonalInfoSection,
-    EmploymentSection,
+    BankingSection,
     CompensationSection,
     DeductionsSection,
-    BankingSection,
+    EmploymentSection,
+    PersonalInfoSection,
     ShopAssignmentSection,
 } from './components';
 
@@ -47,13 +44,16 @@ export default function Edit({
             employment_type: payrollDetail?.employment_type || 'full_time',
             position_title: payrollDetail?.position_title || '',
             department: payrollDetail?.department || '',
-            start_date: payrollDetail?.start_date || new Date().toISOString().split('T')[0],
+            start_date:
+                payrollDetail?.start_date ||
+                new Date().toISOString().split('T')[0],
             end_date: payrollDetail?.end_date || null,
             pay_type: payrollDetail?.pay_type || 'salary',
             pay_amount: payrollDetail?.pay_amount || '',
             pay_frequency: payrollDetail?.pay_frequency || 'monthly',
             pay_calendar_id: payrollDetail?.pay_calendar_id || null,
-            standard_hours_per_week: payrollDetail?.standard_hours_per_week || '40',
+            standard_hours_per_week:
+                payrollDetail?.standard_hours_per_week || '40',
             commission_rate: payrollDetail?.commission_rate || null,
             commission_cap: payrollDetail?.commission_cap || null,
             tax_handling: payrollDetail?.tax_handling || 'shop_calculates',
@@ -66,11 +66,13 @@ export default function Edit({
             bank_account_number: payrollDetail?.bank_account_number || '',
             routing_number: payrollDetail?.routing_number || '',
             emergency_contact_name: payrollDetail?.emergency_contact_name || '',
-            emergency_contact_phone: payrollDetail?.emergency_contact_phone || '',
+            emergency_contact_phone:
+                payrollDetail?.emergency_contact_phone || '',
         };
     }, [staff]);
 
-    const [formData, setFormData] = useState<CreateStaffFormData>(initialFormData);
+    const [formData, setFormData] =
+        useState<CreateStaffFormData>(initialFormData);
     const [isActive, setIsActive] = useState(staff.is_active);
     const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
 
@@ -129,7 +131,7 @@ export default function Edit({
                             </div>
                             <div>
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
+                                    <h1 className="text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
                                         {staff.full_name}
                                     </h1>
                                     {getOnboardingBadge()}
@@ -155,12 +157,16 @@ export default function Edit({
                             {isActive ? (
                                 <>
                                     <ToggleRight className="h-5 w-5" />
-                                    <span className="hidden sm:inline">Active</span>
+                                    <span className="hidden sm:inline">
+                                        Active
+                                    </span>
                                 </>
                             ) : (
                                 <>
                                     <ToggleLeft className="h-5 w-5" />
-                                    <span className="hidden sm:inline">Inactive</span>
+                                    <span className="hidden sm:inline">
+                                        Inactive
+                                    </span>
                                 </>
                             )}
                         </button>
@@ -176,8 +182,9 @@ export default function Edit({
                                     Deactivate Staff Member?
                                 </h3>
                                 <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-                                    This will prevent {staff.first_name} from logging in and
-                                    accessing the system. You can reactivate them later.
+                                    This will prevent {staff.first_name} from
+                                    logging in and accessing the system. You can
+                                    reactivate them later.
                                 </p>
                                 <div className="mt-3 flex gap-2">
                                     <Button
@@ -190,7 +197,9 @@ export default function Edit({
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setShowDeactivateConfirm(false)}
+                                        onClick={() =>
+                                            setShowDeactivateConfirm(false)
+                                        }
                                     >
                                         Cancel
                                     </Button>
@@ -201,7 +210,9 @@ export default function Edit({
                 )}
 
                 <Form
-                    action={StaffManagementController.update.url({ staff: staff.id })}
+                    action={StaffManagementController.update.url({
+                        staff: staff.id,
+                    })}
                     method="put"
                     className="space-y-4"
                 >
@@ -256,19 +267,27 @@ export default function Edit({
                             {!canManagePayroll && (
                                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
                                     <p className="text-sm text-amber-800 dark:text-amber-200">
-                                        <strong>Note:</strong> You don't have permission to
-                                        manage payroll details. Contact a manager with payroll
-                                        permissions to update compensation and banking
-                                        information.
+                                        <strong>Note:</strong> You don't have
+                                        permission to manage payroll details.
+                                        Contact a manager with payroll
+                                        permissions to update compensation and
+                                        banking information.
                                     </p>
                                 </div>
                             )}
 
-                            <input type="hidden" name="is_active" value={isActive ? '1' : '0'} />
+                            <input
+                                type="hidden"
+                                name="is_active"
+                                value={isActive ? '1' : '0'}
+                            />
 
-                            <div className="sticky bottom-0 -mx-4 border-t border-gray-200 bg-white/95 px-4 py-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/95 sm:-mx-6 sm:px-6">
+                            <div className="sticky bottom-0 -mx-4 border-t border-gray-200 bg-white/95 px-4 py-4 backdrop-blur-sm sm:-mx-6 sm:px-6 dark:border-gray-700 dark:bg-gray-900/95">
                                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                    <Link href={StaffManagementController.index.url()} className="w-full sm:w-auto">
+                                    <Link
+                                        href={StaffManagementController.index.url()}
+                                        className="w-full sm:w-auto"
+                                    >
                                         <Button
                                             variant="outline"
                                             disabled={processing}

@@ -1,10 +1,16 @@
-import AppLayout from '@/layouts/AppLayout';
-import { Head } from '@inertiajs/react';
-import { CreditCard, TrendingUp, Users, DollarSign, Search } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 import Input from '@/components/form/input/InputField';
 import Select from '@/components/form/Select';
+import Badge from '@/components/ui/badge/Badge';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
+import { Head } from '@inertiajs/react';
+import {
+    CreditCard,
+    DollarSign,
+    Search,
+    TrendingUp,
+    Users,
+} from 'lucide-react';
 import { useState } from 'react';
 
 interface Subscription {
@@ -161,7 +167,9 @@ export default function Index({ subscriptions, stats, filters, plans }: Props) {
                                 { value: '', label: 'All Plans' },
                                 ...plans.map((plan) => ({
                                     value: plan,
-                                    label: plan.charAt(0).toUpperCase() + plan.slice(1),
+                                    label:
+                                        plan.charAt(0).toUpperCase() +
+                                        plan.slice(1),
                                 })),
                             ]}
                             defaultValue={filters.plan || ''}
@@ -185,19 +193,34 @@ export default function Index({ subscriptions, stats, filters, plans }: Props) {
                         <table className="w-full">
                             <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                    >
                                         Tenant
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                    >
                                         Plan
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                    >
                                         Status
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                    >
                                         Expires
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                    >
                                         Created
                                     </th>
                                 </tr>
@@ -208,12 +231,12 @@ export default function Index({ subscriptions, stats, filters, plans }: Props) {
                                         key={sub.id}
                                         className="hover:bg-gray-50 dark:hover:bg-gray-800"
                                     >
-                                        <td className="whitespace-nowrap px-6 py-4">
+                                        <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm font-medium text-gray-900 dark:text-white">
                                                 {sub.name}
                                             </div>
                                         </td>
-                                        <td className="whitespace-nowrap px-6 py-4">
+                                        <td className="px-6 py-4 whitespace-nowrap">
                                             <Badge
                                                 variant="light"
                                                 color={getPlanBadgeColor(
@@ -223,7 +246,7 @@ export default function Index({ subscriptions, stats, filters, plans }: Props) {
                                                 {sub.subscription_plan}
                                             </Badge>
                                         </td>
-                                        <td className="whitespace-nowrap px-6 py-4">
+                                        <td className="px-6 py-4 whitespace-nowrap">
                                             <Badge
                                                 variant="light"
                                                 color={
@@ -237,10 +260,12 @@ export default function Index({ subscriptions, stats, filters, plans }: Props) {
                                                     : 'Inactive'}
                                             </Badge>
                                         </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                            {formatDate(sub.subscription_ends_at)}
+                                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                            {formatDate(
+                                                sub.subscription_ends_at,
+                                            )}
                                         </td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                                             {formatDate(sub.created_at)}
                                         </td>
                                     </tr>

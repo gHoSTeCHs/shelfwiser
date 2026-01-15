@@ -1,11 +1,11 @@
+import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import Badge from '@/components/ui/badge/Badge';
 import { Product } from '@/types/product';
 import { Shop } from '@/types/shop';
 import { Link } from '@inertiajs/react';
+import { ImageIcon } from 'lucide-react';
 import React from 'react';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 import PriceDisplay from './PriceDisplay';
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 
 interface ProductCardProps {
     product: Product;
@@ -13,50 +13,82 @@ interface ProductCardProps {
 }
 
 /**
- * Reusable product card component for displaying products in grids.
- * Shows product image, name, price, stock status, and link to detail page.
+ * Product card with playful-luxury styling.
+ * Features image zoom on hover, warm-glow effect, and smooth transitions.
  */
 const ProductCard: React.FC<ProductCardProps> = ({ product, shop }) => {
     const mainVariant = product.variants?.[0];
     const hasStock = mainVariant && mainVariant.available_stock > 0;
+    const isLowStock =
+        hasStock && mainVariant && mainVariant.available_stock <= 10;
 
     return (
-        <Link href={StorefrontController.show.url({ shop: shop.slug, product: product.slug })}>
-            <Card className="h-full hover:shadow-lg dark:hover:shadow-gray-800/50 transition-shadow cursor-pointer bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                <div className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-t-lg overflow-hidden">
+        <Link
+            href={StorefrontController.show.url({
+                shop: shop.slug,
+                product: product.slug,
+            })}
+            className="group block h-full"
+        >
+            <article className="relative h-full overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-300 hover:border-brand-300 hover:shadow-lg hover:shadow-brand-100/50 sm:rounded-2xl dark:border-navy-700 dark:bg-navy-800 dark:hover:border-brand-500 dark:hover:shadow-brand-500/10">
+                {/* Image container */}
+                <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-navy-700">
                     {product.image ? (
                         <img
                             src={product.image}
                             alt={product.name}
-                            className="w-full h-full object-cover"
+                            className="h-full w-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-105"
+                            loading="lazy"
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
-                            <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
+                        <div className="flex h-full w-full items-center justify-center text-gray-300 dark:text-navy-500">
+                            <ImageIcon
+                                className="h-12 w-12 sm:h-16 sm:w-16"
+                                strokeWidth={1}
+                            />
+                        </div>
+                    )}
+
+                    {/* Stock badges - absolute positioned */}
+                    {!hasStock && (
+                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
+                            <Badge color="error" size="sm">
+                                Out of Stock
+                            </Badge>
+                        </div>
+                    )}
+                    {isLowStock && (
+                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
+                            <Badge color="warning" size="sm">
+                                Low Stock
+                            </Badge>
                         </div>
                     )}
                 </div>
 
-                <div className="p-4">
-                    <div className="mb-2">
-                        {product.category && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                {product.category.name}
-                            </p>
-                        )}
-                        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 mb-1">
-                            {product.name}
-                        </h3>
-                        {mainVariant?.sku && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                SKU: {mainVariant.sku}
-                            </p>
-                        )}
-                    </div>
+                {/* Content */}
+                <div className="p-3 sm:p-4">
+                    {/* Category */}
+                    {product.category && (
+                        <p className="mb-1 text-[10px] font-medium tracking-wide text-brand-600 uppercase sm:text-xs dark:text-brand-400">
+                            {product.category.name}
+                        </p>
+                    )}
 
-                    <div className="flex justify-between items-center">
+                    {/* Product name */}
+                    <h3 className="line-clamp-2 text-sm font-semibold text-gray-900 transition-colors group-hover:text-brand-600 sm:text-base dark:text-white dark:group-hover:text-brand-400">
+                        {product.name}
+                    </h3>
+
+                    {/* SKU */}
+                    {mainVariant?.sku && (
+                        <p className="mt-0.5 text-[10px] text-gray-400 sm:text-xs dark:text-gray-500">
+                            SKU: {mainVariant.sku}
+                        </p>
+                    )}
+
+                    {/* Price */}
+                    <div className="mt-2 sm:mt-3">
                         {mainVariant && (
                             <PriceDisplay
                                 price={mainVariant.price}
@@ -65,27 +97,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, shop }) => {
                                 size="md"
                             />
                         )}
-
-                        {!hasStock && (
-                            <Badge color="error" size="sm">
-                                Out of Stock
-                            </Badge>
-                        )}
-
-                        {hasStock && mainVariant && mainVariant.available_stock <= 10 && (
-                            <Badge color="warning" size="sm">
-                                Low Stock
-                            </Badge>
-                        )}
                     </div>
-
-                    {product.description && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
-                            {product.description}
-                        </p>
-                    )}
                 </div>
-            </Card>
+            </article>
         </Link>
     );
 };

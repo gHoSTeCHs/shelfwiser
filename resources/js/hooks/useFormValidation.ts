@@ -6,7 +6,7 @@ interface ValidationRules {
         minLength?: number;
         maxLength?: number;
         pattern?: RegExp;
-        custom?: (value: any) => string | null;
+        custom?: (value: unknown) => string | null;
     };
 }
 
@@ -22,48 +22,41 @@ export function useFormValidation(rules: ValidationRules) {
     const [errors, setErrors] = useState<ValidationErrors>({});
 
     const validate = useCallback(
-        (field: string, value: any): string | null => {
+        (field: string, value: unknown): string | null => {
             const fieldRules = rules[field];
             if (!fieldRules) return null;
 
-            // Required validation
-            if (
-                fieldRules.required &&
-                (!value || value.toString().trim() === '')
-            ) {
+            const stringValue = value?.toString() ?? '';
+
+            if (fieldRules.required && stringValue.trim() === '') {
                 return 'This field is required';
             }
 
-            // Skip other validations if field is empty and not required
-            if (!value || value.toString().trim() === '') {
+            if (stringValue.trim() === '') {
                 return null;
             }
 
-            // Min length validation
             if (
                 fieldRules.minLength &&
-                value.toString().length < fieldRules.minLength
+                stringValue.length < fieldRules.minLength
             ) {
                 return `Must be at least ${fieldRules.minLength} characters`;
             }
 
-            // Max length validation
             if (
                 fieldRules.maxLength &&
-                value.toString().length > fieldRules.maxLength
+                stringValue.length > fieldRules.maxLength
             ) {
                 return `Must be no more than ${fieldRules.maxLength} characters`;
             }
 
-            // Pattern validation
             if (
                 fieldRules.pattern &&
-                !fieldRules.pattern.test(value.toString())
+                !fieldRules.pattern.test(stringValue)
             ) {
                 return 'Invalid format';
             }
 
-            // Custom validation
             if (fieldRules.custom) {
                 return fieldRules.custom(value);
             }
@@ -74,7 +67,7 @@ export function useFormValidation(rules: ValidationRules) {
     );
 
     const validateField = useCallback(
-        (field: string, value: any) => {
+        (field: string, value: unknown) => {
             const error = validate(field, value);
             setErrors((prev) => ({
                 ...prev,
@@ -86,7 +79,7 @@ export function useFormValidation(rules: ValidationRules) {
     );
 
     const validateAll = useCallback(
-        (formData: Record<string, any>): boolean => {
+        (formData: Record<string, unknown>): boolean => {
             const newErrors: ValidationErrors = {};
             let isValid = true;
 

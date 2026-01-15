@@ -9,6 +9,7 @@ enum PurchaseOrderStatus: string
     case APPROVED = 'approved';
     case PROCESSING = 'processing';
     case SHIPPED = 'shipped';
+    case PARTIALLY_RECEIVED = 'partially_received';
     case RECEIVED = 'received';
     case COMPLETED = 'completed';
     case CANCELLED = 'cancelled';
@@ -28,6 +29,11 @@ enum PurchaseOrderStatus: string
         return $this === self::SUBMITTED;
     }
 
+    public function canStartProcessing(): bool
+    {
+        return $this === self::APPROVED;
+    }
+
     public function canShip(): bool
     {
         return in_array($this, [self::APPROVED, self::PROCESSING]);
@@ -35,7 +41,7 @@ enum PurchaseOrderStatus: string
 
     public function canReceive(): bool
     {
-        return $this === self::SHIPPED;
+        return in_array($this, [self::SHIPPED, self::PARTIALLY_RECEIVED]);
     }
 
     public function label(): string
@@ -46,6 +52,7 @@ enum PurchaseOrderStatus: string
             self::APPROVED => 'Approved',
             self::PROCESSING => 'Processing',
             self::SHIPPED => 'Shipped',
+            self::PARTIALLY_RECEIVED => 'Partially Received',
             self::RECEIVED => 'Received',
             self::COMPLETED => 'Completed',
             self::CANCELLED => 'Cancelled',
@@ -60,6 +67,7 @@ enum PurchaseOrderStatus: string
             self::APPROVED => 'blue',
             self::PROCESSING => 'indigo',
             self::SHIPPED => 'purple',
+            self::PARTIALLY_RECEIVED => 'teal',
             self::RECEIVED => 'green',
             self::COMPLETED => 'emerald',
             self::CANCELLED => 'red',

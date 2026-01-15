@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\PayRunStatus;
 use App\Models\PayrollAuditLog;
 use App\Models\PayRun;
 use App\Models\PayRunItem;
@@ -56,8 +57,8 @@ class PayrollAuditService
             $payRun,
             PayrollAuditLog::ACTION_PAY_RUN_SUBMITTED,
             $actor,
-            ['status' => PayRun::STATUS_PENDING_REVIEW],
-            ['status' => PayRun::STATUS_PENDING_APPROVAL]
+            ['status' => PayRunStatus::PENDING_REVIEW->value],
+            ['status' => PayRunStatus::PENDING_APPROVAL->value]
         );
     }
 
@@ -67,9 +68,9 @@ class PayrollAuditService
             $payRun,
             PayrollAuditLog::ACTION_PAY_RUN_APPROVED,
             $actor,
-            ['status' => PayRun::STATUS_PENDING_APPROVAL],
+            ['status' => PayRunStatus::PENDING_APPROVAL->value],
             [
-                'status' => PayRun::STATUS_APPROVED,
+                'status' => PayRunStatus::APPROVED->value,
                 'approved_at' => $payRun->approved_at?->toIso8601String(),
             ]
         );
@@ -81,8 +82,8 @@ class PayrollAuditService
             $payRun,
             PayrollAuditLog::ACTION_PAY_RUN_REJECTED,
             $actor,
-            ['status' => PayRun::STATUS_PENDING_APPROVAL],
-            ['status' => PayRun::STATUS_PENDING_REVIEW],
+            ['status' => PayRunStatus::PENDING_APPROVAL->value],
+            ['status' => PayRunStatus::PENDING_REVIEW->value],
             ['reason' => $reason]
         );
     }
@@ -93,9 +94,9 @@ class PayrollAuditService
             $payRun,
             PayrollAuditLog::ACTION_PAY_RUN_COMPLETED,
             $actor,
-            ['status' => PayRun::STATUS_APPROVED],
+            ['status' => PayRunStatus::APPROVED->value],
             [
-                'status' => PayRun::STATUS_COMPLETED,
+                'status' => PayRunStatus::COMPLETED->value,
                 'completed_at' => $payRun->completed_at?->toIso8601String(),
             ],
             [
@@ -112,7 +113,7 @@ class PayrollAuditService
             PayrollAuditLog::ACTION_PAY_RUN_CANCELLED,
             $actor,
             ['status' => $payRun->getOriginal('status')],
-            ['status' => PayRun::STATUS_CANCELLED],
+            ['status' => PayRunStatus::CANCELLED->value],
             ['reason' => $reason]
         );
     }
@@ -370,19 +371,19 @@ class PayrollAuditService
             ->with('actor:id,name')
             ->orderByDesc('created_at');
 
-        if (!empty($filters['action'])) {
+        if (! empty($filters['action'])) {
             $query->forAction($filters['action']);
         }
 
-        if (!empty($filters['actor_id'])) {
+        if (! empty($filters['actor_id'])) {
             $query->byActor($filters['actor_id']);
         }
 
-        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+        if (! empty($filters['start_date']) && ! empty($filters['end_date'])) {
             $query->inDateRange($filters['start_date'], $filters['end_date']);
         }
 
-        if (!empty($filters['auditable_type'])) {
+        if (! empty($filters['auditable_type'])) {
             $query->where('auditable_type', $filters['auditable_type']);
         }
 

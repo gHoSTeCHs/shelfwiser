@@ -1,23 +1,23 @@
 import OrderReturnController from '@/actions/App/Http/Controllers/OrderReturnController';
+import Checkbox from '@/components/form/input/Checkbox';
+import TextArea from '@/components/form/input/TextArea';
+import Label from '@/components/form/Label';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
-import Checkbox from '@/components/form/input/Checkbox';
-import TextArea from '@/components/form/input/TextArea';
-import Label from '@/components/form/Label';
 import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
 import { OrderReturn } from '@/types/return';
 import { Form, Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
+    Calendar,
     CheckCircle,
+    DollarSign,
     Package,
     User,
     XCircle,
-    Calendar,
-    DollarSign,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -127,16 +127,16 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                 <table className="w-full">
                                     <thead className="border-b border-gray-200 dark:border-gray-700">
                                         <tr className="text-left text-sm text-gray-500 dark:text-gray-400">
-                                            <th className="pb-3 font-medium">
+                                            <th scope="col" className="pb-3 font-medium">
                                                 Product
                                             </th>
-                                            <th className="pb-3 font-medium">
+                                            <th scope="col" className="pb-3 font-medium">
                                                 SKU
                                             </th>
-                                            <th className="pb-3 text-right font-medium">
+                                            <th scope="col" className="pb-3 text-right font-medium">
                                                 Quantity
                                             </th>
-                                            <th className="pb-3 font-medium">
+                                            <th scope="col" className="pb-3 font-medium">
                                                 Condition
                                             </th>
                                         </tr>
@@ -150,7 +150,8 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                                             {
                                                                 item.order_item
                                                                     ?.product_variant
-                                                                    ?.product?.name
+                                                                    ?.product
+                                                                    ?.name
                                                             }
                                                         </p>
                                                         {item.order_item
@@ -170,7 +171,8 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                                 <td className="py-3 text-sm text-gray-600 dark:text-gray-300">
                                                     {
                                                         item.order_item
-                                                            ?.product_variant?.sku
+                                                            ?.product_variant
+                                                            ?.sku
                                                     }
                                                 </td>
                                                 <td className="py-3 text-right text-sm text-gray-900 dark:text-white">
@@ -241,7 +243,7 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                         </span>
                                         <span className="ml-auto text-gray-900 dark:text-white">
                                             {formatCurrency(
-                                                returnData.refund_amount
+                                                returnData.refund_amount,
                                             )}
                                         </span>
                                     </div>
@@ -291,10 +293,12 @@ export default function Show({ return: returnData, can_approve }: Props) {
 
                                 {returnData.completed_at && (
                                     <div className="flex items-center text-sm">
-                                        <Package className="mr-2 h-4 w-4 text-info-500" />
+                                        <Package className="text-info-500 mr-2 h-4 w-4" />
                                         <span className="text-gray-500 dark:text-gray-400">
                                             Completed on{' '}
-                                            {formatDate(returnData.completed_at)}
+                                            {formatDate(
+                                                returnData.completed_at,
+                                            )}
                                         </span>
                                     </div>
                                 )}
@@ -432,10 +436,7 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                     >
                                         Cancel
                                     </Button>
-                                    <Button
-                                        type="submit"
-                                        variant="destructive"
-                                    >
+                                    <Button type="submit" variant="destructive">
                                         <XCircle className="mr-2 h-4 w-4" />
                                         Reject Return
                                     </Button>

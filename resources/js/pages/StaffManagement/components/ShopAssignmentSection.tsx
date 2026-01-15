@@ -1,12 +1,12 @@
-import type { FC } from 'react';
-import { useMemo } from 'react';
-import { Store, AlertCircle } from 'lucide-react';
-import CollapsibleSection from '@/components/ui/CollapsibleSection';
+import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import MultiSelect from '@/components/form/MultiSelect';
-import InputError from '@/components/form/InputError';
-import type { CreateStaffFormData, Role } from '@/types/staff';
+import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import type { Shop } from '@/types/shop';
+import type { CreateStaffFormData, Role } from '@/types/staff';
+import { AlertCircle, Store } from 'lucide-react';
+import type { FC } from 'react';
+import { useMemo } from 'react';
 
 interface ShopAssignmentSectionProps {
     data: CreateStaffFormData;
@@ -30,7 +30,8 @@ const ShopAssignmentSection: FC<ShopAssignmentSectionProps> = ({
         return roles.find((r) => r.value === data.role);
     }, [roles, data.role]);
 
-    const canAccessMultipleShops = selectedRole?.can_access_multiple_shops ?? false;
+    const canAccessMultipleShops =
+        selectedRole?.can_access_multiple_shops ?? false;
     const isHighLevelRole = (selectedRole?.level ?? 0) >= 80;
 
     const shopOptions = shops.map((shop) => ({
@@ -63,8 +64,8 @@ const ShopAssignmentSection: FC<ShopAssignmentSectionProps> = ({
                     <div className="flex items-center gap-2 rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
                         <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
                         <p className="text-sm text-amber-700 dark:text-amber-300">
-                            Please select a role first to determine shop assignment
-                            options.
+                            Please select a role first to determine shop
+                            assignment options.
                         </p>
                     </div>
                 )}
@@ -88,10 +89,14 @@ const ShopAssignmentSection: FC<ShopAssignmentSectionProps> = ({
                                         ? 'Select one or more shops'
                                         : 'Select a shop'
                                 }
-                                error={!!errors.shop_ids || !!errors['shop_ids.0']}
+                                error={
+                                    !!errors.shop_ids || !!errors['shop_ids.0']
+                                }
                             />
                             <InputError
-                                message={errors.shop_ids || errors['shop_ids.0']}
+                                message={
+                                    errors.shop_ids || errors['shop_ids.0']
+                                }
                             />
                         </div>
 
@@ -123,9 +128,9 @@ const ShopAssignmentSection: FC<ShopAssignmentSectionProps> = ({
                             <div className="flex items-center gap-2 rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
                                 <AlertCircle className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
                                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                                    This role ({selectedRole?.label}) has access to all shops
-                                    by default. Shop assignments here are for organizational
-                                    purposes.
+                                    This role ({selectedRole?.label}) has access
+                                    to all shops by default. Shop assignments
+                                    here are for organizational purposes.
                                 </p>
                             </div>
                         )}

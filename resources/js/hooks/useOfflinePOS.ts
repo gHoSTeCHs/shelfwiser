@@ -1,7 +1,6 @@
 import {
     deleteItem,
     getItem,
-    getItemsByIndex,
     getPendingActions,
     putItem,
     queueOfflineAction,
@@ -13,7 +12,11 @@ import { useNetworkStatus } from './useNetworkStatus';
 interface UseOfflinePOSOptions {
     shopId: number;
     tenantId: number;
-    onOrderSynced?: (offlineId: string, orderId: number, orderNumber: string) => void;
+    onOrderSynced?: (
+        offlineId: string,
+        orderId: number,
+        orderNumber: string,
+    ) => void;
     onSyncError?: (offlineId: string, error: string) => void;
 }
 
@@ -65,7 +68,9 @@ const CART_KEY_PREFIX = 'pos_cart_';
  * - Queues orders when offline
  * - Syncs orders when back online
  */
-export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSReturn {
+export function useOfflinePOS(
+    options: UseOfflinePOSOptions,
+): UseOfflinePOSReturn {
     const { shopId, tenantId, onOrderSynced, onSyncError } = options;
 
     const [cart, setCartState] = useState<POSCartItem[]>([]);
@@ -73,92 +78,176 @@ export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSRetur
     const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
     const isSyncingRef = useRef(false);
-    
+    const cartSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+        null,
+    );
+
     const isOnline = useNetworkStatus();
 
     const isMountedRef = useRef(true);
     const cartId = `${CART_KEY_PREFIX}${shopId}`;
 
-    // Sync pending orders - defined early so it can be used by online/offline handlers
+    /**
+     * Fetch a fresh CSRF token from the server.
+     * Tokens may expire, so we refresh before critical operations.
+     */
+    const fetchFreshCsrfToken = useCallback(async (): Promise<string> => {
+        try {
+            const response = await fetch('/sanctum/csrf-cookie', {
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch CSRF cookie');
+            }
+
+            const name = 'XSRF-TOKEN=';
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1);
+                if (c.indexOf(name) === 0)
+                    return c.substring(name.length, c.length);
+            }
+
+            return (
+                document.querySelector<HTMLMetaElement>(
+                    'meta[name="csrf-token"]',
+                )?.content || ''
+            );
+        } catch (error) {
+            console.warn(
+                '[useOfflinePOS] Failed to fetch fresh CSRF token:',
+                error,
+            );
+            return (
+                document.querySelector<HTMLMetaElement>(
+                    'meta[name="csrf-token"]',
+                )?.content || ''
+            );
+        }
+    }, []);
+
+    /**
+     * Get CSRF token from cookies, fallback to meta tag.
+     */
+    const getCsrfToken = useCallback(() => {
+        const name = 'XSRF-TOKEN=';
+        const decodedCookie = decodeURIComponent(document.cookie);
+        const ca = decodedCookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1);
+            if (c.indexOf(name) === 0)
+                return c.substring(name.length, c.length);
+        }
+        return (
+            document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                ?.content || ''
+        );
+    }, []);
+
+    /**
+     * Sync pending orders with automatic CSRF token refresh and retry on 419.
+     */
     const syncPendingOrders = useCallback(async () => {
         if (!isOnline || isSyncingRef.current) return;
 
         isSyncingRef.current = true;
-        // Note: We deliberately DO NOT set setIsSyncing(true) yet.
-        // We only want to show the loading state if we actually have data to sync.
 
         try {
             const pending = await getPendingActions();
-            const orderActions = pending.filter(a => a.entity === 'offline_order' && !a.synced);
+            const orderActions = pending.filter(
+                (a) => a.entity === 'offline_order' && !a.synced,
+            );
 
             if (orderActions.length === 0) {
-                // No work to do.
                 return;
             }
 
-            // We have orders to sync, NOW show the loading state
             setIsSyncing(true);
-            console.log(`[useOfflinePOS] Syncing ${orderActions.length} pending orders`);
+            console.log(
+                `[useOfflinePOS] Syncing ${orderActions.length} pending orders`,
+            );
 
-            // Batch sync orders
-            const orders = orderActions.map(a => a.data as OfflineOrder);
+            const orders = orderActions.map((a) => a.data as OfflineOrder);
 
-            // Get fresh CSRF token from cookies if possible, fallback to meta tag
-            const getCsrfToken = () => {
-                const name = 'XSRF-TOKEN=';
-                const decodedCookie = decodeURIComponent(document.cookie);
-                const ca = decodedCookie.split(';');
-                for (let i = 0; i < ca.length; i++) {
-                    let c = ca[i];
-                    while (c.charAt(0) === ' ') c = c.substring(1);
-                    if (c.indexOf(name) === 0) return c.substring(name.length, c.length);
+            let csrfToken = getCsrfToken();
+            let retryCount = 0;
+            const maxRetries = 1;
+
+            while (retryCount <= maxRetries) {
+                const response = await fetch('/api/sync/orders', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({ orders }),
+                });
+
+                if (response.status === 419 && retryCount < maxRetries) {
+                    console.warn(
+                        '[useOfflinePOS] CSRF token mismatch (419), refreshing token and retrying...',
+                    );
+                    csrfToken = await fetchFreshCsrfToken();
+                    retryCount++;
+                    continue;
                 }
-                return document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '';
-            };
 
-            const response = await fetch('/api/sync/orders', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': getCsrfToken(),
-                },
-                body: JSON.stringify({ orders }),
-            });
+                if (response.ok) {
+                    const result = await response.json();
 
-            if (response.ok) {
-                const result = await response.json();
+                    for (const syncResult of result.results || []) {
+                        const action = orderActions.find(
+                            (a) =>
+                                (a.data as OfflineOrder).offline_id ===
+                                syncResult.offline_id,
+                        );
 
-                // Process results
-                for (const syncResult of result.results || []) {
-                    const action = orderActions.find(a => (a.data as OfflineOrder).offline_id === syncResult.offline_id);
-
-                    if (action && action.id !== undefined) {
-                        if (syncResult.success) {
-                            // Mark as synced
-                            const updatedAction = { ...action, synced: true };
-                            await putItem('offlineQueue', updatedAction);
-                            onOrderSynced?.(syncResult.offline_id, syncResult.order_id, syncResult.order_number);
-                        } else {
-                            // Update with error
-                            const updatedAction = {
-                                ...action,
-                                retries: action.retries + 1,
-                                lastError: syncResult.message,
-                            };
-                            await putItem('offlineQueue', updatedAction);
-                            onSyncError?.(syncResult.offline_id, syncResult.message);
+                        if (action && action.id !== undefined) {
+                            if (syncResult.success) {
+                                const updatedAction = {
+                                    ...action,
+                                    synced: true,
+                                };
+                                await putItem('offlineQueue', updatedAction);
+                                onOrderSynced?.(
+                                    syncResult.offline_id,
+                                    syncResult.order_id,
+                                    syncResult.order_number,
+                                );
+                            } else {
+                                const updatedAction = {
+                                    ...action,
+                                    retries: action.retries + 1,
+                                    lastError: syncResult.message,
+                                };
+                                await putItem('offlineQueue', updatedAction);
+                                onSyncError?.(
+                                    syncResult.offline_id,
+                                    syncResult.message,
+                                );
+                            }
                         }
                     }
-                }
 
-                // Update pending count
-                const remaining = await getPendingActions();
-                const remainingOrders = remaining.filter(a => a.entity === 'offline_order' && !a.synced);
-                if (isMountedRef.current) {
-                    setPendingOrdersCount(remainingOrders.length);
+                    const remaining = await getPendingActions();
+                    const remainingOrders = remaining.filter(
+                        (a) => a.entity === 'offline_order' && !a.synced,
+                    );
+                    if (isMountedRef.current) {
+                        setPendingOrdersCount(remainingOrders.length);
+                    }
+                    break;
+                } else {
+                    throw new Error(
+                        `Sync failed: ${response.status} ${response.statusText}`,
+                    );
                 }
             }
         } catch (error) {
@@ -166,17 +255,21 @@ export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSRetur
         } finally {
             isSyncingRef.current = false;
             if (isMountedRef.current) {
-                // Only toggle false if we were actually syncing (state was true)
-                // However, setting it to false repeatedly is harmless in React
                 setIsSyncing(false);
             }
         }
-    }, [isOnline, onOrderSynced, onSyncError]);
+    }, [
+        isOnline,
+        onOrderSynced,
+        onSyncError,
+        getCsrfToken,
+        fetchFreshCsrfToken,
+    ]);
 
     // Update online status
     useEffect(() => {
         if (isOnline) {
-             // Auto-sync when coming online
+            // Auto-sync when coming online
             syncPendingOrders();
         }
     }, [isOnline, syncPendingOrders]);
@@ -201,11 +294,18 @@ export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSRetur
         loadCart();
     }, [cartId]);
 
-    // Save cart to IndexedDB whenever it changes
+    /**
+     * Save cart to IndexedDB with 300ms debounce to prevent
+     * excessive writes during rapid quantity updates.
+     */
     useEffect(() => {
         if (!isCartLoaded) return;
 
-        const saveCart = async () => {
+        if (cartSaveTimeoutRef.current) {
+            clearTimeout(cartSaveTimeoutRef.current);
+        }
+
+        cartSaveTimeoutRef.current = setTimeout(async () => {
             try {
                 const cartData: POSCart = {
                     id: cartId,
@@ -220,9 +320,13 @@ export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSRetur
             } catch (error) {
                 console.error('[useOfflinePOS] Failed to save cart:', error);
             }
-        };
+        }, 300);
 
-        saveCart();
+        return () => {
+            if (cartSaveTimeoutRef.current) {
+                clearTimeout(cartSaveTimeoutRef.current);
+            }
+        };
     }, [cart, cartId, shopId, isCartLoaded]);
 
     // Load pending orders count
@@ -230,12 +334,17 @@ export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSRetur
         const loadPendingCount = async () => {
             try {
                 const pending = await getPendingActions();
-                const orderActions = pending.filter(a => a.entity === 'offline_order');
+                const orderActions = pending.filter(
+                    (a) => a.entity === 'offline_order',
+                );
                 if (isMountedRef.current) {
                     setPendingOrdersCount(orderActions.length);
                 }
             } catch (error) {
-                console.error('[useOfflinePOS] Failed to load pending count:', error);
+                console.error(
+                    '[useOfflinePOS] Failed to load pending count:',
+                    error,
+                );
             }
         };
 
@@ -248,8 +357,10 @@ export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSRetur
 
     // Add product to cart
     const addToCart = useCallback((product: SyncProduct) => {
-        setCartState(prevCart => {
-            const existingIndex = prevCart.findIndex(item => item.variant_id === product.id);
+        setCartState((prevCart) => {
+            const existingIndex = prevCart.findIndex(
+                (item) => item.variant_id === product.id,
+            );
 
             if (existingIndex >= 0) {
                 // Increment quantity
@@ -278,23 +389,30 @@ export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSRetur
     }, []);
 
     // Update item quantity
-    const updateQuantity = useCallback((variantId: number, quantity: number) => {
-        if (quantity <= 0) {
-            setCartState(prevCart => prevCart.filter(item => item.variant_id !== variantId));
-        } else {
-            setCartState(prevCart =>
-                prevCart.map(item =>
-                    item.variant_id === variantId
-                        ? { ...item, quantity }
-                        : item
-                )
-            );
-        }
-    }, []);
+    const updateQuantity = useCallback(
+        (variantId: number, quantity: number) => {
+            if (quantity <= 0) {
+                setCartState((prevCart) =>
+                    prevCart.filter((item) => item.variant_id !== variantId),
+                );
+            } else {
+                setCartState((prevCart) =>
+                    prevCart.map((item) =>
+                        item.variant_id === variantId
+                            ? { ...item, quantity }
+                            : item,
+                    ),
+                );
+            }
+        },
+        [],
+    );
 
     // Remove item from cart
     const removeFromCart = useCallback((variantId: number) => {
-        setCartState(prevCart => prevCart.filter(item => item.variant_id !== variantId));
+        setCartState((prevCart) =>
+            prevCart.filter((item) => item.variant_id !== variantId),
+        );
     }, []);
 
     // Clear cart
@@ -313,109 +431,156 @@ export function useOfflinePOS(options: UseOfflinePOSOptions): UseOfflinePOSRetur
     }, []);
 
     // Complete sale (online or offline)
-    const completeSale = useCallback(async (saleOptions: CompleteSaleOptions): Promise<CompleteSaleResult> => {
-        if (cart.length === 0) {
-            return { success: false, isOffline: false, error: 'Cart is empty' };
-        }
+    const completeSale = useCallback(
+        async (
+            saleOptions: CompleteSaleOptions,
+        ): Promise<CompleteSaleResult> => {
+            if (cart.length === 0) {
+                return {
+                    success: false,
+                    isOffline: false,
+                    error: 'Cart is empty',
+                };
+            }
 
-        // Calculate totals
-        const subtotal = cart.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
-        const taxAmount = saleOptions.taxEnabled ? subtotal * (saleOptions.taxRate / 100) : 0;
-        const totalAmount = subtotal + taxAmount - saleOptions.discount;
+            // Calculate totals
+            const subtotal = cart.reduce(
+                (sum, item) => sum + item.unit_price * item.quantity,
+                0,
+            );
+            const taxAmount = saleOptions.taxEnabled
+                ? subtotal * (saleOptions.taxRate / 100)
+                : 0;
+            const totalAmount = subtotal + taxAmount - saleOptions.discount;
 
-        // Generate offline ID
-        const offlineId = `OFFLINE-${shopId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const generateOfflineId = () => {
+                return `offline_${crypto.randomUUID()}`;
+            };
 
-        const offlineOrder: OfflineOrder = {
-            offline_id: offlineId,
-            shop_id: shopId,
-            items: cart.map(item => ({
-                variant_id: item.variant_id,
-                quantity: item.quantity,
-                unit_price: item.unit_price,
-                packaging_type_id: item.packaging_type_id,
-                discount_amount: item.discount_amount,
-            })),
-            customer_id: saleOptions.customerId,
-            payment_method: saleOptions.paymentMethod,
-            amount_tendered: saleOptions.amountTendered,
-            discount_amount: saleOptions.discount,
-            notes: saleOptions.notes || null,
-            subtotal,
-            tax_amount: taxAmount,
-            total_amount: totalAmount,
-            created_at: new Date().toISOString(),
-        };
+            const offlineId = generateOfflineId();
 
-        // If online, try direct API call
-        if (isOnline) {
+            const offlineOrder: OfflineOrder = {
+                offline_id: offlineId,
+                shop_id: shopId,
+                items: cart.map((item) => ({
+                    variant_id: item.variant_id,
+                    quantity: item.quantity,
+                    unit_price: item.unit_price,
+                    packaging_type_id: item.packaging_type_id,
+                    discount_amount: item.discount_amount,
+                })),
+                customer_id: saleOptions.customerId,
+                payment_method: saleOptions.paymentMethod,
+                amount_tendered: saleOptions.amountTendered,
+                discount_amount: saleOptions.discount,
+                notes: saleOptions.notes || null,
+                subtotal,
+                tax_amount: taxAmount,
+                total_amount: totalAmount,
+                created_at: new Date().toISOString(),
+            };
+
+            if (isOnline) {
+                try {
+                    let csrfToken = getCsrfToken();
+                    let retryCount = 0;
+                    const maxRetries = 1;
+
+                    while (retryCount <= maxRetries) {
+                        const response = await fetch(
+                            `/pos/${shopId}/complete`,
+                            {
+                                method: 'POST',
+                                credentials: 'include',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    Accept: 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRF-TOKEN': csrfToken,
+                                },
+                                body: JSON.stringify({
+                                    items: cart.map((item) => ({
+                                        variant_id: item.variant_id,
+                                        quantity: item.quantity,
+                                        unit_price: item.unit_price,
+                                        packaging_type_id:
+                                            item.packaging_type_id,
+                                        discount_amount: item.discount_amount,
+                                    })),
+                                    customer_id: saleOptions.customerId || null,
+                                    payment_method: saleOptions.paymentMethod,
+                                    amount_tendered: saleOptions.amountTendered,
+                                    discount_amount: saleOptions.discount,
+                                    notes: saleOptions.notes || '',
+                                }),
+                            },
+                        );
+
+                        if (
+                            response.status === 419 &&
+                            retryCount < maxRetries
+                        ) {
+                            console.warn(
+                                '[useOfflinePOS] CSRF token mismatch (419), refreshing token and retrying...',
+                            );
+                            csrfToken = await fetchFreshCsrfToken();
+                            retryCount++;
+                            continue;
+                        }
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            await clearCart();
+                            return {
+                                success: true,
+                                isOffline: false,
+                                orderId: data.order?.id,
+                                orderNumber: data.order?.order_number,
+                            };
+                        }
+
+                        console.warn(
+                            '[useOfflinePOS] Server error, queuing offline:',
+                            response.status,
+                        );
+                        break;
+                    }
+                } catch (error) {
+                    console.warn(
+                        '[useOfflinePOS] Network error, queuing offline:',
+                        error,
+                    );
+                }
+            }
+
+            // Queue for offline sync
             try {
-                const response = await fetch(`/pos/${shopId}/complete`, {
+                await queueOfflineAction({
+                    type: 'create',
+                    entity: 'offline_order',
+                    data: offlineOrder,
+                    url: '/api/sync/orders',
                     method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
-                    },
-                    body: JSON.stringify({
-                        items: cart.map(item => ({
-                            variant_id: item.variant_id,
-                            quantity: item.quantity,
-                            unit_price: item.unit_price,
-                            packaging_type_id: item.packaging_type_id,
-                            discount_amount: item.discount_amount,
-                        })),
-                        customer_id: saleOptions.customerId || null,
-                        payment_method: saleOptions.paymentMethod,
-                        amount_tendered: saleOptions.amountTendered,
-                        discount_amount: saleOptions.discount,
-                        notes: saleOptions.notes || '',
-                    }),
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    await clearCart();
-                    return {
-                        success: true,
-                        isOffline: false,
-                        orderId: data.order?.id,
-                        orderNumber: data.order?.order_number,
-                    };
-                }
+                await clearCart();
+                setPendingOrdersCount((prev) => prev + 1);
 
-                // If server error, fall through to offline queue
-                console.warn('[useOfflinePOS] Server error, queuing offline:', response.status);
+                return {
+                    success: true,
+                    isOffline: true,
+                    offlineId,
+                };
             } catch (error) {
-                console.warn('[useOfflinePOS] Network error, queuing offline:', error);
+                const message =
+                    error instanceof Error
+                        ? error.message
+                        : 'Failed to queue order';
+                return { success: false, isOffline: true, error: message };
             }
-        }
-
-        // Queue for offline sync
-        try {
-            await queueOfflineAction({
-                type: 'create',
-                entity: 'offline_order',
-                data: offlineOrder,
-                url: '/api/sync/orders',
-                method: 'POST',
-            });
-
-            await clearCart();
-            setPendingOrdersCount(prev => prev + 1);
-
-            return {
-                success: true,
-                isOffline: true,
-                offlineId,
-            };
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Failed to queue order';
-            return { success: false, isOffline: true, error: message };
-        }
-    }, [cart, shopId, isOnline, clearCart]);
+        },
+        [cart, shopId, isOnline, clearCart, getCsrfToken, fetchFreshCsrfToken],
+    );
 
     // Cleanup
     useEffect(() => {

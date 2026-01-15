@@ -1,6 +1,6 @@
 import { User } from './index';
+import { ProductCategory } from './product';
 import { Shop } from './shop';
-import { Product, ProductCategory } from './product';
 import { ProductVariant } from './stockMovement';
 
 // Sales Report Types

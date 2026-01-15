@@ -1,5 +1,5 @@
-import type { Shop } from './shop';
 import type { Order } from './order';
+import type { Shop } from './shop';
 
 /**
  * Minimal customer interface for search results and quick lookups.

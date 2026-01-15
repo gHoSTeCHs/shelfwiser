@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\DeductionCalculationBase;
-use App\Enums\DeductionCalculationType;
 use App\Enums\DeductionCategory;
 use App\Models\DeductionTypeModel;
 use App\Models\EmployeeDeduction;
@@ -11,11 +10,10 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 
 class DeductionsService
 {
-    public function getActiveDeductions(User $employee, Carbon $asOfDate = null): Collection
+    public function getActiveDeductions(User $employee, ?Carbon $asOfDate = null): Collection
     {
         $date = $asOfDate ?? now();
 
@@ -35,7 +33,7 @@ class DeductionsService
     ): array {
         $deductions = $this->getActiveDeductions($employee, $periodEnd);
 
-        $amounts = [
+        $baseAmounts = [
             'gross' => $earningsData['total_gross'] ?? 0,
             'basic' => $earningsData['basic_salary'] ?? $earningsData['total_gross'] ?? 0,
             'taxable' => $earningsData['total_taxable'] ?? 0,
@@ -51,11 +49,11 @@ class DeductionsService
         $voluntaryTotal = 0;
 
         $preTaxDeductions = $deductions->filter(fn ($d) => $d->deductionType->is_pre_tax);
-        $postTaxDeductions = $deductions->filter(fn ($d) => !$d->deductionType->is_pre_tax);
+        $postTaxDeductions = $deductions->filter(fn ($d) => ! $d->deductionType->is_pre_tax);
 
         foreach ($preTaxDeductions as $deduction) {
             $type = $deduction->deductionType;
-            $amount = $deduction->calculateAmount($amounts);
+            $amount = $deduction->calculateAmount($baseAmounts);
 
             if ($amount < 0) {
                 \Log::warning('Negative deduction amount calculated, skipping', [
@@ -63,6 +61,7 @@ class DeductionsService
                     'amount' => $amount,
                     'employee_id' => $employee->id,
                 ]);
+
                 continue;
             }
 
@@ -85,11 +84,12 @@ class DeductionsService
             }
         }
 
-        $amounts['taxable'] = $amounts['taxable'] - $totalPreTax;
+        $adjustedTaxable = $baseAmounts['taxable'] - $totalPreTax;
+        $postTaxAmounts = array_merge($baseAmounts, ['taxable' => $adjustedTaxable]);
 
         foreach ($postTaxDeductions as $deduction) {
             $type = $deduction->deductionType;
-            $amount = $deduction->calculateAmount($amounts);
+            $amount = $deduction->calculateAmount($postTaxAmounts);
 
             if ($amount < 0) {
                 \Log::warning('Negative deduction amount calculated, skipping', [
@@ -97,6 +97,7 @@ class DeductionsService
                     'amount' => $amount,
                     'employee_id' => $employee->id,
                 ]);
+
                 continue;
             }
 
@@ -126,7 +127,7 @@ class DeductionsService
             'total_post_tax' => $totalPostTax,
             'statutory_total' => $statutoryTotal,
             'voluntary_total' => $voluntaryTotal,
-            'adjusted_taxable' => $amounts['taxable'],
+            'adjusted_taxable' => $adjustedTaxable,
         ];
     }
 
@@ -250,7 +251,7 @@ class DeductionsService
                 ->where('is_active', true)
                 ->exists();
 
-            if (!$exists) {
+            if (! $exists) {
                 $this->assignDeduction($employee, $type, [
                     'effective_from' => now(),
                 ]);

@@ -1,13 +1,16 @@
+import SupplierCatalogController from '@/actions/App/Http/Controllers/SupplierCatalogController.ts';
+import Checkbox from '@/components/form/input/Checkbox';
+import Input from '@/components/form/input/InputField';
+import TextArea from '@/components/form/input/TextArea';
+import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
-import { SupplierCatalogItem, CatalogVisibility } from '@/types/supplier';
+import { CatalogVisibility, SupplierCatalogItem } from '@/types/supplier';
 import { Form, Head, Link } from '@inertiajs/react';
-import { Plus, X, Save, ArrowLeft } from 'lucide-react';
-import Input from '@/components/form/input/InputField';
-import InputError from '@/components/form/InputError';
-import Select from '@/components/form/Select';
-import Label from '@/components/form/Label';
+import { ArrowLeft, Plus, Save, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -28,24 +31,31 @@ const visibilityOptions: { value: CatalogVisibility; label: string }[] = [
 ];
 
 export default function Edit({ catalogItem }: Props) {
-    const [isAvailable, setIsAvailable] = useState<boolean>(catalogItem.is_available);
+    const [isAvailable, setIsAvailable] = useState<boolean>(
+        catalogItem.is_available,
+    );
     const [baseWholesalePrice, setBaseWholesalePrice] = useState<string>(
-        catalogItem.base_wholesale_price.toString()
+        catalogItem.base_wholesale_price.toString(),
     );
     const [minOrderQuantity, setMinOrderQuantity] = useState<string>(
-        catalogItem.min_order_quantity.toString()
+        catalogItem.min_order_quantity.toString(),
     );
-    const [visibility, setVisibility] = useState<CatalogVisibility>(catalogItem.visibility);
-    const [description, setDescription] = useState<string>(catalogItem.description || '');
+    const [visibility, setVisibility] = useState<CatalogVisibility>(
+        catalogItem.visibility,
+    );
+    const [description, setDescription] = useState<string>(
+        catalogItem.description || '',
+    );
     const [pricingTiers, setPricingTiers] = useState<PricingTier[]>(
-        catalogItem.pricing_tiers || []
+        catalogItem.pricing_tiers || [],
     );
 
     const addPricingTier = () => {
         const newTier: PricingTier = {
             min_quantity:
                 pricingTiers.length > 0
-                    ? (pricingTiers[pricingTiers.length - 1].max_quantity || 0) + 1
+                    ? (pricingTiers[pricingTiers.length - 1].max_quantity ||
+                          0) + 1
                     : 1,
             max_quantity: null,
             price: parseFloat(baseWholesalePrice) || 0,
@@ -60,7 +70,7 @@ export default function Edit({ catalogItem }: Props) {
     const updatePricingTier = (
         index: number,
         field: keyof PricingTier,
-        value: number | null
+        value: number | null,
     ) => {
         const updated = [...pricingTiers];
         updated[index] = { ...updated[index], [field]: value };
@@ -74,7 +84,7 @@ export default function Edit({ catalogItem }: Props) {
             <div className="space-y-6">
                 <div>
                     <Link
-                        href={route('supplier.catalog.index')}
+                        href={SupplierCatalogController.index.url()}
                         className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />
@@ -84,13 +94,15 @@ export default function Edit({ catalogItem }: Props) {
                         Edit Catalog Item
                     </h1>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Update pricing and availability for {catalogItem.product?.name}
+                        Update pricing and availability for{' '}
+                        {catalogItem.product?.name}
                     </p>
                 </div>
 
                 <Form
-                    action={route('supplier.catalog.update', catalogItem.id)}
-                    method="put"
+                    {...SupplierCatalogController.update.form({
+                        id: catalogItem.id,
+                    })}
                     className="space-y-6"
                 >
                     {({ errors, processing }) => (
@@ -115,7 +127,10 @@ export default function Edit({ catalogItem }: Props) {
 
                                 <div className="space-y-4">
                                     <div>
-                                        <Label htmlFor="base_wholesale_price" required>
+                                        <Label
+                                            htmlFor="base_wholesale_price"
+                                            required
+                                        >
                                             Base Wholesale Price
                                         </Label>
                                         <Input
@@ -125,15 +140,26 @@ export default function Edit({ catalogItem }: Props) {
                                             step="0.01"
                                             min="0"
                                             value={baseWholesalePrice}
-                                            onChange={(e) => setBaseWholesalePrice(e.target.value)}
-                                            error={!!errors.base_wholesale_price}
+                                            onChange={(e) =>
+                                                setBaseWholesalePrice(
+                                                    e.target.value,
+                                                )
+                                            }
+                                            error={
+                                                !!errors.base_wholesale_price
+                                            }
                                             required
                                             placeholder="0.00"
                                         />
                                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                            Default price for all buyers (before volume discounts)
+                                            Default price for all buyers (before
+                                            volume discounts)
                                         </p>
-                                        <InputError message={errors.base_wholesale_price} />
+                                        <InputError
+                                            message={
+                                                errors.base_wholesale_price
+                                            }
+                                        />
                                     </div>
 
                                     <div>
@@ -146,10 +172,16 @@ export default function Edit({ catalogItem }: Props) {
                                             type="number"
                                             min="1"
                                             value={minOrderQuantity}
-                                            onChange={(e) => setMinOrderQuantity(e.target.value)}
+                                            onChange={(e) =>
+                                                setMinOrderQuantity(
+                                                    e.target.value,
+                                                )
+                                            }
                                             error={!!errors.min_order_quantity}
                                         />
-                                        <InputError message={errors.min_order_quantity} />
+                                        <InputError
+                                            message={errors.min_order_quantity}
+                                        />
                                     </div>
 
                                     <div>
@@ -160,36 +192,39 @@ export default function Edit({ catalogItem }: Props) {
                                             options={visibilityOptions}
                                             value={visibility}
                                             onChange={(value) =>
-                                                setVisibility(value as CatalogVisibility)
+                                                setVisibility(
+                                                    value as CatalogVisibility,
+                                                )
                                             }
                                         />
-                                        <input type="hidden" name="visibility" value={visibility} />
+                                        <input
+                                            type="hidden"
+                                            name="visibility"
+                                            value={visibility}
+                                        />
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="description">Description</Label>
-                                        <textarea
+                                        <Label htmlFor="description">
+                                            Description
+                                        </Label>
+                                        <TextArea
                                             id="description"
                                             name="description"
                                             rows={3}
                                             value={description}
-                                            onChange={(e) => setDescription(e.target.value)}
-                                            className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                            onChange={setDescription}
                                             placeholder="Additional information for buyers..."
                                         />
                                     </div>
 
-                                    <div className="flex items-center gap-2">
-                                        <input
+                                    <div>
+                                        <Checkbox
                                             id="is_available"
-                                            type="checkbox"
                                             checked={isAvailable}
-                                            onChange={(e) => setIsAvailable(e.target.checked)}
-                                            className="h-4 w-4 rounded border-gray-300"
+                                            onChange={setIsAvailable}
+                                            label="Available for purchase"
                                         />
-                                        <Label htmlFor="is_available" className="mb-0">
-                                            Available for purchase
-                                        </Label>
                                         <input
                                             type="hidden"
                                             name="is_available"
@@ -228,26 +263,35 @@ export default function Edit({ catalogItem }: Props) {
                                                 className="flex items-end gap-3 rounded-lg border p-4 dark:border-gray-700"
                                             >
                                                 <div className="flex-1">
-                                                    <Label htmlFor={`tier-${index}-min`}>
+                                                    <Label
+                                                        htmlFor={`tier-${index}-min`}
+                                                    >
                                                         Min Qty
                                                     </Label>
                                                     <Input
                                                         id={`tier-${index}-min`}
                                                         type="number"
                                                         min="1"
-                                                        value={tier.min_quantity}
+                                                        value={
+                                                            tier.min_quantity
+                                                        }
                                                         onChange={(e) =>
                                                             updatePricingTier(
                                                                 index,
                                                                 'min_quantity',
-                                                                parseInt(e.target.value)
+                                                                parseInt(
+                                                                    e.target
+                                                                        .value,
+                                                                ),
                                                             )
                                                         }
                                                     />
                                                     <input
                                                         type="hidden"
                                                         name={`pricing_tiers[${index}][min_quantity]`}
-                                                        value={tier.min_quantity}
+                                                        value={
+                                                            tier.min_quantity
+                                                        }
                                                     />
                                                     {tier.id && (
                                                         <input
@@ -258,21 +302,30 @@ export default function Edit({ catalogItem }: Props) {
                                                     )}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <Label htmlFor={`tier-${index}-max`}>
+                                                    <Label
+                                                        htmlFor={`tier-${index}-max`}
+                                                    >
                                                         Max Qty
                                                     </Label>
                                                     <Input
                                                         id={`tier-${index}-max`}
                                                         type="number"
                                                         min={tier.min_quantity}
-                                                        value={tier.max_quantity?.toString() || ''}
+                                                        value={
+                                                            tier.max_quantity?.toString() ||
+                                                            ''
+                                                        }
                                                         onChange={(e) =>
                                                             updatePricingTier(
                                                                 index,
                                                                 'max_quantity',
                                                                 e.target.value
-                                                                    ? parseInt(e.target.value)
-                                                                    : null
+                                                                    ? parseInt(
+                                                                          e
+                                                                              .target
+                                                                              .value,
+                                                                      )
+                                                                    : null,
                                                             )
                                                         }
                                                         placeholder="Unlimited"
@@ -280,11 +333,16 @@ export default function Edit({ catalogItem }: Props) {
                                                     <input
                                                         type="hidden"
                                                         name={`pricing_tiers[${index}][max_quantity]`}
-                                                        value={tier.max_quantity?.toString() || ''}
+                                                        value={
+                                                            tier.max_quantity?.toString() ||
+                                                            ''
+                                                        }
                                                     />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <Label htmlFor={`tier-${index}-price`}>
+                                                    <Label
+                                                        htmlFor={`tier-${index}-price`}
+                                                    >
                                                         Price
                                                     </Label>
                                                     <Input
@@ -297,7 +355,10 @@ export default function Edit({ catalogItem }: Props) {
                                                             updatePricingTier(
                                                                 index,
                                                                 'price',
-                                                                parseFloat(e.target.value)
+                                                                parseFloat(
+                                                                    e.target
+                                                                        .value,
+                                                                ),
                                                             )
                                                         }
                                                     />
@@ -311,7 +372,9 @@ export default function Edit({ catalogItem }: Props) {
                                                     type="button"
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => removePricingTier(index)}
+                                                    onClick={() =>
+                                                        removePricingTier(index)
+                                                    }
                                                 >
                                                     <X className="h-4 w-4" />
                                                 </Button>
@@ -320,14 +383,16 @@ export default function Edit({ catalogItem }: Props) {
                                     </div>
                                 ) : (
                                     <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-                                        No volume pricing tiers defined. Buyers will pay the base
-                                        wholesale price.
+                                        No volume pricing tiers defined. Buyers
+                                        will pay the base wholesale price.
                                     </p>
                                 )}
                             </Card>
 
                             <div className="flex justify-end gap-3">
-                                <Link href={route('supplier.catalog.index')}>
+                                <Link
+                                    href={SupplierCatalogController.index.url()}
+                                >
                                     <Button type="button" variant="outline">
                                         Cancel
                                     </Button>

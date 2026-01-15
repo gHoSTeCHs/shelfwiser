@@ -3,6 +3,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDate } from '@/lib/utils.ts';
 import { StockMovement } from '@/types/stockMovement';
 import { getMovementIcon, getMovementLabel } from '@/utils/stock-movement';
 import { Head, Link } from '@inertiajs/react';
@@ -15,7 +16,6 @@ import {
     Tag,
     User,
 } from 'lucide-react';
-import { formatDate } from '@/lib/utils.ts';
 
 interface Props {
     movement: StockMovement;
@@ -31,7 +31,6 @@ export default function Show({ movement }: Props) {
         ].includes(type);
         return isIncrease ? 'success' : 'warning';
     };
-
 
     const isTransfer = movement.type.includes('transfer');
 

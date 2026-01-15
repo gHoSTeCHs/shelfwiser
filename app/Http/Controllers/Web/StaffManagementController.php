@@ -10,7 +10,6 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateStaffRequest;
 use App\Http\Requests\CreateStaffWithPayrollRequest;
-use App\Http\Requests\UpdateStaffRequest;
 use App\Http\Requests\UpdateStaffWithPayrollRequest;
 use App\Models\EmployeeTemplate;
 use App\Models\PayCalendar;
@@ -125,6 +124,7 @@ class StaffManagementController extends Controller
             'shops',
             'tenant',
             'employeePayrollDetail',
+            'taxSettings',
             'customDeductions' => function ($query) {
                 $query->latest();
             },
@@ -137,6 +137,7 @@ class StaffManagementController extends Controller
             'staff' => $staff,
             'canManagePayroll' => $canManagePayroll,
             'canManageDeductions' => $canManageDeductions,
+            'taxConfigurationStatus' => $this->getTaxConfigurationStatus($staff),
         ]);
     }
 
@@ -147,7 +148,7 @@ class StaffManagementController extends Controller
     {
         Gate::authorize('update', $staff);
 
-        $staff->load(['shops', 'employeePayrollDetail', 'customDeductions']);
+        $staff->load(['shops', 'employeePayrollDetail', 'taxSettings', 'customDeductions']);
 
         $accessData = $this->getAccessData();
         $tenantId = auth()->user()->tenant_id;
@@ -265,5 +266,34 @@ class StaffManagementController extends Controller
             ->orderBy('name')
             ->get()
             ->toArray();
+    }
+
+    /**
+     * Get tax configuration status for display on staff profile.
+     * Returns status information for NTA 2025 tax settings.
+     */
+    private function getTaxConfigurationStatus(User $staff): array
+    {
+        $taxSettings = $staff->taxSettings;
+
+        if (! $taxSettings) {
+            return [
+                'status' => 'not_configured',
+                'label' => 'Not Configured',
+                'color' => 'warning',
+                'is_homeowner' => null,
+                'has_rent_proof' => false,
+            ];
+        }
+
+        $isComplete = $taxSettings->tax_id_number !== null;
+
+        return [
+            'status' => $isComplete ? 'complete' : 'partial',
+            'label' => $isComplete ? 'Configured' : 'Needs Attention',
+            'color' => $isComplete ? 'success' : 'info',
+            'is_homeowner' => $taxSettings->is_homeowner,
+            'has_rent_proof' => $taxSettings->hasValidRentProof(),
+        ];
     }
 }

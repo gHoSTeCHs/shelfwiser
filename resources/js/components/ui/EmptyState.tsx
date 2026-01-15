@@ -11,7 +11,7 @@ interface EmptyStateProps {
 const EmptyState = ({ icon, title, description, action, className = '' }: EmptyStateProps) => {
     return (
         <div className={`rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-8 text-center ${className}`}>
-            <div className="mx-auto mb-4 text-gray-400">
+            <div className="mx-auto mb-4 text-gray-400 dark:text-gray-300">
                 {icon}
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">

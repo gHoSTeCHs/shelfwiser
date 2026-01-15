@@ -1,7 +1,7 @@
-import React from 'react';
 import Input from '@/components/form/input/InputField';
-import Label from '@/components/form/Label';
 import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import React from 'react';
 
 interface AddressData {
     first_name?: string;
@@ -43,7 +43,8 @@ const AddressForm: React.FC<AddressFormProps> = ({
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label htmlFor={`${prefix}_first_name`}>
-                        First Name {required && <span className="text-error-500">*</span>}
+                        First Name{' '}
+                        {required && <span className="text-error-500">*</span>}
                     </Label>
                     <Input
                         id={`${prefix}_first_name`}
@@ -59,7 +60,8 @@ const AddressForm: React.FC<AddressFormProps> = ({
 
                 <div>
                     <Label htmlFor={`${prefix}_last_name`}>
-                        Last Name {required && <span className="text-error-500">*</span>}
+                        Last Name{' '}
+                        {required && <span className="text-error-500">*</span>}
                     </Label>
                     <Input
                         id={`${prefix}_last_name`}
@@ -76,7 +78,8 @@ const AddressForm: React.FC<AddressFormProps> = ({
 
             <div>
                 <Label htmlFor={`${prefix}_phone`}>
-                    Phone Number {required && <span className="text-error-500">*</span>}
+                    Phone Number{' '}
+                    {required && <span className="text-error-500">*</span>}
                 </Label>
                 <Input
                     id={`${prefix}_phone`}
@@ -92,7 +95,8 @@ const AddressForm: React.FC<AddressFormProps> = ({
 
             <div>
                 <Label htmlFor={`${prefix}_address_line_1`}>
-                    Address Line 1 {required && <span className="text-error-500">*</span>}
+                    Address Line 1{' '}
+                    {required && <span className="text-error-500">*</span>}
                 </Label>
                 <Input
                     id={`${prefix}_address_line_1`}
@@ -107,7 +111,9 @@ const AddressForm: React.FC<AddressFormProps> = ({
             </div>
 
             <div>
-                <Label htmlFor={`${prefix}_address_line_2`}>Address Line 2</Label>
+                <Label htmlFor={`${prefix}_address_line_2`}>
+                    Address Line 2
+                </Label>
                 <Input
                     id={`${prefix}_address_line_2`}
                     name={getFieldName('address_line_2')}
@@ -120,7 +126,8 @@ const AddressForm: React.FC<AddressFormProps> = ({
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label htmlFor={`${prefix}_city`}>
-                        City {required && <span className="text-error-500">*</span>}
+                        City{' '}
+                        {required && <span className="text-error-500">*</span>}
                     </Label>
                     <Input
                         id={`${prefix}_city`}
@@ -136,7 +143,8 @@ const AddressForm: React.FC<AddressFormProps> = ({
 
                 <div>
                     <Label htmlFor={`${prefix}_state`}>
-                        State/Province {required && <span className="text-error-500">*</span>}
+                        State/Province{' '}
+                        {required && <span className="text-error-500">*</span>}
                     </Label>
                     <Input
                         id={`${prefix}_state`}
@@ -159,13 +167,16 @@ const AddressForm: React.FC<AddressFormProps> = ({
                         name={getFieldName('postal_code')}
                         type="text"
                         value={getFieldValue('postal_code')}
-                        onChange={(e) => onChange('postal_code', e.target.value)}
+                        onChange={(e) =>
+                            onChange('postal_code', e.target.value)
+                        }
                     />
                 </div>
 
                 <div>
                     <Label htmlFor={`${prefix}_country`}>
-                        Country {required && <span className="text-error-500">*</span>}
+                        Country{' '}
+                        {required && <span className="text-error-500">*</span>}
                     </Label>
                     <Input
                         id={`${prefix}_country`}

@@ -10,6 +10,8 @@ enum PaymentMethod: string
     case BANK_TRANSFER = 'bank_transfer';
     case CHEQUE = 'cheque';
     case CUSTOMER_CREDIT = 'customer_credit';
+    case PAYSTACK = 'paystack';
+    case CASH_ON_DELIVERY = 'cash_on_delivery';
 
     public function label(): string
     {
@@ -20,6 +22,8 @@ enum PaymentMethod: string
             self::BANK_TRANSFER => 'Bank Transfer',
             self::CHEQUE => 'Cheque',
             self::CUSTOMER_CREDIT => 'Customer Credit',
+            self::PAYSTACK => 'Paystack',
+            self::CASH_ON_DELIVERY => 'Cash on Delivery',
         };
     }
 
@@ -32,6 +36,8 @@ enum PaymentMethod: string
             self::BANK_TRANSFER => 'Direct bank transfer or wire',
             self::CHEQUE => 'Payment by cheque',
             self::CUSTOMER_CREDIT => 'Payment from customer credit balance',
+            self::PAYSTACK => 'Online payment via Paystack',
+            self::CASH_ON_DELIVERY => 'Pay when order is delivered',
         };
     }
 
@@ -44,6 +50,8 @@ enum PaymentMethod: string
             self::BANK_TRANSFER => 'info',
             self::CHEQUE => 'gray',
             self::CUSTOMER_CREDIT => 'purple',
+            self::PAYSTACK => 'primary',
+            self::CASH_ON_DELIVERY => 'warning',
         };
     }
 
@@ -56,6 +64,8 @@ enum PaymentMethod: string
             self::BANK_TRANSFER => 'building-2',
             self::CHEQUE => 'file-text',
             self::CUSTOMER_CREDIT => 'wallet',
+            self::PAYSTACK => 'credit-card',
+            self::CASH_ON_DELIVERY => 'truck',
         };
     }
 
@@ -71,6 +81,8 @@ enum PaymentMethod: string
             self::BANK_TRANSFER => true,
             self::CHEQUE => true,
             self::CUSTOMER_CREDIT => false,
+            self::PAYSTACK => true,
+            self::CASH_ON_DELIVERY => false,
         };
     }
 
@@ -86,6 +98,19 @@ enum PaymentMethod: string
             self::BANK_TRANSFER => false,
             self::CHEQUE => false,
             self::CUSTOMER_CREDIT => true,
+            self::PAYSTACK => true,
+            self::CASH_ON_DELIVERY => false,
+        };
+    }
+
+    /**
+     * Check if this payment method requires online processing.
+     */
+    public function requiresOnlineProcessing(): bool
+    {
+        return match ($this) {
+            self::PAYSTACK => true,
+            default => false,
         };
     }
 
@@ -122,5 +147,30 @@ enum PaymentMethod: string
             self::cases(),
             fn ($method) => $method->isInstant()
         );
+    }
+
+    /**
+     * Get payment methods available for storefront checkout.
+     */
+    public static function storefrontOptions(): array
+    {
+        return collect([
+            self::CASH_ON_DELIVERY,
+            self::PAYSTACK,
+            self::BANK_TRANSFER,
+        ])->mapWithKeys(fn ($method) => [$method->value => $method->label()])
+            ->toArray();
+    }
+
+    /**
+     * Get storefront payment method values for validation.
+     */
+    public static function storefrontValues(): array
+    {
+        return [
+            self::CASH_ON_DELIVERY->value,
+            self::PAYSTACK->value,
+            self::BANK_TRANSFER->value,
+        ];
     }
 }

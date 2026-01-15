@@ -195,7 +195,7 @@ const Register: React.FC<AuthRegisterProps> = ({ shop }) => {
                                             href={CustomerAuthController.showLogin.url(
                                                 { shop: shop.slug },
                                             )}
-                                            className="text-brand-600 hover:text-brand-700 font-medium"
+                                            className="font-medium text-brand-600 hover:text-brand-700"
                                         >
                                             Sign in
                                         </Link>

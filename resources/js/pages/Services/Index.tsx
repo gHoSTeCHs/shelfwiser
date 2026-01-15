@@ -42,12 +42,8 @@ export default function Index({ services }: Props) {
     });
 
     const getCategories = () => {
-        const categories = services.data
-            .map((s) => s.category)
-            .filter(Boolean);
-        return Array.from(
-            new Map(categories.map((c) => [c!.id, c])).values(),
-        );
+        const categories = services.data.map((s) => s.category).filter(Boolean);
+        return Array.from(new Map(categories.map((c) => [c!.id, c])).values());
     };
 
     const getShops = () => {
@@ -130,7 +126,9 @@ export default function Index({ services }: Props) {
                                 : 'Get started by creating your first service'
                         }
                         action={
-                            !searchTerm && !selectedCategory && !selectedShop ? (
+                            !searchTerm &&
+                            !selectedCategory &&
+                            !selectedShop ? (
                                 <Link href={'/services/create'}>
                                     <Button>
                                         <Plus className="mr-2 h-4 w-4" />

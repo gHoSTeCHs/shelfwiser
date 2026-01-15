@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Storefront;
 
+use App\Enums\OrderStatus;
 use App\Enums\OrderType;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CancelOrderRequest;
 use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,21 +21,29 @@ class CustomerPortalController extends Controller
     {
         $customer = auth('customer')->user();
 
+        if ($customer->tenant_id !== $shop->tenant_id) {
+            abort(403, 'Unauthorized');
+        }
+
         $stats = [
             'total_orders' => $customer->orders()
+                ->where('shop_id', $shop->id)
                 ->where('order_type', OrderType::CUSTOMER->value)
                 ->count(),
             'pending_orders' => $customer->orders()
+                ->where('shop_id', $shop->id)
                 ->where('order_type', OrderType::CUSTOMER->value)
                 ->where('status', 'pending')
                 ->count(),
             'total_spent' => $customer->orders()
+                ->where('shop_id', $shop->id)
                 ->where('order_type', OrderType::CUSTOMER->value)
                 ->where('payment_status', 'paid')
                 ->sum('total_amount'),
         ];
 
         $recentOrders = $customer->orders()
+            ->where('shop_id', $shop->id)
             ->where('order_type', OrderType::CUSTOMER->value)
             ->latest()
             ->limit(5)
@@ -54,7 +64,12 @@ class CustomerPortalController extends Controller
     {
         $customer = auth('customer')->user();
 
+        if ($customer->tenant_id !== $shop->tenant_id) {
+            abort(403, 'Unauthorized');
+        }
+
         $orders = $customer->orders()
+            ->where('shop_id', $shop->id)
             ->where('order_type', OrderType::CUSTOMER->value)
             ->with(['items.productVariant.product'])
             ->latest()
@@ -73,8 +88,13 @@ class CustomerPortalController extends Controller
     {
         $customer = auth('customer')->user();
 
+        if ($customer->tenant_id !== $shop->tenant_id) {
+            abort(403, 'Unauthorized');
+        }
+
         $order = $customer->orders()
             ->where('id', $orderId)
+            ->where('shop_id', $shop->id)
             ->where('order_type', OrderType::CUSTOMER->value)
             ->with(['items.productVariant.product', 'items.packagingType'])
             ->firstOrFail();
@@ -91,6 +111,11 @@ class CustomerPortalController extends Controller
     public function profile(Shop $shop): Response
     {
         $customer = auth('customer')->user();
+
+        if ($customer->tenant_id !== $shop->tenant_id) {
+            abort(403, 'Unauthorized');
+        }
+
         $addresses = $customer->addresses;
 
         return Inertia::render('Storefront/Account/Profile', [
@@ -107,6 +132,10 @@ class CustomerPortalController extends Controller
     {
         $customer = auth('customer')->user();
 
+        if ($customer->tenant_id !== $shop->tenant_id) {
+            abort(403, 'Unauthorized');
+        }
+
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -117,5 +146,36 @@ class CustomerPortalController extends Controller
         $customer->update($validated);
 
         return back()->with('success', 'Profile updated successfully');
+    }
+
+    /**
+     * Cancel a customer order.
+     */
+    public function cancelOrder(CancelOrderRequest $request, Shop $shop, $orderId): RedirectResponse
+    {
+        $customer = auth('customer')->user();
+
+        if ($customer->tenant_id !== $shop->tenant_id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $order = $customer->orders()
+            ->where('id', $orderId)
+            ->where('shop_id', $shop->id)
+            ->where('order_type', OrderType::CUSTOMER->value)
+            ->firstOrFail();
+
+        if (! $order->canCancel()) {
+            return back()->with('error', 'This order cannot be cancelled at its current status.');
+        }
+
+        $order->update([
+            'status' => OrderStatus::CANCELLED,
+            'cancellation_reason' => $request->validated('cancellation_reason'),
+            'cancelled_at' => now(),
+            'cancelled_by' => $customer->id,
+        ]);
+
+        return back()->with('success', 'Order cancelled successfully.');
     }
 }

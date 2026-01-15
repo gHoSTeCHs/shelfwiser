@@ -1,16 +1,16 @@
-import { Head } from '@inertiajs/react';
+import MetricCard from '@/components/dashboard/MetricCard';
+import DataTable from '@/components/reports/DataTable';
+import FilterBar from '@/components/reports/FilterBar';
 import AppLayout from '@/layouts/AppLayout';
 import { SalesReportProps } from '@/types/reports';
-import FilterBar from '@/components/reports/FilterBar';
-import DataTable from '@/components/reports/DataTable';
-import MetricCard from '@/components/dashboard/MetricCard';
+import { Head } from '@inertiajs/react';
 import {
     DollarSign,
-    ShoppingCart,
-    TrendingUp,
     PercentIcon,
-    Tag,
     Receipt,
+    ShoppingCart,
+    Tag,
+    TrendingUp,
 } from 'lucide-react';
 
 export default function SalesReport({
@@ -288,7 +288,7 @@ export default function SalesReport({
                         key: 'status',
                         label: 'Status',
                         render: (value: string) => (
-                            <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium capitalize text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                            <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 capitalize dark:bg-gray-800 dark:text-gray-200">
                                 {value.replace('_', ' ')}
                             </span>
                         ),

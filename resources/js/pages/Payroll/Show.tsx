@@ -1,22 +1,21 @@
-import { Head, Link, Form, router } from '@inertiajs/react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/AppLayout';
-import { Card } from '@/components/ui/card';
-import Button from '@/components/ui/button/Button';
-import Badge from '@/components/ui/badge/Badge';
-import Input from '@/components/form/input/InputField';
-import TextArea from '@/components/form/input/TextArea';
 import PayrollController from '@/actions/App/Http/Controllers/PayrollController';
+import TextArea from '@/components/form/input/TextArea';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
+import { Head, Link, router } from '@inertiajs/react';
 import {
-    Calendar,
-    DollarSign,
-    Users,
-    CheckCircle,
-    XCircle,
-    Play,
     ArrowLeft,
+    Calendar,
+    CheckCircle,
+    DollarSign,
+    Play,
     Trash2,
+    Users,
+    XCircle,
 } from 'lucide-react';
+import { useState } from 'react';
 
 interface User {
     id: number;
@@ -145,16 +144,18 @@ export default function Show({
     const handleProcess = () => {
         if (
             confirm(
-                'Are you sure you want to process this payroll? This will generate payslips for all eligible employees.'
+                'Are you sure you want to process this payroll? This will generate payslips for all eligible employees.',
             )
         ) {
             setProcessing(true);
             router.post(
-                PayrollController.process.url({ payrollPeriod: payrollPeriod.id }),
+                PayrollController.process.url({
+                    payrollPeriod: payrollPeriod.id,
+                }),
                 {},
                 {
                     onFinish: () => setProcessing(false),
-                }
+                },
             );
         }
     };
@@ -163,11 +164,13 @@ export default function Show({
         if (confirm('Are you sure you want to approve this payroll?')) {
             setApproving(true);
             router.post(
-                PayrollController.approve.url({ payrollPeriod: payrollPeriod.id }),
+                PayrollController.approve.url({
+                    payrollPeriod: payrollPeriod.id,
+                }),
                 {},
                 {
                     onFinish: () => setApproving(false),
-                }
+                },
             );
         }
     };
@@ -175,16 +178,18 @@ export default function Show({
     const handleMarkAsPaid = () => {
         if (
             confirm(
-                'Are you sure you want to mark this payroll as paid? This will trigger wage advance repayments.'
+                'Are you sure you want to mark this payroll as paid? This will trigger wage advance repayments.',
             )
         ) {
             setMarkingPaid(true);
             router.post(
-                PayrollController.markAsPaid.url({ payrollPeriod: payrollPeriod.id }),
+                PayrollController.markAsPaid.url({
+                    payrollPeriod: payrollPeriod.id,
+                }),
                 {},
                 {
                     onFinish: () => setMarkingPaid(false),
-                }
+                },
             );
         }
     };
@@ -205,18 +210,21 @@ export default function Show({
                     setCancelReason('');
                 },
                 onFinish: () => setCancelling(false),
-            }
+            },
         );
     };
 
     const handleDelete = () => {
         setDeleting(true);
-        router.delete(PayrollController.destroy.url({ payrollPeriod: payrollPeriod.id }), {
-            onSuccess: () => {
-                router.visit(PayrollController.index.url());
+        router.delete(
+            PayrollController.destroy.url({ payrollPeriod: payrollPeriod.id }),
+            {
+                onSuccess: () => {
+                    router.visit(PayrollController.index.url());
+                },
+                onFinish: () => setDeleting(false),
             },
-            onFinish: () => setDeleting(false),
-        });
+        );
     };
 
     return (
@@ -237,7 +245,7 @@ export default function Show({
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                     <div>
                         <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold text-dark-900">
+                            <h1 className="text-dark-900 text-2xl font-bold">
                                 {payrollPeriod.period_name}
                             </h1>
                             <Badge color={getStatusColor(payrollPeriod.status)}>
@@ -249,8 +257,10 @@ export default function Show({
                                 </Badge>
                             )}
                         </div>
-                        <p className="mt-1 text-sm text-dark-600">
-                            {payrollPeriod.shop ? payrollPeriod.shop.name : 'All Shops'}
+                        <p className="text-dark-600 mt-1 text-sm">
+                            {payrollPeriod.shop
+                                ? payrollPeriod.shop.name
+                                : 'All Shops'}
                         </p>
                     </div>
 
@@ -264,7 +274,9 @@ export default function Show({
                                 loading={processing}
                                 disabled={processing}
                             >
-                                {processing ? 'Processing...' : 'Process Payroll'}
+                                {processing
+                                    ? 'Processing...'
+                                    : 'Process Payroll'}
                             </Button>
                         )}
 
@@ -281,18 +293,23 @@ export default function Show({
                             </Button>
                         )}
 
-                        {canMarkAsPaid && payrollPeriod.status === 'approved' && (
-                            <Button
-                                variant="primary"
-                                size="md"
-                                startIcon={<DollarSign className="h-4 w-4" />}
-                                onClick={handleMarkAsPaid}
-                                loading={markingPaid}
-                                disabled={markingPaid}
-                            >
-                                {markingPaid ? 'Marking as Paid...' : 'Mark as Paid'}
-                            </Button>
-                        )}
+                        {canMarkAsPaid &&
+                            payrollPeriod.status === 'approved' && (
+                                <Button
+                                    variant="primary"
+                                    size="md"
+                                    startIcon={
+                                        <DollarSign className="h-4 w-4" />
+                                    }
+                                    onClick={handleMarkAsPaid}
+                                    loading={markingPaid}
+                                    disabled={markingPaid}
+                                >
+                                    {markingPaid
+                                        ? 'Marking as Paid...'
+                                        : 'Mark as Paid'}
+                                </Button>
+                            )}
 
                         {canCancel && (
                             <Button
@@ -326,9 +343,12 @@ export default function Show({
                     <div className="flex items-start gap-3">
                         <XCircle className="mt-0.5 h-5 w-5 text-error-600" />
                         <div>
-                            <h3 className="font-semibold text-error-900">Payroll Cancelled</h3>
+                            <h3 className="font-semibold text-error-900">
+                                Payroll Cancelled
+                            </h3>
                             <p className="mt-1 text-sm text-error-700">
-                                Cancelled on {formatDateTime(payrollPeriod.cancelled_at)}
+                                Cancelled on{' '}
+                                {formatDateTime(payrollPeriod.cancelled_at)}
                             </p>
                             {payrollPeriod.cancellation_reason && (
                                 <p className="mt-2 text-sm text-error-700">
@@ -344,44 +364,52 @@ export default function Show({
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-dark-600">Period</p>
-                            <p className="mt-1 text-sm text-dark-900">
+                            <p className="text-dark-600 text-sm font-medium">
+                                Period
+                            </p>
+                            <p className="text-dark-900 mt-1 text-sm">
                                 {formatDate(payrollPeriod.start_date)} -{' '}
                                 {formatDate(payrollPeriod.end_date)}
                             </p>
                         </div>
-                        <Calendar className="h-5 w-5 text-dark-400" />
+                        <Calendar className="text-dark-400 h-5 w-5" />
                     </div>
                 </Card>
 
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-dark-600">Payment Date</p>
-                            <p className="mt-1 text-sm text-dark-900">
+                            <p className="text-dark-600 text-sm font-medium">
+                                Payment Date
+                            </p>
+                            <p className="text-dark-900 mt-1 text-sm">
                                 {formatDate(payrollPeriod.payment_date)}
                             </p>
                         </div>
-                        <Calendar className="h-5 w-5 text-dark-400" />
+                        <Calendar className="text-dark-400 h-5 w-5" />
                     </div>
                 </Card>
 
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-dark-600">Employees</p>
-                            <p className="mt-1 text-lg font-bold text-dark-900">
+                            <p className="text-dark-600 text-sm font-medium">
+                                Employees
+                            </p>
+                            <p className="text-dark-900 mt-1 text-lg font-bold">
                                 {payrollPeriod.employee_count}
                             </p>
                         </div>
-                        <Users className="h-5 w-5 text-dark-400" />
+                        <Users className="text-dark-400 h-5 w-5" />
                     </div>
                 </Card>
 
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-dark-600">Total Net Pay</p>
+                            <p className="text-dark-600 text-sm font-medium">
+                                Total Net Pay
+                            </p>
                             <p className="mt-1 text-lg font-bold text-success-600">
                                 {formatCurrency(payrollPeriod.total_net_pay)}
                             </p>
@@ -393,21 +421,27 @@ export default function Show({
 
             <div className="mb-6 grid gap-6 lg:grid-cols-3">
                 <Card className="p-4">
-                    <h3 className="mb-3 font-semibold text-dark-900">Gross Pay</h3>
-                    <p className="text-2xl font-bold text-dark-900">
+                    <h3 className="text-dark-900 mb-3 font-semibold">
+                        Gross Pay
+                    </h3>
+                    <p className="text-dark-900 text-2xl font-bold">
                         {formatCurrency(payrollPeriod.total_gross_pay)}
                     </p>
                 </Card>
 
                 <Card className="p-4">
-                    <h3 className="mb-3 font-semibold text-dark-900">Total Deductions</h3>
+                    <h3 className="text-dark-900 mb-3 font-semibold">
+                        Total Deductions
+                    </h3>
                     <p className="text-2xl font-bold text-warning-600">
                         {formatCurrency(payrollPeriod.total_deductions)}
                     </p>
                 </Card>
 
                 <Card className="p-4">
-                    <h3 className="mb-3 font-semibold text-dark-900">Net Pay</h3>
+                    <h3 className="text-dark-900 mb-3 font-semibold">
+                        Net Pay
+                    </h3>
                     <p className="text-2xl font-bold text-success-600">
                         {formatCurrency(payrollPeriod.total_net_pay)}
                     </p>
@@ -418,22 +452,26 @@ export default function Show({
                 <Card className="mb-6 p-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                            <p className="text-sm font-medium text-dark-600">Processed By</p>
-                            <p className="mt-1 text-sm text-dark-900">
+                            <p className="text-dark-600 text-sm font-medium">
+                                Processed By
+                            </p>
+                            <p className="text-dark-900 mt-1 text-sm">
                                 {payrollPeriod.processed_by?.name || 'N/A'}
                             </p>
-                            <p className="text-xs text-dark-500">
+                            <p className="text-dark-500 text-xs">
                                 {formatDateTime(payrollPeriod.processed_at)}
                             </p>
                         </div>
 
                         {payrollPeriod.approved_at && (
                             <div>
-                                <p className="text-sm font-medium text-dark-600">Approved By</p>
-                                <p className="mt-1 text-sm text-dark-900">
+                                <p className="text-dark-600 text-sm font-medium">
+                                    Approved By
+                                </p>
+                                <p className="text-dark-900 mt-1 text-sm">
                                     {payrollPeriod.approved_by?.name || 'N/A'}
                                 </p>
-                                <p className="text-xs text-dark-500">
+                                <p className="text-dark-500 text-xs">
                                     {formatDateTime(payrollPeriod.approved_at)}
                                 </p>
                             </div>
@@ -443,91 +481,117 @@ export default function Show({
             )}
 
             <Card className="overflow-hidden">
-                <div className="border-b border-dark-200 bg-dark-50 p-4">
-                    <h2 className="text-lg font-semibold text-dark-900">Employee Payslips</h2>
+                <div className="border-dark-200 bg-dark-50 border-b p-4">
+                    <h2 className="text-dark-900 text-lg font-semibold">
+                        Employee Payslips
+                    </h2>
                 </div>
 
                 <div className="overflow-x-auto">
                     {payrollPeriod.payslips.length === 0 ? (
-                        <div className="p-8 text-center text-dark-500">
-                            No payslips generated yet. Process payroll to generate payslips.
+                        <div className="text-dark-500 p-8 text-center">
+                            No payslips generated yet. Process payroll to
+                            generate payslips.
                         </div>
                     ) : (
                         <table className="w-full">
                             <thead className="bg-dark-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                                         Employee
                                     </th>
-                                    <th className="hidden lg:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 hidden px-4 py-3 text-right text-xs font-medium tracking-wider uppercase lg:table-cell">
                                         Base/Salary
                                     </th>
-                                    <th className="hidden md:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 hidden px-4 py-3 text-right text-xs font-medium tracking-wider uppercase md:table-cell">
                                         Regular Hours
                                     </th>
-                                    <th className="hidden md:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 hidden px-4 py-3 text-right text-xs font-medium tracking-wider uppercase md:table-cell">
                                         Overtime
                                     </th>
-                                    <th className="hidden lg:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 hidden px-4 py-3 text-right text-xs font-medium tracking-wider uppercase lg:table-cell">
                                         Gross Pay
                                     </th>
-                                    <th className="hidden lg:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 hidden px-4 py-3 text-right text-xs font-medium tracking-wider uppercase lg:table-cell">
                                         Deductions
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 px-4 py-3 text-right text-xs font-medium tracking-wider uppercase">
                                         Net Pay
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 px-4 py-3 text-right text-xs font-medium tracking-wider uppercase">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-dark-200 bg-white">
+                            <tbody className="divide-dark-200 divide-y bg-white">
                                 {payrollPeriod.payslips.map((payslip) => (
-                                    <tr key={payslip.id} className="hover:bg-dark-50">
+                                    <tr
+                                        key={payslip.id}
+                                        className="hover:bg-dark-50"
+                                    >
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col">
-                                                <span className="font-medium text-dark-900">
+                                                <span className="text-dark-900 font-medium">
                                                     {payslip.user.name}
                                                 </span>
-                                                <span className="text-xs text-dark-500">
+                                                <span className="text-dark-500 text-xs">
                                                     {payslip.user.email}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="hidden lg:table-cell px-4 py-3 text-right text-sm text-dark-900">
-                                            {formatCurrency(payslip.basic_salary)}
+                                        <td className="text-dark-900 hidden px-4 py-3 text-right text-sm lg:table-cell">
+                                            {formatCurrency(
+                                                payslip.basic_salary,
+                                            )}
                                         </td>
-                                        <td className="hidden md:table-cell px-4 py-3 text-right text-sm text-dark-900">
+                                        <td className="text-dark-900 hidden px-4 py-3 text-right text-sm md:table-cell">
                                             <div className="flex flex-col">
-                                                <span>{parseFloat(payslip.regular_hours).toFixed(2)}h</span>
-                                                <span className="text-xs text-dark-500">
-                                                    {formatCurrency(payslip.regular_pay)}
+                                                <span>
+                                                    {parseFloat(
+                                                        payslip.regular_hours,
+                                                    ).toFixed(2)}
+                                                    h
+                                                </span>
+                                                <span className="text-dark-500 text-xs">
+                                                    {formatCurrency(
+                                                        payslip.regular_pay,
+                                                    )}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="hidden md:table-cell px-4 py-3 text-right text-sm text-dark-900">
+                                        <td className="text-dark-900 hidden px-4 py-3 text-right text-sm md:table-cell">
                                             <div className="flex flex-col">
-                                                <span>{parseFloat(payslip.overtime_hours).toFixed(2)}h</span>
-                                                <span className="text-xs text-dark-500">
-                                                    {formatCurrency(payslip.overtime_pay)}
+                                                <span>
+                                                    {parseFloat(
+                                                        payslip.overtime_hours,
+                                                    ).toFixed(2)}
+                                                    h
+                                                </span>
+                                                <span className="text-dark-500 text-xs">
+                                                    {formatCurrency(
+                                                        payslip.overtime_pay,
+                                                    )}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="hidden lg:table-cell px-4 py-3 text-right text-sm font-medium text-dark-900">
+                                        <td className="text-dark-900 hidden px-4 py-3 text-right text-sm font-medium lg:table-cell">
                                             {formatCurrency(payslip.gross_pay)}
                                         </td>
-                                        <td className="hidden lg:table-cell px-4 py-3 text-right text-sm text-warning-600">
-                                            {formatCurrency(payslip.total_deductions)}
+                                        <td className="hidden px-4 py-3 text-right text-sm text-warning-600 lg:table-cell">
+                                            {formatCurrency(
+                                                payslip.total_deductions,
+                                            )}
                                         </td>
                                         <td className="px-4 py-3 text-right text-sm font-semibold text-success-600">
                                             {formatCurrency(payslip.net_pay)}
                                         </td>
                                         <td className="px-4 py-3 text-right">
                                             <Link
-                                                href={PayrollController.showPayslip.url({
-                                                    payslip: payslip.id,
-                                                })}
+                                                href={PayrollController.showPayslip.url(
+                                                    {
+                                                        payslip: payslip.id,
+                                                    },
+                                                )}
                                                 className="text-sm font-medium text-brand-600 hover:text-brand-700"
                                             >
                                                 View
@@ -542,13 +606,14 @@ export default function Show({
             </Card>
 
             {showCancelDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
                     <Card className="w-full max-w-md p-6">
-                        <h3 className="mb-4 text-lg font-semibold text-dark-900">
+                        <h3 className="text-dark-900 mb-4 text-lg font-semibold">
                             Cancel Payroll Period
                         </h3>
-                        <p className="mb-4 text-sm text-dark-600">
-                            Please provide a reason for cancelling this payroll period.
+                        <p className="text-dark-600 mb-4 text-sm">
+                            Please provide a reason for cancelling this payroll
+                            period.
                         </p>
 
                         <TextArea
@@ -584,14 +649,14 @@ export default function Show({
             )}
 
             {showDeleteDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
                     <Card className="w-full max-w-md p-6">
-                        <h3 className="mb-4 text-lg font-semibold text-dark-900">
+                        <h3 className="text-dark-900 mb-4 text-lg font-semibold">
                             Delete Payroll Period
                         </h3>
-                        <p className="mb-6 text-sm text-dark-600">
-                            Are you sure you want to delete this payroll period? This action
-                            cannot be undone.
+                        <p className="text-dark-600 mb-6 text-sm">
+                            Are you sure you want to delete this payroll period?
+                            This action cannot be undone.
                         </p>
 
                         <div className="flex gap-3">
@@ -602,7 +667,11 @@ export default function Show({
                             >
                                 Cancel
                             </Button>
-                            <Button variant="destructive" fullWidth onClick={handleDelete}>
+                            <Button
+                                variant="destructive"
+                                fullWidth
+                                onClick={handleDelete}
+                            >
                                 Delete
                             </Button>
                         </div>

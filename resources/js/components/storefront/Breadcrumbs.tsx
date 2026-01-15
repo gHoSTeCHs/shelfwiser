@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
-import React from 'react';
 import { ChevronRight } from 'lucide-react';
+import React from 'react';
 
 export interface BreadcrumbItem {
     label: string;
@@ -26,22 +26,24 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
                     return (
                         <li key={index} className="flex items-center">
                             {index > 0 && (
-                                <ChevronRight className="w-4 h-4 text-gray-400 mx-2" />
+                                <ChevronRight className="mx-2 h-4 w-4 text-gray-400" />
                             )}
 
                             {isLast ? (
-                                <span className="text-gray-900 font-medium">
+                                <span className="font-medium text-gray-900">
                                     {item.label}
                                 </span>
                             ) : item.href ? (
                                 <Link
                                     href={item.href}
-                                    className="text-gray-600 hover:text-brand-600 transition"
+                                    className="text-gray-600 transition hover:text-brand-600"
                                 >
                                     {item.label}
                                 </Link>
                             ) : (
-                                <span className="text-gray-600">{item.label}</span>
+                                <span className="text-gray-600">
+                                    {item.label}
+                                </span>
                             )}
                         </li>
                     );

@@ -1,23 +1,16 @@
 import CustomerController from '@/actions/App/Http/Controllers/CustomerController';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
+import InputField from '@/components/form/input/InputField';
+import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
-import Select from '@/components/form/Select';
-import Label from '@/components/form/Label';
-import InputField from '@/components/form/input/InputField';
 import AppLayout from '@/layouts/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    CreditCard,
-    Mail,
-    Phone,
-    Search,
-    UserPlus,
-    Users,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import type { CustomerIndexPageProps } from '@/types/customer';
 import { formatCurrency } from '@/types/customer';
+import { Head, Link, router } from '@inertiajs/react';
+import { CreditCard, Mail, Phone, Search, UserPlus, Users } from 'lucide-react';
+import React, { useState } from 'react';
 
 const CustomersIndex = ({
     customers,
@@ -50,7 +43,11 @@ const CustomersIndex = ({
         setStatusFilter('');
         setCreditFilter('');
         setShopFilter('');
-        router.get(CustomerController.index.url(), {}, { preserveState: true, preserveScroll: true });
+        router.get(
+            CustomerController.index.url(),
+            {},
+            { preserveState: true, preserveScroll: true },
+        );
     };
 
     const handleSearchKeyDown = (e: React.KeyboardEvent) => {
@@ -137,7 +134,9 @@ const CustomersIndex = ({
                                     Total Balance
                                 </p>
                                 <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
-                                    {formatCurrency(statistics.total_credit_balance)}
+                                    {formatCurrency(
+                                        statistics.total_credit_balance,
+                                    )}
                                 </p>
                             </div>
                             <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
@@ -168,7 +167,7 @@ const CustomersIndex = ({
                         <div className="sm:col-span-2">
                             <Label htmlFor="search">Search</Label>
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                                 <InputField
                                     id="search"
                                     type="text"
@@ -208,10 +207,16 @@ const CustomersIndex = ({
                         </div>
 
                         <div className="flex items-end gap-2">
-                            <Button onClick={handleFilterChange} className="flex-1">
+                            <Button
+                                onClick={handleFilterChange}
+                                className="flex-1"
+                            >
                                 Filter
                             </Button>
-                            <Button onClick={handleClearFilters} variant="outline">
+                            <Button
+                                onClick={handleClearFilters}
+                                variant="outline"
+                            >
                                 Clear
                             </Button>
                         </div>
@@ -223,25 +228,46 @@ const CustomersIndex = ({
                         <table className="w-full">
                             <thead className="border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Customer
                                     </th>
-                                    <th className="hidden md:table-cell px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-6 py-4 text-left text-sm font-semibold text-gray-900 md:table-cell dark:text-white"
+                                    >
                                         Contact
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Status
                                     </th>
-                                    <th className="hidden lg:table-cell px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-6 py-4 text-right text-sm font-semibold text-gray-900 lg:table-cell dark:text-white"
+                                    >
                                         Balance
                                     </th>
-                                    <th className="hidden lg:table-cell px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-6 py-4 text-right text-sm font-semibold text-gray-900 lg:table-cell dark:text-white"
+                                    >
                                         Credit Limit
                                     </th>
-                                    <th className="hidden xl:table-cell px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-6 py-4 text-center text-sm font-semibold text-gray-900 xl:table-cell dark:text-white"
+                                    >
                                         Orders
                                     </th>
-                                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Actions
                                     </th>
                                 </tr>
@@ -249,12 +275,17 @@ const CustomersIndex = ({
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                 {customers.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="px-6 py-12 text-center">
+                                        <td
+                                            colSpan={7}
+                                            className="px-6 py-12 text-center"
+                                        >
                                             <Users className="mx-auto h-12 w-12 text-gray-400" />
                                             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
                                                 No customers found
                                             </p>
-                                            <Link href={CustomerController.create.url()}>
+                                            <Link
+                                                href={CustomerController.create.url()}
+                                            >
                                                 <Button className="mt-4">
                                                     <UserPlus className="mr-2 h-4 w-4" />
                                                     Add First Customer
@@ -270,30 +301,47 @@ const CustomersIndex = ({
                                         >
                                             <td className="px-6 py-4">
                                                 <Link
-                                                    href={CustomerController.show.url({ customer: customer.id })}
+                                                    href={CustomerController.show.url(
+                                                        {
+                                                            customer:
+                                                                customer.id,
+                                                        },
+                                                    )}
                                                     className="block"
                                                 >
                                                     <div className="flex items-center gap-3">
                                                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">
                                                             <span className="text-sm font-semibold">
-                                                                {customer.first_name[0]}
-                                                                {customer.last_name[0]}
+                                                                {
+                                                                    customer
+                                                                        .first_name[0]
+                                                                }
+                                                                {
+                                                                    customer
+                                                                        .last_name[0]
+                                                                }
                                                             </span>
                                                         </div>
                                                         <div>
-                                                            <p className="font-medium text-gray-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400">
-                                                                {customer.full_name}
+                                                            <p className="font-medium text-gray-900 hover:text-brand-600 dark:text-white dark:hover:text-brand-400">
+                                                                {
+                                                                    customer.full_name
+                                                                }
                                                             </p>
                                                             {customer.preferred_shop && (
                                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                                    {customer.preferred_shop.name}
+                                                                    {
+                                                                        customer
+                                                                            .preferred_shop
+                                                                            .name
+                                                                    }
                                                                 </p>
                                                             )}
                                                         </div>
                                                     </div>
                                                 </Link>
                                             </td>
-                                            <td className="hidden md:table-cell px-6 py-4">
+                                            <td className="hidden px-6 py-4 md:table-cell">
                                                 <div className="space-y-1">
                                                     <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                                         <Mail className="h-3 w-3" />
@@ -310,39 +358,73 @@ const CustomersIndex = ({
                                             <td className="px-6 py-4">
                                                 <Badge
                                                     variant="light"
-                                                    color={customer.is_active ? 'success' : 'error'}
+                                                    color={
+                                                        customer.is_active
+                                                            ? 'success'
+                                                            : 'error'
+                                                    }
                                                 >
-                                                    {customer.is_active ? 'Active' : 'Inactive'}
+                                                    {customer.is_active
+                                                        ? 'Active'
+                                                        : 'Inactive'}
                                                 </Badge>
                                             </td>
-                                            <td className="hidden lg:table-cell px-6 py-4 text-right">
-                                                <span className={`font-medium ${parseFloat(customer.account_balance) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>
-                                                    {formatCurrency(customer.account_balance)}
+                                            <td className="hidden px-6 py-4 text-right lg:table-cell">
+                                                <span
+                                                    className={`font-medium ${parseFloat(customer.account_balance) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}
+                                                >
+                                                    {formatCurrency(
+                                                        customer.account_balance,
+                                                    )}
                                                 </span>
                                             </td>
-                                            <td className="hidden lg:table-cell px-6 py-4 text-right">
+                                            <td className="hidden px-6 py-4 text-right lg:table-cell">
                                                 {customer.credit_limit ? (
                                                     <span className="text-gray-900 dark:text-white">
-                                                        {formatCurrency(customer.credit_limit)}
+                                                        {formatCurrency(
+                                                            customer.credit_limit,
+                                                        )}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-gray-400">—</span>
+                                                    <span className="text-gray-400">
+                                                        —
+                                                    </span>
                                                 )}
                                             </td>
-                                            <td className="hidden xl:table-cell px-6 py-4 text-center">
+                                            <td className="hidden px-6 py-4 text-center xl:table-cell">
                                                 <span className="text-gray-900 dark:text-white">
                                                     {customer.orders_count ?? 0}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Link href={CustomerController.show.url({ customer: customer.id })}>
-                                                        <Button variant="outline" size="sm">
+                                                    <Link
+                                                        href={CustomerController.show.url(
+                                                            {
+                                                                customer:
+                                                                    customer.id,
+                                                            },
+                                                        )}
+                                                    >
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                        >
                                                             View
                                                         </Button>
                                                     </Link>
-                                                    <Link href={CustomerController.edit.url({ customer: customer.id })}>
-                                                        <Button variant="outline" size="sm">
+                                                    <Link
+                                                        href={CustomerController.edit.url(
+                                                            {
+                                                                customer:
+                                                                    customer.id,
+                                                            },
+                                                        )}
+                                                    >
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                        >
                                                             Edit
                                                         </Button>
                                                     </Link>
@@ -358,19 +440,32 @@ const CustomersIndex = ({
                     {customers.last_page > 1 && (
                         <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-700">
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Showing {(customers.current_page - 1) * customers.per_page + 1} to{' '}
-                                {Math.min(customers.current_page * customers.per_page, customers.total)} of{' '}
-                                {customers.total} customers
+                                Showing{' '}
+                                {(customers.current_page - 1) *
+                                    customers.per_page +
+                                    1}{' '}
+                                to{' '}
+                                {Math.min(
+                                    customers.current_page * customers.per_page,
+                                    customers.total,
+                                )}{' '}
+                                of {customers.total} customers
                             </p>
                             <div className="flex gap-2">
                                 {customers.links.map((link, index) => (
                                     <Button
                                         key={index}
-                                        variant={link.active ? 'primary' : 'outline'}
+                                        variant={
+                                            link.active ? 'primary' : 'outline'
+                                        }
                                         size="sm"
                                         disabled={!link.url}
-                                        onClick={() => link.url && router.get(link.url)}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                        onClick={() =>
+                                            link.url && router.get(link.url)
+                                        }
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
                                     />
                                 ))}
                             </div>
@@ -382,6 +477,8 @@ const CustomersIndex = ({
     );
 };
 
-CustomersIndex.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
+CustomersIndex.layout = (page: React.ReactNode) => (
+    <AppLayout>{page}</AppLayout>
+);
 
 export default CustomersIndex;

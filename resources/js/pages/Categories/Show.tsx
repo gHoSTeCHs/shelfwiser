@@ -65,7 +65,6 @@ interface Props {
 }
 
 export default function Show({ category, breadcrumbs }: Props) {
-
     return (
         <>
             <Head title={category.name} />
@@ -101,11 +100,15 @@ export default function Show({ category, breadcrumbs }: Props) {
                             as="button"
                             onBefore={() =>
                                 confirm(
-                                    'Are you sure you want to delete this category? This action cannot be undone.'
+                                    'Are you sure you want to delete this category? This action cannot be undone.',
                                 )
                             }
                         >
-                            <Button size="sm" variant="outline" className="text-error-600">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-error-600"
+                            >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
                             </Button>
@@ -116,7 +119,10 @@ export default function Show({ category, breadcrumbs }: Props) {
                 {breadcrumbs.length > 1 && (
                     <nav className="flex items-center gap-2 text-sm">
                         {breadcrumbs.map((crumb, index) => (
-                            <div key={crumb.id} className="flex items-center gap-2">
+                            <div
+                                key={crumb.id}
+                                className="flex items-center gap-2"
+                            >
                                 {index > 0 && (
                                     <ChevronRight className="h-4 w-4 text-gray-400" />
                                 )}
@@ -151,7 +157,9 @@ export default function Show({ category, breadcrumbs }: Props) {
                             </Badge>
                             <span className="text-sm text-gray-500 dark:text-gray-400">
                                 {category.products_count}{' '}
-                                {category.products_count === 1 ? 'product' : 'products'}
+                                {category.products_count === 1
+                                    ? 'product'
+                                    : 'products'}
                             </span>
                         </div>
                     </div>
@@ -173,9 +181,11 @@ export default function Show({ category, breadcrumbs }: Props) {
                                     {category.children.map((child) => (
                                         <Link
                                             key={child.id}
-                                            href={ProductCategoryController.show.url({
-                                                category: child.id,
-                                            })}
+                                            href={ProductCategoryController.show.url(
+                                                {
+                                                    category: child.id,
+                                                },
+                                            )}
                                             className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-all hover:border-brand-300 hover:shadow-sm dark:border-gray-700 dark:hover:border-brand-700"
                                         >
                                             <FolderTree className="h-5 w-5 text-brand-500" />
@@ -227,9 +237,12 @@ export default function Show({ category, breadcrumbs }: Props) {
                                             <ChevronRight className="h-5 w-5 text-gray-400" />
                                         </Link>
                                     ))}
-                                    {category.products_count > category.products.length && (
+                                    {category.products_count >
+                                        category.products.length && (
                                         <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-                                            And {category.products_count - category.products.length}{' '}
+                                            And{' '}
+                                            {category.products_count -
+                                                category.products.length}{' '}
                                             more products...
                                         </p>
                                     )}
@@ -245,7 +258,7 @@ export default function Show({ category, breadcrumbs }: Props) {
                                     <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                         Slug
                                     </p>
-                                    <p className="mt-1 font-mono text-sm text-gray-900 dark:text-white">
+                                    <p className="font-mono mt-1 text-sm text-gray-900 dark:text-white">
                                         {category.slug}
                                     </p>
                                 </div>
@@ -256,9 +269,12 @@ export default function Show({ category, breadcrumbs }: Props) {
                                             Parent Category
                                         </p>
                                         <Link
-                                            href={ProductCategoryController.show.url({
-                                                category: category.parent.id,
-                                            })}
+                                            href={ProductCategoryController.show.url(
+                                                {
+                                                    category:
+                                                        category.parent.id,
+                                                },
+                                            )}
                                             className="mt-1 text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                                         >
                                             {category.parent.name}

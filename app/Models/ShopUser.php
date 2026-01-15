@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class ShopUser extends Pivot
 {
+    use BelongsToTenant;
     protected $table = 'shop_user';
 
     protected $fillable = [

@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CustomerAddress extends Model
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     /**
      * @var array<int, string>
      */
     protected $fillable = [
+        'tenant_id',
         'customer_id',
         'type',
         'is_default',
@@ -34,6 +36,11 @@ class CustomerAddress extends Model
     protected $casts = [
         'is_default' => 'boolean',
     ];
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
 
     public function customer(): BelongsTo
     {

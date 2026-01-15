@@ -1,17 +1,17 @@
-import type { FC } from 'react';
-import { Wallet } from 'lucide-react';
-import CollapsibleSection from '@/components/ui/CollapsibleSection';
-import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
-import Select from '@/components/form/Select';
 import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
+import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import type { CreateStaffFormData, PayCalendar } from '@/types/staff';
 import {
-    PAY_TYPE_OPTIONS,
     PAY_FREQUENCY_OPTIONS,
-    isCommissionBased,
+    PAY_TYPE_OPTIONS,
     formatCurrency,
+    isCommissionBased,
 } from '@/types/staff';
+import { Wallet } from 'lucide-react';
+import type { FC } from 'react';
 
 interface CompensationSectionProps {
     data: CreateStaffFormData;
@@ -127,7 +127,7 @@ const CompensationSection: FC<CompensationSectionProps> = ({
                             {getPayAmountLabel()}
                         </Label>
                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">
+                            <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">
                                 ₦
                             </span>
                             <Input
@@ -135,7 +135,9 @@ const CompensationSection: FC<CompensationSectionProps> = ({
                                 name="pay_amount"
                                 type="number"
                                 value={data.pay_amount}
-                                onChange={(e) => onChange('pay_amount', e.target.value)}
+                                onChange={(e) =>
+                                    onChange('pay_amount', e.target.value)
+                                }
                                 error={!!errors.pay_amount}
                                 placeholder="0.00"
                                 className="pl-7"
@@ -161,7 +163,10 @@ const CompensationSection: FC<CompensationSectionProps> = ({
                             type="number"
                             value={data.standard_hours_per_week}
                             onChange={(e) =>
-                                onChange('standard_hours_per_week', e.target.value)
+                                onChange(
+                                    'standard_hours_per_week',
+                                    e.target.value,
+                                )
                             }
                             error={!!errors.standard_hours_per_week}
                             placeholder="40"
@@ -179,7 +184,11 @@ const CompensationSection: FC<CompensationSectionProps> = ({
                         </Label>
                         <Select
                             name="pay_calendar_id"
-                            value={data.pay_calendar_id ? String(data.pay_calendar_id) : ''}
+                            value={
+                                data.pay_calendar_id
+                                    ? String(data.pay_calendar_id)
+                                    : ''
+                            }
                             onChange={(value) =>
                                 onChange(
                                     'pay_calendar_id',
@@ -211,7 +220,10 @@ const CompensationSection: FC<CompensationSectionProps> = ({
                                     type="number"
                                     value={data.commission_rate || ''}
                                     onChange={(e) =>
-                                        onChange('commission_rate', e.target.value || null)
+                                        onChange(
+                                            'commission_rate',
+                                            e.target.value || null,
+                                        )
                                     }
                                     error={!!errors.commission_rate}
                                     placeholder="e.g., 5"
@@ -227,7 +239,7 @@ const CompensationSection: FC<CompensationSectionProps> = ({
                                     Commission Cap
                                 </Label>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">
+                                    <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">
                                         ₦
                                     </span>
                                     <Input
@@ -249,8 +261,8 @@ const CompensationSection: FC<CompensationSectionProps> = ({
                                 </div>
                                 <InputError message={errors.commission_cap} />
                                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    Maximum commission per pay period (leave empty for no
-                                    cap)
+                                    Maximum commission per pay period (leave
+                                    empty for no cap)
                                 </p>
                             </div>
                         </div>

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\DeductionCalculationBase;
 use App\Enums\DeductionCalculationType;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Carbon\Carbon;
 
 class EmployeeDeduction extends Model
 {
-    use HasFactory, SoftDeletes;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',

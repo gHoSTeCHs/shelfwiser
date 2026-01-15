@@ -33,9 +33,10 @@ export interface PayrollPeriod {
 export interface Payslip {
     id: number;
     payroll_period_id: number;
+    pay_run_id: number | null;
     user_id: number;
     tenant_id: number;
-    shop_id: number;
+    shop_id: number | null;
     basic_salary: number;
     regular_hours: number;
     regular_pay: number;
@@ -44,6 +45,7 @@ export interface Payslip {
     bonus: number;
     commission: number;
     gross_pay: number;
+    gross_earnings: number;
     income_tax: number;
     pension_employee: number;
     pension_employer: number;
@@ -53,9 +55,12 @@ export interface Payslip {
     other_deductions: number;
     total_deductions: number;
     net_pay: number;
-    earnings_breakdown: EarningsBreakdown;
-    deductions_breakdown: DeductionsBreakdown;
+    earnings_breakdown: EarningsBreakdown | EarningBreakdownItem[];
+    deductions_breakdown: DeductionsBreakdown | DeductionBreakdownItem[];
     tax_breakdown: TaxBreakdown | null;
+    tax_calculation: TaxCalculation | null;
+    employer_contributions: EmployerContributions | null;
+    status: string;
     notes: string | null;
     created_at: string;
     updated_at: string;
@@ -63,6 +68,14 @@ export interface Payslip {
     user?: User;
     shop?: Shop;
     payrollPeriod?: PayrollPeriod;
+    payRun?: PayRun;
+    tax_law_version_label?: string;
+}
+
+export interface EmployerContributions {
+    pension: number;
+    nhf: number;
+    total: number;
 }
 
 export interface EmployeePayrollDetail {
@@ -222,9 +235,22 @@ export interface TaxBand {
     band_max: number | null;
 }
 
-export type PayrollStatus = 'draft' | 'processing' | 'processed' | 'approved' | 'paid' | 'cancelled';
+export type PayrollStatus =
+    | 'draft'
+    | 'processing'
+    | 'processed'
+    | 'approved'
+    | 'paid'
+    | 'cancelled';
 
-export type WageAdvanceStatus = 'pending' | 'approved' | 'rejected' | 'disbursed' | 'repaying' | 'repaid' | 'cancelled';
+export type WageAdvanceStatus =
+    | 'pending'
+    | 'approved'
+    | 'rejected'
+    | 'disbursed'
+    | 'repaying'
+    | 'repaid'
+    | 'cancelled';
 
 export type EmploymentType =
     | 'full_time'
@@ -233,11 +259,7 @@ export type EmploymentType =
     | 'seasonal'
     | 'intern';
 
-export type PayType =
-    | 'salary'
-    | 'hourly'
-    | 'daily'
-    | 'commission_based';
+export type PayType = 'salary' | 'hourly' | 'daily' | 'commission_based';
 
 export type PayFrequency =
     | 'daily'
@@ -246,10 +268,7 @@ export type PayFrequency =
     | 'semi_monthly'
     | 'monthly';
 
-export type TaxHandling =
-    | 'shop_calculates'
-    | 'employee_calculates'
-    | 'exempt';
+export type TaxHandling = 'shop_calculates' | 'employee_calculates' | 'exempt';
 
 export type DeductionType =
     | 'fixed_amount'
@@ -282,6 +301,7 @@ export interface PayRun {
     completed_at: string | null;
     notes: string | null;
     metadata: Record<string, unknown> | null;
+    tax_law_version?: TaxLawVersion | null;
     created_at: string;
     updated_at: string;
     deleted_at: string | null;
@@ -294,10 +314,12 @@ export interface PayRun {
     completed_by_user?: User;
     status_label?: string;
     status_color?: string;
+    tax_law_version_label?: string;
 }
 
 export interface PayRunItem {
     id: number;
+    tenant_id: number;
     pay_run_id: number;
     user_id: number;
     payslip_id: number | null;
@@ -316,11 +338,13 @@ export interface PayRunItem {
     error_message: string | null;
     created_at: string;
     updated_at: string;
+    deleted_at: string | null;
     user?: User;
     pay_run?: PayRun;
     payslip?: Payslip;
     status_label?: string;
     status_color?: string;
+    tax_law_version_label?: string;
 }
 
 export interface EarningBreakdownItem {
@@ -346,12 +370,25 @@ export interface DeductionBreakdownItem {
 export interface TaxCalculation {
     gross_income: number;
     taxable_income: number;
-    consolidated_relief: number;
+    annual_taxable_income?: number;
+    consolidated_relief?: number;
+    total_reliefs?: number;
+    cra_amount?: number;
+    rent_relief?: number;
+    pension_relief?: number;
+    reliefs_applied?: AppliedRelief[];
     annual_tax: number;
-    monthly_tax: number;
+    monthly_tax?: number;
     tax: number;
-    effective_rate: number;
+    effective_rate?: number;
     bands?: TaxBandCalculation[];
+    band_breakdown?: TaxBandBreakdown[];
+    is_exempt?: boolean;
+    is_low_income_exempt?: boolean;
+    low_income_exempt?: boolean;
+    exemption_reason?: string;
+    tax_law_version?: TaxLawVersion | null;
+    effective_date?: string;
 }
 
 export interface TaxBandCalculation {
@@ -427,15 +464,27 @@ export interface DeductionTypeModel {
 
 export interface TaxTable {
     id: number;
+    tenant_id: number | null;
     name: string;
     description: string | null;
-    country_code: string;
-    tax_year: number;
-    effective_from: string;
+    jurisdiction: string;
+    effective_year: number;
+    effective_from: string | null;
     effective_to: string | null;
+    tax_law_reference: TaxLawVersion | null;
+    has_low_income_exemption: boolean;
+    low_income_threshold: number | null;
+    cra_applicable: boolean;
+    minimum_tax_rate: number | null;
+    is_system: boolean;
     is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
     bands?: TaxTableBand[];
     reliefs?: TaxRelief[];
+    tax_law_version_label?: string;
+    is_current?: boolean;
 }
 
 export interface TaxTableBand {
@@ -451,12 +500,22 @@ export interface TaxTableBand {
 export interface TaxRelief {
     id: number;
     tax_table_id: number;
+    code: string;
     name: string;
-    type: string;
-    value: number;
-    is_percentage: boolean;
-    max_amount: number | null;
     description: string | null;
+    relief_type: TaxReliefType;
+    amount: number | null;
+    rate: number | null;
+    cap: number | null;
+    is_automatic: boolean;
+    is_active: boolean;
+    requires_proof: boolean;
+    proof_type: string | null;
+    eligibility_criteria: Record<string, unknown> | null;
+    calculation_formula: string | null;
+    created_at: string;
+    updated_at: string;
+    relief_description?: string;
 }
 
 export interface PayRunSummary {
@@ -465,11 +524,14 @@ export interface PayRunSummary {
     pending: number;
     errors: number;
     excluded: number;
+    low_income_exempt_count?: number;
     totals: {
         gross: string;
         deductions: string;
         net: string;
         employer_costs: string;
+        tax?: number;
+        total_reliefs?: number;
     };
 }
 
@@ -514,11 +576,7 @@ export type PayRunStatus =
     | 'completed'
     | 'cancelled';
 
-export type PayRunItemStatus =
-    | 'pending'
-    | 'calculated'
-    | 'error'
-    | 'excluded';
+export type PayRunItemStatus = 'pending' | 'calculated' | 'error' | 'excluded';
 
 export type EarningCategory =
     | 'base'
@@ -558,4 +616,146 @@ export interface EnumOption {
     value: string;
     label: string;
     description?: string;
+}
+
+/**
+ * NTA 2025 Tax System Types
+ * These types support the transition from PITA 2011 to NTA 2025
+ */
+
+export type TaxLawVersion = 'pita_2011' | 'nta_2025';
+
+export type TaxReliefType =
+    | 'fixed'
+    | 'percentage'
+    | 'capped_percentage'
+    | 'cra'
+    | 'rent_relief'
+    | 'low_income_exemption';
+
+export type ProofStatus = 'valid' | 'expired' | 'missing';
+
+export interface EmployeeTaxSettings {
+    id: number;
+    user_id: number;
+    tenant_id: number;
+    tax_id_number: string | null;
+    tax_state: string | null;
+    is_tax_exempt: boolean;
+    exemption_reason: string | null;
+    exemption_expires_at: string | null;
+    is_homeowner: boolean;
+    annual_rent_paid: number | null;
+    rent_proof_document: string | null;
+    rent_proof_expiry: string | null;
+    active_reliefs: string[];
+    relief_claims: ReliefClaim[] | null;
+    low_income_auto_exempt: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ReliefClaim {
+    code: string;
+    amount: number;
+    period: string;
+    claimed_at: string;
+}
+
+export interface AppliedRelief {
+    code: string;
+    name: string;
+    amount: number;
+    requires_proof?: boolean;
+    proof_status?: ProofStatus;
+}
+
+export interface TaxBandBreakdown {
+    band_order: number;
+    min_amount: number;
+    max_amount: number | null;
+    rate: number;
+    tax_amount: number;
+}
+
+export interface TaxCalculationResult {
+    tax: number;
+    annual_tax: number;
+    taxable_income: number;
+    annual_taxable_income: number;
+    total_reliefs: number;
+    reliefs_applied: AppliedRelief[];
+    band_breakdown: TaxBandBreakdown[];
+    is_exempt: boolean;
+    is_low_income_exempt?: boolean;
+    exemption_reason?: string;
+    tax_law_version: TaxLawVersion | null;
+    effective_date?: string;
+    error?: string;
+}
+
+export interface TaxEstimate {
+    gross_salary: number;
+    total_reliefs: number;
+    reliefs_applied?: AppliedRelief[];
+    taxable_income: number;
+    annual_tax: number;
+    monthly_tax: number;
+    effective_rate: number;
+    is_low_income_exempt: boolean;
+    tax_law_version: TaxLawVersion | null;
+    band_breakdown: TaxBandBreakdown[];
+}
+
+export interface TaxLawComparison {
+    pita_2011: TaxEstimate;
+    nta_2025: TaxEstimate;
+}
+
+export interface TaxLawVersionOption {
+    value: TaxLawVersion;
+    label: string;
+    short_label: string;
+}
+
+export interface TaxSettingsPageProps {
+    employee: {
+        id: number;
+        name: string;
+        email: string;
+    };
+    taxSettings: EmployeeTaxSettings;
+    availableReliefs: TaxRelief[];
+    taxSummary: TaxCalculationResult | { error: string };
+    taxLawVersion: TaxLawVersion | null;
+    taxLawLabel: string | null;
+}
+
+export interface PayrollTaxSettingsPageProps {
+    taxTables: (TaxTable & {
+        tax_law_version_label?: string;
+        is_current?: boolean;
+    })[];
+    currentTable: TaxTable | null;
+    taxLawVersions: TaxLawVersionOption[];
+    nta2025Countdown: number;
+}
+
+export interface TaxTableShowPageProps {
+    taxTable: TaxTable;
+}
+
+export type TaxConfigurationStatusType =
+    | 'not_configured'
+    | 'partial'
+    | 'complete';
+
+export type TaxConfigurationStatusColor = 'warning' | 'info' | 'success';
+
+export interface TaxConfigurationStatus {
+    status: TaxConfigurationStatusType;
+    label: string;
+    color: TaxConfigurationStatusColor;
+    is_homeowner: boolean | null;
+    has_rent_proof: boolean;
 }

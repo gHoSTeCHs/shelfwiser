@@ -1,12 +1,12 @@
-import AppLayout from '@/layouts/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
-import Button from '@/components/ui/button/Button';
 import Input from '@/components/form/input/InputField';
 import Select from '@/components/form/Select';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
-import { Plus, Search, Building2, Eye, Edit, Trash2 } from 'lucide-react';
+import AppLayout from '@/layouts/AppLayout';
+import { Head, Link, router } from '@inertiajs/react';
+import { Building2, Edit, Eye, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 
 interface Tenant {
@@ -46,7 +46,11 @@ export default function Index({ tenants, filters }: Props) {
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/admin/tenants', { ...filters, search }, { preserveState: true });
+        router.get(
+            '/admin/tenants',
+            { ...filters, search },
+            { preserveState: true },
+        );
     };
 
     const handleFilterChange = (key: string, value: string) => {
@@ -95,7 +99,7 @@ export default function Index({ tenants, filters }: Props) {
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                         <form onSubmit={handleSearch} className="flex-1">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                                 <Input
                                     type="text"
                                     placeholder="Search tenants..."
@@ -111,11 +115,19 @@ export default function Index({ tenants, filters }: Props) {
                                     { value: '', label: 'All Plans' },
                                     { value: 'trial', label: 'Trial' },
                                     { value: 'basic', label: 'Basic' },
-                                    { value: 'professional', label: 'Professional' },
-                                    { value: 'enterprise', label: 'Enterprise' },
+                                    {
+                                        value: 'professional',
+                                        label: 'Professional',
+                                    },
+                                    {
+                                        value: 'enterprise',
+                                        label: 'Enterprise',
+                                    },
                                 ]}
                                 defaultValue={filters.plan || ''}
-                                onChange={(value) => handleFilterChange('plan', value)}
+                                onChange={(value) =>
+                                    handleFilterChange('plan', value)
+                                }
                             />
                             <Select
                                 options={[
@@ -124,7 +136,9 @@ export default function Index({ tenants, filters }: Props) {
                                     { value: '0', label: 'Inactive' },
                                 ]}
                                 defaultValue={filters.is_active || ''}
-                                onChange={(value) => handleFilterChange('is_active', value)}
+                                onChange={(value) =>
+                                    handleFilterChange('is_active', value)
+                                }
                             />
                         </div>
                     </div>
@@ -137,7 +151,9 @@ export default function Index({ tenants, filters }: Props) {
                         description="Get started by creating your first tenant."
                         action={
                             <Link href="/admin/tenants/create">
-                                <Button startIcon={<Plus className="h-4 w-4" />}>
+                                <Button
+                                    startIcon={<Plus className="h-4 w-4" />}
+                                >
                                     Create Tenant
                                 </Button>
                             </Link>
@@ -149,29 +165,50 @@ export default function Index({ tenants, filters }: Props) {
                             <table className="w-full">
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Tenant
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Plan
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Usage
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Status
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Created
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Actions
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
                                     {tenants.data.map((tenant) => (
-                                        <tr key={tenant.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                        <tr
+                                            key={tenant.id}
+                                            className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                                        >
                                             <td className="px-4 py-3">
                                                 <div>
                                                     <Link
@@ -186,23 +223,39 @@ export default function Index({ tenants, filters }: Props) {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Badge color={getPlanColor(tenant.subscription_plan)}>
+                                                <Badge
+                                                    color={getPlanColor(
+                                                        tenant.subscription_plan,
+                                                    )}
+                                                >
                                                     {tenant.subscription_plan}
                                                 </Badge>
                                             </td>
                                             <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                                 <div className="space-y-1">
                                                     <div>
-                                                        Users: {tenant.users_count}/{tenant.max_users}
+                                                        Users:{' '}
+                                                        {tenant.users_count}/
+                                                        {tenant.max_users}
                                                     </div>
                                                     <div>
-                                                        Shops: {tenant.shops_count}/{tenant.max_shops}
+                                                        Shops:{' '}
+                                                        {tenant.shops_count}/
+                                                        {tenant.max_shops}
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Badge color={tenant.is_active ? 'success' : 'error'}>
-                                                    {tenant.is_active ? 'Active' : 'Inactive'}
+                                                <Badge
+                                                    color={
+                                                        tenant.is_active
+                                                            ? 'success'
+                                                            : 'error'
+                                                    }
+                                                >
+                                                    {tenant.is_active
+                                                        ? 'Active'
+                                                        : 'Inactive'}
                                                 </Badge>
                                             </td>
                                             <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
@@ -210,13 +263,23 @@ export default function Index({ tenants, filters }: Props) {
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Link href={`/admin/tenants/${tenant.id}`}>
-                                                        <Button variant="ghost" size="sm">
+                                                    <Link
+                                                        href={`/admin/tenants/${tenant.id}`}
+                                                    >
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                        >
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
-                                                    <Link href={`/admin/tenants/${tenant.id}/edit`}>
-                                                        <Button variant="ghost" size="sm">
+                                                    <Link
+                                                        href={`/admin/tenants/${tenant.id}/edit`}
+                                                    >
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                        >
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
@@ -230,22 +293,27 @@ export default function Index({ tenants, filters }: Props) {
                         {tenants.last_page > 1 && (
                             <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
                                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                                    Showing page {tenants.current_page} of {tenants.last_page} ({tenants.total} total)
+                                    Showing page {tenants.current_page} of{' '}
+                                    {tenants.last_page} ({tenants.total} total)
                                 </div>
                                 <div className="flex gap-1">
                                     {tenants.links.map((link, index) => (
                                         <button
                                             key={index}
-                                            onClick={() => link.url && router.get(link.url)}
+                                            onClick={() =>
+                                                link.url && router.get(link.url)
+                                            }
                                             disabled={!link.url}
                                             className={`rounded px-3 py-1 text-sm ${
                                                 link.active
                                                     ? 'bg-brand-600 text-white'
                                                     : link.url
-                                                    ? 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
-                                                    : 'cursor-not-allowed text-gray-300 dark:text-gray-600'
+                                                      ? 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+                                                      : 'cursor-not-allowed text-gray-300 dark:text-gray-600'
                                             }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                            dangerouslySetInnerHTML={{
+                                                __html: link.label,
+                                            }}
                                         />
                                     ))}
                                 </div>

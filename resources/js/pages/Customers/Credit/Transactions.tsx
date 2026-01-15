@@ -1,18 +1,18 @@
 import CustomerCreditController from '@/actions/App/Http/Controllers/CustomerCreditController';
+import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Select from '@/components/form/Select';
 import AppLayout from '@/layouts/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
-    TrendingUp,
-    TrendingDown,
-    FileText,
-    User,
     Calendar,
+    FileText,
     Filter,
+    TrendingDown,
+    TrendingUp,
+    User,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -299,8 +299,7 @@ export default function Transactions({
                                                 </p>
                                                 <div className="space-y-0.5 text-xs text-gray-500 dark:text-gray-500">
                                                     <p>
-                                                        Before:{' '}
-                                                        {currencySymbol}
+                                                        Before: {currencySymbol}
                                                         {transaction.balance_before.toFixed(
                                                             2,
                                                         )}

@@ -34,7 +34,7 @@ export default function SetupInventoryModal({
         setSelectedShopIds((prev) =>
             prev.includes(shopId)
                 ? prev.filter((id) => id !== shopId)
-                : [...prev, shopId]
+                : [...prev, shopId],
         );
         if (errors.shop_ids) {
             setErrors({});
@@ -68,7 +68,7 @@ export default function SetupInventoryModal({
                 onFinish: () => {
                     setProcessing(false);
                 },
-            }
+            },
         );
     };
 
@@ -90,7 +90,8 @@ export default function SetupInventoryModal({
                     </span>
                 </p>
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    Select which locations should stock this product variant. Each selected location will start with 0 stock.
+                    Select which locations should stock this product variant.
+                    Each selected location will start with 0 stock.
                 </p>
             </div>
 
@@ -104,7 +105,8 @@ export default function SetupInventoryModal({
                         <div className="mt-3 space-y-2 rounded-lg border border-gray-300 p-4 dark:border-gray-700">
                             {availableShops.length === 0 ? (
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    No active shops available. Please create a shop first.
+                                    No active shops available. Please create a
+                                    shop first.
                                 </p>
                             ) : (
                                 availableShops.map((shop) => (
@@ -115,7 +117,7 @@ export default function SetupInventoryModal({
                                         <input
                                             type="checkbox"
                                             checked={selectedShopIds.includes(
-                                                shop.id
+                                                shop.id,
                                             )}
                                             onChange={() =>
                                                 handleShopToggle(shop.id)

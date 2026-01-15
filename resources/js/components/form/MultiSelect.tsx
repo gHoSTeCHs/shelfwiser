@@ -1,7 +1,7 @@
-import type { FC } from 'react';
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Check, ChevronDown, X } from 'lucide-react';
 import { clsx } from 'clsx';
+import { Check, ChevronDown, X } from 'lucide-react';
+import type { FC } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface MultiSelectOption {
     value: string | number;
@@ -20,6 +20,8 @@ interface MultiSelectProps {
     id?: string;
     name?: string;
     maxDisplay?: number;
+    ariaLabel?: string;
+    label?: string;
 }
 
 const MultiSelect: FC<MultiSelectProps> = ({
@@ -33,11 +35,16 @@ const MultiSelect: FC<MultiSelectProps> = ({
     id,
     name,
     maxDisplay = 3,
+    ariaLabel,
+    label,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
     const inputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const listboxRef = useRef<HTMLUListElement>(null);
+    const triggerRef = useRef<HTMLDivElement>(null);
 
     const filteredOptions = useMemo(() => {
         if (!searchQuery) return options;
@@ -77,6 +84,60 @@ const MultiSelect: FC<MultiSelectProps> = ({
         onChange([]);
     };
 
+    /**
+     * Handles keyboard navigation within the listbox
+     */
+    const handleKeyDown = useCallback(
+        (e: React.KeyboardEvent) => {
+            if (!isOpen) return;
+
+            const maxIndex = filteredOptions.length - 1;
+
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    setHighlightedIndex((prev) =>
+                        prev < maxIndex ? prev + 1 : prev,
+                    );
+                    break;
+
+                case 'ArrowUp':
+                    e.preventDefault();
+                    setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+                    break;
+
+                case 'Home':
+                    e.preventDefault();
+                    setHighlightedIndex(0);
+                    break;
+
+                case 'End':
+                    e.preventDefault();
+                    setHighlightedIndex(maxIndex);
+                    break;
+
+                case 'Enter':
+                case ' ':
+                    if (highlightedIndex >= 0 && highlightedIndex <= maxIndex) {
+                        e.preventDefault();
+                        handleToggle(filteredOptions[highlightedIndex].value);
+                    }
+                    break;
+
+                case 'Escape':
+                    e.preventDefault();
+                    setIsOpen(false);
+                    setSearchQuery('');
+                    triggerRef.current?.focus();
+                    break;
+
+                default:
+                    break;
+            }
+        },
+        [isOpen, filteredOptions, highlightedIndex, handleToggle],
+    );
+
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (
@@ -89,8 +150,29 @@ const MultiSelect: FC<MultiSelectProps> = ({
         };
 
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        return () =>
+            document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    useEffect(() => {
+        if (isOpen) {
+            setHighlightedIndex(0);
+        } else {
+            setHighlightedIndex(-1);
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (highlightedIndex >= 0 && listboxRef.current) {
+            const highlightedElement = listboxRef.current.children[
+                highlightedIndex
+            ] as HTMLElement;
+            highlightedElement?.scrollIntoView({
+                block: 'nearest',
+                behavior: 'smooth',
+            });
+        }
+    }, [highlightedIndex]);
 
     const displayedOptions = selectedOptions.slice(0, maxDisplay);
     const remainingCount = selectedOptions.length - maxDisplay;
@@ -98,7 +180,17 @@ const MultiSelect: FC<MultiSelectProps> = ({
     return (
         <div ref={containerRef} className={clsx('relative', className)} id={id}>
             <div
+                ref={triggerRef}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
+                onKeyDown={handleKeyDown}
+                role="combobox"
+                aria-expanded={isOpen}
+                aria-haspopup="listbox"
+                aria-controls={`${id || 'multiselect'}-listbox`}
+                aria-disabled={disabled}
+                aria-label={ariaLabel || label}
+                aria-invalid={error ? true : undefined}
+                tabIndex={disabled ? -1 : 0}
                 className={clsx(
                     'relative flex min-h-[2.75rem] cursor-pointer items-center rounded-lg border shadow-theme-xs transition-colors',
                     disabled
@@ -124,7 +216,9 @@ const MultiSelect: FC<MultiSelectProps> = ({
                                     {!disabled && (
                                         <button
                                             type="button"
-                                            onClick={(e) => handleRemove(opt.value, e)}
+                                            onClick={(e) =>
+                                                handleRemove(opt.value, e)
+                                            }
                                             className="rounded hover:bg-brand-100 dark:hover:bg-brand-800/50"
                                         >
                                             <X className="h-3 w-3" />
@@ -156,6 +250,7 @@ const MultiSelect: FC<MultiSelectProps> = ({
                             'h-4 w-4 text-gray-400 transition-transform',
                             isOpen && 'rotate-180',
                         )}
+                        aria-hidden="true"
                     />
                 </div>
             </div>
@@ -180,26 +275,44 @@ const MultiSelect: FC<MultiSelectProps> = ({
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search..."
-                            className="w-full rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400"
+                            className="w-full rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400"
                             autoFocus
                         />
                     </div>
 
-                    <ul className="max-h-60 overflow-auto">
+                    <ul
+                        ref={listboxRef}
+                        role="listbox"
+                        id={`${id || 'multiselect'}-listbox`}
+                        aria-multiselectable="true"
+                        className="max-h-60 overflow-auto"
+                    >
                         {filteredOptions.length === 0 ? (
-                            <li className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                            <li
+                                role="option"
+                                aria-disabled="true"
+                                className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400"
+                            >
                                 No options found
                             </li>
                         ) : (
-                            filteredOptions.map((option) => {
+                            filteredOptions.map((option, index) => {
                                 const isSelected = value.includes(option.value);
+                                const isHighlighted =
+                                    index === highlightedIndex;
                                 return (
                                     <li
                                         key={option.value}
-                                        onClick={() => handleToggle(option.value)}
+                                        role="option"
+                                        aria-selected={isSelected}
+                                        onClick={() =>
+                                            handleToggle(option.value)
+                                        }
                                         className={clsx(
                                             'flex cursor-pointer items-center justify-between px-4 py-2.5',
                                             'text-sm transition-colors',
+                                            isHighlighted &&
+                                                'bg-gray-100 dark:bg-gray-700',
                                             isSelected
                                                 ? 'bg-brand-50 dark:bg-brand-900/20'
                                                 : 'hover:bg-gray-50 dark:hover:bg-gray-700/50',

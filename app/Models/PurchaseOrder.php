@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\PurchaseOrderPaymentStatus;
 use App\Enums\PurchaseOrderStatus;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseOrder extends Model
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
+
     protected $fillable = [
         'buyer_tenant_id',
         'supplier_tenant_id',
@@ -121,15 +123,31 @@ class PurchaseOrder extends Model
         $this->save();
     }
 
+    /**
+     * Update payment status based on paid amount and due date.
+     * Priority: CANCELLED (skip) > PAID > OVERDUE > PARTIAL > PENDING
+     */
     public function updatePaymentStatus(): void
     {
-        if ($this->paid_amount >= $this->total_amount) {
+        if ($this->payment_status === PurchaseOrderPaymentStatus::CANCELLED) {
+            return;
+        }
+
+        $totalAmount = (float) $this->total_amount;
+        $paidAmount = (float) $this->paid_amount;
+        $isFullyPaid = $paidAmount >= $totalAmount && $totalAmount > 0;
+        $hasPartialPayment = $paidAmount > 0 && $paidAmount < $totalAmount;
+        $isOverdue = $this->payment_due_date && now()->startOfDay()->isAfter($this->payment_due_date);
+
+        if ($isFullyPaid) {
             $this->payment_status = PurchaseOrderPaymentStatus::PAID;
-            $this->payment_date = $this->payments()->latest()->first()?->payment_date ?? now();
-        } elseif ($this->paid_amount > 0) {
-            $this->payment_status = PurchaseOrderPaymentStatus::PARTIAL;
-        } elseif ($this->payment_due_date && now()->isAfter($this->payment_due_date)) {
+            if (! $this->payment_date) {
+                $this->payment_date = $this->payments()->latest('payment_date')->first()?->payment_date ?? now();
+            }
+        } elseif ($isOverdue) {
             $this->payment_status = PurchaseOrderPaymentStatus::OVERDUE;
+        } elseif ($hasPartialPayment) {
+            $this->payment_status = PurchaseOrderPaymentStatus::PARTIAL;
         } else {
             $this->payment_status = PurchaseOrderPaymentStatus::PENDING;
         }
@@ -155,5 +173,51 @@ class PurchaseOrder extends Model
     public function scopeByStatus($query, PurchaseOrderStatus $status)
     {
         return $query->where('status', $status);
+    }
+
+    /**
+     * Check if all items in the PO are fully received
+     */
+    public function isFullyReceived(): bool
+    {
+        return $this->items->every(fn ($item) => $item->isFullyReceived());
+    }
+
+    /**
+     * Check if any items have been partially received
+     */
+    public function hasPartialReceipts(): bool
+    {
+        return $this->items->some(fn ($item) => $item->received_quantity > 0 && ! $item->isFullyReceived());
+    }
+
+    /**
+     * Get the total quantity ordered across all items
+     */
+    public function getTotalOrderedQuantity(): int
+    {
+        return $this->items->sum('quantity');
+    }
+
+    /**
+     * Get the total quantity received across all items
+     */
+    public function getTotalReceivedQuantity(): int
+    {
+        return $this->items->sum('received_quantity');
+    }
+
+    /**
+     * Get the receipt completion percentage
+     */
+    public function getReceiptCompletionPercentage(): float
+    {
+        $totalOrdered = $this->getTotalOrderedQuantity();
+
+        if ($totalOrdered === 0) {
+            return 0;
+        }
+
+        return round(($this->getTotalReceivedQuantity() / $totalOrdered) * 100, 2);
     }
 }

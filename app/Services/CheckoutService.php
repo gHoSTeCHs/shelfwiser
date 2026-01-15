@@ -11,8 +11,11 @@ use App\Models\Customer;
 use App\Models\InventoryLocation;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderPayment;
 use App\Models\Shop;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutService
 {
@@ -27,7 +30,9 @@ class CheckoutService
         array $shippingAddress,
         array $billingAddress,
         string $paymentMethod = 'cash_on_delivery',
-        ?string $customerNotes = null
+        ?string $customerNotes = null,
+        ?string $paymentReference = null,
+        ?string $idempotencyKey = null
     ): Order {
         return DB::transaction(function () use (
             $cart,
@@ -35,7 +40,9 @@ class CheckoutService
             $shippingAddress,
             $billingAddress,
             $paymentMethod,
-            $customerNotes
+            $customerNotes,
+            $paymentReference,
+            $idempotencyKey
         ) {
             $cartSummary = $this->cartService->getCartSummary($cart);
 
@@ -44,6 +51,8 @@ class CheckoutService
             }
 
             $productItems = collect($cartSummary['items'])->filter(fn ($item) => $item->isProduct());
+
+            $locations = collect();
 
             if ($productItems->isNotEmpty()) {
                 $variantIds = $productItems->pluck('product_variant_id')->toArray();
@@ -76,6 +85,8 @@ class CheckoutService
                 'status' => OrderStatus::PENDING->value,
                 'payment_status' => PaymentStatus::UNPAID->value,
                 'payment_method' => $paymentMethod,
+                'payment_reference' => $paymentReference,
+                'offline_id' => $idempotencyKey,
                 'subtotal' => $cartSummary['subtotal'],
                 'tax_amount' => $cartSummary['tax'],
                 'shipping_cost' => $cartSummary['shipping_fee'],
@@ -85,8 +96,6 @@ class CheckoutService
                 'customer_notes' => $customerNotes,
                 'created_by' => null,
             ]);
-
-            $locations = $locations ?? collect();
 
             foreach ($cartSummary['items'] as $cartItem) {
                 $orderItemData = [
@@ -127,7 +136,14 @@ class CheckoutService
                     $location = $locations->get($cartItem->product_variant_id);
                     if ($location) {
                         $quantityBefore = $location->quantity;
-                        $location->decrement('quantity', $cartItem->quantity);
+                        $reservedBefore = $location->reserved_quantity;
+
+                        if ($location->reserved_quantity >= $cartItem->quantity) {
+                            $location->reserved_quantity -= $cartItem->quantity;
+                        }
+
+                        $location->quantity -= $cartItem->quantity;
+                        $location->save();
 
                         $this->stockMovementService->recordMovement([
                             'tenant_id' => $cart->tenant_id,
@@ -154,6 +170,124 @@ class CheckoutService
                 'items.packagingType',
                 'items.sellable.service',
             ]);
+        });
+    }
+
+    /**
+     * Verify Paystack payment and update order status.
+     */
+    public function verifyPaystackPayment(string $reference, Shop $shop): ?Order
+    {
+        $order = Order::where('payment_reference', $reference)
+            ->where('shop_id', $shop->id)
+            ->first();
+
+        if (! $order) {
+            Log::warning('Order not found for payment reference', [
+                'reference' => $reference,
+                'shop_id' => $shop->id,
+            ]);
+
+            return null;
+        }
+
+        if ($order->payment_status === PaymentStatus::PAID->value) {
+            return $order;
+        }
+
+        $secretKey = config('services.paystack.secret_key');
+        if (! $secretKey) {
+            Log::error('Paystack secret key not configured');
+
+            return $order;
+        }
+
+        try {
+            $response = Http::withToken($secretKey)
+                ->get("https://api.paystack.co/transaction/verify/{$reference}");
+
+            if (! $response->successful()) {
+                Log::error('Paystack verification failed', [
+                    'reference' => $reference,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return $order;
+            }
+
+            $data = $response->json();
+
+            if ($data['status'] === true && $data['data']['status'] === 'success') {
+                $this->updatePaymentStatus(
+                    $reference,
+                    PaymentStatus::PAID,
+                    $data['data']['id'] ?? null
+                );
+                $order->refresh();
+            }
+
+            return $order;
+
+        } catch (\Exception $e) {
+            Log::error('Paystack verification exception', [
+                'reference' => $reference,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $order;
+        }
+    }
+
+    /**
+     * Update order payment status.
+     */
+    public function updatePaymentStatus(
+        string $paymentReference,
+        PaymentStatus $status,
+        ?string $transactionId = null
+    ): bool {
+        $order = Order::where('payment_reference', $paymentReference)->first();
+
+        if (! $order) {
+            Log::warning('Order not found for payment update', [
+                'reference' => $paymentReference,
+            ]);
+
+            return false;
+        }
+
+        return DB::transaction(function () use ($order, $status, $transactionId, $paymentReference) {
+            $order->update([
+                'payment_status' => $status->value,
+            ]);
+
+            if ($status === PaymentStatus::PAID) {
+                $order->update([
+                    'status' => OrderStatus::CONFIRMED->value,
+                    'confirmed_at' => now(),
+                ]);
+
+                OrderPayment::create([
+                    'tenant_id' => $order->tenant_id,
+                    'order_id' => $order->id,
+                    'amount' => $order->total_amount,
+                    'payment_method' => $order->payment_method,
+                    'reference_number' => $transactionId ?? $paymentReference,
+                    'status' => 'completed',
+                    'paid_at' => now(),
+                    'notes' => 'Payment verified via Paystack',
+                ]);
+            }
+
+            Log::info('Payment status updated', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'status' => $status->value,
+                'transaction_id' => $transactionId,
+            ]);
+
+            return true;
         });
     }
 }

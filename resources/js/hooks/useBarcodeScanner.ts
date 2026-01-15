@@ -38,7 +38,9 @@ interface UseBarcodeSccannerReturn {
  * We detect this by tracking keystroke timing - if characters arrive faster
  * than ~50ms average, it's likely a scanner.
  */
-export function useBarcodeScanner(options: UseBarcodeSccannerOptions): UseBarcodeSccannerReturn {
+export function useBarcodeScanner(
+    options: UseBarcodeSccannerOptions,
+): UseBarcodeSccannerReturn {
     const {
         onScan,
         onError,
@@ -56,7 +58,15 @@ export function useBarcodeScanner(options: UseBarcodeSccannerOptions): UseBarcod
 
     const inputRef = useRef<HTMLInputElement>(null);
     const videoRef = useRef<HTMLDivElement>(null);
-    const html5QrCodeRef = useRef<any>(null);
+    const html5QrCodeRef = useRef<{
+        start: (
+            cameraIdOrConfig: unknown,
+            configuration: unknown,
+            qrCodeSuccessCallback: (decodedText: string) => void,
+            qrCodeErrorCallback?: () => void,
+        ) => Promise<void>;
+        stop: () => Promise<void>;
+    } | null>(null);
 
     // Track keystroke timing for scanner detection
     const keystrokeTimesRef = useRef<number[]>([]);
@@ -65,86 +75,99 @@ export function useBarcodeScanner(options: UseBarcodeSccannerOptions): UseBarcod
     const scannerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Check if camera is supported
-    const isCameraSupported = typeof navigator !== 'undefined' &&
+    const isCameraSupported =
+        typeof navigator !== 'undefined' &&
         'mediaDevices' in navigator &&
         'getUserMedia' in navigator.mediaDevices;
 
     // Process a successful scan
-    const processScan = useCallback((barcode: string) => {
-        const trimmed = barcode.trim();
+    const processScan = useCallback(
+        (barcode: string) => {
+            const trimmed = barcode.trim();
 
-        if (trimmed.length < minLength || trimmed.length > maxLength) {
-            return;
-        }
+            if (trimmed.length < minLength || trimmed.length > maxLength) {
+                return;
+            }
 
-        // Check scan delay
-        const now = Date.now();
-        if (lastScanTime && now - lastScanTime < scanDelay) {
-            return;
-        }
+            // Check scan delay
+            const now = Date.now();
+            if (lastScanTime && now - lastScanTime < scanDelay) {
+                return;
+            }
 
-        setLastScanTime(now);
-        onScan(trimmed);
-        setInputValue('');
-        scannerBufferRef.current = '';
-    }, [onScan, scanDelay, minLength, maxLength, lastScanTime]);
+            setLastScanTime(now);
+            onScan(trimmed);
+            setInputValue('');
+            scannerBufferRef.current = '';
+        },
+        [onScan, scanDelay, minLength, maxLength, lastScanTime],
+    );
 
     // Handle input change (manual typing or scanner)
-    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setInputValue(value);
-    }, []);
+    const handleInputChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const value = e.target.value;
+            setInputValue(value);
+        },
+        [],
+    );
 
     // Handle keydown for detecting scanner input
-    const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (!enabled) return;
+    const handleKeyDown = useCallback(
+        (e: React.KeyboardEvent<HTMLInputElement>) => {
+            if (!enabled) return;
 
-        const now = Date.now();
-        const timeSinceLastKey = now - lastKeystrokeRef.current;
-        lastKeystrokeRef.current = now;
+            const now = Date.now();
+            const timeSinceLastKey = now - lastKeystrokeRef.current;
+            lastKeystrokeRef.current = now;
 
-        // Track keystroke timing
-        if (timeSinceLastKey < 100) {
-            keystrokeTimesRef.current.push(timeSinceLastKey);
-            // Keep only last 10 keystrokes for average
-            if (keystrokeTimesRef.current.length > 10) {
-                keystrokeTimesRef.current.shift();
-            }
-        }
-
-        // Calculate average keystroke time
-        const avgKeystrokeTime = keystrokeTimesRef.current.length > 0
-            ? keystrokeTimesRef.current.reduce((a, b) => a + b, 0) / keystrokeTimesRef.current.length
-            : 100;
-
-        // If average is under 50ms, likely a scanner
-        const likelyScanner = avgKeystrokeTime < 50 && keystrokeTimesRef.current.length >= 3;
-        setIsExternalScanner(likelyScanner);
-
-        // Handle Enter key
-        if (e.key === 'Enter') {
-            e.preventDefault();
-
-            const value = inputValue.trim();
-            if (value.length >= minLength) {
-                processScan(value);
+            // Track keystroke timing
+            if (timeSinceLastKey < 100) {
+                keystrokeTimesRef.current.push(timeSinceLastKey);
+                // Keep only last 10 keystrokes for average
+                if (keystrokeTimesRef.current.length > 10) {
+                    keystrokeTimesRef.current.shift();
+                }
             }
 
-            // Reset scanner detection
-            keystrokeTimesRef.current = [];
-            return;
-        }
+            // Calculate average keystroke time
+            const avgKeystrokeTime =
+                keystrokeTimesRef.current.length > 0
+                    ? keystrokeTimesRef.current.reduce((a, b) => a + b, 0) /
+                      keystrokeTimesRef.current.length
+                    : 100;
 
-        // Clear buffer after timeout (for manual typing)
-        if (scannerTimeoutRef.current) {
-            clearTimeout(scannerTimeoutRef.current);
-        }
+            // If average is under 50ms, likely a scanner
+            const likelyScanner =
+                avgKeystrokeTime < 50 && keystrokeTimesRef.current.length >= 3;
+            setIsExternalScanner(likelyScanner);
 
-        scannerTimeoutRef.current = setTimeout(() => {
-            keystrokeTimesRef.current = [];
-            setIsExternalScanner(false);
-        }, 200);
-    }, [enabled, inputValue, minLength, processScan]);
+            // Handle Enter key
+            if (e.key === 'Enter') {
+                e.preventDefault();
+
+                const value = inputValue.trim();
+                if (value.length >= minLength) {
+                    processScan(value);
+                }
+
+                // Reset scanner detection
+                keystrokeTimesRef.current = [];
+                return;
+            }
+
+            // Clear buffer after timeout (for manual typing)
+            if (scannerTimeoutRef.current) {
+                clearTimeout(scannerTimeoutRef.current);
+            }
+
+            scannerTimeoutRef.current = setTimeout(() => {
+                keystrokeTimesRef.current = [];
+                setIsExternalScanner(false);
+            }, 200);
+        },
+        [enabled, inputValue, minLength, processScan],
+    );
 
     // Focus input
     const focusInput = useCallback(() => {
@@ -194,13 +217,16 @@ export function useBarcodeScanner(options: UseBarcodeSccannerOptions): UseBarcod
                 },
                 () => {
                     // QR code scan error - ignore (happens frequently when no code in view)
-                }
+                },
             );
 
             setIsCameraActive(true);
             setCameraError(null);
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Failed to start camera';
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to start camera';
             setCameraError(message);
             onError?.(message);
         }

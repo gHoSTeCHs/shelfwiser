@@ -1,12 +1,12 @@
 import FundRequestController from '@/actions/App/Http/Controllers/FundRequestController.ts';
-import Button from '@/components/ui/button/Button';
-import { Card } from '@/components/ui/card';
 import Input from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
-import Label from '@/components/form/Label';
 import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
-import { Head, Link, Form } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -55,32 +55,39 @@ const FundRequestsCreate = ({ shops, requestTypes }: Props) => {
                     </div>
                 </div>
 
-                <Form
-                    action={FundRequestController.store.url()}
-                    method="post"
-                >
+                <Form action={FundRequestController.store.url()} method="post">
                     {({ errors, processing }) => (
                         <div className="space-y-6">
                             <Card className="p-6">
-                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+                                <h2 className="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
                                     Request Details
                                 </h2>
 
                                 <div className="space-y-6">
                                     <div>
                                         <Label htmlFor="shop_id">
-                                            Shop <span className="text-red-500">*</span>
+                                            Shop{' '}
+                                            <span className="text-red-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <select
                                             id="shop_id"
                                             name="shop_id"
                                             value={shopId}
-                                            onChange={(e) => setShopId(parseInt(e.target.value))}
-                                            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                            onChange={(e) =>
+                                                setShopId(
+                                                    parseInt(e.target.value),
+                                                )
+                                            }
+                                            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                             required
                                         >
                                             {shops.map((shop) => (
-                                                <option key={shop.id} value={shop.id}>
+                                                <option
+                                                    key={shop.id}
+                                                    value={shop.id}
+                                                >
                                                     {shop.name}
                                                 </option>
                                             ))}
@@ -90,14 +97,18 @@ const FundRequestsCreate = ({ shops, requestTypes }: Props) => {
 
                                     <div>
                                         <Label htmlFor="request_type">
-                                            Request Type <span className="text-red-500">*</span>
+                                            Request Type{' '}
+                                            <span className="text-red-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                             {requestTypes.map((type) => (
                                                 <label
                                                     key={type.value}
                                                     className={`flex cursor-pointer items-start gap-3 rounded-lg border-2 p-4 transition-all ${
-                                                        requestType === type.value
+                                                        requestType ===
+                                                        type.value
                                                             ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
                                                             : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
                                                     }`}
@@ -106,8 +117,15 @@ const FundRequestsCreate = ({ shops, requestTypes }: Props) => {
                                                         type="radio"
                                                         name="request_type"
                                                         value={type.value}
-                                                        checked={requestType === type.value}
-                                                        onChange={(e) => setRequestType(e.target.value)}
+                                                        checked={
+                                                            requestType ===
+                                                            type.value
+                                                        }
+                                                        onChange={(e) =>
+                                                            setRequestType(
+                                                                e.target.value,
+                                                            )
+                                                        }
                                                         className="mt-1"
                                                         required
                                                     />
@@ -122,23 +140,32 @@ const FundRequestsCreate = ({ shops, requestTypes }: Props) => {
                                                 </label>
                                             ))}
                                         </div>
-                                        <InputError message={errors.request_type} />
+                                        <InputError
+                                            message={errors.request_type}
+                                        />
                                     </div>
 
                                     <div>
                                         <Label htmlFor="amount">
-                                            Amount <span className="text-red-500">*</span>
+                                            Amount{' '}
+                                            <span className="text-red-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <div className="relative mt-2">
                                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                <span className="text-gray-500 dark:text-gray-400">$</span>
+                                                <span className="text-gray-500 dark:text-gray-400">
+                                                    $
+                                                </span>
                                             </div>
                                             <Input
                                                 type="number"
                                                 id="amount"
                                                 name="amount"
                                                 value={amount}
-                                                onChange={(e) => setAmount(e.target.value)}
+                                                onChange={(e) =>
+                                                    setAmount(e.target.value)
+                                                }
                                                 placeholder="0.00"
                                                 step="0.01"
                                                 min="0.01"
@@ -152,25 +179,36 @@ const FundRequestsCreate = ({ shops, requestTypes }: Props) => {
 
                                     <div>
                                         <Label htmlFor="description">
-                                            Description <span className="text-red-500">*</span>
+                                            Description{' '}
+                                            <span className="text-red-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <TextArea
                                             id="description"
                                             name="description"
                                             value={description}
-                                            onChange={(value) => setDescription(value)}
+                                            onChange={(value) =>
+                                                setDescription(value)
+                                            }
                                             rows={4}
                                             error={!!errors.description}
                                             hint="Provide detailed information about what the funds will be used for"
                                             required
                                         />
-                                        <InputError message={errors.description} />
+                                        <InputError
+                                            message={errors.description}
+                                        />
                                     </div>
                                 </div>
                             </Card>
 
                             <div className="flex gap-4">
-                                <Button type="submit" disabled={processing} className="flex-1">
+                                <Button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="flex-1"
+                                >
                                     Submit Request
                                 </Button>
                                 <Link href={FundRequestController.index.url()}>

@@ -1,9 +1,8 @@
-import OrderReturnController from '@/actions/App/Http/Controllers/OrderReturnController';
+import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
-import Select from '@/components/form/Select';
 import AppLayout from '@/layouts/AppLayout';
 import { OrderReturn } from '@/types/return';
 import { Head, Link, router } from '@inertiajs/react';
@@ -63,7 +62,7 @@ export default function Index({ returns, filters }: Props) {
         router.get(
             '/returns',
             { status: status || undefined },
-            { preserveState: true, preserveScroll: true }
+            { preserveState: true, preserveScroll: true },
         );
     };
 
@@ -135,25 +134,25 @@ export default function Index({ returns, filters }: Props) {
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Return #
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Order #
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Status
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Reason
                                         </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Refund Amount
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Created
                                         </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Actions
                                         </th>
                                     </tr>
@@ -161,16 +160,17 @@ export default function Index({ returns, filters }: Props) {
                                 <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
                                     {returns.data.map((returnItem) => (
                                         <tr key={returnItem.id}>
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                            <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white">
                                                 {returnItem.return_number}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-white">
-                                                {returnItem.order?.order_number || 'N/A'}
+                                            <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900 dark:text-white">
+                                                {returnItem.order
+                                                    ?.order_number || 'N/A'}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4">
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <Badge
                                                     color={getStatusColor(
-                                                        returnItem.status
+                                                        returnItem.status,
                                                     )}
                                                     size="sm"
                                                 >
@@ -180,15 +180,17 @@ export default function Index({ returns, filters }: Props) {
                                             <td className="max-w-xs truncate px-6 py-4 text-sm text-gray-900 dark:text-white">
                                                 {returnItem.reason}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900 dark:text-white">
+                                            <td className="px-6 py-4 text-right text-sm whitespace-nowrap text-gray-900 dark:text-white">
                                                 {formatCurrency(
-                                                    returnItem.refund_amount
+                                                    returnItem.refund_amount,
                                                 )}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                                {formatDate(returnItem.created_at)}
+                                            <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                                {formatDate(
+                                                    returnItem.created_at,
+                                                )}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
+                                            <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
                                                 <Link
                                                     href={`/returns/${returnItem.id}`}
                                                 >
@@ -223,7 +225,7 @@ export default function Index({ returns, filters }: Props) {
                                             {Math.min(
                                                 returns.current_page *
                                                     returns.per_page,
-                                                returns.total
+                                                returns.total,
                                             )}
                                         </span>{' '}
                                         of{' '}
@@ -239,7 +241,7 @@ export default function Index({ returns, filters }: Props) {
                                                 size="sm"
                                                 onClick={() =>
                                                     router.get(
-                                                        `/returns?page=${returns.current_page - 1}${statusFilter ? `&status=${statusFilter}` : ''}`
+                                                        `/returns?page=${returns.current_page - 1}${statusFilter ? `&status=${statusFilter}` : ''}`,
                                                     )
                                                 }
                                             >
@@ -253,7 +255,7 @@ export default function Index({ returns, filters }: Props) {
                                                 size="sm"
                                                 onClick={() =>
                                                     router.get(
-                                                        `/returns?page=${returns.current_page + 1}${statusFilter ? `&status=${statusFilter}` : ''}`
+                                                        `/returns?page=${returns.current_page + 1}${statusFilter ? `&status=${statusFilter}` : ''}`,
                                                     )
                                                 }
                                             >

@@ -1,9 +1,9 @@
-import React, { useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { Upload, X } from 'lucide-react';
 import Button from '@/components/ui/button/Button';
 import { Image } from '@/types/image';
 import { router } from '@inertiajs/react';
+import { Upload, X } from 'lucide-react';
+import React, { useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
 
 interface ImageUploaderProps {
     modelType: 'Product' | 'ProductVariant' | 'Service';
@@ -42,7 +42,7 @@ export default function ImageUploader({
 
             setSelectedFiles((prev) => [...prev, ...acceptedFiles]);
         },
-        [selectedFiles, maxFiles]
+        [selectedFiles, maxFiles],
     );
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -115,14 +115,11 @@ export default function ImageUploader({
         <div className={className}>
             <div
                 {...getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer
-                    ${
-                        isDragActive
-                            ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10'
-                            : 'border-gray-300 dark:border-gray-700 hover:border-brand-400 dark:hover:border-brand-600'
-                    }
-                    ${disabled || uploading ? 'opacity-50 cursor-not-allowed' : ''}
-                `}
+                className={`cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
+                    isDragActive
+                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10'
+                        : 'border-gray-300 hover:border-brand-400 dark:border-gray-700 dark:hover:border-brand-600'
+                } ${disabled || uploading ? 'cursor-not-allowed opacity-50' : ''} `}
             >
                 <input {...getInputProps()} />
 
@@ -150,7 +147,7 @@ export default function ImageUploader({
             </div>
 
             {error && (
-                <div className="mt-3 rounded-md bg-error-50 dark:bg-error-900/20 p-3">
+                <div className="mt-3 rounded-md bg-error-50 p-3 dark:bg-error-900/20">
                     <p className="text-sm text-error-600 dark:text-error-400">
                         {error}
                     </p>
@@ -167,7 +164,7 @@ export default function ImageUploader({
                         {selectedFiles.map((file, index) => (
                             <div
                                 key={index}
-                                className="flex items-center justify-between rounded-md border border-gray-200 dark:border-gray-700 p-3"
+                                className="flex items-center justify-between rounded-md border border-gray-200 p-3 dark:border-gray-700"
                             >
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100 dark:bg-gray-800">
@@ -187,7 +184,7 @@ export default function ImageUploader({
                                     type="button"
                                     onClick={() => removeFile(index)}
                                     disabled={uploading}
-                                    className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 disabled:opacity-50"
+                                    className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50 dark:hover:bg-gray-800"
                                 >
                                     <X className="h-5 w-5" />
                                 </button>

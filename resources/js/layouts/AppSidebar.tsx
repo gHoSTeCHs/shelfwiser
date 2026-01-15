@@ -75,7 +75,10 @@ const navItems: NavItem[] = [
             { name: 'Suppliers Report', path: '/reports/suppliers' },
             { name: 'Financials', path: '/reports/financials' },
             { name: 'Customer Analytics', path: '/reports/customer-analytics' },
-            { name: 'Product Profitability', path: '/reports/product-profitability' },
+            {
+                name: 'Product Profitability',
+                path: '/reports/product-profitability',
+            },
         ],
     },
     {
@@ -125,7 +128,10 @@ const navItems: NavItem[] = [
         name: 'Payroll Settings',
         subItems: [
             { name: 'Earning Types', path: '/payroll/settings/earning-types' },
-            { name: 'Deduction Types', path: '/payroll/settings/deduction-types' },
+            {
+                name: 'Deduction Types',
+                path: '/payroll/settings/deduction-types',
+            },
             { name: 'Pay Calendars', path: '/payroll/settings/pay-calendars' },
             { name: 'Tax Settings', path: '/payroll/settings/tax' },
         ],

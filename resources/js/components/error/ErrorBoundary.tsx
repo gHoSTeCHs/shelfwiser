@@ -1,12 +1,10 @@
-import React, { Component, ErrorInfo as ReactErrorInfo } from 'react';
 import {
     ErrorBoundaryProps,
     ErrorBoundaryState,
-    ErrorInfo,
     createErrorInfo,
-    classifyError as defaultClassifyError,
     isChunkLoadError,
 } from '@/types/error';
+import React, { Component, ErrorInfo as ReactErrorInfo } from 'react';
 import ErrorFallback from './ErrorFallback';
 
 /**
@@ -45,7 +43,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
         // Create structured error info
         const errorInfo = createErrorInfo(
             error,
-            reactErrorInfo.componentStack || undefined
+            reactErrorInfo.componentStack || undefined,
         );
 
         // Override classification if custom classifier provided
@@ -109,7 +107,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     };
 
     render(): React.ReactNode {
-        const { children, fallback: FallbackComponent, fallbackRender, showDetailsInProduction } = this.props;
+        const {
+            children,
+            fallback: FallbackComponent,
+            fallbackRender,
+            showDetailsInProduction,
+        } = this.props;
         const { hasError, error, errorInfo, isResetting } = this.state;
 
         if (hasError && error) {
@@ -151,9 +154,10 @@ export default ErrorBoundary;
  */
 export function withErrorBoundary<P extends object>(
     WrappedComponent: React.ComponentType<P>,
-    errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>
+    errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>,
 ): React.FC<P> {
-    const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component';
+    const displayName =
+        WrappedComponent.displayName || WrappedComponent.name || 'Component';
 
     const ComponentWithErrorBoundary: React.FC<P> = (props) => (
         <ErrorBoundary {...errorBoundaryProps}>

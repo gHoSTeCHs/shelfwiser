@@ -1,26 +1,18 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/AppLayout';
-import { Card } from '@/components/ui/card';
-import Button from '@/components/ui/button/Button';
-import Input from '@/components/form/input/InputField';
-import Select from '@/components/form/Select';
-import Label from '@/components/form/Label';
-import InputError from '@/components/form/InputError';
-import Checkbox from '@/components/form/input/Checkbox';
-import Badge from '@/components/ui/badge/Badge';
 import PayrollController from '@/actions/App/Http/Controllers/PayrollController';
 import PayrollSettingsController from '@/actions/App/Http/Controllers/PayrollSettingsController';
-import {
-    ArrowLeft,
-    Plus,
-    Pencil,
-    Trash2,
-    X,
-    MinusCircle,
-    Lock,
-} from 'lucide-react';
+import Checkbox from '@/components/form/input/Checkbox';
+import Input from '@/components/form/input/InputField';
+import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
 import type { DeductionTypeModel, EnumOption } from '@/types/payroll';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { ArrowLeft, Lock, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
 
 interface Props {
     deductionTypes: DeductionTypeModel[];
@@ -36,7 +28,9 @@ export default function DeductionTypes({
     calculationBases,
 }: Props) {
     const [showModal, setShowModal] = useState(false);
-    const [editingType, setEditingType] = useState<DeductionTypeModel | null>(null);
+    const [editingType, setEditingType] = useState<DeductionTypeModel | null>(
+        null,
+    );
     const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -95,10 +89,12 @@ export default function DeductionTypes({
 
         if (editingType) {
             form.put(
-                PayrollSettingsController.updateDeductionType.url({ deductionType: editingType.id }),
+                PayrollSettingsController.updateDeductionType.url({
+                    deductionType: editingType.id,
+                }),
                 {
                     onSuccess: () => closeModal(),
-                }
+                },
             );
         } else {
             form.post(PayrollSettingsController.storeDeductionType.url(), {
@@ -109,13 +105,21 @@ export default function DeductionTypes({
 
     const handleDelete = (id: number) => {
         setErrorMessage(null);
-        router.delete(PayrollSettingsController.destroyDeductionType.url({ deductionType: id }), {
-            onSuccess: () => setDeleteConfirm(null),
-            onError: (errors) => {
-                setDeleteConfirm(null);
-                setErrorMessage(Object.values(errors).flat().join(', ') || 'Failed to delete deduction type');
+        router.delete(
+            PayrollSettingsController.destroyDeductionType.url({
+                deductionType: id,
+            }),
+            {
+                onSuccess: () => setDeleteConfirm(null),
+                onError: (errors) => {
+                    setDeleteConfirm(null);
+                    setErrorMessage(
+                        Object.values(errors).flat().join(', ') ||
+                            'Failed to delete deduction type',
+                    );
+                },
             },
-        });
+        );
     };
 
     const getCategoryColor = (category: string) => {
@@ -157,7 +161,8 @@ export default function DeductionTypes({
                         Deduction Types
                     </h1>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Configure the types of deductions that can be applied to payroll
+                        Configure the types of deductions that can be applied to
+                        payroll
                     </p>
                 </div>
 
@@ -173,7 +178,9 @@ export default function DeductionTypes({
             {errorMessage && (
                 <div className="mb-6 rounded-lg border border-error-200 bg-error-50 p-4 dark:border-error-800 dark:bg-error-900/20">
                     <div className="flex items-center gap-3">
-                        <span className="text-error-600 dark:text-error-400">{errorMessage}</span>
+                        <span className="text-error-600 dark:text-error-400">
+                            {errorMessage}
+                        </span>
                         <button
                             onClick={() => setErrorMessage(null)}
                             className="ml-auto inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-error-600 hover:text-error-800 dark:text-error-400"
@@ -189,35 +196,38 @@ export default function DeductionTypes({
                     <table className="w-full">
                         <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                                <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
+                                <th scope="col" className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400">
                                     Code
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Name
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Category
                                 </th>
-                                <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
+                                <th scope="col" className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400">
                                     Calculation
                                 </th>
-                                <th className="hidden px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
+                                <th scope="col" className="hidden px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400">
                                     Pre-Tax
                                 </th>
-                                <th className="hidden px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
+                                <th scope="col" className="hidden px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400">
                                     Priority
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Status
                                 </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Actions
                                 </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
                             {deductionTypes.map((type) => (
-                                <tr key={type.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <tr
+                                    key={type.id}
+                                    className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                                >
                                     <td className="hidden px-4 py-3 md:table-cell">
                                         <div className="flex items-center gap-2">
                                             {type.is_system && (
@@ -241,33 +251,47 @@ export default function DeductionTypes({
                                         </div>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <Badge color={getCategoryColor(type.category)} size="sm">
+                                        <Badge
+                                            color={getCategoryColor(
+                                                type.category,
+                                            )}
+                                            size="sm"
+                                        >
                                             {type.category}
                                         </Badge>
                                     </td>
-                                    <td className="hidden px-4 py-3 text-sm text-gray-600 dark:text-gray-300 md:table-cell">
+                                    <td className="hidden px-4 py-3 text-sm text-gray-600 md:table-cell dark:text-gray-300">
                                         <div className="flex flex-col">
                                             <span>{type.calculation_type}</span>
                                             <span className="text-xs text-gray-400">
-                                                Based on: {type.calculation_base}
+                                                Based on:{' '}
+                                                {type.calculation_base}
                                             </span>
                                         </div>
                                     </td>
                                     <td className="hidden px-4 py-3 text-center md:table-cell">
                                         {type.is_pre_tax ? (
-                                            <Badge color="info" size="sm">Yes</Badge>
+                                            <Badge color="info" size="sm">
+                                                Yes
+                                            </Badge>
                                         ) : (
-                                            <Badge color="light" size="sm">No</Badge>
+                                            <Badge color="light" size="sm">
+                                                No
+                                            </Badge>
                                         )}
                                     </td>
-                                    <td className="hidden px-4 py-3 text-center text-sm text-gray-600 dark:text-gray-300 md:table-cell">
+                                    <td className="hidden px-4 py-3 text-center text-sm text-gray-600 md:table-cell dark:text-gray-300">
                                         {type.priority}
                                     </td>
                                     <td className="px-4 py-3">
                                         {type.is_active ? (
-                                            <Badge color="success" size="sm">Active</Badge>
+                                            <Badge color="success" size="sm">
+                                                Active
+                                            </Badge>
                                         ) : (
-                                            <Badge color="light" size="sm">Inactive</Badge>
+                                            <Badge color="light" size="sm">
+                                                Inactive
+                                            </Badge>
                                         )}
                                     </td>
                                     <td className="px-4 py-3 text-right">
@@ -276,7 +300,9 @@ export default function DeductionTypes({
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => openEditModal(type)}
+                                                    onClick={() =>
+                                                        openEditModal(type)
+                                                    }
                                                 >
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
@@ -285,14 +311,22 @@ export default function DeductionTypes({
                                                         <Button
                                                             variant="destructive"
                                                             size="sm"
-                                                            onClick={() => handleDelete(type.id)}
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    type.id,
+                                                                )
+                                                            }
                                                         >
                                                             Confirm
                                                         </Button>
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
-                                                            onClick={() => setDeleteConfirm(null)}
+                                                            onClick={() =>
+                                                                setDeleteConfirm(
+                                                                    null,
+                                                                )
+                                                            }
                                                         >
                                                             Cancel
                                                         </Button>
@@ -301,7 +335,11 @@ export default function DeductionTypes({
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => setDeleteConfirm(type.id)}
+                                                        onClick={() =>
+                                                            setDeleteConfirm(
+                                                                type.id,
+                                                            )
+                                                        }
                                                     >
                                                         <Trash2 className="h-4 w-4 text-error-500" />
                                                     </Button>
@@ -309,7 +347,9 @@ export default function DeductionTypes({
                                             </div>
                                         )}
                                         {type.is_system && (
-                                            <span className="text-sm text-gray-400">System</span>
+                                            <span className="text-sm text-gray-400">
+                                                System
+                                            </span>
                                         )}
                                     </td>
                                 </tr>
@@ -323,10 +363,16 @@ export default function DeductionTypes({
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto p-4 sm:p-6">
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-base font-semibold text-gray-900 dark:text-white sm:text-lg">
-                                {editingType ? 'Edit Deduction Type' : 'Add Deduction Type'}
+                            <h3 className="text-base font-semibold text-gray-900 sm:text-lg dark:text-white">
+                                {editingType
+                                    ? 'Edit Deduction Type'
+                                    : 'Add Deduction Type'}
                             </h3>
-                            <Button variant="ghost" size="sm" onClick={closeModal}>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={closeModal}
+                            >
                                 <X className="h-5 w-5" />
                             </Button>
                         </div>
@@ -335,13 +381,21 @@ export default function DeductionTypes({
                             <div className="grid gap-4 min-[480px]:grid-cols-2">
                                 <div>
                                     <Label htmlFor="code">
-                                        Code <span className="text-error-500">*</span>
+                                        Code{' '}
+                                        <span className="text-error-500">
+                                            *
+                                        </span>
                                     </Label>
                                     <Input
                                         type="text"
                                         name="code"
                                         value={form.data.code}
-                                        onChange={(e) => form.setData('code', e.target.value.toUpperCase())}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'code',
+                                                e.target.value.toUpperCase(),
+                                            )
+                                        }
                                         placeholder="LOAN"
                                         error={!!form.errors.code}
                                     />
@@ -350,13 +404,18 @@ export default function DeductionTypes({
 
                                 <div>
                                     <Label htmlFor="name">
-                                        Name <span className="text-error-500">*</span>
+                                        Name{' '}
+                                        <span className="text-error-500">
+                                            *
+                                        </span>
                                     </Label>
                                     <Input
                                         type="text"
                                         name="name"
                                         value={form.data.name}
-                                        onChange={(e) => form.setData('name', e.target.value)}
+                                        onChange={(e) =>
+                                            form.setData('name', e.target.value)
+                                        }
                                         placeholder="Staff Loan"
                                         error={!!form.errors.name}
                                     />
@@ -370,7 +429,12 @@ export default function DeductionTypes({
                                     type="text"
                                     name="description"
                                     value={form.data.description}
-                                    onChange={(e) => form.setData('description', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'description',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="Optional description"
                                 />
                             </div>
@@ -384,104 +448,175 @@ export default function DeductionTypes({
                                             label: c.label,
                                         }))}
                                         defaultValue={form.data.category}
-                                        onChange={(value) => form.setData('category', value)}
+                                        onChange={(value) =>
+                                            form.setData('category', value)
+                                        }
                                     />
-                                    <InputError message={form.errors.category} />
+                                    <InputError
+                                        message={form.errors.category}
+                                    />
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="priority">Priority (1-100)</Label>
+                                    <Label htmlFor="priority">
+                                        Priority (1-100)
+                                    </Label>
                                     <Input
                                         type="number"
                                         name="priority"
                                         value={form.data.priority}
-                                        onChange={(e) => form.setData('priority', e.target.value)}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'priority',
+                                                e.target.value,
+                                            )
+                                        }
                                         min="1"
                                         max="100"
                                     />
-                                    <InputError message={form.errors.priority} />
+                                    <InputError
+                                        message={form.errors.priority}
+                                    />
                                 </div>
                             </div>
 
                             <div className="grid gap-4 min-[480px]:grid-cols-2">
                                 <div>
-                                    <Label htmlFor="calculation_type">Calculation Type</Label>
+                                    <Label htmlFor="calculation_type">
+                                        Calculation Type
+                                    </Label>
                                     <Select
                                         options={calculationTypes.map((c) => ({
                                             value: c.value,
                                             label: c.label,
                                         }))}
-                                        defaultValue={form.data.calculation_type}
-                                        onChange={(value) => form.setData('calculation_type', value)}
+                                        defaultValue={
+                                            form.data.calculation_type
+                                        }
+                                        onChange={(value) =>
+                                            form.setData(
+                                                'calculation_type',
+                                                value,
+                                            )
+                                        }
                                     />
-                                    <InputError message={form.errors.calculation_type} />
+                                    <InputError
+                                        message={form.errors.calculation_type}
+                                    />
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="calculation_base">Calculation Base</Label>
+                                    <Label htmlFor="calculation_base">
+                                        Calculation Base
+                                    </Label>
                                     <Select
                                         options={calculationBases.map((c) => ({
                                             value: c.value,
                                             label: c.label,
                                         }))}
-                                        defaultValue={form.data.calculation_base}
-                                        onChange={(value) => form.setData('calculation_base', value)}
+                                        defaultValue={
+                                            form.data.calculation_base
+                                        }
+                                        onChange={(value) =>
+                                            form.setData(
+                                                'calculation_base',
+                                                value,
+                                            )
+                                        }
                                     />
-                                    <InputError message={form.errors.calculation_base} />
+                                    <InputError
+                                        message={form.errors.calculation_base}
+                                    />
                                 </div>
                             </div>
 
                             <div className="grid gap-4 min-[480px]:grid-cols-2">
                                 <div>
-                                    <Label htmlFor="default_amount">Default Amount</Label>
+                                    <Label htmlFor="default_amount">
+                                        Default Amount
+                                    </Label>
                                     <Input
                                         type="number"
                                         name="default_amount"
                                         value={form.data.default_amount}
-                                        onChange={(e) => form.setData('default_amount', e.target.value)}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'default_amount',
+                                                e.target.value,
+                                            )
+                                        }
                                         step="0.01"
                                     />
-                                    <InputError message={form.errors.default_amount} />
+                                    <InputError
+                                        message={form.errors.default_amount}
+                                    />
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="default_rate">Default Rate (%)</Label>
+                                    <Label htmlFor="default_rate">
+                                        Default Rate (%)
+                                    </Label>
                                     <Input
                                         type="number"
                                         name="default_rate"
                                         value={form.data.default_rate}
-                                        onChange={(e) => form.setData('default_rate', e.target.value)}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'default_rate',
+                                                e.target.value,
+                                            )
+                                        }
                                         step="0.01"
                                     />
-                                    <InputError message={form.errors.default_rate} />
+                                    <InputError
+                                        message={form.errors.default_rate}
+                                    />
                                 </div>
                             </div>
 
                             <div className="grid gap-4 min-[480px]:grid-cols-2">
                                 <div>
-                                    <Label htmlFor="max_amount">Max Amount (per period)</Label>
+                                    <Label htmlFor="max_amount">
+                                        Max Amount (per period)
+                                    </Label>
                                     <Input
                                         type="number"
                                         name="max_amount"
                                         value={form.data.max_amount}
-                                        onChange={(e) => form.setData('max_amount', e.target.value)}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'max_amount',
+                                                e.target.value,
+                                            )
+                                        }
                                         step="0.01"
                                         placeholder="No limit"
                                     />
-                                    <InputError message={form.errors.max_amount} />
+                                    <InputError
+                                        message={form.errors.max_amount}
+                                    />
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="annual_cap">Annual Cap</Label>
+                                    <Label htmlFor="annual_cap">
+                                        Annual Cap
+                                    </Label>
                                     <Input
                                         type="number"
                                         name="annual_cap"
                                         value={form.data.annual_cap}
-                                        onChange={(e) => form.setData('annual_cap', e.target.value)}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'annual_cap',
+                                                e.target.value,
+                                            )
+                                        }
                                         step="0.01"
                                         placeholder="No cap"
                                     />
-                                    <InputError message={form.errors.annual_cap} />
+                                    <InputError
+                                        message={form.errors.annual_cap}
+                                    />
                                 </div>
                             </div>
 
@@ -490,10 +625,19 @@ export default function DeductionTypes({
                                     <Checkbox
                                         id="is_pre_tax"
                                         checked={form.data.is_pre_tax}
-                                        onChange={(e) => form.setData('is_pre_tax', e.target.checked)}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'is_pre_tax',
+                                                e.target.checked,
+                                            )
+                                        }
                                     />
-                                    <Label htmlFor="is_pre_tax" className="mb-0">
-                                        Pre-tax deduction (reduces taxable income)
+                                    <Label
+                                        htmlFor="is_pre_tax"
+                                        className="mb-0"
+                                    >
+                                        Pre-tax deduction (reduces taxable
+                                        income)
                                     </Label>
                                 </div>
 
@@ -501,10 +645,19 @@ export default function DeductionTypes({
                                     <Checkbox
                                         id="is_mandatory"
                                         checked={form.data.is_mandatory}
-                                        onChange={(e) => form.setData('is_mandatory', e.target.checked)}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'is_mandatory',
+                                                e.target.checked,
+                                            )
+                                        }
                                     />
-                                    <Label htmlFor="is_mandatory" className="mb-0">
-                                        Mandatory (automatically applied to all employees)
+                                    <Label
+                                        htmlFor="is_mandatory"
+                                        className="mb-0"
+                                    >
+                                        Mandatory (automatically applied to all
+                                        employees)
                                     </Label>
                                 </div>
 
@@ -512,7 +665,12 @@ export default function DeductionTypes({
                                     <Checkbox
                                         id="is_active"
                                         checked={form.data.is_active}
-                                        onChange={(e) => form.setData('is_active', e.target.checked)}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'is_active',
+                                                e.target.checked,
+                                            )
+                                        }
                                     />
                                     <Label htmlFor="is_active" className="mb-0">
                                         Active
@@ -521,7 +679,12 @@ export default function DeductionTypes({
                             </div>
 
                             <div className="flex flex-col gap-2 border-t pt-4 min-[480px]:flex-row min-[480px]:justify-end min-[480px]:gap-3">
-                                <Button type="button" variant="outline" onClick={closeModal} className="w-full min-[480px]:w-auto">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={closeModal}
+                                    className="w-full min-[480px]:w-auto"
+                                >
                                     Cancel
                                 </Button>
                                 <Button
@@ -542,4 +705,6 @@ export default function DeductionTypes({
     );
 }
 
-DeductionTypes.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
+DeductionTypes.layout = (page: React.ReactNode) => (
+    <AppLayout>{page}</AppLayout>
+);

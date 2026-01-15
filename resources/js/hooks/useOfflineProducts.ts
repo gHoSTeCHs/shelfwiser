@@ -1,6 +1,8 @@
 import {
+    clearExpiredCache,
     getLastSyncTime,
     getProductCountForShop,
+    isCacheExpired,
     putItems,
     searchProducts,
     setLastSyncTime,
@@ -40,7 +42,9 @@ interface UseOfflineProductsReturn {
  * - Provides fast local search (IndexedDB first, API fallback)
  * - Auto-syncs periodically when online
  */
-export function useOfflineProducts(options: UseOfflineProductsOptions): UseOfflineProductsReturn {
+export function useOfflineProducts(
+    options: UseOfflineProductsOptions,
+): UseOfflineProductsReturn {
     const {
         shopId,
         tenantId,
@@ -55,13 +59,16 @@ export function useOfflineProducts(options: UseOfflineProductsOptions): UseOffli
     const [productCount, setProductCount] = useState(0);
     const [syncError, setSyncError] = useState<string | null>(null);
     const [isReady, setIsReady] = useState(false);
-    
+
     const isOnline = useNetworkStatus();
 
     const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const isMountedRef = useRef(true);
 
-    // Sync products from server to IndexedDB
+    /**
+     * Sync products from server to IndexedDB.
+     * Uses incremental sync based on last sync time.
+     */
     const syncProducts = useCallback(async () => {
         if (!isOnline) {
             console.log('[useOfflineProducts] Skipping sync - offline');
@@ -78,10 +85,8 @@ export function useOfflineProducts(options: UseOfflineProductsOptions): UseOffli
         setSyncError(null);
 
         try {
-            // Get last sync time for incremental sync
             const lastSync = await getLastSyncTime(`products_${shopId}`);
 
-            // Build API URL
             let url = `/api/sync/products?shop_id=${shopId}`;
             if (lastSync) {
                 url += `&updated_since=${new Date(lastSync).toISOString()}`;
@@ -92,40 +97,44 @@ export function useOfflineProducts(options: UseOfflineProductsOptions): UseOffli
             const response = await fetch(url, {
                 credentials: 'include',
                 headers: {
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
                 },
             });
 
             if (!response.ok) {
-                throw new Error(`Sync failed: ${response.status} ${response.statusText}`);
+                throw new Error(
+                    `Sync failed: ${response.status} ${response.statusText}`,
+                );
             }
 
             const result = await response.json();
             const products: SyncProduct[] = result.data || [];
 
-            console.log(`[useOfflineProducts] Received ${products.length} products`);
+            console.log(
+                `[useOfflineProducts] Received ${products.length} products`,
+            );
 
             if (products.length > 0) {
-                // Store in IndexedDB
                 await putItems('products', products);
             }
 
-            // Update sync metadata
             await setLastSyncTime(`products_${shopId}`);
             const newSyncTime = Date.now();
 
             if (isMountedRef.current) {
                 setLastSyncTimeState(newSyncTime);
 
-                // Update product count
                 const count = await getProductCountForShop(shopId);
                 setProductCount(count);
             }
 
             console.log('[useOfflineProducts] Sync complete');
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Failed to sync products';
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to sync products';
             console.error('[useOfflineProducts] Sync error:', message);
 
             if (isMountedRef.current) {
@@ -140,89 +149,109 @@ export function useOfflineProducts(options: UseOfflineProductsOptions): UseOffli
     }, [shopId, isOnline]);
 
     // Search products (IndexedDB first, API fallback)
-    const searchProductsLocal = useCallback(async (query: string): Promise<SyncProduct[]> => {
-        if (!query || query.length < 1) {
-            return [];
-        }
-
-        setIsSearching(true);
-
-        try {
-            // First, try IndexedDB (with tenant scoping for security)
-            const localResults = await searchProducts<SyncProduct>(query, shopId, tenantId, 20);
-
-            if (localResults.length > 0) {
-                console.log(`[useOfflineProducts] Found ${localResults.length} products locally`);
-                return localResults;
+    const searchProductsLocal = useCallback(
+        async (query: string): Promise<SyncProduct[]> => {
+            if (!query || query.length < 1) {
+                return [];
             }
 
-            // If offline or no local results, try API as fallback
-            if (isOnline) {
-                console.log('[useOfflineProducts] No local results, trying API...');
+            setIsSearching(true);
 
-                const response = await fetch(
-                    `/pos/${shopId}/search/products?query=${encodeURIComponent(query)}`,
-                    {
-                        credentials: 'include',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                    }
+            try {
+                // First, try IndexedDB (with tenant scoping for security)
+                const localResults = await searchProducts<SyncProduct>(
+                    query,
+                    shopId,
+                    tenantId,
+                    20,
                 );
 
-                if (response.ok) {
-                    const data = await response.json();
-                    const products = data.products || [];
+                if (localResults.length > 0) {
+                    console.log(
+                        `[useOfflineProducts] Found ${localResults.length} products locally`,
+                    );
+                    return localResults;
+                }
 
-                    // Convert API response to SyncProduct format and cache
-                    const syncProducts: SyncProduct[] = products.map((p: any) => ({
-                        id: p.id,
-                        product_id: p.product?.id || p.product_id,
-                        tenant_id: tenantId,
-                        shop_id: shopId,
-                        product_name: p.product?.name || p.name,
-                        variant_name: p.name,
-                        display_name: `${p.product?.name || ''} ${p.name ? '- ' + p.name : ''}`.trim(),
-                        sku: p.sku,
-                        barcode: p.barcode,
-                        price: parseFloat(p.price) || 0,
-                        cost_price: parseFloat(p.cost_price) || 0,
-                        stock_quantity: p.stock_quantity || 0,
-                        available_stock: p.available_stock || p.stock_quantity || 0,
-                        track_stock: p.track_stock ?? true,
-                        reorder_level: p.reorder_level,
-                        is_taxable: p.product?.is_taxable || false,
-                        is_active: p.is_active ?? true,
-                        image_url: p.image_url,
-                        packaging_types: p.packagingTypes || [],
-                        updated_at: p.updated_at || new Date().toISOString(),
-                    }));
+                // If offline or no local results, try API as fallback
+                if (isOnline) {
+                    console.log(
+                        '[useOfflineProducts] No local results, trying API...',
+                    );
 
-                    // Cache new products in IndexedDB
-                    if (syncProducts.length > 0) {
-                        await putItems('products', syncProducts);
+                    const response = await fetch(
+                        `/pos/${shopId}/search/products?query=${encodeURIComponent(query)}`,
+                        {
+                            credentials: 'include',
+                            headers: {
+                                Accept: 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                        },
+                    );
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const products = data.products || [];
+
+                        const syncProducts: SyncProduct[] = products.map(
+                            (p: Record<string, unknown>) => ({
+                                id: p.id,
+                                product_id: p.product?.id || p.product_id,
+                                tenant_id: tenantId,
+                                shop_id: shopId,
+                                product_name: p.product?.name || p.name,
+                                variant_name: p.name,
+                                display_name:
+                                    `${p.product?.name || ''} ${p.name ? '- ' + p.name : ''}`.trim(),
+                                sku: p.sku,
+                                barcode: p.barcode,
+                                price: parseFloat(p.price) || 0,
+                                cost_price: parseFloat(p.cost_price) || 0,
+                                stock_quantity: p.stock_quantity || 0,
+                                available_stock:
+                                    p.available_stock || p.stock_quantity || 0,
+                                track_stock: p.track_stock ?? true,
+                                reorder_level: p.reorder_level,
+                                is_taxable: p.product?.is_taxable || false,
+                                is_active: p.is_active ?? true,
+                                image_url: p.image_url,
+                                packaging_types: p.packagingTypes || [],
+                                updated_at:
+                                    p.updated_at || new Date().toISOString(),
+                            }),
+                        );
+
+                        // Cache new products in IndexedDB
+                        if (syncProducts.length > 0) {
+                            await putItems('products', syncProducts);
+                        }
+
+                        return syncProducts;
                     }
+                }
 
-                    return syncProducts;
+                return [];
+            } catch (error) {
+                console.error('[useOfflineProducts] Search error:', error);
+                return [];
+            } finally {
+                if (isMountedRef.current) {
+                    setIsSearching(false);
                 }
             }
+        },
+        [shopId, tenantId, isOnline],
+    );
 
-            return [];
-        } catch (error) {
-            console.error('[useOfflineProducts] Search error:', error);
-            return [];
-        } finally {
-            if (isMountedRef.current) {
-                setIsSearching(false);
-            }
-        }
-    }, [shopId, tenantId, isOnline]);
-
-    // Initialize: load sync time and product count
+    /**
+     * Initialize: load sync time, product count, and clear expired cache.
+     */
     useEffect(() => {
         const init = async () => {
             try {
+                await clearExpiredCache('products');
+
                 const syncTime = await getLastSyncTime(`products_${shopId}`);
                 const count = await getProductCountForShop(shopId);
 
@@ -242,19 +271,38 @@ export function useOfflineProducts(options: UseOfflineProductsOptions): UseOffli
         init();
     }, [shopId]);
 
-    // Auto-sync on mount and when coming online
+    /**
+     * Auto-sync on mount and when coming online.
+     * Triggers sync if cache is expired or no products exist.
+     */
     useEffect(() => {
         if (!autoSync || !isReady) return;
 
-        // Sync immediately if we have no products or haven't synced recently
-        const shouldSyncNow = productCount === 0 ||
-            !lastSyncTime ||
-            (Date.now() - lastSyncTime > syncIntervalMs);
+        const checkAndSync = async () => {
+            const cacheExpired = await isCacheExpired(
+                `products_${shopId}`,
+                syncIntervalMs,
+            );
 
-        if (shouldSyncNow && isOnline) {
-            syncProducts();
-        }
-    }, [autoSync, isReady, isOnline, productCount, lastSyncTime, syncIntervalMs, syncProducts]);
+            const shouldSyncNow =
+                productCount === 0 || !lastSyncTime || cacheExpired;
+
+            if (shouldSyncNow && isOnline) {
+                syncProducts();
+            }
+        };
+
+        checkAndSync();
+    }, [
+        autoSync,
+        isReady,
+        isOnline,
+        productCount,
+        lastSyncTime,
+        syncIntervalMs,
+        syncProducts,
+        shopId,
+    ]);
 
     // Set up periodic sync
     useEffect(() => {

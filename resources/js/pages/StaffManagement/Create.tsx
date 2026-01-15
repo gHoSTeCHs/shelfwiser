@@ -1,24 +1,21 @@
-import { useState, useCallback } from 'react';
-import { Head, Link, Form } from '@inertiajs/react';
-import { ArrowLeft, Save, UserPlus } from 'lucide-react';
 import StaffManagementController from '@/actions/App/Http/Controllers/Web/StaffManagementController.ts';
-import AppLayout from '@/layouts/AppLayout';
 import Button from '@/components/ui/button/Button';
+import AppLayout from '@/layouts/AppLayout';
 import type {
-    StaffCreatePageProps,
     CreateStaffFormData,
     EmployeeTemplate,
+    StaffCreatePageProps,
 } from '@/types/staff';
+import { DEFAULT_STAFF_FORM_DATA, applyTemplateToForm } from '@/types/staff';
+import { Form, Head, Link } from '@inertiajs/react';
+import { ArrowLeft, Save, UserPlus } from 'lucide-react';
+import { useCallback, useState } from 'react';
 import {
-    DEFAULT_STAFF_FORM_DATA,
-    applyTemplateToForm,
-} from '@/types/staff';
-import {
-    PersonalInfoSection,
-    EmploymentSection,
+    BankingSection,
     CompensationSection,
     DeductionsSection,
-    BankingSection,
+    EmploymentSection,
+    PersonalInfoSection,
     ShopAssignmentSection,
     TemplateSelector,
 } from './components';
@@ -30,8 +27,12 @@ export default function Create({
     departments,
     templates,
 }: StaffCreatePageProps) {
-    const [formData, setFormData] = useState<CreateStaffFormData>(DEFAULT_STAFF_FORM_DATA);
-    const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+    const [formData, setFormData] = useState<CreateStaffFormData>(
+        DEFAULT_STAFF_FORM_DATA,
+    );
+    const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
+        null,
+    );
 
     const handleChange = useCallback(
         <K extends keyof CreateStaffFormData>(
@@ -67,7 +68,7 @@ export default function Create({
                             <UserPlus className="h-6 w-6 text-brand-600 dark:text-brand-400" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
+                            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
                                 Add Staff Member
                             </h1>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -134,9 +135,12 @@ export default function Create({
                                 onChange={handleChange}
                             />
 
-                            <div className="sticky bottom-0 -mx-4 border-t border-gray-200 bg-white/95 px-4 py-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/95 sm:-mx-6 sm:px-6">
+                            <div className="sticky bottom-0 -mx-4 border-t border-gray-200 bg-white/95 px-4 py-4 backdrop-blur-sm sm:-mx-6 sm:px-6 dark:border-gray-700 dark:bg-gray-900/95">
                                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                    <Link href={StaffManagementController.index.url()} className="w-full sm:w-auto">
+                                    <Link
+                                        href={StaffManagementController.index.url()}
+                                        className="w-full sm:w-auto"
+                                    >
                                         <Button
                                             variant="outline"
                                             disabled={processing}
@@ -166,8 +170,9 @@ export default function Create({
                                 </div>
 
                                 {!formData.role && (
-                                    <p className="mt-2 text-center text-xs text-amber-600 dark:text-amber-400 sm:text-left">
-                                        Please select a role to enable form submission
+                                    <p className="mt-2 text-center text-xs text-amber-600 sm:text-left dark:text-amber-400">
+                                        Please select a role to enable form
+                                        submission
                                     </p>
                                 )}
                             </div>

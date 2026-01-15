@@ -54,8 +54,20 @@ class UpdateCustomerRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'first_name.required' => 'Please provide the customer\'s first name.',
+            'first_name.max' => 'First name cannot exceed 255 characters.',
+            'last_name.required' => 'Please provide the customer\'s last name.',
+            'last_name.max' => 'Last name cannot exceed 255 characters.',
+            'email.required' => 'Please provide an email address for this customer.',
+            'email.email' => 'Please enter a valid email address.',
             'email.unique' => 'A customer with this email already exists.',
+            'phone.max' => 'Phone number cannot exceed 50 characters.',
             'preferred_shop_id.exists' => 'The selected shop is invalid.',
+            'credit_limit.min' => 'Credit limit cannot be negative.',
+            'address.street.required_with' => 'Street address is required when providing an address.',
+            'address.city.required_with' => 'City is required when providing an address.',
+            'address.state.required_with' => 'State is required when providing an address.',
+            'address.postal_code.required_with' => 'Postal code is required when providing an address.',
         ];
     }
 }

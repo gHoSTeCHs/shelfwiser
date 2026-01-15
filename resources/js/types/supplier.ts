@@ -2,9 +2,18 @@ import { User } from '@/types/index';
 import { Product, ProductVariant } from '@/types/product';
 import { Shop } from '@/types/shop';
 
-export type ConnectionApprovalMode = 'auto' | 'owner' | 'general_manager' | 'assistant_manager';
+export type ConnectionApprovalMode =
+    | 'auto'
+    | 'owner'
+    | 'general_manager'
+    | 'assistant_manager';
 
-export type ConnectionStatus = 'pending' | 'approved' | 'active' | 'suspended' | 'rejected';
+export type ConnectionStatus =
+    | 'pending'
+    | 'approved'
+    | 'active'
+    | 'suspended'
+    | 'rejected';
 
 export type CatalogVisibility = 'public' | 'private' | 'connections_only';
 
@@ -18,7 +27,12 @@ export type PurchaseOrderStatus =
     | 'completed'
     | 'cancelled';
 
-export type PurchaseOrderPaymentStatus = 'pending' | 'partial' | 'paid' | 'overdue' | 'cancelled';
+export type PurchaseOrderPaymentStatus =
+    | 'pending'
+    | 'partial'
+    | 'paid'
+    | 'overdue'
+    | 'cancelled';
 
 export interface Tenant {
     id: number;

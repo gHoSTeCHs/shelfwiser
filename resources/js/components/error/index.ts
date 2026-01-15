@@ -47,34 +47,37 @@
  */
 
 // Core components
+export { default as ChunkLoadErrorFallback } from './ChunkLoadErrorFallback';
 export { default as ErrorBoundary, withErrorBoundary } from './ErrorBoundary';
 export { default as ErrorFallback } from './ErrorFallback';
-export { default as ErrorFallbackMinimal, ErrorFallbackTiny } from './ErrorFallbackMinimal';
-export { default as ChunkLoadErrorFallback } from './ChunkLoadErrorFallback';
+export {
+    default as ErrorFallbackMinimal,
+    ErrorFallbackTiny,
+} from './ErrorFallbackMinimal';
 export { default as NetworkErrorFallback } from './NetworkErrorFallback';
 
 // Re-export types for convenience
 export type {
-    ErrorType,
-    ErrorSeverity,
-    ErrorInfo,
-    ErrorFallbackProps,
+    ChunkLoadError,
     ErrorBoundaryProps,
     ErrorBoundaryState,
+    ErrorFallbackProps,
+    ErrorInfo,
+    ErrorSeverity,
+    ErrorType,
     NetworkError,
-    ChunkLoadError,
 } from '@/types/error';
 
 // Re-export utility functions
 export {
-    isChunkLoadError,
-    isNetworkError,
-    isAuthError,
-    isTimeoutError,
     classifyError,
+    createErrorInfo,
+    generateErrorId,
     getErrorSeverity,
     getUserFriendlyMessage,
+    isAuthError,
+    isChunkLoadError,
+    isNetworkError,
     isRecoverableError,
-    generateErrorId,
-    createErrorInfo,
+    isTimeoutError,
 } from '@/types/error';

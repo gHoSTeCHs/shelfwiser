@@ -25,9 +25,11 @@ class UpdateProductVariantRequest extends FormRequest
                 'max:100',
                 Rule::unique('product_variants', 'sku')
                     ->ignore($variant->id)
-                    ->where(fn ($query) => $query->whereIn(
-                        'product_id',
-                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    ->where(fn ($query) => $query->whereExists(
+                        fn ($q) => $q->select(\DB::raw(1))
+                            ->from('products')
+                            ->whereColumn('products.id', 'product_variants.product_id')
+                            ->where('products.tenant_id', $tenantId)
                     )),
             ],
             'barcode' => [
@@ -36,9 +38,11 @@ class UpdateProductVariantRequest extends FormRequest
                 'max:100',
                 Rule::unique('product_variants', 'barcode')
                     ->ignore($variant->id)
-                    ->where(fn ($query) => $query->whereIn(
-                        'product_id',
-                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    ->where(fn ($query) => $query->whereExists(
+                        fn ($q) => $q->select(\DB::raw(1))
+                            ->from('products')
+                            ->whereColumn('products.id', 'product_variants.product_id')
+                            ->where('products.tenant_id', $tenantId)
                     )),
             ],
             'price' => ['required', 'numeric', 'min:0'],
@@ -52,6 +56,25 @@ class UpdateProductVariantRequest extends FormRequest
             'is_active' => ['boolean'],
             'is_available_online' => ['boolean'],
             'max_order_quantity' => ['nullable', 'integer', 'min:0'],
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     */
+    public function messages(): array
+    {
+        return [
+            'sku.required' => 'Please provide a SKU (Stock Keeping Unit) for this variant.',
+            'sku.unique' => 'This SKU is already in use. Please choose a unique SKU.',
+            'barcode.unique' => 'This barcode is already assigned to another product variant.',
+            'price.required' => 'Please enter the selling price for this variant.',
+            'price.min' => 'Selling price cannot be negative.',
+            'cost_price.min' => 'Cost price cannot be negative.',
+            'reorder_level.min' => 'Reorder level cannot be negative.',
+            'base_unit_name.max' => 'Base unit name cannot exceed 50 characters.',
+            'expiry_date.date' => 'Please provide a valid expiry date.',
+            'max_order_quantity.min' => 'Maximum order quantity cannot be negative.',
         ];
     }
 

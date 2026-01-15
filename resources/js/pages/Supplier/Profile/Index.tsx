@@ -6,14 +6,15 @@ import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
 import { ConnectionApprovalMode, SupplierProfile } from '@/types/supplier';
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, router } from '@inertiajs/react';
 import { Building2, CheckCircle2, Info, Settings, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
-    profile: SupplierProfile ;
+    profile: SupplierProfile;
     isSupplier: boolean;
 }
 
@@ -46,15 +47,21 @@ export default function Index({ profile, isSupplier }: Props) {
         useState<ConnectionApprovalMode>(
             profile?.connection_approval_mode || 'owner',
         );
+    const [showDisableConfirm, setShowDisableConfirm] = useState(false);
+    const [isDisabling, setIsDisabling] = useState(false);
 
     const handleDisable = () => {
-        if (
-            confirm(
-                'Are you sure you want to disable supplier mode? This will affect your active connections.',
-            )
-        ) {
-            SupplierProfileController.disable();
-        }
+        setIsDisabling(true);
+        router.post(
+            SupplierProfileController.disable.url(),
+            {},
+            {
+                onFinish: () => {
+                    setIsDisabling(false);
+                    setShowDisableConfirm(false);
+                },
+            },
+        );
     };
 
     if (!isSupplier) {
@@ -458,8 +465,10 @@ export default function Index({ profile, isSupplier }: Props) {
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        onClick={handleDisable}
-                                        disabled={processing}
+                                        onClick={() =>
+                                            setShowDisableConfirm(true)
+                                        }
+                                        disabled={processing || isDisabling}
                                     >
                                         <XCircle className="mr-2 h-4 w-4" />
                                         Disable Supplier Mode
@@ -476,6 +485,17 @@ export default function Index({ profile, isSupplier }: Props) {
                     </Form>
                 </Card>
             </div>
+
+            <ConfirmDialog
+                isOpen={showDisableConfirm}
+                onClose={() => setShowDisableConfirm(false)}
+                onConfirm={handleDisable}
+                title="Disable Supplier Mode"
+                message="Are you sure you want to disable supplier mode? This will affect your active connections and buyers will no longer be able to place orders."
+                confirmLabel="Disable"
+                variant="warning"
+                isLoading={isDisabling}
+            />
         </>
     );
 }

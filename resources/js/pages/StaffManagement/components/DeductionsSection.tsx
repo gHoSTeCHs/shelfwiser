@@ -1,12 +1,12 @@
-import type { FC } from 'react';
-import { Calculator } from 'lucide-react';
-import CollapsibleSection from '@/components/ui/CollapsibleSection';
-import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
-import Select from '@/components/form/Select';
 import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
+import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import type { CreateStaffFormData } from '@/types/staff';
 import { TAX_HANDLING_OPTIONS } from '@/types/staff';
+import { Calculator } from 'lucide-react';
+import type { FC } from 'react';
 
 interface DeductionsSectionProps {
     data: CreateStaffFormData;
@@ -62,7 +62,7 @@ const ToggleCard: FC<ToggleCardProps> = ({
                 role="switch"
                 aria-checked={checked}
                 onClick={() => !disabled && onChange(!checked)}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-900 ${
                     checked ? 'bg-brand-600' : 'bg-gray-200 dark:bg-gray-600'
                 } ${disabled ? 'cursor-not-allowed' : ''}`}
             >
@@ -72,11 +72,7 @@ const ToggleCard: FC<ToggleCardProps> = ({
                     }`}
                 />
             </button>
-            <input
-                type="hidden"
-                name={name}
-                value={checked ? '1' : '0'}
-            />
+            <input type="hidden" name={name} value={checked ? '1' : '0'} />
         </div>
         {checked && children && <div className="mt-3">{children}</div>}
     </div>
@@ -130,7 +126,9 @@ const DeductionsSection: FC<DeductionsSectionProps> = ({
                             name="tax_id_number"
                             type="text"
                             value={data.tax_id_number}
-                            onChange={(e) => onChange('tax_id_number', e.target.value)}
+                            onChange={(e) =>
+                                onChange('tax_id_number', e.target.value)
+                            }
                             error={!!errors.tax_id_number}
                             placeholder="Enter TIN"
                         />
@@ -149,7 +147,9 @@ const DeductionsSection: FC<DeductionsSectionProps> = ({
                         title="Pension (PFA)"
                         description="Contributory pension scheme deductions"
                         checked={data.pension_enabled}
-                        onChange={(checked) => onChange('pension_enabled', checked)}
+                        onChange={(checked) =>
+                            onChange('pension_enabled', checked)
+                        }
                     >
                         <div>
                             <Label htmlFor="pension_employee_rate">
@@ -161,7 +161,10 @@ const DeductionsSection: FC<DeductionsSectionProps> = ({
                                 type="number"
                                 value={data.pension_employee_rate}
                                 onChange={(e) =>
-                                    onChange('pension_employee_rate', e.target.value)
+                                    onChange(
+                                        'pension_employee_rate',
+                                        e.target.value,
+                                    )
                                 }
                                 error={!!errors.pension_employee_rate}
                                 placeholder="8"
@@ -169,7 +172,9 @@ const DeductionsSection: FC<DeductionsSectionProps> = ({
                                 max="100"
                                 step="0.1"
                             />
-                            <InputError message={errors.pension_employee_rate} />
+                            <InputError
+                                message={errors.pension_employee_rate}
+                            />
                             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 Standard rate is 8% (employer contributes 10%)
                             </p>
@@ -191,15 +196,17 @@ const DeductionsSection: FC<DeductionsSectionProps> = ({
                         title="National Health Insurance (NHIS)"
                         description="Health insurance coverage contributions"
                         checked={data.nhis_enabled}
-                        onChange={(checked) => onChange('nhis_enabled', checked)}
+                        onChange={(checked) =>
+                            onChange('nhis_enabled', checked)
+                        }
                     />
                 </div>
 
                 <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
                     <p className="text-xs text-blue-700 dark:text-blue-300">
-                        <strong>Note:</strong> Additional custom deductions can be
-                        configured after the employee is created through the payroll
-                        management section.
+                        <strong>Note:</strong> Additional custom deductions can
+                        be configured after the employee is created through the
+                        payroll management section.
                     </p>
                 </div>
             </div>

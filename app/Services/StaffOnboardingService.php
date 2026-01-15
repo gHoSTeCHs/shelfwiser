@@ -2,15 +2,16 @@
 
 namespace App\Services;
 
-use App\Models\User;
-use App\Models\Tenant;
-use App\Models\EmployeePayrollDetail;
-use App\Models\ShopUser;
 use App\Models\EarningType;
 use App\Models\EmployeeEarning;
+use App\Models\EmployeePayrollDetail;
+use App\Models\EmployeeTaxSetting;
+use App\Models\ShopUser;
+use App\Models\Tenant;
+use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class StaffOnboardingService
@@ -31,6 +32,8 @@ class StaffOnboardingService
 
             $payrollDetail = $this->createPayrollDetail($staff, $data);
 
+            $this->createTaxSettings($staff, $data);
+
             $this->assignDefaultEarnings($staff, $payrollDetail);
 
             $staff->update([
@@ -47,7 +50,7 @@ class StaffOnboardingService
 
             $this->clearCaches($tenant);
 
-            return $staff->load(['shops', 'employeePayrollDetail']);
+            return $staff->load(['shops', 'employeePayrollDetail', 'taxSettings']);
         });
     }
 
@@ -65,9 +68,11 @@ class StaffOnboardingService
 
             $this->updatePayrollDetail($staff, $data);
 
+            $this->updateTaxSettings($staff, $data);
+
             $this->clearCaches($staff->tenant);
 
-            return $staff->fresh(['shops', 'employeePayrollDetail']);
+            return $staff->fresh(['shops', 'employeePayrollDetail', 'taxSettings']);
         });
     }
 
@@ -97,7 +102,7 @@ class StaffOnboardingService
         $userFields = ['first_name', 'last_name', 'email', 'role', 'is_active'];
         $userData = array_intersect_key($data, array_flip($userFields));
 
-        if (!empty($userData)) {
+        if (! empty($userData)) {
             $staff->update($userData);
         }
     }
@@ -213,6 +218,47 @@ class StaffOnboardingService
                 'pay_amount' => 0,
                 'pay_frequency' => 'monthly',
             ], $payrollData));
+        }
+    }
+
+    /**
+     * Create default tax settings for a staff member.
+     * Initializes EmployeeTaxSetting with sensible defaults for NTA 2025 compliance.
+     */
+    protected function createTaxSettings(User $staff, array $data): EmployeeTaxSetting
+    {
+        return EmployeeTaxSetting::create([
+            'user_id' => $staff->id,
+            'tenant_id' => $staff->tenant_id,
+            'tax_id_number' => $data['tax_id_number'] ?? null,
+            'tax_state' => $data['tax_state'] ?? null,
+            'is_tax_exempt' => false,
+            'is_homeowner' => $data['is_homeowner'] ?? false,
+            'annual_rent_paid' => null,
+            'active_reliefs' => [],
+            'low_income_auto_exempt' => false,
+        ]);
+    }
+
+    /**
+     * Update tax settings for an existing staff member.
+     * Creates tax settings if they don't exist.
+     */
+    protected function updateTaxSettings(User $staff, array $data): void
+    {
+        $taxFields = ['tax_id_number', 'tax_state', 'is_homeowner'];
+        $taxData = array_intersect_key($data, array_flip($taxFields));
+
+        if (empty($taxData)) {
+            return;
+        }
+
+        $taxSettings = $staff->taxSettings;
+
+        if ($taxSettings) {
+            $taxSettings->update($taxData);
+        } else {
+            $this->createTaxSettings($staff, $data);
         }
     }
 

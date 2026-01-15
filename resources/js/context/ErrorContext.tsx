@@ -1,5 +1,12 @@
-import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import { ErrorContextValue, ErrorInfo, createErrorInfo } from '@/types/error';
+import React, {
+    ReactNode,
+    createContext,
+    useCallback,
+    useContext,
+    useMemo,
+    useState,
+} from 'react';
 
 const MAX_ERROR_HISTORY = 10;
 
@@ -57,7 +64,7 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({
                 console.groupEnd();
             }
         },
-        [enabled, maxHistory, onError]
+        [enabled, maxHistory, onError],
     );
 
     const clearError = useCallback(() => {
@@ -78,10 +85,19 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({
             currentError,
             isEnabled: enabled,
         }),
-        [reportError, clearError, clearAllErrors, recentErrors, currentError, enabled]
+        [
+            reportError,
+            clearError,
+            clearAllErrors,
+            recentErrors,
+            currentError,
+            enabled,
+        ],
     );
 
-    return <ErrorContext.Provider value={value}>{children}</ErrorContext.Provider>;
+    return (
+        <ErrorContext.Provider value={value}>{children}</ErrorContext.Provider>
+    );
 };
 
 /**

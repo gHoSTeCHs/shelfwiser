@@ -10,5 +10,4 @@ export const PERMISSIONS = [
     'manage_settings',
 ] as const;
 
-export type Permission = typeof PERMISSIONS[number];
-
+export type Permission = (typeof PERMISSIONS)[number];

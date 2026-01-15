@@ -1,12 +1,12 @@
-import type { FC } from 'react';
-import { Building2, Phone } from 'lucide-react';
-import CollapsibleSection from '@/components/ui/CollapsibleSection';
-import Label from '@/components/form/Label';
-import Input from '@/components/form/input/InputField';
 import Combobox from '@/components/form/Combobox';
 import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Input from '@/components/form/input/InputField';
+import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import type { CreateStaffFormData } from '@/types/staff';
 import { NIGERIAN_BANKS } from '@/types/staff';
+import { Building2, Phone } from 'lucide-react';
+import type { FC } from 'react';
 
 interface BankingSectionProps {
     data: CreateStaffFormData;
@@ -17,7 +17,11 @@ interface BankingSectionProps {
     ) => void;
 }
 
-const BankingSection: FC<BankingSectionProps> = ({ data, errors, onChange }) => {
+const BankingSection: FC<BankingSectionProps> = ({
+    data,
+    errors,
+    onChange,
+}) => {
     const bankOptions = NIGERIAN_BANKS.map((bank) => ({
         value: bank,
         label: bank,
@@ -45,7 +49,9 @@ const BankingSection: FC<BankingSectionProps> = ({ data, errors, onChange }) => 
                                 id="bank_name"
                                 name="bank_name"
                                 value={data.bank_name}
-                                onChange={(value) => onChange('bank_name', value)}
+                                onChange={(value) =>
+                                    onChange('bank_name', value)
+                                }
                                 options={bankOptions}
                                 placeholder="Select or enter bank"
                                 allowCustom
@@ -64,7 +70,10 @@ const BankingSection: FC<BankingSectionProps> = ({ data, errors, onChange }) => 
                                 type="text"
                                 value={data.bank_account_number}
                                 onChange={(e) =>
-                                    onChange('bank_account_number', e.target.value)
+                                    onChange(
+                                        'bank_account_number',
+                                        e.target.value,
+                                    )
                                 }
                                 error={!!errors.bank_account_number}
                                 placeholder="10-digit account number"
@@ -108,12 +117,17 @@ const BankingSection: FC<BankingSectionProps> = ({ data, errors, onChange }) => 
                                 type="text"
                                 value={data.emergency_contact_name}
                                 onChange={(e) =>
-                                    onChange('emergency_contact_name', e.target.value)
+                                    onChange(
+                                        'emergency_contact_name',
+                                        e.target.value,
+                                    )
                                 }
                                 error={!!errors.emergency_contact_name}
                                 placeholder="Full name"
                             />
-                            <InputError message={errors.emergency_contact_name} />
+                            <InputError
+                                message={errors.emergency_contact_name}
+                            />
                         </div>
 
                         <div>
@@ -126,20 +140,25 @@ const BankingSection: FC<BankingSectionProps> = ({ data, errors, onChange }) => 
                                 type="tel"
                                 value={data.emergency_contact_phone}
                                 onChange={(e) =>
-                                    onChange('emergency_contact_phone', e.target.value)
+                                    onChange(
+                                        'emergency_contact_phone',
+                                        e.target.value,
+                                    )
                                 }
                                 error={!!errors.emergency_contact_phone}
                                 placeholder="08012345678"
                             />
-                            <InputError message={errors.emergency_contact_phone} />
+                            <InputError
+                                message={errors.emergency_contact_phone}
+                            />
                         </div>
                     </div>
                 </div>
 
                 <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
                     <p className="text-xs text-amber-700 dark:text-amber-300">
-                        <strong>Privacy:</strong> Banking details are encrypted and only
-                        visible to authorized payroll administrators.
+                        <strong>Privacy:</strong> Banking details are encrypted
+                        and only visible to authorized payroll administrators.
                     </p>
                 </div>
             </div>

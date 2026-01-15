@@ -6,6 +6,7 @@ use App\Models\Customer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class CreateCustomerRequest extends FormRequest
 {
@@ -30,7 +31,7 @@ class CreateCustomerRequest extends FormRequest
                 }),
             ],
             'phone' => ['nullable', 'string', 'max:50'],
-            'password' => ['required', 'string', 'min:6'],
+            'password' => ['required', 'string', Password::min(8)->mixedCase()->numbers()],
             'preferred_shop_id' => [
                 'nullable',
                 'integer',
@@ -52,8 +53,21 @@ class CreateCustomerRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'first_name.required' => 'Please provide the customer\'s first name.',
+            'first_name.max' => 'First name cannot exceed 255 characters.',
+            'last_name.required' => 'Please provide the customer\'s last name.',
+            'last_name.max' => 'Last name cannot exceed 255 characters.',
+            'email.required' => 'Please provide an email address for this customer.',
+            'email.email' => 'Please enter a valid email address.',
             'email.unique' => 'A customer with this email already exists.',
+            'phone.max' => 'Phone number cannot exceed 50 characters.',
+            'password.required' => 'Please create a password for the customer account.',
             'preferred_shop_id.exists' => 'The selected shop is invalid.',
+            'credit_limit.min' => 'Credit limit cannot be negative.',
+            'address.street.required_with' => 'Street address is required when providing an address.',
+            'address.city.required_with' => 'City is required when providing an address.',
+            'address.state.required_with' => 'State is required when providing an address.',
+            'address.postal_code.required_with' => 'Postal code is required when providing an address.',
         ];
     }
 }

@@ -21,11 +21,9 @@ use Inertia\Response;
 class PurchaseOrderController extends Controller
 {
     public function __construct(
-        private readonly PurchaseOrderService      $purchaseOrderService,
+        private readonly PurchaseOrderService $purchaseOrderService,
         private readonly SupplierConnectionService $connectionService
-    )
-    {
-    }
+    ) {}
 
     /**
      * @throws AuthorizationException
@@ -79,25 +77,36 @@ class PurchaseOrderController extends Controller
         $shops = Shop::where('tenant_id', $tenantId)->get(['id', 'name']);
 
         $connections = $this->connectionService->getConnectionsForBuyer(auth()->user()->tenant);
-        $approvedConnections = $connections->filter(fn($conn) => $conn->status->canOrder());
+        $approvedConnections = $connections->filter(fn ($conn) => $conn->status->canOrder());
 
-        $supplierCatalog = [];
+        $supplierCatalog = null;
         $selectedSupplierId = $request->input('supplier');
 
         if ($selectedSupplierId) {
             $supplierTenant = Tenant::findOrFail($selectedSupplierId);
-            $supplierCatalog = $supplierTenant->supplierProfile
+            $search = $request->input('search', '');
+            $perPage = min((int) $request->input('per_page', 20), 50);
+
+            $query = $supplierTenant->supplierProfile
                 ->catalogItems()
                 ->where('is_available', true)
-                ->with(['product', 'pricingTiers'])
-                ->get();
+                ->with(['product', 'pricingTiers']);
+
+            if ($search) {
+                $query->whereHas('product', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%");
+                });
+            }
+
+            $supplierCatalog = $query->orderBy('created_at', 'desc')->paginate($perPage);
         }
 
         return Inertia::render('PurchaseOrders/Create', [
             'shops' => $shops,
             'supplierConnections' => $approvedConnections,
             'supplierCatalog' => $supplierCatalog,
-            'selectedSupplierId' => $selectedSupplierId ? (int)$selectedSupplierId : null,
+            'selectedSupplierId' => $selectedSupplierId ? (int) $selectedSupplierId : null,
         ]);
     }
 

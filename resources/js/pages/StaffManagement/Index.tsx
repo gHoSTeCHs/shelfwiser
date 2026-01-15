@@ -1,8 +1,8 @@
 import StaffManagementController from '@/actions/App/Http/Controllers/Web/StaffManagementController.ts';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Select from '@/components/form/Select';
-import Label from '@/components/form/Label';
 import AppLayout from '@/layouts/AppLayout';
 import { User } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -88,7 +88,8 @@ const StaffManagement = ({
                 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
             sales_rep:
                 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
-            cashier: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+            cashier:
+                'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
             inventory_clerk:
                 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
         };
@@ -205,10 +206,12 @@ const StaffManagement = ({
                             <Select
                                 options={[
                                     { value: '', label: 'All Roles' },
-                                    ...Object.entries(roles).map(([value, label]) => ({
-                                        value,
-                                        label: label as string,
-                                    })),
+                                    ...Object.entries(roles).map(
+                                        ([value, label]) => ({
+                                            value,
+                                            label: label as string,
+                                        }),
+                                    ),
                                 ]}
                                 defaultValue={selectedRole}
                                 onChange={(value) => setSelectedRole(value)}
@@ -266,19 +269,19 @@ const StaffManagement = ({
                         <table className="w-full">
                             <thead className="border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Staff Member
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Role
                                     </th>
-                                    <th className="hidden md:table-cell px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="hidden px-6 py-4 text-left text-sm font-semibold text-gray-900 md:table-cell dark:text-white">
                                         Assigned Shops
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Status
                                     </th>
-                                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
                                         Actions
                                     </th>
                                 </tr>
@@ -295,10 +298,7 @@ const StaffManagement = ({
                                                 No staff members found
                                             </p>
                                             <Link
-                                                href={
-                                                    StaffManagementController
-                                                        .create.url()
-                                                }
+                                                href={StaffManagementController.create.url()}
                                             >
                                                 <Button className="mt-4">
                                                     <UserPlus className="mr-2 h-4 w-4" />
@@ -317,8 +317,14 @@ const StaffManagement = ({
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">
                                                         <span className="text-sm font-semibold">
-                                                            {member.first_name[0]}
-                                                            {member.last_name[0]}
+                                                            {
+                                                                member
+                                                                    .first_name[0]
+                                                            }
+                                                            {
+                                                                member
+                                                                    .last_name[0]
+                                                            }
                                                         </span>
                                                     </div>
                                                     <div>
@@ -339,7 +345,7 @@ const StaffManagement = ({
                                                     {roles[member.role]}
                                                 </span>
                                             </td>
-                                            <td className="hidden md:table-cell px-6 py-4">
+                                            <td className="hidden px-6 py-4 md:table-cell">
                                                 {member.shops.length === 0 ? (
                                                     <span className="text-sm text-gray-500 dark:text-gray-400">
                                                         No shops assigned
@@ -349,7 +355,9 @@ const StaffManagement = ({
                                                         {member.shops.map(
                                                             (shop) => (
                                                                 <span
-                                                                    key={shop.id}
+                                                                    key={
+                                                                        shop.id
+                                                                    }
                                                                     className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300"
                                                                 >
                                                                     {shop.name}
@@ -381,7 +389,9 @@ const StaffManagement = ({
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <Link
-                                                    href={StaffManagementController.edit.url({ staff: member.id })}
+                                                    href={StaffManagementController.edit.url(
+                                                        { staff: member.id },
+                                                    )}
                                                 >
                                                     <Button
                                                         variant="outline"

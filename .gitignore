@@ -28,3 +28,7 @@ yarn-error.log
 /.zed
 nul
 /docs
+.claude
+CLAUDE.md
+CONSOLIDATION_SUMMARY.md
+AGENTS.md

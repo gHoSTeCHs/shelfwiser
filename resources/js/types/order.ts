@@ -1,7 +1,7 @@
-import { ProductPackagingType, ProductVariant } from './stockMovement';
-import { Shop } from './shop';
 import { User } from '@/types/index';
-import { Customer } from './storefront';
+import { Shop } from './shop';
+import { ProductPackagingType, ProductVariant } from './stockMovement';
+import { Customer } from './customer';
 
 export type OrderStatus =
     | 'pending'

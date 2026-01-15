@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { router } from '@inertiajs/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseUnsavedChangesOptions<T> {
     initialData: T;
@@ -28,10 +28,15 @@ export function useUnsavedChanges<T>({
     message = 'You have unsaved changes. Are you sure you want to leave?',
 }: UseUnsavedChangesOptions<T>): UseUnsavedChangesReturn {
     const [showWarningModal, setShowWarningModal] = useState(false);
-    const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+    const [pendingNavigation, setPendingNavigation] = useState<string | null>(
+        null,
+    );
     const initialDataRef = useRef<T>(initialData);
 
-    const hasUnsavedChanges = !compareFunction(initialDataRef.current, currentData);
+    const hasUnsavedChanges = !compareFunction(
+        initialDataRef.current,
+        currentData,
+    );
 
     useEffect(() => {
         if (!hasUnsavedChanges) return;
@@ -43,7 +48,8 @@ export function useUnsavedChanges<T>({
         };
 
         window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+        return () =>
+            window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [hasUnsavedChanges, message]);
 
     useEffect(() => {

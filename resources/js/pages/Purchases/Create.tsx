@@ -1,13 +1,12 @@
 import StockMovementController from '@/actions/App/Http/Controllers/StockMovementController';
-import Input from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
+import PurchasePackagingForm from '@/components/inventory/PurchasePackagingForm';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import PurchasePackagingForm from '@/components/inventory/PurchasePackagingForm';
 import AppLayout from '@/layouts/AppLayout';
-import { ProductVariant, InventoryLocation } from '@/types/stockMovement';
+import { InventoryLocation, ProductVariant } from '@/types/stockMovement';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useState } from 'react';
@@ -29,7 +28,8 @@ export default function Create({ products, locations }: Props) {
     const [costPerPackage, setCostPerPackage] = useState(0);
     const [notes, setNotes] = useState('');
 
-    const selectedVariant = products.find((p) => p.id === productVariantId) || null;
+    const selectedVariant =
+        products.find((p) => p.id === productVariantId) || null;
 
     const getProductLabel = (product: ProductVariant): string => {
         const productName = product.product?.name || 'Unknown';
@@ -106,7 +106,9 @@ export default function Create({ products, locations }: Props) {
                                     <div>
                                         <Label htmlFor="product_variant_id">
                                             Product{' '}
-                                            <span className="text-error-500">*</span>
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Select
                                             options={products.map((p) => ({
@@ -116,7 +118,9 @@ export default function Create({ products, locations }: Props) {
                                             placeholder="Select product"
                                             onChange={(value) => {
                                                 setProductVariantId(
-                                                    value ? parseInt(value) : '',
+                                                    value
+                                                        ? parseInt(value)
+                                                        : '',
                                                 );
                                                 // Reset packaging when product changes
                                                 setPackagingTypeId(null);
@@ -130,7 +134,9 @@ export default function Create({ products, locations }: Props) {
                                     <div>
                                         <Label htmlFor="location_id">
                                             Storage Location{' '}
-                                            <span className="text-error-500">*</span>
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Select
                                             options={
@@ -147,16 +153,23 @@ export default function Create({ products, locations }: Props) {
                                                     : 'Select a product first'
                                             }
                                             onChange={(value) =>
-                                                setLocationId(value ? parseInt(value) : '')
+                                                setLocationId(
+                                                    value
+                                                        ? parseInt(value)
+                                                        : '',
+                                                )
                                             }
                                             defaultValue=""
                                             disabled={!selectedVariant}
                                         />
                                         {!selectedVariant?.inventory_locations ||
-                                            (selectedVariant.inventory_locations.length === 0 && (
+                                            (selectedVariant.inventory_locations
+                                                .length === 0 && (
                                                 <p className="mt-1 text-xs text-warning-600 dark:text-warning-400">
-                                                    No storage locations found for this product.
-                                                    Please set up inventory locations first.
+                                                    No storage locations found
+                                                    for this product. Please set
+                                                    up inventory locations
+                                                    first.
                                                 </p>
                                             ))}
                                     </div>
@@ -210,7 +223,9 @@ export default function Create({ products, locations }: Props) {
                                             </span>
                                             <span className="font-medium text-gray-900 dark:text-white">
                                                 {packageQuantity} package
-                                                {packageQuantity !== 1 ? 's' : ''}
+                                                {packageQuantity !== 1
+                                                    ? 's'
+                                                    : ''}
                                             </span>
                                         </div>
 
@@ -221,7 +236,9 @@ export default function Create({ products, locations }: Props) {
                                             <span className="font-medium text-gray-900 dark:text-white">
                                                 {packageQuantity *
                                                     selectedPackaging.units_per_package}{' '}
-                                                {selectedVariant?.base_unit_name}
+                                                {
+                                                    selectedVariant?.base_unit_name
+                                                }
                                                 {packageQuantity *
                                                     selectedPackaging.units_per_package >
                                                 1
@@ -237,7 +254,8 @@ export default function Create({ products, locations }: Props) {
                                                 </span>
                                                 <span className="text-xl font-bold text-gray-900 dark:text-white">
                                                     {formatCurrency(
-                                                        packageQuantity * costPerPackage,
+                                                        packageQuantity *
+                                                            costPerPackage,
                                                     )}
                                                 </span>
                                             </div>
@@ -246,7 +264,11 @@ export default function Create({ products, locations }: Props) {
                                 </Card>
                             )}
 
-                            <Button type="submit" className="w-full" disabled={!canSubmit}>
+                            <Button
+                                type="submit"
+                                className="w-full"
+                                disabled={!canSubmit}
+                            >
                                 <Save className="mr-2 h-4 w-4" />
                                 Record Purchase
                             </Button>

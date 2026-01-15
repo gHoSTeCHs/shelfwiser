@@ -4,9 +4,9 @@ import TextArea from '@/components/form/input/TextArea';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
+import PackagingSelector from '@/components/inventory/PackagingSelector';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import PackagingSelector from '@/components/inventory/PackagingSelector';
 import AppLayout from '@/layouts/AppLayout';
 import { Shop } from '@/types/shop';
 import { ProductVariant } from '@/types/stockMovement';
@@ -67,7 +67,7 @@ export default function Create({ shops, products }: Props) {
         }
     };
 
-    const updateItem = (id: string, field: keyof OrderItemForm, value: any) => {
+    const updateItem = (id: string, field: keyof OrderItemForm, value: string | number | null) => {
         setItems(
             items.map((item) => {
                 if (item.id === id) {
@@ -99,24 +99,33 @@ export default function Create({ shops, products }: Props) {
                             );
                             if (packagingType) {
                                 // Calculate unit price from packaging price
-                                updated.unit_price = packagingType.price / packagingType.units_per_package;
+                                updated.unit_price =
+                                    packagingType.price /
+                                    packagingType.units_per_package;
                                 // Calculate total quantity from package quantity
-                                updated.quantity = updated.package_quantity * packagingType.units_per_package;
+                                updated.quantity =
+                                    updated.package_quantity *
+                                    packagingType.units_per_package;
                             }
                         }
                     }
 
                     // When package quantity changes, update total quantity
-                    if (field === 'package_quantity' && item.product_packaging_type_id) {
+                    if (
+                        field === 'package_quantity' &&
+                        item.product_packaging_type_id
+                    ) {
                         const variant = products.find(
                             (p) => p.id === item.product_variant_id,
                         );
                         if (variant) {
                             const packagingType = variant.packaging_types?.find(
-                                (pt) => pt.id === item.product_packaging_type_id,
+                                (pt) =>
+                                    pt.id === item.product_packaging_type_id,
                             );
                             if (packagingType) {
-                                updated.quantity = value * packagingType.units_per_package;
+                                updated.quantity =
+                                    value * packagingType.units_per_package;
                             }
                         }
                     }
@@ -200,7 +209,8 @@ export default function Create({ shops, products }: Props) {
                         ...data,
                         items: items.map((item) => ({
                             product_variant_id: item.product_variant_id,
-                            product_packaging_type_id: item.product_packaging_type_id,
+                            product_packaging_type_id:
+                                item.product_packaging_type_id,
                             package_quantity: item.package_quantity,
                             quantity: item.quantity,
                             unit_price: item.unit_price,
@@ -308,108 +318,141 @@ export default function Create({ shops, products }: Props) {
                                                             }
                                                             defaultValue=""
                                                         />
-                                                        {selectedVariant && !item.product_packaging_type_id && (
-                                                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                                                Available:{' '}
-                                                                {availableStock}{' '}
-                                                                {selectedVariant.base_unit_name}
-                                                                {availableStock > 1 ? 's' : ''}
-                                                            </p>
-                                                        )}
+                                                        {selectedVariant &&
+                                                            !item.product_packaging_type_id && (
+                                                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                                    Available:{' '}
+                                                                    {
+                                                                        availableStock
+                                                                    }{' '}
+                                                                    {
+                                                                        selectedVariant.base_unit_name
+                                                                    }
+                                                                    {availableStock >
+                                                                    1
+                                                                        ? 's'
+                                                                        : ''}
+                                                                </p>
+                                                            )}
                                                     </div>
 
-                                                    {selectedVariant && selectedVariant.packaging_types && selectedVariant.packaging_types.length > 0 && (
-                                                        <PackagingSelector
-                                                            variant={selectedVariant}
-                                                            selectedPackagingTypeId={item.product_packaging_type_id}
-                                                            packageQuantity={item.package_quantity}
-                                                            onPackagingTypeChange={(packagingTypeId) =>
-                                                                updateItem(
-                                                                    item.id,
-                                                                    'product_packaging_type_id',
+                                                    {selectedVariant &&
+                                                        selectedVariant.packaging_types &&
+                                                        selectedVariant
+                                                            .packaging_types
+                                                            .length > 0 && (
+                                                            <PackagingSelector
+                                                                variant={
+                                                                    selectedVariant
+                                                                }
+                                                                selectedPackagingTypeId={
+                                                                    item.product_packaging_type_id
+                                                                }
+                                                                packageQuantity={
+                                                                    item.package_quantity
+                                                                }
+                                                                onPackagingTypeChange={(
                                                                     packagingTypeId,
-                                                                )
-                                                            }
-                                                            onPackageQuantityChange={(quantity) =>
-                                                                updateItem(
-                                                                    item.id,
-                                                                    'package_quantity',
+                                                                ) =>
+                                                                    updateItem(
+                                                                        item.id,
+                                                                        'product_packaging_type_id',
+                                                                        packagingTypeId,
+                                                                    )
+                                                                }
+                                                                onPackageQuantityChange={(
                                                                     quantity,
-                                                                )
-                                                            }
-                                                            showLabel={true}
-                                                            required={false}
-                                                        />
-                                                    )}
+                                                                ) =>
+                                                                    updateItem(
+                                                                        item.id,
+                                                                        'package_quantity',
+                                                                        quantity,
+                                                                    )
+                                                                }
+                                                                showLabel={true}
+                                                                required={false}
+                                                            />
+                                                        )}
 
-                                                    {!item.product_packaging_type_id && selectedVariant && (
-                                                        <div className="grid gap-4 md:grid-cols-2">
-                                                            <div>
-                                                                <Label>
-                                                                    Quantity{' '}
-                                                                    <span className="text-error-500">
-                                                                        *
-                                                                    </span>
-                                                                </Label>
-                                                                <Input
-                                                                    type="number"
-                                                                    min="1"
-                                                                    value={
-                                                                        item.quantity
-                                                                    }
-                                                                    onChange={(e) =>
-                                                                        updateItem(
-                                                                            item.id,
-                                                                            'quantity',
-                                                                            parseInt(
-                                                                                e.target
-                                                                                    .value,
-                                                                            ) || 1,
-                                                                        )
-                                                                    }
-                                                                />
-                                                            </div>
+                                                    {!item.product_packaging_type_id &&
+                                                        selectedVariant && (
+                                                            <div className="grid gap-4 md:grid-cols-2">
+                                                                <div>
+                                                                    <Label>
+                                                                        Quantity{' '}
+                                                                        <span className="text-error-500">
+                                                                            *
+                                                                        </span>
+                                                                    </Label>
+                                                                    <Input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        value={
+                                                                            item.quantity
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            updateItem(
+                                                                                item.id,
+                                                                                'quantity',
+                                                                                parseInt(
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
+                                                                                ) ||
+                                                                                    1,
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                </div>
 
-                                                            <div>
-                                                                <Label>
-                                                                    Unit Price{' '}
-                                                                    <span className="text-error-500">
-                                                                        *
-                                                                    </span>
-                                                                </Label>
-                                                                <Input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    step="0.01"
-                                                                    value={
-                                                                        item.unit_price
-                                                                    }
-                                                                    onChange={(e) =>
-                                                                        updateItem(
-                                                                            item.id,
-                                                                            'unit_price',
-                                                                            parseFloat(
-                                                                                e.target
-                                                                                    .value,
-                                                                            ) || 0,
-                                                                        )
-                                                                    }
-                                                                />
-                                                            </div>
+                                                                <div>
+                                                                    <Label>
+                                                                        Unit
+                                                                        Price{' '}
+                                                                        <span className="text-error-500">
+                                                                            *
+                                                                        </span>
+                                                                    </Label>
+                                                                    <Input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        step="0.01"
+                                                                        value={
+                                                                            item.unit_price
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            updateItem(
+                                                                                item.id,
+                                                                                'unit_price',
+                                                                                parseFloat(
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
+                                                                                ) ||
+                                                                                    0,
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                </div>
 
-                                                            <div className="md:col-span-2">
-                                                                <Label>
-                                                                    Item Total
-                                                                </Label>
-                                                                <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                                                                    {formatCurrency(
-                                                                        item.quantity *
-                                                                            item.unit_price,
-                                                                    )}
-                                                                </p>
+                                                                <div className="md:col-span-2">
+                                                                    <Label>
+                                                                        Item
+                                                                        Total
+                                                                    </Label>
+                                                                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                                        {formatCurrency(
+                                                                            item.quantity *
+                                                                                item.unit_price,
+                                                                        )}
+                                                                    </p>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    )}
+                                                        )}
                                                 </div>
                                             </div>
                                         );

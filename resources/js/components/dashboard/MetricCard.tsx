@@ -1,5 +1,5 @@
-import { LucideIcon } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { LucideIcon } from 'lucide-react';
 
 interface MetricCardProps {
     title: string;
@@ -45,8 +45,8 @@ export default function MetricCard({
                         <p
                             className={`text-sm ${trend.isPositive ? 'text-success-600' : 'text-error-600'}`}
                         >
-                            {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}
-                            %
+                            {trend.isPositive ? '↑' : '↓'}{' '}
+                            {Math.abs(trend.value)}%
                         </p>
                     )}
                 </div>

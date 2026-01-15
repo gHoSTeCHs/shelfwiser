@@ -16,17 +16,19 @@ class UserSeeder extends Seeder
          * Create Super Admin user (not tied to any tenant)
          * This user has platform-wide access for administration
          */
-        User::create([
-            'first_name' => 'Super',
-            'last_name' => 'Admin',
-            'email' => 'superadmin@shelfwiser.com',
-            'password' => Hash::make('password'),
-            'role' => UserRole::SUPER_ADMIN,
-            'is_super_admin' => true,
-            'is_tenant_owner' => false,
-            'is_active' => true,
-            'tenant_id' => null,
-        ]);
+        User::updateOrCreate(
+            ['email' => 'superadmin@shelfwiser.com'],
+            [
+                'first_name' => 'Super',
+                'last_name' => 'Admin',
+                'password' => Hash::make('password'),
+                'role' => UserRole::SUPER_ADMIN,
+                'is_super_admin' => true,
+                'is_tenant_owner' => false,
+                'is_active' => true,
+                'tenant_id' => null,
+            ]
+        );
 
         $tenants = Tenant::all();
 
@@ -34,10 +36,13 @@ class UserSeeder extends Seeder
             $users = $this->getUsersForTenant($tenant);
 
             foreach ($users as $userData) {
-                User::create(array_merge($userData, [
-                    'tenant_id' => $tenant->id,
-                    'password' => Hash::make('password'),
-                ]));
+                User::updateOrCreate(
+                    ['email' => $userData['email']],
+                    array_merge($userData, [
+                        'tenant_id' => $tenant->id,
+                        'password' => Hash::make('password'),
+                    ])
+                );
             }
         }
     }

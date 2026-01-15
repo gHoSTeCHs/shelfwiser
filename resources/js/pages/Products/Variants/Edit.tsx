@@ -1,17 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
+import ProductController from '@/actions/App/Http/Controllers/ProductController';
 import ProductVariantController from '@/actions/App/Http/Controllers/ProductVariantController';
 import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
+import ImageGallery from '@/components/images/ImageGallery';
+import ImageUploader from '@/components/images/ImageUploader';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { Product } from '@/types/product';
 import { ProductVariant } from '@/types/stockMovement';
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Save, Package } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, Package, Save } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -23,7 +24,9 @@ export default function Edit({ variant, product }: Props) {
     const [sku, setSku] = useState<string>(variant.sku || '');
     const [barcode, setBarcode] = useState<string>(variant.barcode || '');
     const [variantName, setVariantName] = useState<string>(variant.name || '');
-    const [price, setPrice] = useState<string>(variant.price?.toString() || '0');
+    const [price, setPrice] = useState<string>(
+        variant.price?.toString() || '0',
+    );
     const [costPrice, setCostPrice] = useState<string>(
         variant.cost_price?.toString() || '0',
     );
@@ -60,7 +63,9 @@ export default function Edit({ variant, product }: Props) {
                 <div className="flex items-center justify-between">
                     <div>
                         <Link
-                            href={`/products/${product.id}`}
+                            href={ProductController.show.url({
+                                product: product.id,
+                            })}
                             className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -390,9 +395,7 @@ export default function Edit({ variant, product }: Props) {
                                                 id="is_active"
                                                 name="is_active"
                                                 checked={isActive}
-                                                onChange={(e) =>
-                                                    setIsActive(e.target.checked)
-                                                }
+                                                onChange={setIsActive}
                                             />
                                             <Label
                                                 htmlFor="is_active"
@@ -412,11 +415,7 @@ export default function Edit({ variant, product }: Props) {
                                                 id="is_available_online"
                                                 name="is_available_online"
                                                 checked={isAvailableOnline}
-                                                onChange={(e) =>
-                                                    setIsAvailableOnline(
-                                                        e.target.checked,
-                                                    )
-                                                }
+                                                onChange={setIsAvailableOnline}
                                             />
                                             <Label
                                                 htmlFor="is_available_online"
@@ -433,10 +432,45 @@ export default function Edit({ variant, product }: Props) {
                                 </div>
                             </Card>
 
+                            {/* Variant Images */}
+                            <Card>
+                                <div className="mb-6 flex items-center gap-3 border-b border-gray-200 pb-4 dark:border-gray-700">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/20">
+                                        <ImageIcon className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                            Variant Images
+                                        </h2>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            Manage variant-specific images
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <ImageGallery
+                                        images={variant.images || []}
+                                        modelType="ProductVariant"
+                                        modelId={variant.id}
+                                        canManage={true}
+                                        showPlaceholder={true}
+                                    />
+
+                                    <ImageUploader
+                                        modelType="ProductVariant"
+                                        modelId={variant.id}
+                                        maxFiles={10}
+                                    />
+                                </div>
+                            </Card>
+
                             {/* Actions */}
                             <div className="flex items-center justify-end gap-3">
                                 <Link
-                                    href={`/products/${product.id}`}
+                                    href={ProductController.show.url({
+                                        product: product.id,
+                                    })}
                                     className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                                 >
                                     Cancel

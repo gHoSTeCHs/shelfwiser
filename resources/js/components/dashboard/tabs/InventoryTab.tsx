@@ -1,9 +1,9 @@
-import {  Package, AlertTriangle, DollarSign, Layers } from 'lucide-react';
-import MetricCard from '../MetricCard';
-import { InventoryData } from '@/types/dashboard';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 import ReusableBarChart from '@/components/charts/ReusableBarChart';
+import Badge from '@/components/ui/badge/Badge';
+import { Card } from '@/components/ui/card';
+import { InventoryData } from '@/types/dashboard';
+import { AlertTriangle, DollarSign, Layers, Package } from 'lucide-react';
+import MetricCard from '../MetricCard';
 
 interface InventoryTabProps {
     data: InventoryData;
@@ -78,7 +78,9 @@ export default function InventoryTab({ data }: InventoryTabProps) {
                                 <Badge
                                     variant="light"
                                     color={
-                                        movement.quantity > 0 ? 'success' : 'error'
+                                        movement.quantity > 0
+                                            ? 'success'
+                                            : 'error'
                                     }
                                 >
                                     {movement.quantity > 0 ? '+' : ''}
@@ -104,19 +106,19 @@ export default function InventoryTab({ data }: InventoryTabProps) {
                         <table className="w-full">
                             <thead className="border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Product
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         SKU
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Current
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Reorder Level
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Deficit
                                     </th>
                                 </tr>

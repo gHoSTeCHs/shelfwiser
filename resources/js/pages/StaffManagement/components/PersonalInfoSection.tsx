@@ -1,10 +1,10 @@
-import type { FC } from 'react';
-import { User } from 'lucide-react';
-import CollapsibleSection from '@/components/ui/CollapsibleSection';
-import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import CollapsibleSection from '@/components/ui/CollapsibleSection';
 import type { CreateStaffFormData } from '@/types/staff';
+import { User } from 'lucide-react';
+import type { FC } from 'react';
 
 interface PersonalInfoSectionProps {
     data: CreateStaffFormData;
@@ -40,7 +40,9 @@ const PersonalInfoSection: FC<PersonalInfoSectionProps> = ({
                             name="first_name"
                             type="text"
                             value={data.first_name}
-                            onChange={(e) => onChange('first_name', e.target.value)}
+                            onChange={(e) =>
+                                onChange('first_name', e.target.value)
+                            }
                             error={!!errors.first_name}
                             placeholder="Enter first name"
                         />
@@ -56,7 +58,9 @@ const PersonalInfoSection: FC<PersonalInfoSectionProps> = ({
                             name="last_name"
                             type="text"
                             value={data.last_name}
-                            onChange={(e) => onChange('last_name', e.target.value)}
+                            onChange={(e) =>
+                                onChange('last_name', e.target.value)
+                            }
                             error={!!errors.last_name}
                             placeholder="Enter last name"
                         />
@@ -92,7 +96,9 @@ const PersonalInfoSection: FC<PersonalInfoSectionProps> = ({
                                     name="password"
                                     type="password"
                                     value={data.password}
-                                    onChange={(e) => onChange('password', e.target.value)}
+                                    onChange={(e) =>
+                                        onChange('password', e.target.value)
+                                    }
                                     error={!!errors.password}
                                     placeholder="••••••••"
                                 />
@@ -109,12 +115,17 @@ const PersonalInfoSection: FC<PersonalInfoSectionProps> = ({
                                     type="password"
                                     value={data.password_confirmation}
                                     onChange={(e) =>
-                                        onChange('password_confirmation', e.target.value)
+                                        onChange(
+                                            'password_confirmation',
+                                            e.target.value,
+                                        )
                                     }
                                     error={!!errors.password_confirmation}
                                     placeholder="••••••••"
                                 />
-                                <InputError message={errors.password_confirmation} />
+                                <InputError
+                                    message={errors.password_confirmation}
+                                />
                             </div>
                         </div>
 
@@ -125,7 +136,10 @@ const PersonalInfoSection: FC<PersonalInfoSectionProps> = ({
                                 name="send_invitation"
                                 checked={data.send_invitation}
                                 onChange={(e) =>
-                                    onChange('send_invitation', e.target.checked)
+                                    onChange(
+                                        'send_invitation',
+                                        e.target.checked,
+                                    )
                                 }
                                 className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-gray-600"
                             />

@@ -42,7 +42,17 @@ class AddToCatalogRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'product_id.required' => 'Please select a product to add to your catalog.',
             'product_id.exists' => 'The selected product does not exist or does not belong to your organization.',
+            'base_wholesale_price.required' => 'Please specify the wholesale price for this product.',
+            'base_wholesale_price.min' => 'Wholesale price cannot be negative.',
+            'min_order_quantity.min' => 'Minimum order quantity must be at least 1.',
+            'description.max' => 'Product description cannot exceed 1000 characters.',
+            'pricing_tiers.*.min_quantity.required' => 'Minimum quantity is required for each pricing tier.',
+            'pricing_tiers.*.min_quantity.min' => 'Minimum quantity must be at least 1.',
+            'pricing_tiers.*.max_quantity.gt' => 'Maximum quantity must be greater than minimum quantity.',
+            'pricing_tiers.*.price.required' => 'Price is required for each pricing tier.',
+            'pricing_tiers.*.price.min' => 'Tier price cannot be negative.',
         ];
     }
 }

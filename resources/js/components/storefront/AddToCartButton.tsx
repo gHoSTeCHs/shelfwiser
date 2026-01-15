@@ -1,9 +1,9 @@
+import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
+import Button from '@/components/ui/button/Button';
 import { Shop } from '@/types/shop';
 import { Form } from '@inertiajs/react';
-import React from 'react';
-import Button from '@/components/ui/button/Button';
 import { ShoppingCart } from 'lucide-react';
-import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
+import React from 'react';
 
 interface AddToCartButtonProps {
     shop: Shop;
@@ -45,7 +45,11 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
                     <input type="hidden" name="variant_id" value={variantId} />
                     <input type="hidden" name="quantity" value={quantity} />
                     {packagingTypeId && (
-                        <input type="hidden" name="packaging_type_id" value={packagingTypeId} />
+                        <input
+                            type="hidden"
+                            name="packaging_type_id"
+                            value={packagingTypeId}
+                        />
                     )}
 
                     <Button
@@ -53,11 +57,20 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
                         variant={variant}
                         size={size}
                         fullWidth={fullWidth}
-                        disabled={disabled || processing || isOutOfStock || exceedsStock}
+                        disabled={
+                            disabled ||
+                            processing ||
+                            isOutOfStock ||
+                            exceedsStock
+                        }
                         loading={processing}
                         startIcon={<ShoppingCart />}
                     >
-                        {isOutOfStock ? 'Out of Stock' : exceedsStock ? 'Exceeds Stock' : 'Add to Cart'}
+                        {isOutOfStock
+                            ? 'Out of Stock'
+                            : exceedsStock
+                              ? 'Exceeds Stock'
+                              : 'Add to Cart'}
                     </Button>
                 </>
             )}

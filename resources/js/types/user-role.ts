@@ -25,6 +25,6 @@ export function isValidUserRole(role: string): role is UserRoleValue {
         'assistant_manager',
         'sales_rep',
         'cashier',
-        'inventory_clerk'
+        'inventory_clerk',
     ].includes(role);
 }

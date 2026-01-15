@@ -1,8 +1,8 @@
 import OrderReturnController from '@/actions/App/Http/Controllers/OrderReturnController';
 import Input from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
-import Label from '@/components/form/Label';
 import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
@@ -25,9 +25,9 @@ interface ReturnItem {
 export default function Create({ order }: Props) {
     const [reason, setReason] = useState('');
     const [notes, setNotes] = useState('');
-    const [returnItems, setReturnItems] = useState<
-        Record<number, ReturnItem>
-    >({});
+    const [returnItems, setReturnItems] = useState<Record<number, ReturnItem>>(
+        {},
+    );
 
     const handleQuantityChange = (orderItemId: number, quantity: string) => {
         const numValue = parseInt(quantity) || 0;
@@ -56,10 +56,7 @@ export default function Create({ order }: Props) {
         }));
     };
 
-    const handleConditionNotesChange = (
-        orderItemId: number,
-        notes: string
-    ) => {
+    const handleConditionNotesChange = (orderItemId: number, notes: string) => {
         setReturnItems((prev) => ({
             ...prev,
             [orderItemId]: {
@@ -74,7 +71,7 @@ export default function Create({ order }: Props) {
 
     const prepareSubmitData = () => {
         const items = Object.values(returnItems).filter(
-            (item) => item.quantity > 0
+            (item) => item.quantity > 0,
         );
 
         return {
@@ -85,7 +82,7 @@ export default function Create({ order }: Props) {
     };
 
     const hasSelectedItems = Object.values(returnItems).some(
-        (item) => item.quantity > 0
+        (item) => item.quantity > 0,
     );
 
     return (
@@ -110,7 +107,9 @@ export default function Create({ order }: Props) {
                 </div>
 
                 <Form
-                    action={OrderReturnController.store.url({ order: order.id })}
+                    action={OrderReturnController.store.url({
+                        order: order.id,
+                    })}
                     method="post"
                     data={prepareSubmitData()}
                 >
@@ -122,22 +121,22 @@ export default function Create({ order }: Props) {
                                     <table className="w-full">
                                         <thead className="border-b border-gray-200 dark:border-gray-700">
                                             <tr className="text-left text-sm text-gray-500 dark:text-gray-400">
-                                                <th className="pb-3 font-medium">
+                                                <th scope="col" className="pb-3 font-medium">
                                                     Product
                                                 </th>
-                                                <th className="pb-3 font-medium">
+                                                <th scope="col" className="pb-3 font-medium">
                                                     SKU
                                                 </th>
-                                                <th className="pb-3 text-right font-medium">
+                                                <th scope="col" className="pb-3 text-right font-medium">
                                                     Ordered Qty
                                                 </th>
-                                                <th className="pb-3 text-right font-medium">
+                                                <th scope="col" className="pb-3 text-right font-medium">
                                                     Return Qty
                                                 </th>
-                                                <th className="pb-3 font-medium">
+                                                <th scope="col" className="pb-3 font-medium">
                                                     Reason
                                                 </th>
-                                                <th className="pb-3 font-medium">
+                                                <th scope="col" className="pb-3 font-medium">
                                                     Condition
                                                 </th>
                                             </tr>
@@ -155,7 +154,8 @@ export default function Create({ order }: Props) {
                                                                         ?.name
                                                                 }
                                                             </p>
-                                                            {item.product_variant
+                                                            {item
+                                                                .product_variant
                                                                 ?.name && (
                                                                 <p className="text-sm text-gray-500 dark:text-gray-400">
                                                                     {
@@ -191,7 +191,7 @@ export default function Create({ order }: Props) {
                                                                 handleQuantityChange(
                                                                     item.id,
                                                                     e.target
-                                                                        .value
+                                                                        .value,
                                                                 )
                                                             }
                                                             className="w-24 text-right"
@@ -210,7 +210,7 @@ export default function Create({ order }: Props) {
                                                                 handleItemReasonChange(
                                                                     item.id,
                                                                     e.target
-                                                                        .value
+                                                                        .value,
                                                                 )
                                                             }
                                                             disabled={
@@ -239,7 +239,7 @@ export default function Create({ order }: Props) {
                                                                 handleConditionNotesChange(
                                                                     item.id,
                                                                     e.target
-                                                                        .value
+                                                                        .value,
                                                                 )
                                                             }
                                                             disabled={

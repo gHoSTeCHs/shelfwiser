@@ -8,10 +8,9 @@ import {
     ArrowLeft,
     CreditCard,
     DollarSign,
+    FileText,
     TrendingDown,
     TrendingUp,
-    Receipt,
-    FileText,
 } from 'lucide-react';
 
 interface Shop {
@@ -69,8 +68,7 @@ export default function Show({ shop, customer, summary }: Props) {
 
     const getCreditStatus = () => {
         const usage = summary.credit_usage_percent;
-        if (usage >= 90)
-            return { color: 'error' as const, label: 'Critical' };
+        if (usage >= 90) return { color: 'error' as const, label: 'Critical' };
         if (usage >= 75) return { color: 'warning' as const, label: 'High' };
         if (usage >= 50) return { color: 'info' as const, label: 'Moderate' };
         return { color: 'success' as const, label: 'Good' };
@@ -235,30 +233,37 @@ export default function Show({ shop, customer, summary }: Props) {
                                 {summary.unpaid_orders.length > 0 && (
                                     <div>
                                         <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-                                            Unpaid Orders ({summary.unpaid_orders.length})
+                                            Unpaid Orders (
+                                            {summary.unpaid_orders.length})
                                         </h3>
                                         <div className="space-y-3">
-                                            {summary.unpaid_orders.map((order) => (
-                                                <div
-                                                    key={order.id}
-                                                    className="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700"
-                                                >
-                                                    <div>
-                                                        <p className="font-medium text-gray-900 dark:text-white">
-                                                            Order #{order.order_number}
-                                                        </p>
-                                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                            Status: {order.status}
+                                            {summary.unpaid_orders.map(
+                                                (order) => (
+                                                    <div
+                                                        key={order.id}
+                                                        className="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+                                                    >
+                                                        <div>
+                                                            <p className="font-medium text-gray-900 dark:text-white">
+                                                                Order #
+                                                                {
+                                                                    order.order_number
+                                                                }
+                                                            </p>
+                                                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                                Status:{' '}
+                                                                {order.status}
+                                                            </p>
+                                                        </div>
+                                                        <p className="font-semibold text-gray-900 dark:text-white">
+                                                            {currencySymbol}
+                                                            {order.total_amount.toFixed(
+                                                                2,
+                                                            )}
                                                         </p>
                                                     </div>
-                                                    <p className="font-semibold text-gray-900 dark:text-white">
-                                                        {currencySymbol}
-                                                        {order.total_amount.toFixed(
-                                                            2,
-                                                        )}
-                                                    </p>
-                                                </div>
-                                            ))}
+                                                ),
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -290,11 +295,9 @@ export default function Show({ shop, customer, summary }: Props) {
                                                                     )}
                                                                     size="sm"
                                                                 >
-                                                                    {
-                                                                        getTransactionTypeIcon(
-                                                                            transaction.type,
-                                                                        )
-                                                                    }
+                                                                    {getTransactionTypeIcon(
+                                                                        transaction.type,
+                                                                    )}
                                                                 </Badge>
                                                             </div>
                                                             <div>
@@ -348,7 +351,8 @@ export default function Show({ shop, customer, summary }: Props) {
                                         Name
                                     </p>
                                     <p className="font-medium text-gray-900 dark:text-white">
-                                        {customer.first_name} {customer.last_name}
+                                        {customer.first_name}{' '}
+                                        {customer.last_name}
                                     </p>
                                 </div>
                                 <div>

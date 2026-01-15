@@ -1,6 +1,9 @@
-import React, { useEffect } from 'react';
 import Button from '@/components/ui/button/Button';
-import { PaystackPaymentProps, PaystackCallbackResponse } from '@/types/payment';
+import {
+    PaystackCallbackResponse,
+    PaystackPaymentProps,
+} from '@/types/payment';
+import React, { useEffect } from 'react';
 
 /**
  * Paystack inline payment button component.
@@ -66,7 +69,9 @@ const PaystackButton: React.FC<PaystackPaymentProps> = ({
                         value: reference,
                     },
                     ...Object.entries(metadata).map(([key, value]) => ({
-                        display_name: key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+                        display_name: key
+                            .replace(/_/g, ' ')
+                            .replace(/\b\w/g, (l) => l.toUpperCase()),
                         variable_name: key,
                         value: String(value),
                     })),

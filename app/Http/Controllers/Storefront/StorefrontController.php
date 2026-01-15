@@ -24,7 +24,7 @@ class StorefrontController extends Controller
      */
     public function index(Shop $shop): Response
     {
-            // Check if storefront is enabled
+        // Check if storefront is enabled
         if (! $shop->storefront_enabled) {
             abort(404, 'Storefront not available for this shop');
         }
@@ -41,8 +41,7 @@ class StorefrontController extends Controller
             ->limit(4)
             ->get();
 
-        // Get cart summary for current user/session
-        $cart = $this->cartService->getCart($shop, auth()->id());
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
         $cartSummary = $this->cartService->getCartSummary($cart);
 
         return Inertia::render('Storefront/Home', [
@@ -76,8 +75,7 @@ class StorefrontController extends Controller
 
         $categories = $this->storefrontService->getCategories($shop);
 
-        // Get cart summary
-        $cart = $this->cartService->getCart($shop, auth()->id());
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
         $cartSummary = $this->cartService->getCartSummary($cart);
 
         return Inertia::render('Storefront/Products', [
@@ -109,8 +107,7 @@ class StorefrontController extends Controller
 
         $relatedProducts = $this->storefrontService->getRelatedProducts($product);
 
-        // Get cart summary
-        $cart = $this->cartService->getCart($shop, auth()->id());
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
         $cartSummary = $this->cartService->getCartSummary($cart);
 
         return Inertia::render('Storefront/ProductDetail', [
@@ -143,8 +140,7 @@ class StorefrontController extends Controller
 
         $categories = $this->storefrontService->getServiceCategories($shop);
 
-        // Get cart summary
-        $cart = $this->cartService->getCart($shop, auth()->id());
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
         $cartSummary = $this->cartService->getCartSummary($cart);
 
         return Inertia::render('Storefront/Services', [
@@ -185,8 +181,7 @@ class StorefrontController extends Controller
 
         $relatedServices = $this->storefrontService->getRelatedServices($service);
 
-        // Get cart summary
-        $cart = $this->cartService->getCart($shop, auth()->id());
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
         $cartSummary = $this->cartService->getCartSummary($cart);
 
         return Inertia::render('Storefront/ServiceDetail', [

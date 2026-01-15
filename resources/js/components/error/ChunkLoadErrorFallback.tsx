@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Download, RefreshCw, Wifi, WifiOff } from 'lucide-react';
-import { ErrorFallbackProps } from '@/types/error';
 import Button from '@/components/ui/button/Button';
+import { ErrorFallbackProps } from '@/types/error';
+import { Download, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
-interface ChunkLoadErrorFallbackProps extends Omit<ErrorFallbackProps, 'errorInfo'> {
+interface ChunkLoadErrorFallbackProps
+    extends Omit<ErrorFallbackProps, 'errorInfo'> {
     /** Custom class name */
     className?: string;
     /** Auto-retry after a delay (in ms) */
@@ -84,37 +85,34 @@ const ChunkLoadErrorFallback: React.FC<ChunkLoadErrorFallbackProps> = ({
 
     return (
         <div
-            className={`
-                min-h-screen flex items-center justify-center
-                bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8
-                ${className}
-            `}
+            className={`flex min-h-screen items-center justify-center bg-gray-50 p-4 sm:p-6 lg:p-8 dark:bg-gray-900 ${className} `}
         >
             <div className="w-full max-w-md">
-                <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-6 sm:p-8 text-center shadow-theme-md">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-theme-md sm:p-8 dark:border-gray-800 dark:bg-white/[0.03]">
                     {/* Icon */}
-                    <div className="mx-auto mb-6 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-warning-50 dark:bg-warning-500/15">
-                        <Download className="h-8 w-8 sm:h-10 sm:w-10 text-warning-500" />
+                    <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-warning-50 sm:h-20 sm:w-20 dark:bg-warning-500/15">
+                        <Download className="h-8 w-8 text-warning-500 sm:h-10 sm:w-10" />
                     </div>
 
                     {/* Title */}
-                    <h1 className="mb-3 text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
+                    <h1 className="mb-3 text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">
                         Failed to Load Page
                     </h1>
 
                     {/* Description */}
-                    <p className="mb-4 text-sm sm:text-base text-gray-500 dark:text-gray-400 leading-relaxed">
-                        A part of this page couldn't be loaded. This usually happens due to a network issue or a recent update.
+                    <p className="mb-4 text-sm leading-relaxed text-gray-500 sm:text-base dark:text-gray-400">
+                        A part of this page couldn't be loaded. This usually
+                        happens due to a network issue or a recent update.
                     </p>
 
                     {/* Online/Offline Status */}
-                    <div className={`
-                        inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-6
-                        ${isOnline
-                            ? 'bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-400'
-                            : 'bg-error-50 text-error-700 dark:bg-error-500/15 dark:text-error-400'
-                        }
-                    `}>
+                    <div
+                        className={`mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ${
+                            isOnline
+                                ? 'bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-400'
+                                : 'bg-error-50 text-error-700 dark:bg-error-500/15 dark:text-error-400'
+                        } `}
+                    >
                         {isOnline ? (
                             <>
                                 <Wifi className="h-3 w-3" />
@@ -129,20 +127,26 @@ const ChunkLoadErrorFallback: React.FC<ChunkLoadErrorFallbackProps> = ({
                     </div>
 
                     {/* Auto-retry countdown */}
-                    {isOnline && autoRetryCount < maxAutoRetries && countdown > 0 && (
-                        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                            Retrying automatically in {countdown}s...
-                        </p>
-                    )}
+                    {isOnline &&
+                        autoRetryCount < maxAutoRetries &&
+                        countdown > 0 && (
+                            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                                Retrying automatically in {countdown}s...
+                            </p>
+                        )}
 
                     {/* Actions */}
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <div className="flex flex-col justify-center gap-3 sm:flex-row">
                         <Button
                             variant="primary"
                             onClick={handleReload}
                             disabled={isResetting}
                             loading={isResetting}
-                            startIcon={!isResetting ? <RefreshCw className="h-4 w-4" /> : undefined}
+                            startIcon={
+                                !isResetting ? (
+                                    <RefreshCw className="h-4 w-4" />
+                                ) : undefined
+                            }
                         >
                             Refresh Page
                         </Button>
@@ -150,7 +154,8 @@ const ChunkLoadErrorFallback: React.FC<ChunkLoadErrorFallbackProps> = ({
 
                     {/* Hint for users */}
                     <p className="mt-6 text-xs text-gray-400 dark:text-gray-500">
-                        If you recently updated the app, refreshing should fix this issue.
+                        If you recently updated the app, refreshing should fix
+                        this issue.
                     </p>
                 </div>
             </div>

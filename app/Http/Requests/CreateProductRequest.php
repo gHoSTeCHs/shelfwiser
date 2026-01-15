@@ -50,9 +50,11 @@ class CreateProductRequest extends FormRequest
                 'required',
                 'string',
                 Rule::unique('product_variants', 'sku')
-                    ->where(fn ($query) => $query->whereIn(
-                        'product_id',
-                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    ->where(fn ($query) => $query->whereExists(
+                        fn ($q) => $q->select(\DB::raw(1))
+                            ->from('products')
+                            ->whereColumn('products.id', 'product_variants.product_id')
+                            ->where('products.tenant_id', $tenantId)
                     )),
             ];
             $rules['variants.*.name'] = ['nullable', 'string'];
@@ -62,9 +64,11 @@ class CreateProductRequest extends FormRequest
                 'nullable',
                 'string',
                 Rule::unique('product_variants', 'barcode')
-                    ->where(fn ($query) => $query->whereIn(
-                        'product_id',
-                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    ->where(fn ($query) => $query->whereExists(
+                        fn ($q) => $q->select(\DB::raw(1))
+                            ->from('products')
+                            ->whereColumn('products.id', 'product_variants.product_id')
+                            ->where('products.tenant_id', $tenantId)
                     )),
             ];
             $rules['variants.*.attributes'] = ['nullable', 'array'];
@@ -85,9 +89,11 @@ class CreateProductRequest extends FormRequest
                 'required',
                 'string',
                 Rule::unique('product_variants', 'sku')
-                    ->where(fn ($query) => $query->whereIn(
-                        'product_id',
-                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    ->where(fn ($query) => $query->whereExists(
+                        fn ($q) => $q->select(\DB::raw(1))
+                            ->from('products')
+                            ->whereColumn('products.id', 'product_variants.product_id')
+                            ->where('products.tenant_id', $tenantId)
                     )),
             ];
             $rules['price'] = ['required', 'numeric', 'min:0'];
@@ -96,9 +102,11 @@ class CreateProductRequest extends FormRequest
                 'nullable',
                 'string',
                 Rule::unique('product_variants', 'barcode')
-                    ->where(fn ($query) => $query->whereIn(
-                        'product_id',
-                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    ->where(fn ($query) => $query->whereExists(
+                        fn ($q) => $q->select(\DB::raw(1))
+                            ->from('products')
+                            ->whereColumn('products.id', 'product_variants.product_id')
+                            ->where('products.tenant_id', $tenantId)
                     )),
             ];
             $rules['base_unit_name'] = ['required', 'string', 'max:50'];
@@ -116,6 +124,37 @@ class CreateProductRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function messages(): array
+    {
+        return [
+            'shop_id.required' => 'Please select a shop for this product.',
+            'shop_id.exists' => 'The selected shop does not exist or is not accessible.',
+            'product_type_slug.required' => 'Please select a product type.',
+            'product_type_slug.exists' => 'The selected product type does not exist.',
+            'category_id.exists' => 'The selected category does not exist in your organization.',
+            'name.required' => 'Please provide a name for this product.',
+            'name.max' => 'Product name cannot exceed 255 characters.',
+            'variants.required' => 'Please add at least one variant for this product.',
+            'variants.min' => 'Please add at least one variant for this product.',
+            'variants.*.sku.required' => 'SKU is required for each variant.',
+            'variants.*.sku.unique' => 'This SKU is already in use. Please choose a unique SKU.',
+            'variants.*.price.required' => 'Selling price is required for each variant.',
+            'variants.*.price.min' => 'Selling price cannot be negative.',
+            'variants.*.cost_price.min' => 'Cost price cannot be negative.',
+            'variants.*.barcode.unique' => 'This barcode is already assigned to another product.',
+            'variants.*.base_unit_name.required' => 'Base unit name is required for each variant.',
+            'variants.*.packaging_types.*.units_per_package.required' => 'Units per package is required.',
+            'variants.*.packaging_types.*.units_per_package.min' => 'Units per package must be at least 1.',
+            'sku.required' => 'Please provide a SKU (Stock Keeping Unit) for this product.',
+            'sku.unique' => 'This SKU is already in use. Please choose a unique SKU.',
+            'price.required' => 'Please enter the selling price.',
+            'price.min' => 'Selling price cannot be negative.',
+            'cost_price.min' => 'Cost price cannot be negative.',
+            'barcode.unique' => 'This barcode is already assigned to another product.',
+            'base_unit_name.required' => 'Please specify the base unit name (e.g., piece, kg, liter).',
+        ];
     }
 
     protected function getProductType(): \App\Models\ProductType

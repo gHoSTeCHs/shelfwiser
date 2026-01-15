@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class PayrollAuditLog extends Model
 {
+    use BelongsToTenant;
     const ACTION_PAY_RUN_CREATED = 'pay_run_created';
     const ACTION_PAY_RUN_CALCULATED = 'pay_run_calculated';
     const ACTION_PAY_RUN_SUBMITTED = 'pay_run_submitted';

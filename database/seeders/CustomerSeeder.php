@@ -25,7 +25,7 @@ class CustomerSeeder extends Seeder
         $customerTemplates = $this->getCustomerTemplates();
 
         $selectedCustomers = array_rand($customerTemplates, min($count, count($customerTemplates)));
-        if (! is_array($selectedCustomers)) {
+        if (!is_array($selectedCustomers)) {
             $selectedCustomers = [$selectedCustomers];
         }
 
@@ -57,7 +57,7 @@ class CustomerSeeder extends Seeder
 
         $addressCount = rand(1, 2);
         $selectedAddresses = array_rand($addresses, min($addressCount, count($addresses)));
-        if (! is_array($selectedAddresses)) {
+        if (!is_array($selectedAddresses)) {
             $selectedAddresses = [$selectedAddresses];
         }
 
@@ -66,6 +66,7 @@ class CustomerSeeder extends Seeder
             $template = $addresses[$key];
 
             CustomerAddress::create([
+                'tenant_id' => $customer->tenant_id,
                 'customer_id' => $customer->id,
                 'first_name' => $customer->first_name,
                 'last_name' => $customer->last_name,
@@ -234,6 +235,6 @@ class CustomerSeeder extends Seeder
     {
         $parts = explode('@', $baseEmail);
 
-        return $parts[0].".shop{$shopId}.".substr(uniqid(), -4).'@'.$parts[1];
+        return $parts[0] . ".shop{$shopId}." . substr(uniqid(), -4) . '@' . $parts[1];
     }
 }

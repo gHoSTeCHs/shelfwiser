@@ -29,9 +29,9 @@ export default function Pending({ connections }: Props) {
             title: 'Approve Connection Request',
             content: (
                 <div className="space-y-4">
-                    <div className="flex items-start gap-3 rounded-lg bg-info-50 p-4 dark:bg-info-950/50">
-                        <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-info-600 dark:text-info-400" />
-                        <div className="text-sm text-info-700 dark:text-info-300">
+                    <div className="bg-info-50 dark:bg-info-950/50 flex items-start gap-3 rounded-lg p-4">
+                        <AlertCircle className="text-info-600 dark:text-info-400 mt-0.5 h-5 w-5 flex-shrink-0" />
+                        <div className="text-info-700 dark:text-info-300 text-sm">
                             <p className="font-medium">
                                 Are you sure you want to approve this connection
                                 request?
@@ -90,8 +90,8 @@ export default function Pending({ connections }: Props) {
                                 request?
                             </p>
                             <p className="mt-1">
-                                {connection.buyer_tenant?.name} will not be
-                                able to access your catalog or place orders.
+                                {connection.buyer_tenant?.name} will not be able
+                                to access your catalog or place orders.
                             </p>
                         </div>
                     </div>

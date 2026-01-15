@@ -1,13 +1,18 @@
-import ReorderAlertController from '@/actions/App/Http/Controllers/ReorderAlertController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
-import { ProductVariant } from '@/types/stockMovement';
 import { Shop } from '@/types/shop';
+import { ProductVariant } from '@/types/stockMovement';
 import { Head, Link } from '@inertiajs/react';
-import { AlertCircle, AlertTriangle, ArrowLeft, Package, ShoppingCart } from 'lucide-react';
+import {
+    AlertCircle,
+    AlertTriangle,
+    ArrowLeft,
+    Package,
+    ShoppingCart,
+} from 'lucide-react';
 
 interface LowStockItem {
     variant: ProductVariant;
@@ -62,7 +67,11 @@ export default function Index({ shop, low_stock_items, summary }: Props) {
 
     return (
         <AppLayout>
-            <Head title={shop ? `Reorder Alerts - ${shop.name}` : 'Reorder Alerts'} />
+            <Head
+                title={
+                    shop ? `Reorder Alerts - ${shop.name}` : 'Reorder Alerts'
+                }
+            />
 
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -80,7 +89,8 @@ export default function Index({ shop, low_stock_items, summary }: Props) {
                             Reorder Alerts{shop ? ` - ${shop.name}` : ''}
                         </h1>
                         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                            Monitor products below their reorder level and take action
+                            Monitor products below their reorder level and take
+                            action
                         </p>
                     </div>
                 </div>
@@ -97,8 +107,8 @@ export default function Index({ shop, low_stock_items, summary }: Props) {
                                     {summary.total_low_stock}
                                 </p>
                             </div>
-                            <div className="rounded-lg bg-info-100 p-3 dark:bg-info-950/30">
-                                <Package className="h-8 w-8 text-info-600 dark:text-info-400" />
+                            <div className="bg-info-100 dark:bg-info-950/30 rounded-lg p-3">
+                                <Package className="text-info-600 dark:text-info-400 h-8 w-8" />
                             </div>
                         </div>
                     </Card>
@@ -156,7 +166,8 @@ export default function Index({ shop, low_stock_items, summary }: Props) {
                                 Low Stock Products
                             </h2>
                             <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                Products that need to be reordered, sorted by urgency
+                                Products that need to be reordered, sorted by
+                                urgency
                             </p>
                         </div>
 
@@ -164,25 +175,25 @@ export default function Index({ shop, low_stock_items, summary }: Props) {
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Product
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             SKU
                                         </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Current Stock
                                         </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Reorder Level
                                         </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Shortage
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Status
                                         </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Actions
                                         </th>
                                     </tr>
@@ -202,7 +213,9 @@ export default function Index({ shop, low_stock_items, summary }: Props) {
                                             <td className="px-6 py-4">
                                                 <div>
                                                     <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {item.variant.product?.name || 'Unknown Product'}
+                                                        {item.variant.product
+                                                            ?.name ||
+                                                            'Unknown Product'}
                                                     </div>
                                                     {item.variant.name && (
                                                         <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -211,15 +224,16 @@ export default function Index({ shop, low_stock_items, summary }: Props) {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                            <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900 dark:text-white">
                                                 {item.variant.sku}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
+                                            <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
                                                 <span
                                                     className={
                                                         item.percentage < 25
                                                             ? 'font-semibold text-error-600 dark:text-error-400'
-                                                            : item.percentage < 50
+                                                            : item.percentage <
+                                                                50
                                                               ? 'font-semibold text-warning-600 dark:text-warning-400'
                                                               : 'text-gray-900 dark:text-white'
                                                     }
@@ -227,26 +241,34 @@ export default function Index({ shop, low_stock_items, summary }: Props) {
                                                     {item.current_stock}
                                                 </span>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900 dark:text-white">
+                                            <td className="px-6 py-4 text-right text-sm whitespace-nowrap text-gray-900 dark:text-white">
                                                 {item.reorder_level}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium text-error-600 dark:text-error-400">
+                                            <td className="px-6 py-4 text-right text-sm font-medium whitespace-nowrap text-error-600 dark:text-error-400">
                                                 {item.shortage}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm">
+                                            <td className="px-6 py-4 text-sm whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
-                                                    {getSeverityBadge(item.percentage)}
+                                                    {getSeverityBadge(
+                                                        item.percentage,
+                                                    )}
                                                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {item.percentage.toFixed(1)}%
+                                                        {item.percentage.toFixed(
+                                                            1,
+                                                        )}
+                                                        %
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
+                                            <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
                                                 <Link
                                                     href={`/products/${item.variant.product_id}`}
                                                     className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                                                 >
-                                                    <Button size="sm" variant="outline">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                    >
                                                         <ShoppingCart className="mr-1 h-4 w-4" />
                                                         Reorder
                                                     </Button>

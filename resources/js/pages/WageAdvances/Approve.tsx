@@ -1,17 +1,17 @@
 import WageAdvanceController from '@/actions/App/Http/Controllers/WageAdvanceController.ts';
+import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 import AppLayout from '@/layouts/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
+    Building2,
+    Calendar,
     CheckCircle,
     Clock,
     DollarSign,
     User,
-    Building2,
-    Calendar,
 } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -132,8 +132,10 @@ const WageAdvancesApprove = ({ wageAdvances, filters, shops }: Props) => {
                             </label>
                             <select
                                 value={selectedShop}
-                                onChange={(e) => setSelectedShop(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                onChange={(e) =>
+                                    setSelectedShop(e.target.value)
+                                }
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             >
                                 <option value="">All Shops</option>
                                 {shops.map((shop) => (
@@ -178,7 +180,9 @@ const WageAdvancesApprove = ({ wageAdvances, filters, shops }: Props) => {
                                                 Pending Approval
                                             </Badge>
                                             <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                {formatDate(advance.requested_at)}
+                                                {formatDate(
+                                                    advance.requested_at,
+                                                )}
                                             </span>
                                         </div>
 
@@ -187,7 +191,10 @@ const WageAdvancesApprove = ({ wageAdvances, filters, shops }: Props) => {
                                                 <User className="h-4 w-4 text-gray-400" />
                                                 <div>
                                                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {advance.user.first_name}{' '}
+                                                        {
+                                                            advance.user
+                                                                .first_name
+                                                        }{' '}
                                                         {advance.user.last_name}
                                                     </p>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400">

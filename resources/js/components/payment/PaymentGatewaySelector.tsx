@@ -1,6 +1,6 @@
-import React from 'react';
-import { CreditCard, Banknote, Bitcoin, Wallet, Building } from 'lucide-react';
 import { PaymentGateway, PaymentGatewaySelectorProps } from '@/types/payment';
+import { Banknote, Bitcoin, Building, CreditCard, Wallet } from 'lucide-react';
+import React from 'react';
 
 /**
  * Payment gateway selector component.
@@ -21,19 +21,19 @@ const PaymentGatewaySelector: React.FC<PaymentGatewaySelectorProps> = ({
     const getGatewayIcon = (identifier: string): React.ReactNode => {
         switch (identifier) {
             case 'paystack':
-                return <CreditCard className="w-6 h-6" />;
+                return <CreditCard className="h-6 w-6" />;
             case 'opay':
-                return <Wallet className="w-6 h-6" />;
+                return <Wallet className="h-6 w-6" />;
             case 'flutterwave':
-                return <CreditCard className="w-6 h-6" />;
+                return <CreditCard className="h-6 w-6" />;
             case 'crypto':
-                return <Bitcoin className="w-6 h-6" />;
+                return <Bitcoin className="h-6 w-6" />;
             case 'bank_transfer':
-                return <Building className="w-6 h-6" />;
+                return <Building className="h-6 w-6" />;
             case 'cash_on_delivery':
-                return <Banknote className="w-6 h-6" />;
+                return <Banknote className="h-6 w-6" />;
             default:
-                return <CreditCard className="w-6 h-6" />;
+                return <CreditCard className="h-6 w-6" />;
         }
     };
 
@@ -61,7 +61,9 @@ const PaymentGatewaySelector: React.FC<PaymentGatewaySelectorProps> = ({
      * Filter gateways that support the current currency
      */
     const filteredGateways = availableGateways.filter(
-        (gateway) => gateway.isAvailable && gateway.supportedCurrencies.includes(currency)
+        (gateway) =>
+            gateway.isAvailable &&
+            gateway.supportedCurrencies.includes(currency),
     );
 
     /**
@@ -74,7 +76,15 @@ const PaymentGatewaySelector: React.FC<PaymentGatewaySelectorProps> = ({
             name: 'Cash on Delivery',
             description: 'Pay with cash when your order is delivered',
             isAvailable: true,
-            supportedCurrencies: ['NGN', 'USD', 'EUR', 'GBP', 'GHS', 'KES', 'ZAR'],
+            supportedCurrencies: [
+                'NGN',
+                'USD',
+                'EUR',
+                'GBP',
+                'GHS',
+                'KES',
+                'ZAR',
+            ],
             supportsInline: false,
             supportsRefunds: false,
         },
@@ -88,14 +98,14 @@ const PaymentGatewaySelector: React.FC<PaymentGatewaySelectorProps> = ({
                     type="button"
                     onClick={() => onSelect(gateway.identifier)}
                     disabled={disabled}
-                    className={`w-full flex items-start p-4 rounded-lg border-2 transition-all text-left ${
+                    className={`flex w-full items-start rounded-lg border-2 p-4 text-left transition-all ${
                         selectedGateway === gateway.identifier
                             ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                    } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                            : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                    } ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                 >
                     <div
-                        className={`flex-shrink-0 p-2 rounded-lg ${
+                        className={`flex-shrink-0 rounded-lg p-2 ${
                             selectedGateway === gateway.identifier
                                 ? 'bg-brand-100 text-brand-600 dark:bg-brand-800 dark:text-brand-400'
                                 : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
@@ -109,9 +119,9 @@ const PaymentGatewaySelector: React.FC<PaymentGatewaySelectorProps> = ({
                                 {gateway.name}
                             </p>
                             {selectedGateway === gateway.identifier && (
-                                <div className="w-5 h-5 rounded-full bg-brand-500 flex items-center justify-center">
+                                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500">
                                     <svg
-                                        className="w-3 h-3 text-white"
+                                        className="h-3 w-3 text-white"
                                         fill="currentColor"
                                         viewBox="0 0 20 20"
                                     >
@@ -124,7 +134,7 @@ const PaymentGatewaySelector: React.FC<PaymentGatewaySelectorProps> = ({
                                 </div>
                             )}
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                             {getGatewayDescription(gateway)}
                         </p>
                     </div>
@@ -132,7 +142,7 @@ const PaymentGatewaySelector: React.FC<PaymentGatewaySelectorProps> = ({
             ))}
 
             {allPaymentOptions.length === 0 && (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div className="py-8 text-center text-gray-500 dark:text-gray-400">
                     <p>No payment methods available for {currency}</p>
                 </div>
             )}

@@ -245,22 +245,40 @@ export default function Show({
                                 <table className="w-full">
                                     <thead className="border-b border-gray-200 dark:border-gray-700">
                                         <tr className="text-left text-sm text-gray-500 dark:text-gray-400">
-                                            <th className="pb-3 font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 font-medium"
+                                            >
                                                 Product
                                             </th>
-                                            <th className="pb-3 font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 font-medium"
+                                            >
                                                 SKU
                                             </th>
-                                            <th className="pb-3 font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 font-medium"
+                                            >
                                                 Packaging
                                             </th>
-                                            <th className="pb-3 text-right font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 text-right font-medium"
+                                            >
                                                 Quantity
                                             </th>
-                                            <th className="pb-3 text-right font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 text-right font-medium"
+                                            >
                                                 Unit Price
                                             </th>
-                                            <th className="pb-3 text-right font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 text-right font-medium"
+                                            >
                                                 Total
                                             </th>
                                         </tr>

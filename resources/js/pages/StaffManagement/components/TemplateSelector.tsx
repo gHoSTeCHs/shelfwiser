@@ -1,9 +1,9 @@
-import type { FC } from 'react';
-import { useMemo, useState } from 'react';
-import { Check, ChevronRight, FileText, Search, Sparkles } from 'lucide-react';
-import { clsx } from 'clsx';
 import type { EmployeeTemplate } from '@/types/staff';
 import { formatCurrency } from '@/types/staff';
+import { clsx } from 'clsx';
+import { Check, ChevronRight, FileText, Search, Sparkles } from 'lucide-react';
+import type { FC } from 'react';
+import { useMemo, useState } from 'react';
 
 interface TemplateSelectorProps {
     templates: EmployeeTemplate[];
@@ -170,8 +170,7 @@ const TemplateCard: FC<TemplateCardProps> = ({
     isSelected,
     onSelect,
 }) => {
-
-    console.log(template)
+    console.log(template);
     return (
         <button
             type="button"

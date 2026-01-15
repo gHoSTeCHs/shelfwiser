@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\OrderType;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,19 +16,21 @@ use Illuminate\Support\Carbon;
 
 class Order extends Model
 {
-    use HasFactory, SoftDeletes;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
         'shop_id',
         'customer_id',
         'order_number',
+        'offline_id',
         'order_type',
         'tracking_number',
         'shipping_carrier',
         'status',
         'payment_status',
         'payment_method',
+        'payment_reference',
         'subtotal',
         'tax_amount',
         'discount_amount',
@@ -36,6 +39,7 @@ class Order extends Model
         'paid_amount',
         'customer_notes',
         'internal_notes',
+        'cancellation_reason',
         'shipping_address',
         'billing_address',
         'customer_shipping_address_id',
@@ -44,6 +48,7 @@ class Order extends Model
         'packed_at',
         'shipped_at',
         'delivered_at',
+        'cancelled_at',
         'refunded_at',
         'estimated_delivery_date',
         'actual_delivery_date',
@@ -51,6 +56,7 @@ class Order extends Model
         'packed_by',
         'shipped_by',
         'delivered_by',
+        'cancelled_by',
         'refunded_by',
     ];
 
@@ -69,6 +75,7 @@ class Order extends Model
         'packed_at' => 'datetime',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
+        'cancelled_at' => 'datetime',
         'refunded_at' => 'datetime',
         'estimated_delivery_date' => 'date',
         'actual_delivery_date' => 'date',
@@ -138,6 +145,11 @@ class Order extends Model
     public function refundedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'refunded_by');
+    }
+
+    public function cancelledByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
     }
 
     public function payments(): HasMany

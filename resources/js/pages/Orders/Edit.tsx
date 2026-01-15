@@ -4,17 +4,17 @@ import TextArea from '@/components/form/input/TextArea';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
+import PackagingSelector from '@/components/inventory/PackagingSelector';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import PackagingSelector from '@/components/inventory/PackagingSelector';
+import { useToast } from '@/hooks/useToast';
 import AppLayout from '@/layouts/AppLayout';
-import { Shop } from '@/types/shop';
 import { Order, OrderItem } from '@/types/order';
+import { Shop } from '@/types/shop';
 import { ProductVariant } from '@/types/stockMovement';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Plus, Save, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useToast } from '@/hooks/useToast';
 
 interface OrderItemForm {
     id: string | number;
@@ -83,7 +83,7 @@ export default function Edit({ order, shops, products }: Props) {
     const updateItem = (
         id: string | number,
         field: keyof OrderItemForm,
-        value: any,
+        value: string | number | null,
     ) => {
         setItems(
             items.map((item) => {
@@ -159,7 +159,9 @@ export default function Edit({ order, shops, products }: Props) {
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
                 <div className="mb-6 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Link href={OrderController.show.url({ order: order.id })}>
+                        <Link
+                            href={OrderController.show.url({ order: order.id })}
+                        >
                             <Button variant="outline" size="sm">
                                 <ArrowLeft className="h-4 w-4" />
                                 Back to Order
@@ -223,20 +225,21 @@ export default function Edit({ order, shops, products }: Props) {
                                                         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                                             Item #{index + 1}
                                                         </h4>
-                                                        {items.length > 1 && canEdit && (
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() =>
-                                                                    removeItem(
-                                                                        item.id,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Trash2 className="h-4 w-4 text-error-600 dark:text-error-400" />
-                                                            </Button>
-                                                        )}
+                                                        {items.length > 1 &&
+                                                            canEdit && (
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        removeItem(
+                                                                            item.id,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Trash2 className="h-4 w-4 text-error-600 dark:text-error-400" />
+                                                                </Button>
+                                                            )}
                                                     </div>
 
                                                     <div className="grid gap-4 md:grid-cols-2">
@@ -256,7 +259,9 @@ export default function Edit({ order, shops, products }: Props) {
                                                                         label: 'Select product',
                                                                     },
                                                                     ...products.map(
-                                                                        (p) => ({
+                                                                        (
+                                                                            p,
+                                                                        ) => ({
                                                                             value: p.id.toString(),
                                                                             label: `${p.product?.name} - ${p.name} (${p.sku})`,
                                                                         }),
@@ -275,7 +280,9 @@ export default function Edit({ order, shops, products }: Props) {
                                                                         value,
                                                                     )
                                                                 }
-                                                                disabled={!canEdit}
+                                                                disabled={
+                                                                    !canEdit
+                                                                }
                                                             />
                                                             <input
                                                                 type="hidden"
@@ -327,7 +334,9 @@ export default function Edit({ order, shops, products }: Props) {
                                                                                 qty,
                                                                             )
                                                                         }
-                                                                        disabled={!canEdit}
+                                                                        disabled={
+                                                                            !canEdit
+                                                                        }
                                                                     />
                                                                     <input
                                                                         type="hidden"
@@ -374,7 +383,9 @@ export default function Edit({ order, shops, products }: Props) {
                                                                     )
                                                                 }
                                                                 min={1}
-                                                                disabled={!canEdit}
+                                                                disabled={
+                                                                    !canEdit
+                                                                }
                                                                 error={
                                                                     !!errors[
                                                                         `items.${index}.quantity`
@@ -415,7 +426,9 @@ export default function Edit({ order, shops, products }: Props) {
                                                                 }
                                                                 step="0.01"
                                                                 min={0}
-                                                                disabled={!canEdit}
+                                                                disabled={
+                                                                    !canEdit
+                                                                }
                                                                 error={
                                                                     !!errors[
                                                                         `items.${index}.unit_price`

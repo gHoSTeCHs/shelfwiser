@@ -7,7 +7,6 @@ use App\Models\Shop;
 use App\Models\Tenant;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Notification;
 
 class ReorderAlertService
 {
@@ -24,18 +23,17 @@ class ReorderAlertService
                 }
             })
             ->with([
-                'product:id,name,shop_id',
+                'product:id,name,shop_id,supplier_id',
                 'product.shop:id,name',
+                'product.supplierCatalogItem:id,product_id,supplier_id',
                 'inventoryLocations',
             ])
             ->where('is_active', true)
             ->where('reorder_level', '>', 0);
 
-        return $query->get()->filter(function ($variant) use ($shop) {
+        return $query->get()->map(function ($variant) use ($shop) {
             $totalStock = $this->getTotalStock($variant, $shop);
-            return $totalStock <= $variant->reorder_level;
-        })->map(function ($variant) use ($shop) {
-            $totalStock = $this->getTotalStock($variant, $shop);
+
             return [
                 'variant' => $variant,
                 'current_stock' => $totalStock,
@@ -44,8 +42,16 @@ class ReorderAlertService
                 'percentage' => $variant->reorder_level > 0
                     ? round(($totalStock / $variant->reorder_level) * 100, 1)
                     : 100,
+                'is_low' => $totalStock <= $variant->reorder_level,
             ];
-        })->sortBy('percentage')->values();
+        })->filter(fn ($item) => $item['is_low'])
+            ->map(function ($item) {
+                unset($item['is_low']);
+
+                return $item;
+            })
+            ->sortBy('percentage')
+            ->values();
     }
 
     /**
@@ -77,11 +83,12 @@ class ReorderAlertService
      */
     public function isLowStock(ProductVariant $variant, ?Shop $shop = null): bool
     {
-        if (!$variant->reorder_level || $variant->reorder_level <= 0) {
+        if (! $variant->reorder_level || $variant->reorder_level <= 0) {
             return false;
         }
 
         $totalStock = $this->getTotalStock($variant, $shop);
+
         return $totalStock <= $variant->reorder_level;
     }
 
@@ -90,7 +97,7 @@ class ReorderAlertService
      */
     public function getAlertSummary(Tenant $tenant, ?Shop $shop = null): array
     {
-        $cacheKey = "reorder_alerts_{$tenant->id}" . ($shop ? "_{$shop->id}" : '');
+        $cacheKey = "reorder_alerts_{$tenant->id}".($shop ? "_{$shop->id}" : '');
 
         return Cache::remember($cacheKey, now()->addMinutes(15), function () use ($tenant, $shop) {
             $lowStock = $this->getLowStockVariants($tenant, $shop);
@@ -112,7 +119,7 @@ class ReorderAlertService
      */
     public function clearCache(Tenant $tenant, ?Shop $shop = null): void
     {
-        $cacheKey = "reorder_alerts_{$tenant->id}" . ($shop ? "_{$shop->id}" : '');
+        $cacheKey = "reorder_alerts_{$tenant->id}".($shop ? "_{$shop->id}" : '');
         Cache::forget($cacheKey);
     }
 
@@ -123,22 +130,21 @@ class ReorderAlertService
     {
         $lowStock = $this->getLowStockVariants($tenant, $shop);
 
-        // Group by supplier if available
         return $lowStock->groupBy(function ($item) {
-            return $item['variant']->product->supplier_id ?? 'no_supplier';
+            return $item['variant']->product->supplierCatalogItem?->supplier_tenant_id ?? 'no_supplier';
         })->map(function ($items, $supplierId) {
             return [
                 'supplier_id' => $supplierId !== 'no_supplier' ? $supplierId : null,
                 'items' => $items->map(function ($item) {
                     $suggestedQuantity = max(
                         $item['shortage'],
-                        $item['variant']->reorder_level * 2 // Order 2x reorder level
+                        $item['variant']->reorder_level * 2
                     );
 
                     return [
                         'variant_id' => $item['variant']->id,
                         'sku' => $item['variant']->sku,
-                        'name' => $item['variant']->product->name . ' - ' . $item['variant']->name,
+                        'name' => $item['variant']->product->name.' - '.$item['variant']->name,
                         'current_stock' => $item['current_stock'],
                         'reorder_level' => $item['reorder_level'],
                         'suggested_quantity' => $suggestedQuantity,
@@ -152,6 +158,7 @@ class ReorderAlertService
                         $item['shortage'],
                         $item['variant']->reorder_level * 2
                     );
+
                     return $suggestedQuantity * ($item['variant']->cost_price ?? 0);
                 }),
             ];

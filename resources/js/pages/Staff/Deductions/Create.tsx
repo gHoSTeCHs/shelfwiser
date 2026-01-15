@@ -1,16 +1,16 @@
-import { Head, Form, router } from '@inertiajs/react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/AppLayout';
-import { Card } from '@/components/ui/card';
-import Button from '@/components/ui/button/Button';
-import Input from '@/components/form/input/InputField';
-import Select from '@/components/form/Select';
-import Label from '@/components/form/Label';
-import InputError from '@/components/form/InputError';
-import Checkbox from '@/components/form/input/Checkbox';
 import EmployeeCustomDeductionController from '@/actions/App/Http/Controllers/EmployeeCustomDeductionController';
+import Checkbox from '@/components/form/input/Checkbox';
+import Input from '@/components/form/input/InputField';
+import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
 import { User } from '@/types/payroll';
+import { Form, Head, router } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
 
 interface DeductionTypeOption {
     value: string;
@@ -45,7 +45,9 @@ export default function Create({ employee, deductionTypes }: Props) {
                     startIcon={<ArrowLeft className="h-4 w-4" />}
                     onClick={() =>
                         router.visit(
-                            EmployeeCustomDeductionController.index.url({ employee: employee.id })
+                            EmployeeCustomDeductionController.index.url({
+                                employee: employee.id,
+                            }),
                         )
                     }
                     className="mb-4"
@@ -54,15 +56,19 @@ export default function Create({ employee, deductionTypes }: Props) {
                 </Button>
 
                 <div>
-                    <h1 className="text-2xl font-bold text-dark-900">Add Custom Deduction</h1>
-                    <p className="mt-1 text-sm text-dark-600">
+                    <h1 className="text-dark-900 text-2xl font-bold">
+                        Add Custom Deduction
+                    </h1>
+                    <p className="text-dark-600 mt-1 text-sm">
                         Create a new custom deduction for {employee.name}
                     </p>
                 </div>
             </div>
 
             <Form
-                action={EmployeeCustomDeductionController.store.url({ employee: employee.id })}
+                action={EmployeeCustomDeductionController.store.url({
+                    employee: employee.id,
+                })}
                 method="post"
             >
                 {({ errors, processing }) => (
@@ -71,7 +77,8 @@ export default function Create({ employee, deductionTypes }: Props) {
                             {/* Deduction Name */}
                             <div>
                                 <Label htmlFor="deduction_name">
-                                    Deduction Name <span className="text-error-500">*</span>
+                                    Deduction Name{' '}
+                                    <span className="text-error-500">*</span>
                                 </Label>
                                 <Input
                                     type="text"
@@ -79,7 +86,9 @@ export default function Create({ employee, deductionTypes }: Props) {
                                     id="deduction_name"
                                     placeholder="e.g., Housing Loan, Car Loan, Insurance Premium"
                                     value={deductionName}
-                                    onChange={(e) => setDeductionName(e.target.value)}
+                                    onChange={(e) =>
+                                        setDeductionName(e.target.value)
+                                    }
                                     error={!!errors.deduction_name}
                                     required
                                 />
@@ -89,20 +98,30 @@ export default function Create({ employee, deductionTypes }: Props) {
                             {/* Deduction Type */}
                             <div>
                                 <Label htmlFor="deduction_type">
-                                    Deduction Type <span className="text-error-500">*</span>
+                                    Deduction Type{' '}
+                                    <span className="text-error-500">*</span>
                                 </Label>
                                 <Select
                                     options={[
-                                        { value: '', label: 'Select deduction type' },
+                                        {
+                                            value: '',
+                                            label: 'Select deduction type',
+                                        },
                                         ...deductionTypes.map((dt) => ({
                                             value: dt.value,
                                             label: dt.label,
                                         })),
                                     ]}
-                                    onChange={(value) => setDeductionType(value)}
+                                    onChange={(value) =>
+                                        setDeductionType(value)
+                                    }
                                     defaultValue=""
                                 />
-                                <input type="hidden" name="deduction_type" value={deductionType} />
+                                <input
+                                    type="hidden"
+                                    name="deduction_type"
+                                    value={deductionType}
+                                />
                                 <InputError message={errors.deduction_type} />
                             </div>
 
@@ -111,7 +130,10 @@ export default function Create({ employee, deductionTypes }: Props) {
                                 {isPercentageType ? (
                                     <div>
                                         <Label htmlFor="percentage">
-                                            Percentage <span className="text-error-500">*</span>
+                                            Percentage{' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Input
                                             type="number"
@@ -122,17 +144,24 @@ export default function Create({ employee, deductionTypes }: Props) {
                                             min="0"
                                             max="100"
                                             value={percentage}
-                                            onChange={(e) => setPercentage(e.target.value)}
+                                            onChange={(e) =>
+                                                setPercentage(e.target.value)
+                                            }
                                             error={!!errors.percentage}
                                             hint="Percentage of gross salary (0-100)"
                                             required
                                         />
-                                        <InputError message={errors.percentage} />
+                                        <InputError
+                                            message={errors.percentage}
+                                        />
                                     </div>
                                 ) : requiresAmount ? (
                                     <div>
                                         <Label htmlFor="amount">
-                                            Amount (₦) <span className="text-error-500">*</span>
+                                            Amount (₦){' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Input
                                             type="number"
@@ -142,7 +171,9 @@ export default function Create({ employee, deductionTypes }: Props) {
                                             step="0.01"
                                             min="0"
                                             value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
+                                            onChange={(e) =>
+                                                setAmount(e.target.value)
+                                            }
                                             error={!!errors.amount}
                                             required
                                         />
@@ -155,28 +186,39 @@ export default function Create({ employee, deductionTypes }: Props) {
                             <div className="grid gap-6 sm:grid-cols-2">
                                 <div>
                                     <Label htmlFor="effective_from">
-                                        Effective From <span className="text-error-500">*</span>
+                                        Effective From{' '}
+                                        <span className="text-error-500">
+                                            *
+                                        </span>
                                     </Label>
                                     <Input
                                         type="date"
                                         name="effective_from"
                                         id="effective_from"
                                         value={effectiveFrom}
-                                        onChange={(e) => setEffectiveFrom(e.target.value)}
+                                        onChange={(e) =>
+                                            setEffectiveFrom(e.target.value)
+                                        }
                                         error={!!errors.effective_from}
                                         required
                                     />
-                                    <InputError message={errors.effective_from} />
+                                    <InputError
+                                        message={errors.effective_from}
+                                    />
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="effective_to">Effective To (Optional)</Label>
+                                    <Label htmlFor="effective_to">
+                                        Effective To (Optional)
+                                    </Label>
                                     <Input
                                         type="date"
                                         name="effective_to"
                                         id="effective_to"
                                         value={effectiveTo}
-                                        onChange={(e) => setEffectiveTo(e.target.value)}
+                                        onChange={(e) =>
+                                            setEffectiveTo(e.target.value)
+                                        }
                                         error={!!errors.effective_to}
                                         hint="Leave blank for ongoing deduction"
                                     />
@@ -190,23 +232,31 @@ export default function Create({ employee, deductionTypes }: Props) {
                                     id="is_active"
                                     name="is_active"
                                     checked={isActive}
-                                    onChange={(e) => setIsActive(e.target.checked)}
+                                    onChange={(e) =>
+                                        setIsActive(e.target.checked)
+                                    }
                                 />
-                                <Label htmlFor="is_active" className="cursor-pointer">
-                                    Active (deduction will be applied to payroll)
+                                <Label
+                                    htmlFor="is_active"
+                                    className="cursor-pointer"
+                                >
+                                    Active (deduction will be applied to
+                                    payroll)
                                 </Label>
                             </div>
 
                             {/* Actions */}
-                            <div className="flex gap-3 border-t border-dark-200 pt-6">
+                            <div className="border-dark-200 flex gap-3 border-t pt-6">
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={() =>
                                         router.visit(
-                                            EmployeeCustomDeductionController.index.url({
-                                                employee: employee.id,
-                                            })
+                                            EmployeeCustomDeductionController.index.url(
+                                                {
+                                                    employee: employee.id,
+                                                },
+                                            ),
                                         )
                                     }
                                 >
@@ -218,7 +268,9 @@ export default function Create({ employee, deductionTypes }: Props) {
                                     disabled={processing}
                                     loading={processing}
                                 >
-                                    {processing ? 'Creating...' : 'Create Deduction'}
+                                    {processing
+                                        ? 'Creating...'
+                                        : 'Create Deduction'}
                                 </Button>
                             </div>
                         </div>

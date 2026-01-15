@@ -8,7 +8,12 @@ interface TextLinkProps {
     children: ReactNode;
 }
 
-export default function TextLink({ href, className = '', tabIndex, children }: TextLinkProps) {
+export default function TextLink({
+    href,
+    className = '',
+    tabIndex,
+    children,
+}: TextLinkProps) {
     return (
         <Link
             href={href}

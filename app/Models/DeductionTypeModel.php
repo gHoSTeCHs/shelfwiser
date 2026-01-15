@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\DeductionCalculationBase;
 use App\Enums\DeductionCalculationType;
 use App\Enums\DeductionCategory;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DeductionTypeModel extends Model
 {
-    use HasFactory, SoftDeletes;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $table = 'deduction_types';
 

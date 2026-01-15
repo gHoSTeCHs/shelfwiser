@@ -1,26 +1,25 @@
 import FundRequestController from '@/actions/App/Http/Controllers/FundRequestController';
-import Button from '@/components/ui/button/Button';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
-import AppLayout from '@/layouts/AppLayout';
 import TextArea from '@/components/form/input/TextArea';
 import Label from '@/components/form/Label';
-import { Head, Link, Form, router } from '@inertiajs/react';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import { useModal } from '@/hooks/useModal';
+import { useToast } from '@/hooks/useToast';
+import AppLayout from '@/layouts/AppLayout';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
+    Building2,
     CheckCircle,
-    XCircle,
+    Clock,
     DollarSign,
     FileText,
-    Clock,
-    User,
-    Building2,
-    Calendar,
     Trash2,
+    User,
+    XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useToast } from '@/hooks/useToast';
-import { useModal } from '@/hooks/useModal';
 
 interface Shop {
     id: number;
@@ -279,7 +278,9 @@ export default function Show({
                                 })}
                                 method="post"
                                 onSuccess={() => {
-                                    toast.success('Funds disbursed successfully');
+                                    toast.success(
+                                        'Funds disbursed successfully',
+                                    );
                                 }}
                             >
                                 {({ processing }) => (
@@ -468,7 +469,7 @@ export default function Show({
 
                                     {fundRequest.disbursed_at && (
                                         <div className="flex items-start gap-3">
-                                            <DollarSign className="mt-0.5 h-4 w-4 text-info-500" />
+                                            <DollarSign className="text-info-500 mt-0.5 h-4 w-4" />
                                             <div className="flex-1">
                                                 <p className="text-xs text-gray-500 dark:text-gray-500">
                                                     Disbursed by{' '}

@@ -3,15 +3,17 @@
 namespace App\Models;
 
 use App\Enums\PayRunItemStatus;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Enums\TaxLawVersion;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PayRunItem extends Model
 {
-    use HasFactory, SoftDeletes;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
@@ -61,11 +63,6 @@ class PayRunItem extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function employee(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function payslip(): BelongsTo
@@ -132,7 +129,7 @@ class PayRunItem extends Model
     {
         $this->update(array_merge($data, [
             'status' => PayRunItemStatus::CALCULATED,
-            'error_message' => null
+            'error_message' => null,
         ]));
     }
 
@@ -140,7 +137,7 @@ class PayRunItem extends Model
     {
         $this->update([
             'status' => PayRunItemStatus::ERROR,
-            'error_message' => $message
+            'error_message' => $message,
         ]);
     }
 
@@ -148,7 +145,7 @@ class PayRunItem extends Model
     {
         $this->update([
             'status' => PayRunItemStatus::EXCLUDED,
-            'error_message' => $reason
+            'error_message' => $reason,
         ]);
     }
 
@@ -179,5 +176,75 @@ class PayRunItem extends Model
     public function getStatusColorAttribute(): string
     {
         return $this->status->color();
+    }
+
+    /**
+     * Get the tax law version used for this pay run item.
+     */
+    public function getTaxLawVersion(): ?TaxLawVersion
+    {
+        $taxCalc = $this->tax_calculation ?? [];
+        $version = $taxCalc['tax_law_version'] ?? null;
+
+        if (! $version) {
+            return null;
+        }
+
+        return TaxLawVersion::tryFrom($version);
+    }
+
+    /**
+     * Check if this item was calculated with low-income exemption.
+     */
+    public function isLowIncomeExempt(): bool
+    {
+        $taxCalc = $this->tax_calculation ?? [];
+
+        return (bool) ($taxCalc['is_low_income_exempt'] ?? $taxCalc['low_income_exempt'] ?? false);
+    }
+
+    /**
+     * Get reliefs applied in this calculation.
+     */
+    public function getReliefsApplied(): array
+    {
+        $taxCalc = $this->tax_calculation ?? [];
+
+        return $taxCalc['reliefs_applied'] ?? [];
+    }
+
+    /**
+     * Get the tax law version label for display.
+     */
+    public function getTaxLawVersionLabelAttribute(): string
+    {
+        $version = $this->getTaxLawVersion();
+
+        return $version?->shortLabel() ?? 'Unknown';
+    }
+
+    /**
+     * Check if rent relief was applied.
+     */
+    public function hasRentRelief(): bool
+    {
+        $reliefs = $this->getReliefsApplied();
+
+        return collect($reliefs)->contains(fn ($r) => ($r['code'] ?? '') === 'RENT_RELIEF');
+    }
+
+    /**
+     * Get the effective tax rate for this item.
+     */
+    public function getEffectiveTaxRate(): float
+    {
+        if (! $this->gross_earnings || $this->gross_earnings <= 0) {
+            return 0;
+        }
+
+        $taxCalc = $this->tax_calculation ?? [];
+        $tax = $taxCalc['tax'] ?? 0;
+
+        return round(($tax / $this->gross_earnings) * 100, 2);
     }
 }

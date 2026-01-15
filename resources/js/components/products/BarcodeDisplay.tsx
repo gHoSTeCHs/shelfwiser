@@ -94,7 +94,9 @@ export const BarcodeDisplay: React.FC<BarcodeDisplayProps> = ({
         // Convert SVG to canvas then to PNG
         const svg = svgRef.current;
         const svgData = new XMLSerializer().serializeToString(svg);
-        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const svgBlob = new Blob([svgData], {
+            type: 'image/svg+xml;charset=utf-8',
+        });
         const svgUrl = URL.createObjectURL(svgBlob);
 
         const img = new Image();
@@ -199,7 +201,9 @@ export const BarcodeDisplay: React.FC<BarcodeDisplayProps> = ({
     // No barcode state
     if (!barcode) {
         return (
-            <div className={`rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center dark:border-gray-700 dark:bg-gray-800 ${className}`}>
+            <div
+                className={`rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center dark:border-gray-700 dark:bg-gray-800 ${className}`}
+            >
                 <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
                     No barcode assigned
                 </p>
@@ -221,7 +225,9 @@ export const BarcodeDisplay: React.FC<BarcodeDisplayProps> = ({
     }
 
     return (
-        <div className={`rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 ${className}`}>
+        <div
+            className={`rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 ${className}`}
+        >
             {/* Barcode SVG */}
             <div className="flex justify-center overflow-hidden rounded bg-white p-2">
                 {error ? (
@@ -276,7 +282,9 @@ export const BarcodeDisplay: React.FC<BarcodeDisplayProps> = ({
                             disabled={isGenerating}
                             className="h-8 gap-1.5 px-2 text-xs"
                         >
-                            <RefreshCw className={`h-3.5 w-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
+                            <RefreshCw
+                                className={`h-3.5 w-3.5 ${isGenerating ? 'animate-spin' : ''}`}
+                            />
                             {isGenerating ? 'Generating...' : 'Regenerate'}
                         </Button>
                     )}

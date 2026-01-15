@@ -2,21 +2,33 @@
 
 namespace Database\Seeders;
 
-use App\Models\TaxTable;
+use App\Enums\TaxLawVersion;
+use App\Enums\TaxReliefType;
 use App\Models\TaxBand;
 use App\Models\TaxRelief;
-use App\Enums\TaxReliefType;
+use App\Models\TaxTable;
 use Illuminate\Database\Seeder;
 
 class TaxTableSeeder extends Seeder
 {
+    /**
+     * Seed PITA 2011 tax table (effective until December 31, 2025).
+     * This represents the legacy Nigerian tax law before NTA 2025 takes effect.
+     */
     public function run(): void
     {
         $taxTable = TaxTable::updateOrCreate(
             ['jurisdiction' => 'NG', 'effective_year' => 2024, 'is_system' => true],
             [
-                'name' => 'Nigeria PAYE Tax Table 2024',
-                'description' => 'Nigerian Pay As You Earn (PAYE) progressive tax bands as per Finance Act',
+                'name' => 'Nigeria PAYE Tax Table (PITA 2011)',
+                'description' => 'Nigerian Pay As You Earn (PAYE) progressive tax bands per Personal Income Tax Act 2011. Valid until December 31, 2025.',
+                'effective_from' => '2011-01-01',
+                'effective_to' => '2025-12-31',
+                'tax_law_reference' => TaxLawVersion::PITA_2011->value,
+                'has_low_income_exemption' => false,
+                'low_income_threshold' => null,
+                'cra_applicable' => true,
+                'minimum_tax_rate' => 1,
                 'is_active' => true,
             ]
         );
@@ -98,6 +110,8 @@ class TaxTableSeeder extends Seeder
             );
         }
 
-        $this->command->info('Created Nigerian PAYE tax table with ' . count($bands) . ' bands and ' . count($reliefs) . ' reliefs.');
+        $this->command->info('Created PITA 2011 tax table with '.count($bands).' bands and '.count($reliefs).' reliefs.');
+        $this->command->info('PITA 2011 table is effective from 2011-01-01 to 2025-12-31');
+        $this->command->info('After Dec 31, 2025, the system will automatically switch to NTA 2025 based on effective_from dates.');
     }
 }

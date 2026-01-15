@@ -1,10 +1,10 @@
 import CustomerAuthController from '@/actions/App/Http/Controllers/Storefront/CustomerAuthController';
 import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
-import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
+import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
@@ -23,12 +23,17 @@ const Login: React.FC<AuthLoginProps> = ({ shop }) => {
         <StorefrontLayout shop={shop}>
             <Breadcrumbs
                 items={[
-                    { label: 'Home', href: StorefrontController.index.url({ shop: shop.slug }) },
+                    {
+                        label: 'Home',
+                        href: StorefrontController.index.url({
+                            shop: shop.slug,
+                        }),
+                    },
                     { label: 'Login' },
                 ]}
             />
 
-            <div className="mx-auto max-w-md mt-6">
+            <div className="mx-auto mt-6 max-w-md">
                 <Card className="p-8">
                     <div className="mb-8 text-center">
                         <h1 className="text-3xl font-bold text-gray-900">
@@ -87,9 +92,15 @@ const Login: React.FC<AuthLoginProps> = ({ shop }) => {
                                         <Checkbox
                                             id="remember"
                                             checked={rememberMe}
-                                            onChange={(e) => setRememberMe(e.target.checked)}
+                                            onChange={(e) =>
+                                                setRememberMe(e.target.checked)
+                                            }
                                         />
-                                        <input type="hidden" name="remember" value={rememberMe ? '1' : '0'} />
+                                        <input
+                                            type="hidden"
+                                            name="remember"
+                                            value={rememberMe ? '1' : '0'}
+                                        />
                                         <Label
                                             htmlFor="remember"
                                             className="mb-0 ml-2"
@@ -116,7 +127,7 @@ const Login: React.FC<AuthLoginProps> = ({ shop }) => {
                                             href={CustomerAuthController.showRegister.url(
                                                 { shop: shop.slug },
                                             )}
-                                            className="text-brand-600 hover:text-brand-700 font-medium"
+                                            className="font-medium text-brand-600 hover:text-brand-700"
                                         >
                                             Sign up
                                         </Link>

@@ -1,25 +1,22 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/AppLayout';
-import { Card } from '@/components/ui/card';
-import Button from '@/components/ui/button/Button';
-import Select from '@/components/form/Select';
-import Badge from '@/components/ui/badge/Badge';
 import PayrollController from '@/actions/App/Http/Controllers/PayrollController';
 import PayrollReportController from '@/actions/App/Http/Controllers/PayrollReportController';
+import Select from '@/components/form/Select';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
+import type { BankScheduleValidation, PayRun } from '@/types/payroll';
+import { Head, Link, router } from '@inertiajs/react';
 import {
-    ArrowLeft,
-    Download,
-    FileSpreadsheet,
-    FileText,
-    Landmark,
-    Users,
-    DollarSign,
     AlertTriangle,
+    ArrowLeft,
     CheckCircle,
+    DollarSign,
+    FileSpreadsheet,
+    Landmark,
     XCircle,
 } from 'lucide-react';
-import type { PayRun, BankScheduleValidation, BankScheduleItem, BankScheduleInvalidItem } from '@/types/payroll';
+import { useState } from 'react';
 
 interface Props {
     payRuns: PayRun[];
@@ -27,7 +24,11 @@ interface Props {
     selectedPayRunId: string | null;
 }
 
-export default function BankSchedule({ payRuns, validation, selectedPayRunId }: Props) {
+export default function BankSchedule({
+    payRuns,
+    validation,
+    selectedPayRunId,
+}: Props) {
     const [payRunId, setPayRunId] = useState(selectedPayRunId || '');
 
     const formatCurrency = (amount: number) => {
@@ -43,20 +44,25 @@ export default function BankSchedule({ payRuns, validation, selectedPayRunId }: 
         router.get(
             PayrollReportController.bankSchedule.url(),
             { pay_run_id: payRunId },
-            { preserveState: true, replace: true }
+            { preserveState: true, replace: true },
         );
     };
 
     const handleExport = (format: 'csv' | 'excel' | 'nibss') => {
         if (!payRunId) return;
 
-        const url = new URL(PayrollReportController.exportBankSchedule.url(), window.location.origin);
+        const url = new URL(
+            PayrollReportController.exportBankSchedule.url(),
+            window.location.origin,
+        );
         url.searchParams.append('pay_run_id', payRunId);
         url.searchParams.append('format', format);
         window.location.href = url.toString();
     };
 
-    const completedPayRuns = payRuns.filter((pr) => pr.status === 'completed' || pr.status === 'approved');
+    const completedPayRuns = payRuns.filter(
+        (pr) => pr.status === 'completed' || pr.status === 'approved',
+    );
 
     return (
         <>
@@ -76,7 +82,9 @@ export default function BankSchedule({ payRuns, validation, selectedPayRunId }: 
 
             <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Bank Schedule</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        Bank Schedule
+                    </h1>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         Generate bank payment schedules for salary disbursement
                     </p>
@@ -186,7 +194,9 @@ export default function BankSchedule({ payRuns, validation, selectedPayRunId }: 
                                         Valid Amount
                                     </p>
                                     <p className="mt-1 text-xl font-bold text-success-600 dark:text-success-400">
-                                        {formatCurrency(validation.total_valid_amount)}
+                                        {formatCurrency(
+                                            validation.total_valid_amount,
+                                        )}
                                     </p>
                                 </div>
                                 <div className="rounded-lg bg-success-100 p-3 dark:bg-success-900/20">
@@ -242,8 +252,9 @@ export default function BankSchedule({ payRuns, validation, selectedPayRunId }: 
                                     </h3>
                                 </div>
                                 <p className="mt-1 text-sm text-error-600 dark:text-error-400">
-                                    These employees have missing or invalid bank details and will be
-                                    excluded from the payment schedule.
+                                    These employees have missing or invalid bank
+                                    details and will be excluded from the
+                                    payment schedule.
                                 </p>
                             </div>
 
@@ -251,13 +262,22 @@ export default function BankSchedule({ payRuns, validation, selectedPayRunId }: 
                                 <table className="w-full">
                                     <thead className="bg-error-50 dark:bg-error-900/10">
                                         <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-error-600 dark:text-error-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-left text-xs font-medium tracking-wider text-error-600 uppercase dark:text-error-400"
+                                            >
                                                 Employee
                                             </th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-error-600 dark:text-error-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-right text-xs font-medium tracking-wider text-error-600 uppercase dark:text-error-400"
+                                            >
                                                 Amount
                                             </th>
-                                            <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-error-600 dark:text-error-400 md:table-cell">
+                                            <th
+                                                scope="col"
+                                                className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-error-600 uppercase md:table-cell dark:text-error-400"
+                                            >
                                                 Issues
                                             </th>
                                         </tr>
@@ -269,13 +289,19 @@ export default function BankSchedule({ payRuns, validation, selectedPayRunId }: 
                                                     {item.employee_name}
                                                 </td>
                                                 <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">
-                                                    {formatCurrency(item.amount)}
+                                                    {formatCurrency(
+                                                        item.amount,
+                                                    )}
                                                 </td>
                                                 <td className="hidden px-4 py-3 md:table-cell">
                                                     <ul className="list-inside list-disc text-sm text-error-600 dark:text-error-400">
-                                                        {item.errors.map((error, idx) => (
-                                                            <li key={idx}>{error}</li>
-                                                        ))}
+                                                        {item.errors.map(
+                                                            (error, idx) => (
+                                                                <li key={idx}>
+                                                                    {error}
+                                                                </li>
+                                                            ),
+                                                        )}
                                                     </ul>
                                                 </td>
                                             </tr>
@@ -298,16 +324,28 @@ export default function BankSchedule({ payRuns, validation, selectedPayRunId }: 
                                 <table className="w-full">
                                     <thead className="bg-gray-50 dark:bg-gray-800">
                                         <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Employee
                                             </th>
-                                            <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
+                                            <th
+                                                scope="col"
+                                                className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400"
+                                            >
                                                 Bank
                                             </th>
-                                            <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 lg:table-cell">
+                                            <th
+                                                scope="col"
+                                                className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase lg:table-cell dark:text-gray-400"
+                                            >
                                                 Account Number
                                             </th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Amount
                                             </th>
                                         </tr>
@@ -321,19 +359,24 @@ export default function BankSchedule({ payRuns, validation, selectedPayRunId }: 
                                                 <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
                                                     {item.employee_name}
                                                 </td>
-                                                <td className="hidden px-4 py-3 text-sm text-gray-600 dark:text-gray-300 md:table-cell">
+                                                <td className="hidden px-4 py-3 text-sm text-gray-600 md:table-cell dark:text-gray-300">
                                                     <div className="flex flex-col">
-                                                        <span>{item.bank_name}</span>
+                                                        <span>
+                                                            {item.bank_name}
+                                                        </span>
                                                         <span className="text-xs text-gray-400">
-                                                            Code: {item.bank_code}
+                                                            Code:{' '}
+                                                            {item.bank_code}
                                                         </span>
                                                     </div>
                                                 </td>
-                                                <td className="hidden px-4 py-3 font-mono text-sm text-gray-600 dark:text-gray-300 lg:table-cell">
+                                                <td className="font-mono hidden px-4 py-3 text-sm text-gray-600 lg:table-cell dark:text-gray-300">
                                                     {item.account_number}
                                                 </td>
                                                 <td className="px-4 py-3 text-right text-sm font-semibold text-success-600 dark:text-success-400">
-                                                    {formatCurrency(item.amount)}
+                                                    {formatCurrency(
+                                                        item.amount,
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -348,7 +391,9 @@ export default function BankSchedule({ payRuns, validation, selectedPayRunId }: 
                                             </td>
                                             <td className="hidden px-4 py-3 lg:table-cell"></td>
                                             <td className="px-4 py-3 text-right text-lg font-bold text-success-600 dark:text-success-400">
-                                                {formatCurrency(validation.total_valid_amount)}
+                                                {formatCurrency(
+                                                    validation.total_valid_amount,
+                                                )}
                                             </td>
                                         </tr>
                                     </tfoot>
@@ -363,15 +408,25 @@ export default function BankSchedule({ payRuns, validation, selectedPayRunId }: 
                         </h3>
                         <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
                             <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
-                                The Nigerian Inter-Bank Settlement System (NIBSS) format is the standard
-                                format used by Nigerian banks for bulk transfers. When you export to NIBSS
-                                format:
+                                The Nigerian Inter-Bank Settlement System
+                                (NIBSS) format is the standard format used by
+                                Nigerian banks for bulk transfers. When you
+                                export to NIBSS format:
                             </p>
                             <ul className="list-inside list-disc space-y-1 text-sm text-gray-600 dark:text-gray-300">
                                 <li>A fixed-width text file is generated</li>
-                                <li>Bank codes are automatically mapped to CBN-approved codes</li>
-                                <li>Account numbers are validated for correct length</li>
-                                <li>The file can be uploaded directly to your bank's bulk transfer portal</li>
+                                <li>
+                                    Bank codes are automatically mapped to
+                                    CBN-approved codes
+                                </li>
+                                <li>
+                                    Account numbers are validated for correct
+                                    length
+                                </li>
+                                <li>
+                                    The file can be uploaded directly to your
+                                    bank's bulk transfer portal
+                                </li>
                             </ul>
                         </div>
                     </Card>
@@ -385,7 +440,8 @@ export default function BankSchedule({ payRuns, validation, selectedPayRunId }: 
                         No Completed Pay Runs
                     </h3>
                     <p className="text-gray-500 dark:text-gray-400">
-                        Complete a pay run first to generate a bank payment schedule.
+                        Complete a pay run first to generate a bank payment
+                        schedule.
                     </p>
                 </Card>
             )}
@@ -393,8 +449,8 @@ export default function BankSchedule({ payRuns, validation, selectedPayRunId }: 
             {!validation && completedPayRuns.length > 0 && (
                 <Card className="p-8 text-center">
                     <p className="text-gray-500 dark:text-gray-400">
-                        Select a pay run and click "Generate Schedule" to validate bank details and
-                        prepare the payment schedule.
+                        Select a pay run and click "Generate Schedule" to
+                        validate bank details and prepare the payment schedule.
                     </p>
                 </Card>
             )}

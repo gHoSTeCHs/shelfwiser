@@ -4,14 +4,14 @@ import TextArea from '@/components/form/input/TextArea';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
+import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
+import { useToast } from '@/hooks/useToast';
 import AppLayout from '@/layouts/AppLayout';
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft, DollarSign, CreditCard, Receipt } from 'lucide-react';
+import { ArrowLeft, CreditCard, DollarSign, Receipt } from 'lucide-react';
 import { useState } from 'react';
-import { useToast } from '@/hooks/useToast';
 
 interface Shop {
     id: number;
@@ -62,8 +62,7 @@ export default function RecordPayment({ shop, customer }: Props) {
         { value: 'card', label: 'Card' },
     ];
 
-    const availableCredit =
-        customer.credit_limit - customer.account_balance;
+    const availableCredit = customer.credit_limit - customer.account_balance;
 
     return (
         <AppLayout>
@@ -106,7 +105,9 @@ export default function RecordPayment({ shop, customer }: Props) {
                                 )}
                                 method="post"
                                 onSuccess={() => {
-                                    toast.success('Payment recorded successfully');
+                                    toast.success(
+                                        'Payment recorded successfully',
+                                    );
                                 }}
                             >
                                 {({ errors, processing }) => (
@@ -134,7 +135,9 @@ export default function RecordPayment({ shop, customer }: Props) {
                                                     }
                                                     step="0.01"
                                                     min="0.01"
-                                                    max={customer.account_balance}
+                                                    max={
+                                                        customer.account_balance
+                                                    }
                                                     placeholder="0.00"
                                                     className="pl-10"
                                                     error={!!errors.amount}
@@ -189,7 +192,9 @@ export default function RecordPayment({ shop, customer }: Props) {
                                                 hint="Optional transaction or receipt reference"
                                             />
                                             <InputError
-                                                message={errors.reference_number}
+                                                message={
+                                                    errors.reference_number
+                                                }
                                             />
                                         </div>
 
@@ -204,7 +209,9 @@ export default function RecordPayment({ shop, customer }: Props) {
                                                 placeholder="Additional notes about this payment (optional)"
                                                 error={!!errors.notes}
                                             />
-                                            <InputError message={errors.notes} />
+                                            <InputError
+                                                message={errors.notes}
+                                            />
                                         </div>
 
                                         <div className="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
@@ -318,7 +325,9 @@ export default function RecordPayment({ shop, customer }: Props) {
                                                     </p>
                                                     {transaction.payment_method && (
                                                         <p className="text-xs text-gray-600 dark:text-gray-400">
-                                                            {transaction.payment_method}
+                                                            {
+                                                                transaction.payment_method
+                                                            }
                                                         </p>
                                                     )}
                                                 </div>

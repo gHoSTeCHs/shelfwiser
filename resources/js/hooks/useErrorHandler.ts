@@ -1,12 +1,11 @@
-import { useState, useCallback, useRef } from 'react';
+import { useOptionalErrorContext } from '@/context/ErrorContext';
 import {
     UseErrorHandlerOptions,
     UseErrorHandlerReturn,
-    ErrorInfo,
     createErrorInfo,
     classifyError as defaultClassifyError,
 } from '@/types/error';
-import { useOptionalErrorContext } from '@/context/ErrorContext';
+import { useCallback, useRef, useState } from 'react';
 
 /**
  * useErrorHandler - A hook for handling async errors and manual error reporting
@@ -28,7 +27,9 @@ import { useOptionalErrorContext } from '@/context/ErrorContext';
  * };
  * ```
  */
-export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorHandlerReturn {
+export function useErrorHandler(
+    options: UseErrorHandlerOptions = {},
+): UseErrorHandlerReturn {
     const {
         onError,
         rethrow = false,
@@ -48,7 +49,11 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
      */
     const handleError = useCallback(
         (err: Error): void => {
-            const errorInfo = createErrorInfo(err, undefined, metadataRef.current);
+            const errorInfo = createErrorInfo(
+                err,
+                undefined,
+                metadataRef.current,
+            );
 
             // Override classification if custom classifier provided
             if (classifyError !== defaultClassifyError) {
@@ -78,7 +83,7 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
                 throw err;
             }
         },
-        [onError, rethrow, classifyError, errorContext]
+        [onError, rethrow, classifyError, errorContext],
     );
 
     /**
@@ -89,11 +94,13 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
             try {
                 return await promise;
             } catch (err) {
-                handleError(err instanceof Error ? err : new Error(String(err)));
+                handleError(
+                    err instanceof Error ? err : new Error(String(err)),
+                );
                 return undefined;
             }
         },
-        [handleError]
+        [handleError],
     );
 
     /**
@@ -134,22 +141,26 @@ export function useAsyncError<T = void>() {
     const [isLoading, setIsLoading] = useState(false);
     const [data, setData] = useState<T | null>(null);
 
-    const execute = useCallback(async (asyncFn: () => Promise<T>): Promise<T | undefined> => {
-        setIsLoading(true);
-        setError(null);
+    const execute = useCallback(
+        async (asyncFn: () => Promise<T>): Promise<T | undefined> => {
+            setIsLoading(true);
+            setError(null);
 
-        try {
-            const result = await asyncFn();
-            setData(result);
-            return result;
-        } catch (err) {
-            const error = err instanceof Error ? err : new Error(String(err));
-            setError(error);
-            return undefined;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+            try {
+                const result = await asyncFn();
+                setData(result);
+                return result;
+            } catch (err) {
+                const error =
+                    err instanceof Error ? err : new Error(String(err));
+                setError(error);
+                return undefined;
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [],
+    );
 
     const reset = useCallback(() => {
         setError(null);
@@ -188,7 +199,7 @@ export function useSafeAsync<T, Args extends unknown[] = []>(
         onSuccess?: (data: T) => void;
         onError?: (error: Error) => void;
         onSettled?: () => void;
-    } = {}
+    } = {},
 ) {
     const { onSuccess, onError, onSettled } = options;
     const [state, setState] = useState<{
@@ -211,7 +222,8 @@ export function useSafeAsync<T, Args extends unknown[] = []>(
                 onSuccess?.(data);
                 return data;
             } catch (err) {
-                const error = err instanceof Error ? err : new Error(String(err));
+                const error =
+                    err instanceof Error ? err : new Error(String(err));
                 setState((prev) => ({ ...prev, error, isLoading: false }));
                 onError?.(error);
                 return undefined;
@@ -219,7 +231,7 @@ export function useSafeAsync<T, Args extends unknown[] = []>(
                 onSettled?.();
             }
         },
-        [asyncFn, onSuccess, onError, onSettled]
+        [asyncFn, onSuccess, onError, onSettled],
     );
 
     const reset = useCallback(() => {

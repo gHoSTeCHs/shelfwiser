@@ -44,6 +44,7 @@ use App\Http\Controllers\SupplierConnectionController;
 use App\Http\Controllers\SupplierProfileController;
 use App\Http\Controllers\TimesheetController;
 use App\Http\Controllers\WageAdvanceController;
+use App\Http\Controllers\Web\EmployeeTaxSettingsController;
 use App\Http\Controllers\Web\StaffManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -142,6 +143,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/{deduction}', [EmployeeCustomDeductionController::class, 'destroy'])->name('destroy');
             Route::post('/{deduction}/toggle-status', [EmployeeCustomDeductionController::class, 'toggleStatus'])->name('toggle-status');
         });
+
+        // Employee Tax Settings (NTA 2025)
+        Route::prefix('{user}/tax-settings')->name('tax-settings.')->group(function () {
+            Route::get('/', [EmployeeTaxSettingsController::class, 'show'])->name('show');
+            Route::put('/', [EmployeeTaxSettingsController::class, 'update'])->name('update');
+            Route::post('/rent-proof', [EmployeeTaxSettingsController::class, 'uploadRentProof'])->name('rent-proof.upload');
+            Route::delete('/rent-proof', [EmployeeTaxSettingsController::class, 'deleteRentProof'])->name('rent-proof.delete');
+            Route::get('/preview-tax', [EmployeeTaxSettingsController::class, 'previewTax'])->name('preview-tax');
+            Route::get('/compare-tax-laws', [EmployeeTaxSettingsController::class, 'compareTaxLaws'])->name('compare-tax-laws');
+        });
     });
 
     Route::prefix('timesheets')->name('timesheets.')->group(function () {
@@ -239,6 +250,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/pay-calendars/{payCalendar}', [PayrollSettingsController::class, 'deletePayCalendar'])->name('pay-calendars.destroy');
 
             Route::get('/tax', [PayrollSettingsController::class, 'taxSettings'])->name('tax');
+            Route::get('/tax/tables/{taxTable}', [PayrollSettingsController::class, 'showTaxTable'])->name('tax.table.show');
+            Route::get('/tax/compare', [PayrollSettingsController::class, 'compareTaxLaws'])->name('tax.compare');
+            Route::post('/tax/estimate', [PayrollSettingsController::class, 'estimateTax'])->name('tax.estimate');
         });
     });
 

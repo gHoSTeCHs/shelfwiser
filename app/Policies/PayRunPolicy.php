@@ -35,7 +35,7 @@ class PayRunPolicy
             return false;
         }
 
-        if (!$user->role->hasPermission('manage_payroll')) {
+        if (! $user->role->hasPermission('manage_payroll')) {
             return false;
         }
 
@@ -48,7 +48,7 @@ class PayRunPolicy
             return false;
         }
 
-        if (!$user->role->hasPermission('manage_payroll')) {
+        if (! $user->role->hasPermission('manage_payroll')) {
             return false;
         }
 
@@ -61,7 +61,7 @@ class PayRunPolicy
             return false;
         }
 
-        if (!$user->role->hasPermission('approve_payroll')) {
+        if (! $user->role->hasPermission('approve_payroll')) {
             return false;
         }
 
@@ -83,7 +83,7 @@ class PayRunPolicy
             return false;
         }
 
-        if (!$user->role->hasPermission('manage_payroll')) {
+        if (! $user->role->hasPermission('manage_payroll')) {
             return false;
         }
 
@@ -96,11 +96,28 @@ class PayRunPolicy
             return false;
         }
 
-        if (!$user->role->hasPermission('manage_payroll')) {
+        if (! $user->role->hasPermission('manage_payroll')) {
             return false;
         }
 
         return in_array($payRun->status, ['draft', 'pending_review', 'pending_approval']);
+    }
+
+    public function regenerate(User $user, PayRun $payRun): bool
+    {
+        if ($user->tenant_id !== $payRun->tenant_id) {
+            return false;
+        }
+
+        if ($user->role->level() < UserRole::GENERAL_MANAGER->level()) {
+            return false;
+        }
+
+        if (! $user->role->hasPermission('manage_payroll')) {
+            return false;
+        }
+
+        return in_array($payRun->status, ['draft', 'rejected', 'cancelled']);
     }
 
     public function excludeEmployee(User $user, PayRun $payRun): bool
@@ -109,7 +126,7 @@ class PayRunPolicy
             return false;
         }
 
-        if (!$user->role->hasPermission('manage_payroll')) {
+        if (! $user->role->hasPermission('manage_payroll')) {
             return false;
         }
 

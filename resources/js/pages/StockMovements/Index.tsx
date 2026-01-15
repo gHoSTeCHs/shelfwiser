@@ -59,6 +59,15 @@ export default function Index({
         });
     };
 
+    const handlePageChange = (page: number) => {
+        const params: Record<string, string | number> = { page };
+        if (selectedShop) params.shop = selectedShop;
+        router.get(route('stock-movements.index'), params, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
     const filteredMovements = movements.data.filter((movement) => {
         const matchesSearch =
             movement.reference_number
@@ -223,25 +232,25 @@ export default function Index({
                                 <table className="w-full">
                                     <thead className="border-b border-gray-200 dark:border-gray-700">
                                         <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Date & Time
                                             </th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Type
                                             </th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Product
                                             </th>
-                                            <th className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th scope="col" className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Quantity
                                             </th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Reference
                                             </th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Created By
                                             </th>
-                                            <th className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th scope="col" className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                                 Actions
                                             </th>
                                         </tr>
@@ -330,7 +339,7 @@ export default function Index({
                         {movements.last_page > 1 && (
                             <Pagination
                                 currentPage={movements.current_page}
-                                onPageChange={() => {}}
+                                onPageChange={handlePageChange}
                                 totalPages={movements.last_page}
                             />
                         )}

@@ -1,12 +1,11 @@
-import React, { createContext, useCallback, useState } from 'react';
 import ToastContainer from '@/components/ui/toast/ToastContainer';
 import {
     Toast,
     ToastContextType,
     ToastOptions,
     ToastPosition,
-    ToastVariant,
 } from '@/types/toast';
+import React, { createContext, useCallback, useState } from 'react';
 
 export const ToastContext = createContext<ToastContextType | undefined>(
     undefined,

@@ -1,14 +1,19 @@
-import { router } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { Card } from '@/components/ui/card';
 import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import { router } from '@inertiajs/react';
+import {
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+} from 'lucide-react';
 
-interface Column {
+interface Column<T = Record<string, unknown>> {
     key: string;
     label: string;
     sortable?: boolean;
     className?: string;
-    render?: (value: any, row: any) => React.ReactNode;
+    render?: (value: unknown, row: T) => React.ReactNode;
 }
 
 interface PaginationData {
@@ -18,9 +23,9 @@ interface PaginationData {
     last_page: number;
 }
 
-interface DataTableProps {
-    columns: Column[];
-    data: any[];
+interface DataTableProps<T = Record<string, unknown>> {
+    columns: Column<T>[];
+    data: T[];
     pagination?: PaginationData;
     onSort?: (column: string) => void;
     sortColumn?: string;
@@ -29,7 +34,7 @@ interface DataTableProps {
     loading?: boolean;
 }
 
-export default function DataTable({
+export default function DataTable<T extends Record<string, unknown> = Record<string, unknown>>({
     columns,
     data,
     pagination,
@@ -38,20 +43,24 @@ export default function DataTable({
     sortDirection = 'asc',
     emptyMessage = 'No data available',
     loading = false,
-}: DataTableProps) {
+}: DataTableProps<T>) {
     const handlePageChange = (page: number) => {
         if (!pagination) return;
 
         const currentParams = new URLSearchParams(window.location.search);
         currentParams.set('page', page.toString());
 
-        router.get(`${window.location.pathname}?${currentParams.toString()}`, {}, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get(
+            `${window.location.pathname}?${currentParams.toString()}`,
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
-    const handleSort = (column: Column) => {
+    const handleSort = (column: Column<T>) => {
         if (!column.sortable) return;
 
         if (onSort) {
@@ -79,7 +88,7 @@ export default function DataTable({
         }
     };
 
-    const renderCellContent = (column: Column, row: any) => {
+    const renderCellContent = (column: Column<T>, row: T) => {
         const value = row[column.key];
 
         if (column.render) {
@@ -99,8 +108,11 @@ export default function DataTable({
                             {columns.map((column) => (
                                 <th
                                     key={column.key}
-                                    className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 ${
-                                        column.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800' : ''
+                                    scope="col"
+                                    className={`px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400 ${
+                                        column.sortable
+                                            ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
+                                            : ''
                                     } ${column.className || ''}`}
                                     onClick={() =>
                                         column.sortable && handleSort(column)
@@ -202,7 +214,9 @@ export default function DataTable({
                                 variant="outline"
                                 size="sm"
                                 onClick={() =>
-                                    handlePageChange(pagination.current_page - 1)
+                                    handlePageChange(
+                                        pagination.current_page - 1,
+                                    )
                                 }
                                 disabled={pagination.current_page === 1}
                             >
@@ -218,7 +232,9 @@ export default function DataTable({
                                 variant="outline"
                                 size="sm"
                                 onClick={() =>
-                                    handlePageChange(pagination.current_page + 1)
+                                    handlePageChange(
+                                        pagination.current_page + 1,
+                                    )
                                 }
                                 disabled={
                                     pagination.current_page ===

@@ -1,18 +1,11 @@
-import {
-    DollarSign,
-    TrendingUp,
-    TrendingDown,
-    Receipt,
-    FileText,
-    AlertCircle,
-} from 'lucide-react';
-import MetricCard from '../MetricCard';
-import { FinancialData } from '@/types/dashboard';
-import { Card } from '@/components/ui/card';
 import ReusableBarChart from '@/components/charts/ReusableBarChart';
 import ReusablePieChart from '@/components/charts/ReusablePieChart';
-import Chart from 'react-apexcharts';
+import { Card } from '@/components/ui/card';
+import { FinancialData } from '@/types/dashboard';
 import { ApexOptions } from 'apexcharts';
+import { DollarSign, TrendingDown, TrendingUp } from 'lucide-react';
+import Chart from 'react-apexcharts';
+import MetricCard from '../MetricCard';
 
 interface FinancialsTabProps {
     data: FinancialData;
@@ -122,9 +115,7 @@ export default function FinancialsTab({ data }: FinancialsTabProps) {
                     value={formatCurrency(data.summary.net_profit)}
                     subtitle={`COGS: ${formatCurrency(data.summary.cogs)}`}
                     icon={
-                        data.summary.net_profit >= 0
-                            ? TrendingUp
-                            : TrendingDown
+                        data.summary.net_profit >= 0 ? TrendingUp : TrendingDown
                     }
                     iconColor={
                         data.summary.net_profit >= 0
@@ -141,7 +132,9 @@ export default function FinancialsTab({ data }: FinancialsTabProps) {
                     title="Cash Flow"
                     value={formatCurrency(data.summary.cash_flow)}
                     subtitle={`Expenses: ${formatCurrency(data.summary.paid_expenses)}`}
-                    icon={data.summary.cash_flow >= 0 ? TrendingUp : TrendingDown}
+                    icon={
+                        data.summary.cash_flow >= 0 ? TrendingUp : TrendingDown
+                    }
                     iconColor={
                         data.summary.cash_flow >= 0
                             ? 'text-success-600 dark:text-success-400'
@@ -331,7 +324,8 @@ export default function FinancialsTab({ data }: FinancialsTabProps) {
                                 </span>
                                 <span className="font-medium text-error-600">
                                     {formatCurrency(
-                                        data.accounts_payable.aging.over_90_days,
+                                        data.accounts_payable.aging
+                                            .over_90_days,
                                     )}
                                 </span>
                             </div>
@@ -370,16 +364,16 @@ export default function FinancialsTab({ data }: FinancialsTabProps) {
                         <table className="w-full">
                             <thead className="border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Shop
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Revenue
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Gross Profit
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                         Net Profit
                                     </th>
                                 </tr>

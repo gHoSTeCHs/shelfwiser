@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Image as ImageType } from '@/types/image';
-import { Star, Trash2, MoveUp, MoveDown } from 'lucide-react';
 import Button from '@/components/ui/button/Button';
+import { Image as ImageType } from '@/types/image';
 import { router } from '@inertiajs/react';
+import { MoveDown, MoveUp, Star, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 interface ImageGalleryProps {
     images: ImageType[];
@@ -81,7 +81,8 @@ export default function ImageGallery({
         const currentIndex = images.findIndex((img) => img.id === imageId);
         if (currentIndex === -1) return;
 
-        const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+        const newIndex =
+            direction === 'up' ? currentIndex - 1 : currentIndex + 1;
         if (newIndex < 0 || newIndex >= images.length) return;
 
         const reorderedImages = [...images];
@@ -119,7 +120,7 @@ export default function ImageGallery({
         if (!showPlaceholder) return null;
 
         return (
-            <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 p-8">
+            <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 dark:border-gray-700">
                 <div className="text-center">
                     <img
                         src={placeholderUrl}
@@ -159,7 +160,9 @@ export default function ImageGallery({
                                     type="button"
                                     variant="destructive"
                                     size="sm"
-                                    onClick={() => handleDelete(primaryImage.id)}
+                                    onClick={() =>
+                                        handleDelete(primaryImage.id)
+                                    }
                                     disabled={deleting === primaryImage.id}
                                     loading={deleting === primaryImage.id}
                                 >
@@ -181,7 +184,7 @@ export default function ImageGallery({
             {otherImages.length > 0 && (
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                     {otherImages.map((image, index) => (
-                        <div key={image.id} className="relative group">
+                        <div key={image.id} className="group relative">
                             <div className="relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
                                 <img
                                     src={image.url || image.path}
@@ -209,7 +212,10 @@ export default function ImageGallery({
                                                 variant="secondary"
                                                 size="sm"
                                                 onClick={() =>
-                                                    handleReorder(image.id, 'up')
+                                                    handleReorder(
+                                                        image.id,
+                                                        'up',
+                                                    )
                                                 }
                                                 title="Move up"
                                             >
@@ -225,7 +231,7 @@ export default function ImageGallery({
                                                 onClick={() =>
                                                     handleReorder(
                                                         image.id,
-                                                        'down'
+                                                        'down',
                                                     )
                                                 }
                                                 title="Move down"
@@ -238,7 +244,9 @@ export default function ImageGallery({
                                             type="button"
                                             variant="destructive"
                                             size="sm"
-                                            onClick={() => handleDelete(image.id)}
+                                            onClick={() =>
+                                                handleDelete(image.id)
+                                            }
                                             disabled={deleting === image.id}
                                             loading={deleting === image.id}
                                             title="Delete"
@@ -250,7 +258,7 @@ export default function ImageGallery({
                             </div>
 
                             {image.caption && (
-                                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 truncate">
+                                <p className="mt-1 truncate text-xs text-gray-600 dark:text-gray-400">
                                     {image.caption}
                                 </p>
                             )}

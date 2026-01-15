@@ -9,6 +9,26 @@ const DB_NAME = 'shelfwiser';
 const DB_VERSION = 1;
 
 /**
+ * Cache expiration time: 24 hours in milliseconds
+ */
+const CACHE_TTL = 24 * 60 * 60 * 1000;
+
+/**
+ * Wrapper for cached data with timestamp
+ */
+interface CachedData<T> {
+    data: T;
+    cachedAt: number;
+}
+
+/**
+ * Check if cached data is expired based on TTL
+ */
+function isExpired(cachedAt: number, ttl: number = CACHE_TTL): boolean {
+    return Date.now() - cachedAt > ttl;
+}
+
+/**
  * Store definitions for IndexedDB
  */
 interface StoreConfig {
@@ -54,9 +74,7 @@ const STORES: StoreConfig[] = [
     {
         name: 'cart',
         keyPath: 'id',
-        indexes: [
-            { name: 'shop_id', keyPath: 'shop_id' },
-        ],
+        indexes: [{ name: 'shop_id', keyPath: 'shop_id' }],
     },
     {
         name: 'offlineQueue',
@@ -81,7 +99,10 @@ export function openDB(): Promise<IDBDatabase> {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onerror = () => {
-            console.error('[IndexedDB] Failed to open database:', request.error);
+            console.error(
+                '[IndexedDB] Failed to open database:',
+                request.error,
+            );
             reject(request.error);
         };
 
@@ -100,10 +121,16 @@ export function openDB(): Promise<IDBDatabase> {
                     });
 
                     storeConfig.indexes?.forEach((index) => {
-                        store.createIndex(index.name, index.keyPath, index.options);
+                        store.createIndex(
+                            index.name,
+                            index.keyPath,
+                            index.options,
+                        );
                     });
 
-                    console.log(`[IndexedDB] Created store: ${storeConfig.name}`);
+                    console.log(
+                        `[IndexedDB] Created store: ${storeConfig.name}`,
+                    );
                 }
             });
         };
@@ -113,7 +140,10 @@ export function openDB(): Promise<IDBDatabase> {
 /**
  * Get a single item by key from a store
  */
-export async function getItem<T>(storeName: string, key: IDBValidKey): Promise<T | undefined> {
+export async function getItem<T>(
+    storeName: string,
+    key: IDBValidKey,
+): Promise<T | undefined> {
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(storeName, 'readonly');
@@ -146,7 +176,7 @@ export async function getAllItems<T>(storeName: string): Promise<T[]> {
 export async function getItemsByIndex<T>(
     storeName: string,
     indexName: string,
-    value: IDBValidKey
+    value: IDBValidKey,
 ): Promise<T[]> {
     const db = await openDB();
     return new Promise((resolve, reject) => {
@@ -163,7 +193,10 @@ export async function getItemsByIndex<T>(
 /**
  * Put (add or update) an item in a store
  */
-export async function putItem<T>(storeName: string, item: T): Promise<IDBValidKey> {
+export async function putItem<T>(
+    storeName: string,
+    item: T,
+): Promise<IDBValidKey> {
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(storeName, 'readwrite');
@@ -178,7 +211,10 @@ export async function putItem<T>(storeName: string, item: T): Promise<IDBValidKe
 /**
  * Put multiple items in a store
  */
-export async function putItems<T>(storeName: string, items: T[]): Promise<void> {
+export async function putItems<T>(
+    storeName: string,
+    items: T[],
+): Promise<void> {
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(storeName, 'readwrite');
@@ -196,7 +232,10 @@ export async function putItems<T>(storeName: string, items: T[]): Promise<void> 
 /**
  * Delete an item from a store
  */
-export async function deleteItem(storeName: string, key: IDBValidKey): Promise<void> {
+export async function deleteItem(
+    storeName: string,
+    key: IDBValidKey,
+): Promise<void> {
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(storeName, 'readwrite');
@@ -245,7 +284,7 @@ export interface OfflineAction {
     id?: number;
     type: 'create' | 'update' | 'delete';
     entity: string;
-    data: any;
+    data: unknown;
     url: string;
     method: string;
     headers?: Record<string, string>;
@@ -258,7 +297,9 @@ export interface OfflineAction {
 /**
  * Add an action to the offline queue
  */
-export async function queueOfflineAction(action: Omit<OfflineAction, 'id' | 'timestamp' | 'synced' | 'retries'>): Promise<void> {
+export async function queueOfflineAction(
+    action: Omit<OfflineAction, 'id' | 'timestamp' | 'synced' | 'retries'>,
+): Promise<void> {
     const offlineAction: OfflineAction = {
         ...action,
         timestamp: Date.now(),
@@ -267,13 +308,18 @@ export async function queueOfflineAction(action: Omit<OfflineAction, 'id' | 'tim
     };
 
     await putItem('offlineQueue', offlineAction);
-    console.log('[IndexedDB] Queued offline action:', action.type, action.entity);
+    console.log(
+        '[IndexedDB] Queued offline action:',
+        action.type,
+        action.entity,
+    );
 
-    // Request background sync if available
-    if ('serviceWorker' in navigator && 'sync' in registration) {
+    if ('serviceWorker' in navigator) {
         try {
             const registration = await navigator.serviceWorker.ready;
-            await (registration as any).sync.register('sync-offline-actions');
+            if ('sync' in registration) {
+                await (registration as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } }).sync.register('sync-offline-actions');
+            }
         } catch (error) {
             console.warn('[IndexedDB] Background sync not available:', error);
         }
@@ -285,7 +331,7 @@ export async function queueOfflineAction(action: Omit<OfflineAction, 'id' | 'tim
  */
 export async function getPendingActions(): Promise<OfflineAction[]> {
     const allActions = await getAllItems<OfflineAction>('offlineQueue');
-    const pendingActions = allActions.filter(action => !action.synced);
+    const pendingActions = allActions.filter((action) => !action.synced);
     return pendingActions.sort((a, b) => a.timestamp - b.timestamp);
 }
 
@@ -303,15 +349,18 @@ export async function markActionSynced(actionId: number): Promise<void> {
 /**
  * Update sync metadata
  */
-export async function setSyncMetadata(key: string, value: any): Promise<void> {
+export async function setSyncMetadata(key: string, value: unknown): Promise<void> {
     await putItem('syncMetadata', { key, value, updatedAt: Date.now() });
 }
 
 /**
  * Get sync metadata
  */
-export async function getSyncMetadata(key: string): Promise<any> {
-    const meta = await getItem<{ key: string; value: any }>('syncMetadata', key);
+export async function getSyncMetadata(key: string): Promise<unknown> {
+    const meta = await getItem<{ key: string; value: unknown }>(
+        'syncMetadata',
+        key,
+    );
     return meta?.value;
 }
 
@@ -337,12 +386,15 @@ export async function setLastSyncTime(entity: string): Promise<void> {
 export async function searchProductByBarcode<T>(
     barcode: string,
     shopId: number,
-    tenantId?: number
+    tenantId?: number,
 ): Promise<T | undefined> {
-    const products = await getItemsByIndex<T & { barcode: string | null; shop_id: number; tenant_id: number }>('products', 'barcode', barcode);
-    return products.find(p =>
-        p.shop_id === shopId &&
-        (tenantId === undefined || p.tenant_id === tenantId)
+    const products = await getItemsByIndex<
+        T & { barcode: string | null; shop_id: number; tenant_id: number }
+    >('products', 'barcode', barcode);
+    return products.find(
+        (p) =>
+            p.shop_id === shopId &&
+            (tenantId === undefined || p.tenant_id === tenantId),
     ) as T | undefined;
 }
 
@@ -353,12 +405,15 @@ export async function searchProductByBarcode<T>(
 export async function searchProductBySku<T>(
     sku: string,
     shopId: number,
-    tenantId?: number
+    tenantId?: number,
 ): Promise<T | undefined> {
-    const products = await getItemsByIndex<T & { sku: string; shop_id: number; tenant_id: number }>('products', 'sku', sku);
-    return products.find(p =>
-        p.shop_id === shopId &&
-        (tenantId === undefined || p.tenant_id === tenantId)
+    const products = await getItemsByIndex<
+        T & { sku: string; shop_id: number; tenant_id: number }
+    >('products', 'sku', sku);
+    return products.find(
+        (p) =>
+            p.shop_id === shopId &&
+            (tenantId === undefined || p.tenant_id === tenantId),
     ) as T | undefined;
 }
 
@@ -370,16 +425,24 @@ export async function searchProductsByName<T>(
     query: string,
     shopId: number,
     tenantId?: number,
-    limit: number = 20
+    limit: number = 20,
 ): Promise<T[]> {
-    const allProducts = await getItemsByIndex<T & { product_name: string; display_name: string; shop_id: number; tenant_id: number }>('products', 'shop_id', shopId);
+    const allProducts = await getItemsByIndex<
+        T & {
+            product_name: string;
+            display_name: string;
+            shop_id: number;
+            tenant_id: number;
+        }
+    >('products', 'shop_id', shopId);
     const lowerQuery = query.toLowerCase();
 
     return allProducts
-        .filter(p =>
-            (tenantId === undefined || p.tenant_id === tenantId) &&
-            (p.product_name?.toLowerCase().includes(lowerQuery) ||
-                p.display_name?.toLowerCase().includes(lowerQuery))
+        .filter(
+            (p) =>
+                (tenantId === undefined || p.tenant_id === tenantId) &&
+                (p.product_name?.toLowerCase().includes(lowerQuery) ||
+                    p.display_name?.toLowerCase().includes(lowerQuery)),
         )
         .slice(0, limit) as T[];
 }
@@ -393,10 +456,14 @@ export async function searchProducts<T>(
     query: string,
     shopId: number,
     tenantId?: number,
-    limit: number = 20
+    limit: number = 20,
 ): Promise<T[]> {
     // First, try exact barcode match
-    const barcodeMatch = await searchProductByBarcode<T>(query, shopId, tenantId);
+    const barcodeMatch = await searchProductByBarcode<T>(
+        query,
+        shopId,
+        tenantId,
+    );
     if (barcodeMatch) {
         return [barcodeMatch];
     }
@@ -415,12 +482,19 @@ export async function searchProducts<T>(
  * Get all products for a shop
  * Optionally filter by tenant_id for extra security
  */
-export async function getProductsForShop<T>(shopId: number, tenantId?: number): Promise<T[]> {
-    const products = await getItemsByIndex<T & { tenant_id: number }>('products', 'shop_id', shopId);
+export async function getProductsForShop<T>(
+    shopId: number,
+    tenantId?: number,
+): Promise<T[]> {
+    const products = await getItemsByIndex<T & { tenant_id: number }>(
+        'products',
+        'shop_id',
+        shopId,
+    );
     if (tenantId === undefined) {
         return products as T[];
     }
-    return products.filter(p => p.tenant_id === tenantId) as T[];
+    return products.filter((p) => p.tenant_id === tenantId) as T[];
 }
 
 /**
@@ -429,6 +503,155 @@ export async function getProductsForShop<T>(shopId: number, tenantId?: number): 
 export async function getProductCountForShop(shopId: number): Promise<number> {
     const products = await getItemsByIndex('products', 'shop_id', shopId);
     return products.length;
+}
+
+/**
+ * Search customers by name, email, or phone
+ * Filters by tenant_id for security
+ */
+export async function searchCustomers<T>(
+    query: string,
+    tenantId: number,
+    limit: number = 10,
+): Promise<T[]> {
+    const allCustomers = await getItemsByIndex<
+        T & {
+            tenant_id: number;
+            first_name: string;
+            last_name: string;
+            email: string;
+            phone: string | null;
+        }
+    >('customers', 'tenant_id', tenantId);
+
+    const lowerQuery = query.toLowerCase();
+
+    return allCustomers
+        .filter(
+            (c) =>
+                c.first_name?.toLowerCase().includes(lowerQuery) ||
+                c.last_name?.toLowerCase().includes(lowerQuery) ||
+                c.email?.toLowerCase().includes(lowerQuery) ||
+                c.phone?.includes(query),
+        )
+        .slice(0, limit) as T[];
+}
+
+/**
+ * Get all customers for a tenant
+ */
+export async function getCustomersForTenant<T>(tenantId: number): Promise<T[]> {
+    return getItemsByIndex<T>('customers', 'tenant_id', tenantId);
+}
+
+/**
+ * Get customer count for a tenant
+ */
+export async function getCustomerCountForTenant(
+    tenantId: number,
+): Promise<number> {
+    const customers = await getItemsByIndex('customers', 'tenant_id', tenantId);
+    return customers.length;
+}
+
+/**
+ * Set cached data with timestamp for expiration tracking.
+ * Stores data wrapped in CachedData structure with cachedAt timestamp.
+ */
+export async function setCachedItem<T>(
+    storeName: string,
+    key: string,
+    data: T,
+): Promise<void> {
+    const cachedData: CachedData<T> = {
+        data,
+        cachedAt: Date.now(),
+    };
+    await setSyncMetadata(`cache_${storeName}_${key}`, cachedData);
+}
+
+/**
+ * Get cached data with automatic expiration checking.
+ * Returns null if data is expired or doesn't exist.
+ */
+export async function getCachedItem<T>(
+    storeName: string,
+    key: string,
+    ttl: number = CACHE_TTL,
+): Promise<T | null> {
+    const cached = await getSyncMetadata(`cache_${storeName}_${key}`);
+
+    if (!cached) {
+        return null;
+    }
+
+    const cachedData = cached as CachedData<T>;
+
+    if (isExpired(cachedData.cachedAt, ttl)) {
+        console.log(`[IndexedDB] Cache expired for ${storeName}:${key}`);
+        return null;
+    }
+
+    return cachedData.data;
+}
+
+/**
+ * Clear expired cache entries from syncMetadata store.
+ * Optionally specify a store name to only clear caches for that store.
+ */
+export async function clearExpiredCache(storeName?: string): Promise<number> {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction('syncMetadata', 'readwrite');
+        const store = tx.objectStore('syncMetadata');
+        const getAllRequest = store.getAll();
+
+        getAllRequest.onsuccess = () => {
+            const allMetadata = getAllRequest.result as Array<{
+                key: string;
+                value: { cachedAt?: number } & Record<string, unknown>;
+                updatedAt?: number;
+            }>;
+            let deletedCount = 0;
+
+            const prefix = storeName ? `cache_${storeName}_` : 'cache_';
+
+            allMetadata.forEach((meta) => {
+                if (meta.key.startsWith(prefix) && meta.value?.cachedAt) {
+                    if (isExpired(meta.value.cachedAt)) {
+                        store.delete(meta.key);
+                        deletedCount++;
+                    }
+                }
+            });
+
+            tx.oncomplete = () => {
+                if (deletedCount > 0) {
+                    console.log(
+                        `[IndexedDB] Cleared ${deletedCount} expired cache entries`,
+                    );
+                }
+                resolve(deletedCount);
+            };
+            tx.onerror = () => reject(tx.error);
+        };
+
+        getAllRequest.onerror = () => reject(getAllRequest.error);
+    });
+}
+
+/**
+ * Check if cache for an entity is expired based on last sync time.
+ */
+export async function isCacheExpired(
+    entity: string,
+    ttl: number = CACHE_TTL,
+): Promise<boolean> {
+    const lastSync = await getLastSyncTime(entity);
+    if (!lastSync) {
+        return true;
+    }
+    return isExpired(lastSync, ttl);
 }
 
 export default {
@@ -454,4 +677,11 @@ export default {
     searchProducts,
     getProductsForShop,
     getProductCountForShop,
+    searchCustomers,
+    getCustomersForTenant,
+    getCustomerCountForTenant,
+    setCachedItem,
+    getCachedItem,
+    clearExpiredCache,
+    isCacheExpired,
 };

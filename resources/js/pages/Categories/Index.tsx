@@ -35,7 +35,6 @@ function CategoryTreeItem({
     category: Category;
     level?: number;
 }) {
-
     const [isExpanded, setIsExpanded] = useState(level === 0);
     const hasChildren = category.children && category.children.length > 0;
 
@@ -137,7 +136,6 @@ function CategoryTreeItem({
 }
 
 export default function Index({ categories }: Props) {
-
     return (
         <>
             <Head title="Product Categories" />

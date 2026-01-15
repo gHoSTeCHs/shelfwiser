@@ -45,7 +45,7 @@ const PriceDisplay: React.FC<PriceDisplayProps> = ({
                 </span>
 
                 {hasRetailPrice && (
-                    <span className="text-sm text-gray-500 dark:text-gray-400 line-through">
+                    <span className="text-sm text-gray-500 line-through dark:text-gray-400">
                         {formatPrice(price)}
                     </span>
                 )}

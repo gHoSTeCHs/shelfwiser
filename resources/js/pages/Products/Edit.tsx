@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import ProductController from '@/actions/App/Http/Controllers/ProductController';
 import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
@@ -7,33 +5,24 @@ import TextArea from '@/components/form/input/TextArea';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
+import ImageGallery from '@/components/images/ImageGallery';
+import ImageUploader from '@/components/images/ImageUploader';
 import DynamicSchemaField from '@/components/shops/DynamicSchemaField';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import ImageGallery from '@/components/images/ImageGallery';
-import ImageUploader from '@/components/images/ImageUploader';
 import AppLayout from '@/layouts/AppLayout';
 import { flattenCategories } from '@/lib/utils.ts';
-import { ProductCategory, ProductType } from '@/types/product';
-import { ProductVariant } from '@/types/stockMovement';
-import { Image } from '@/types/image';
+import { SchemaProperty } from '@/types/index';
+import { Product, ProductCategory, ProductType } from '@/types/product';
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Image as ImageIcon, Package, Save, Tag } from 'lucide-react';
+import {
+    ArrowLeft,
+    Image as ImageIcon,
+    Package,
+    Save,
+    Tag,
+} from 'lucide-react';
 import { useState } from 'react';
-
-interface Product {
-    id: number;
-    name: string;
-    slug: string;
-    description: string | null;
-    custom_attributes: Record<string, any> | null;
-    has_variants: boolean;
-    is_active: boolean;
-    type: ProductType;
-    category: ProductCategory | null;
-    variants: ProductVariant[];
-    images?: Image[];
-}
 
 interface Props {
     product: Product;
@@ -50,7 +39,7 @@ export default function Edit({ product, productTypes, categories }: Props) {
         product.category?.id || '',
     );
     const [customAttributes, setCustomAttributes] = useState<
-        Record<string, any>
+        Record<string, unknown>
     >(product.custom_attributes || {});
     const [isActive, setIsActive] = useState<boolean>(product.is_active);
 
@@ -58,7 +47,7 @@ export default function Edit({ product, productTypes, categories }: Props) {
         (type) => type.slug === product.type.slug,
     );
 
-    const handleCustomAttributeChange = (fieldName: string, value: any) => {
+    const handleCustomAttributeChange = (fieldName: string, value: unknown) => {
         setCustomAttributes((prev) => ({
             ...prev,
             [fieldName]: value,
@@ -73,7 +62,9 @@ export default function Edit({ product, productTypes, categories }: Props) {
                 <div className="flex items-center justify-between">
                     <div>
                         <Link
-                            href={`/products/${product.id}`}
+                            href={ProductController.show.url({
+                                product: product.id,
+                            })}
                             className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -95,7 +86,7 @@ export default function Edit({ product, productTypes, categories }: Props) {
                     method="put"
                     className="space-y-6"
                     transform={(data) => {
-                        const transformedAttributes: Record<string, any> = {};
+                        const transformedAttributes: Record<string, unknown> = {};
                         const configProperties =
                             selectedType?.config_schema?.properties;
 
@@ -419,7 +410,9 @@ export default function Edit({ product, productTypes, categories }: Props) {
 
                             <div className="flex gap-4">
                                 <Link
-                                    href={`/products/${product.id}`}
+                                    href={ProductController.show.url({
+                                        product: product.id,
+                                    })}
                                     className="flex-1"
                                 >
                                     <Button

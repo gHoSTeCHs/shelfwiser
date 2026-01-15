@@ -1,5 +1,5 @@
-import { CartSummary } from '@/types/storefront';
 import { Shop } from '@/types/shop';
+import { CartSummary } from '@/types/storefront';
 import React from 'react';
 
 interface OrderSummaryProps {
@@ -27,18 +27,25 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
 
     return (
         <div className={className}>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                {title}
+            </h3>
 
             <div className="space-y-3">
                 {showItems && summary.items.length > 0 && (
-                    <div className="pb-3 border-b space-y-2">
+                    <div className="space-y-2 border-b pb-3">
                         {summary.items.map((item) => (
-                            <div key={item.id} className="flex justify-between text-sm">
+                            <div
+                                key={item.id}
+                                className="flex justify-between text-sm"
+                            >
                                 <div>
                                     <p className="font-medium text-gray-900">
                                         {item.productVariant?.product?.name}
                                     </p>
-                                    <p className="text-gray-600">Qty: {item.quantity}</p>
+                                    <p className="text-gray-600">
+                                        Qty: {item.quantity}
+                                    </p>
                                 </div>
                                 <p className="font-medium text-gray-900">
                                     {formatPrice(item.subtotal || 0)}
@@ -84,7 +91,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                     )}
                 </div>
 
-                <div className="pt-3 border-t">
+                <div className="border-t pt-3">
                     <div className="flex justify-between">
                         <p className="text-lg font-bold text-gray-900">Total</p>
                         <p className="text-lg font-bold text-gray-900">
@@ -94,8 +101,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 </div>
 
                 {summary.item_count > 0 && (
-                    <div className="text-center text-sm text-gray-600 pt-2">
-                        {summary.item_count} {summary.item_count === 1 ? 'item' : 'items'}
+                    <div className="pt-2 text-center text-sm text-gray-600">
+                        {summary.item_count}{' '}
+                        {summary.item_count === 1 ? 'item' : 'items'}
                     </div>
                 )}
             </div>

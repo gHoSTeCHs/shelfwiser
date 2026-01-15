@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import ShopController from '@/actions/App/Http/Controllers/ShopController.ts';
 import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
 import DynamicSchemaField from '@/components/shops/DynamicSchemaField';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
@@ -14,7 +13,6 @@ import { InventoryModelOption, Shop, ShopType } from '@/types/shop';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Building2, MapPin, Package, Save } from 'lucide-react';
 import { useState } from 'react';
-import Select from '@/components/form/Select';
 
 interface Props {
     shop: Shop;
@@ -23,25 +21,20 @@ interface Props {
 }
 
 export default function Edit({ shop, shopTypes, inventoryModels }: Props) {
-    const [shopConfig, setShopConfig] = useState<Record<string, any>>(
+    const [shopConfig, setShopConfig] = useState<Record<string, unknown>>(
         shop.config || {},
     );
-    const [selectedInventoryModel, setSelectedInventoryModel] = useState<string>(
-        shop.inventory_model || 'simple_retail',
-    );
-    const [isActive, setIsActive] = useState<boolean>(
-        shop.is_active ?? true,
-    );
+    const [selectedInventoryModel, setSelectedInventoryModel] =
+        useState<string>(shop.inventory_model || 'simple_retail');
+    const [isActive, setIsActive] = useState<boolean>(shop.is_active ?? true);
 
-    const selectedType = shopTypes.find(
-        (type) => type.slug === shop.type.slug,
-    );
+    const selectedType = shopTypes.find((type) => type.slug === shop.type.slug);
 
     const selectedInventoryModelData = inventoryModels.find(
         (model) => model.value === selectedInventoryModel,
     );
 
-    const handleConfigChange = (fieldName: string, value: any) => {
+    const handleConfigChange = (fieldName: string, value: unknown) => {
         setShopConfig((prev) => ({
             ...prev,
             [fieldName]: value,
@@ -255,7 +248,7 @@ export default function Edit({ shop, shopTypes, inventoryModels }: Props) {
                                             <div className="mb-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                                                 <span>
                                                     Complexity:{' '}
-                                                    <span className="font-medium capitalize text-gray-700 dark:text-gray-300">
+                                                    <span className="font-medium text-gray-700 capitalize dark:text-gray-300">
                                                         {
                                                             selectedInventoryModelData.complexity
                                                         }
@@ -314,16 +307,14 @@ export default function Edit({ shop, shopTypes, inventoryModels }: Props) {
 
                                 <div className="space-y-5">
                                     <div>
-                                        <Label htmlFor="address">
-                                            Address
-                                        </Label>
+                                        <Label htmlFor="address">Address</Label>
                                         <textarea
                                             id="address"
                                             name="address"
                                             defaultValue={shop.address || ''}
                                             placeholder="Street address, building name, apartment, suite, etc."
                                             rows={3}
-                                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-400"
+                                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-brand-400"
                                         />
                                         <InputError message={errors.address} />
                                     </div>
@@ -491,18 +482,16 @@ export default function Edit({ shop, shopTypes, inventoryModels }: Props) {
                                                     {Array.isArray(
                                                         shopConfig[fieldName],
                                                     ) ? (
-                                                        shopConfig[
-                                                            fieldName
-                                                        ].map(
+                                                        (shopConfig[fieldName] as unknown[]).map(
                                                             (
-                                                                item: any,
-                                                                index: number,
+                                                                item,
+                                                                index,
                                                             ) => (
                                                                 <input
                                                                     key={index}
                                                                     type="hidden"
                                                                     name={`config[${fieldName}][]`}
-                                                                    value={item}
+                                                                    value={String(item)}
                                                                 />
                                                             ),
                                                         )

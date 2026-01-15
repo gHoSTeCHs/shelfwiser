@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-import StockMovementController from '@/actions/App/Http/Controllers/StockMovementController';
 import ProductVariantController from '@/actions/App/Http/Controllers/ProductVariantController';
+import StockMovementController from '@/actions/App/Http/Controllers/StockMovementController';
 import SetupInventoryModal from '@/components/stock/SetupInventoryModal';
 import StockAdjustmentModal from '@/components/stock/StockAdjustmentModal';
 import StockLevelBadge from '@/components/stock/StockLevelBadge';
@@ -12,6 +10,7 @@ import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
 import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency } from '@/lib/utils';
 import { ProductCategory, ProductType } from '@/types/product.ts';
 import { Shop } from '@/types/shop.ts';
 import { ProductVariant, StockMovement } from '@/types/stockMovement';
@@ -30,7 +29,7 @@ import {
     Plus,
     Tag,
     TrendingUp,
-    Warehouse
+    Warehouse,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -39,7 +38,7 @@ interface Product {
     name: string;
     slug: string;
     description: string | null;
-    custom_attributes: Record<string, any> | null;
+    custom_attributes: Record<string, unknown> | null;
     has_variants: boolean;
     is_active: boolean;
     type: ProductType;
@@ -57,7 +56,12 @@ interface Props {
     recent_movements: StockMovement[];
 }
 
-export default function Show({ product, can_manage, available_shops, recent_movements }: Props) {
+export default function Show({
+    product,
+    can_manage,
+    available_shops,
+    recent_movements,
+}: Props) {
     const [selectedVariant, setSelectedVariant] =
         useState<ProductVariant | null>(
             product.variants.length > 0 ? product.variants[0] : null,
@@ -104,7 +108,7 @@ export default function Show({ product, can_manage, available_shops, recent_move
     };
 
     const formatPrice = (price: number): string => {
-        return `₦${parseFloat(price.toString()).toLocaleString()}`;
+        return formatCurrency(price);
     };
 
     const formatDate = (dateString: string): string => {
@@ -459,8 +463,12 @@ export default function Show({ product, can_manage, available_shops, recent_move
                                                                                         packagingType.name}
                                                                                 </p>
                                                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                                                    {packagingType.units_per_package}{' '}
-                                                                                    {variant.base_unit_name}
+                                                                                    {
+                                                                                        packagingType.units_per_package
+                                                                                    }{' '}
+                                                                                    {
+                                                                                        variant.base_unit_name
+                                                                                    }
                                                                                     {packagingType.units_per_package >
                                                                                     1
                                                                                         ? 's'
@@ -490,6 +498,7 @@ export default function Show({ product, can_manage, available_shops, recent_move
                                                                                         {formatPrice(
                                                                                             packagingType.price_per_unit,
                                                                                         )}
+
                                                                                         /
                                                                                         {
                                                                                             variant.base_unit_name

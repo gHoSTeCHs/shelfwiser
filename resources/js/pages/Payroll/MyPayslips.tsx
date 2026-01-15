@@ -140,134 +140,161 @@ export default function MyPayslips({ payslips }: Props) {
                     ) : (
                         <table className="w-full">
                             <thead className="bg-gray-50 dark:bg-gray-800">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                                    Period
-                                </th>
-                                <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                                    Shop
-                                </th>
-                                <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                                    Payment Date
-                                </th>
-                                <th className="hidden lg:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                                    Hours
-                                </th>
-                                <th className="hidden md:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                                    Gross Pay
-                                </th>
-                                <th className="hidden lg:table-cell px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                                    Deductions
-                                </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                                    Net Pay
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                                    Status
-                                </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                                    Actions
-                                </th>
-                            </tr>
+                                <tr>
+                                    <th
+                                        scope="col"
+                                        className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400"
+                                    >
+                                        Period
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase md:table-cell dark:text-gray-400"
+                                    >
+                                        Shop
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase md:table-cell dark:text-gray-400"
+                                    >
+                                        Payment Date
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase lg:table-cell dark:text-gray-400"
+                                    >
+                                        Hours
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase md:table-cell dark:text-gray-400"
+                                    >
+                                        Gross Pay
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase lg:table-cell dark:text-gray-400"
+                                    >
+                                        Deductions
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400"
+                                    >
+                                        Net Pay
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400"
+                                    >
+                                        Status
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400"
+                                    >
+                                        Actions
+                                    </th>
+                                </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-                            {payslips.map((payslip) => (
-                                <tr
-                                    key={payslip.id}
-                                    className="hover:bg-gray-50 dark:hover:bg-gray-800"
-                                >
-                                    <td className="px-4 py-3">
-                                        <div className="flex flex-col">
+                                {payslips.map((payslip) => (
+                                    <tr
+                                        key={payslip.id}
+                                        className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                                    >
+                                        <td className="px-4 py-3">
+                                            <div className="flex flex-col">
                                                 <span className="font-medium text-gray-900 dark:text-white">
                                                     {
                                                         payslip.payroll_period
                                                             .period_name
                                                     }
                                                 </span>
-                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">
                                                     {formatDate(
                                                         payslip.payroll_period
                                                             .start_date,
                                                     )}{' '}
-                                                -{' '}
+                                                    -{' '}
+                                                    {formatDate(
+                                                        payslip.payroll_period
+                                                            .end_date,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="hidden px-4 py-3 text-sm text-gray-600 md:table-cell dark:text-gray-400">
+                                            {payslip.shop
+                                                ? payslip.shop.name
+                                                : 'N/A'}
+                                        </td>
+                                        <td className="hidden px-4 py-3 text-sm text-gray-600 md:table-cell dark:text-gray-400">
+                                            <div className="flex items-center gap-1">
+                                                <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                                                 {formatDate(
                                                     payslip.payroll_period
-                                                        .end_date,
+                                                        .payment_date,
                                                 )}
-                                                </span>
-                                        </div>
-                                    </td>
-                                    <td className="hidden md:table-cell px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                        {payslip.shop
-                                            ? payslip.shop.name
-                                            : 'N/A'}
-                                    </td>
-                                    <td className="hidden md:table-cell px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                        <div className="flex items-center gap-1">
-                                            <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                                            {formatDate(
-                                                payslip.payroll_period
-                                                    .payment_date,
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="hidden lg:table-cell px-4 py-3 text-right text-sm text-gray-900 dark:text-white">
-                                        <div className="flex flex-col">
+                                            </div>
+                                        </td>
+                                        <td className="hidden px-4 py-3 text-right text-sm text-gray-900 lg:table-cell dark:text-white">
+                                            <div className="flex flex-col">
                                                 <span>
                                                     {parseFloat(
                                                         payslip.regular_hours,
                                                     ).toFixed(2)}
                                                     h
                                                 </span>
-                                            {parseFloat(
-                                                payslip.overtime_hours,
-                                            ) > 0 && (
-                                                <span className="text-xs text-warning-600 dark:text-warning-400">
+                                                {parseFloat(
+                                                    payslip.overtime_hours,
+                                                ) > 0 && (
+                                                    <span className="text-xs text-warning-600 dark:text-warning-400">
                                                         +
-                                                    {parseFloat(
-                                                        payslip.overtime_hours,
-                                                    ).toFixed(2)}
-                                                    h OT
+                                                        {parseFloat(
+                                                            payslip.overtime_hours,
+                                                        ).toFixed(2)}
+                                                        h OT
                                                     </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="hidden px-4 py-3 text-right text-sm font-medium text-gray-900 md:table-cell dark:text-white">
+                                            {formatCurrency(payslip.gross_pay)}
+                                        </td>
+                                        <td className="hidden px-4 py-3 text-right text-sm text-warning-600 lg:table-cell dark:text-warning-400">
+                                            {formatCurrency(
+                                                payslip.total_deductions,
                                             )}
-                                        </div>
-                                    </td>
-                                    <td className="hidden md:table-cell px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
-                                        {formatCurrency(payslip.gross_pay)}
-                                    </td>
-                                    <td className="hidden lg:table-cell px-4 py-3 text-right text-sm text-warning-600 dark:text-warning-400">
-                                        {formatCurrency(
-                                            payslip.total_deductions,
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-3 text-right text-sm font-semibold text-success-600 dark:text-success-400">
-                                        {formatCurrency(payslip.net_pay)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <Badge
-                                            color={getStatusColor(
-                                                payslip.payroll_period
-                                                    .status,
-                                            )}
-                                            size="sm"
-                                        >
-                                            {payslip.payroll_period.status}
-                                        </Badge>
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                        <Link
-                                            href={PayrollController.showPayslip.url(
-                                                {
-                                                    payslip: payslip.id,
-                                                },
-                                            )}
-                                            className="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
-                                        >
-                                            View Details
-                                        </Link>
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                        <td className="px-4 py-3 text-right text-sm font-semibold text-success-600 dark:text-success-400">
+                                            {formatCurrency(payslip.net_pay)}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <Badge
+                                                color={getStatusColor(
+                                                    payslip.payroll_period
+                                                        .status,
+                                                )}
+                                                size="sm"
+                                            >
+                                                {payslip.payroll_period.status}
+                                            </Badge>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <Link
+                                                href={PayrollController.showPayslip.url(
+                                                    {
+                                                        payslip: payslip.id,
+                                                    },
+                                                )}
+                                                className="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+                                            >
+                                                View Details
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     )}

@@ -1,7 +1,16 @@
-import React, { useState } from 'react';
-import { AlertTriangle, RefreshCw, Home, ArrowLeft, Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
-import { ErrorFallbackProps, ErrorInfo } from '@/types/error';
 import Button from '@/components/ui/button/Button';
+import { ErrorFallbackProps, ErrorInfo } from '@/types/error';
+import {
+    AlertTriangle,
+    ArrowLeft,
+    Check,
+    ChevronDown,
+    ChevronUp,
+    Copy,
+    Home,
+    RefreshCw,
+} from 'lucide-react';
+import React, { useState } from 'react';
 
 interface ExtendedErrorFallbackProps extends ErrorFallbackProps {
     /** Show technical error details */
@@ -71,41 +80,45 @@ const ErrorFallback: React.FC<ExtendedErrorFallbackProps> = ({
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4 sm:p-6 lg:p-8 dark:bg-gray-900">
             <div className="w-full max-w-lg">
                 {/* Error Card */}
-                <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-6 sm:p-8 text-center shadow-theme-md">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-theme-md sm:p-8 dark:border-gray-800 dark:bg-white/[0.03]">
                     {/* Error Icon */}
-                    <div className="mx-auto mb-6 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-error-50 dark:bg-error-500/15">
-                        <AlertTriangle className="h-8 w-8 sm:h-10 sm:w-10 text-error-500" />
+                    <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-error-50 sm:h-20 sm:w-20 dark:bg-error-500/15">
+                        <AlertTriangle className="h-8 w-8 text-error-500 sm:h-10 sm:w-10" />
                     </div>
 
                     {/* Error Title */}
-                    <h1 className="mb-3 text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
+                    <h1 className="mb-3 text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">
                         {errorTitle}
                     </h1>
 
                     {/* Error Description */}
-                    <p className="mb-6 text-sm sm:text-base text-gray-500 dark:text-gray-400 leading-relaxed">
+                    <p className="mb-6 text-sm leading-relaxed text-gray-500 sm:text-base dark:text-gray-400">
                         {errorDescription}
                     </p>
 
                     {/* Error ID */}
                     {errorInfo.errorId && (
-                        <p className="mb-6 text-xs text-gray-400 dark:text-gray-500 font-mono">
+                        <p className="font-mono mb-6 text-xs text-gray-400 dark:text-gray-500">
                             Error ID: {errorInfo.errorId}
                         </p>
                     )}
 
                     {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+                    <div className="mb-6 flex flex-col justify-center gap-3 sm:flex-row">
                         {errorInfo.recoverable && (
                             <Button
                                 variant="primary"
                                 onClick={resetError}
                                 disabled={isResetting}
                                 loading={isResetting}
-                                startIcon={!isResetting ? <RefreshCw className="h-4 w-4" /> : undefined}
+                                startIcon={
+                                    !isResetting ? (
+                                        <RefreshCw className="h-4 w-4" />
+                                    ) : undefined
+                                }
                             >
                                 {isResetting ? 'Retrying...' : 'Try Again'}
                             </Button>
@@ -134,10 +147,12 @@ const ErrorFallback: React.FC<ExtendedErrorFallbackProps> = ({
 
                     {/* Error Details (Collapsible) */}
                     {showDetails && (
-                        <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
+                        <div className="border-t border-gray-200 pt-4 dark:border-gray-800">
                             <button
-                                onClick={() => setShowErrorDetails(!showErrorDetails)}
-                                className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors w-full"
+                                onClick={() =>
+                                    setShowErrorDetails(!showErrorDetails)
+                                }
+                                className="flex w-full items-center justify-center gap-2 text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                             >
                                 <span>Technical Details</span>
                                 {showErrorDetails ? (
@@ -150,15 +165,17 @@ const ErrorFallback: React.FC<ExtendedErrorFallbackProps> = ({
                             {showErrorDetails && (
                                 <div className="mt-4 text-left">
                                     {/* Copy Button */}
-                                    <div className="flex justify-end mb-2">
+                                    <div className="mb-2 flex justify-end">
                                         <button
                                             onClick={handleCopyError}
-                                            className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                                            className="flex items-center gap-1 text-xs text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                                         >
                                             {copied ? (
                                                 <>
                                                     <Check className="h-3 w-3 text-success-500" />
-                                                    <span className="text-success-500">Copied!</span>
+                                                    <span className="text-success-500">
+                                                        Copied!
+                                                    </span>
                                                 </>
                                             ) : (
                                                 <>
@@ -170,11 +187,13 @@ const ErrorFallback: React.FC<ExtendedErrorFallbackProps> = ({
                                     </div>
 
                                     {/* Error Details Box */}
-                                    <div className="rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-auto max-h-60">
-                                        <div className="space-y-3 text-xs font-mono">
+                                    <div className="max-h-60 overflow-auto rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
+                                        <div className="font-mono space-y-3 text-xs">
                                             {/* Error Type */}
                                             <div>
-                                                <span className="text-gray-500 dark:text-gray-400">Type: </span>
+                                                <span className="text-gray-500 dark:text-gray-400">
+                                                    Type:{' '}
+                                                </span>
                                                 <span className="text-gray-900 dark:text-gray-100">
                                                     {errorInfo.type}
                                                 </span>
@@ -182,7 +201,9 @@ const ErrorFallback: React.FC<ExtendedErrorFallbackProps> = ({
 
                                             {/* Error Name */}
                                             <div>
-                                                <span className="text-gray-500 dark:text-gray-400">Name: </span>
+                                                <span className="text-gray-500 dark:text-gray-400">
+                                                    Name:{' '}
+                                                </span>
                                                 <span className="text-gray-900 dark:text-gray-100">
                                                     {error.name}
                                                 </span>
@@ -190,8 +211,10 @@ const ErrorFallback: React.FC<ExtendedErrorFallbackProps> = ({
 
                                             {/* Error Message */}
                                             <div>
-                                                <span className="text-gray-500 dark:text-gray-400">Message: </span>
-                                                <span className="text-error-600 dark:text-error-400 break-words">
+                                                <span className="text-gray-500 dark:text-gray-400">
+                                                    Message:{' '}
+                                                </span>
+                                                <span className="break-words text-error-600 dark:text-error-400">
                                                     {error.message}
                                                 </span>
                                             </div>
@@ -199,10 +222,10 @@ const ErrorFallback: React.FC<ExtendedErrorFallbackProps> = ({
                                             {/* Stack Trace */}
                                             {error.stack && (
                                                 <div>
-                                                    <span className="text-gray-500 dark:text-gray-400 block mb-1">
+                                                    <span className="mb-1 block text-gray-500 dark:text-gray-400">
                                                         Stack Trace:
                                                     </span>
-                                                    <pre className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words text-[10px] leading-relaxed">
+                                                    <pre className="text-[10px] leading-relaxed break-words whitespace-pre-wrap text-gray-700 dark:text-gray-300">
                                                         {error.stack}
                                                     </pre>
                                                 </div>
@@ -211,11 +234,13 @@ const ErrorFallback: React.FC<ExtendedErrorFallbackProps> = ({
                                             {/* Component Stack */}
                                             {errorInfo.componentStack && (
                                                 <div>
-                                                    <span className="text-gray-500 dark:text-gray-400 block mb-1">
+                                                    <span className="mb-1 block text-gray-500 dark:text-gray-400">
                                                         Component Stack:
                                                     </span>
-                                                    <pre className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words text-[10px] leading-relaxed">
-                                                        {errorInfo.componentStack}
+                                                    <pre className="text-[10px] leading-relaxed break-words whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+                                                        {
+                                                            errorInfo.componentStack
+                                                        }
                                                     </pre>
                                                 </div>
                                             )}
@@ -232,7 +257,7 @@ const ErrorFallback: React.FC<ExtendedErrorFallbackProps> = ({
                     If this problem persists, please{' '}
                     <a
                         href="mailto:support@shelfwise.com"
-                        className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 underline"
+                        className="text-brand-500 underline hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300"
                     >
                         contact support
                     </a>

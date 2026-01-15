@@ -1,8 +1,8 @@
+import Badge from '@/components/ui/badge/Badge';
+import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { Head } from '@inertiajs/react';
-import { Key, Activity, Zap, Globe } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
+import { Activity, Globe, Key, Zap } from 'lucide-react';
 
 interface Props {
     apiKeys: any[];

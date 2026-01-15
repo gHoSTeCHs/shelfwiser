@@ -3,10 +3,17 @@
 namespace App\Providers;
 
 use App\Models\Customer;
+use App\Models\EmployeeDeduction;
+use App\Models\EmployeeEarning;
 use App\Models\FundRequest;
+use App\Models\HeldSale;
 use App\Models\Notification;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\OrderPayment;
 use App\Models\PayrollPeriod;
 use App\Models\PayRun;
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Receipt;
 use App\Models\Service;
@@ -16,10 +23,17 @@ use App\Models\User;
 use App\Models\WageAdvance;
 use App\Policies\CustomerPolicy;
 use App\Policies\DashboardPolicy;
+use App\Policies\EmployeeDeductionPolicy;
+use App\Policies\EmployeeEarningPolicy;
 use App\Policies\FundRequestPolicy;
+use App\Policies\HeldSalePolicy;
 use App\Policies\NotificationPolicy;
+use App\Policies\OrderItemPolicy;
+use App\Policies\OrderPaymentPolicy;
+use App\Policies\OrderPolicy;
 use App\Policies\PayrollPolicy;
 use App\Policies\PayRunPolicy;
+use App\Policies\ProductPolicy;
 use App\Policies\ProductVariantPolicy;
 use App\Policies\PurchaseOrderPolicy;
 use App\Policies\ReceiptPolicy;
@@ -54,13 +68,20 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Shop::class, StorefrontPolicy::class);
         Gate::policy(Service::class, ServicePolicy::class);
         Gate::policy(Customer::class, CustomerPolicy::class);
+        Gate::policy(Product::class, ProductPolicy::class);
         Gate::policy(ProductVariant::class, ProductVariantPolicy::class);
+        Gate::policy(Order::class, OrderPolicy::class);
+        Gate::policy(OrderItem::class, OrderItemPolicy::class);
+        Gate::policy(OrderPayment::class, OrderPaymentPolicy::class);
         Gate::policy(Receipt::class, ReceiptPolicy::class);
+        Gate::policy(HeldSale::class, HeldSalePolicy::class);
         Gate::policy(Timesheet::class, TimesheetPolicy::class);
         Gate::policy(FundRequest::class, FundRequestPolicy::class);
         Gate::policy(WageAdvance::class, WageAdvancePolicy::class);
         Gate::policy(PayrollPeriod::class, PayrollPolicy::class);
         Gate::policy(PayRun::class, PayRunPolicy::class);
+        Gate::policy(EmployeeDeduction::class, EmployeeDeductionPolicy::class);
+        Gate::policy(EmployeeEarning::class, EmployeeEarningPolicy::class);
         Gate::policy(Notification::class, NotificationPolicy::class);
 
         Gate::define('payRun.viewAny', [PayRunPolicy::class, 'viewAny']);
@@ -100,7 +121,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('purchaseOrder.recordPayment', [PurchaseOrderPolicy::class, 'recordPayment']);
         Gate::define('purchaseOrder.viewAsSupplier', [PurchaseOrderPolicy::class, 'viewAsSupplier']);
         Gate::define('purchaseOrder.viewAsBuyer', [PurchaseOrderPolicy::class, 'viewAsBuyer']);
-
 
         // Report Polices
         Gate::define('reports.view', [ReportPolicy::class, 'view']);

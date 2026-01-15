@@ -105,7 +105,9 @@ export default function Edit({ category, parentCategories }: Props) {
                                             name="parent_id"
                                             value={parentId}
                                         />
-                                        <InputError message={errors.parent_id} />
+                                        <InputError
+                                            message={errors.parent_id}
+                                        />
                                     </div>
 
                                     <div>
@@ -207,7 +209,9 @@ export default function Edit({ category, parentCategories }: Props) {
                                             }
                                             error={!!errors.sort_order}
                                         />
-                                        <InputError message={errors.sort_order} />
+                                        <InputError
+                                            message={errors.sort_order}
+                                        />
                                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                             Lower numbers appear first
                                         </p>

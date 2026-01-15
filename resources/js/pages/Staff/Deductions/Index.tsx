@@ -1,12 +1,20 @@
-import { Head, Link, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/AppLayout';
-import { Card } from '@/components/ui/card';
-import Button from '@/components/ui/button/Button';
-import Badge from '@/components/ui/badge/Badge';
-import EmptyState from '@/components/ui/EmptyState';
 import EmployeeCustomDeductionController from '@/actions/App/Http/Controllers/EmployeeCustomDeductionController';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import EmptyState from '@/components/ui/EmptyState';
+import AppLayout from '@/layouts/AppLayout';
 import { EmployeeCustomDeduction, User } from '@/types/payroll';
-import { Plus, Edit, Trash2, ToggleLeft, ToggleRight, ArrowLeft, DollarSign } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import {
+    ArrowLeft,
+    DollarSign,
+    Edit,
+    Plus,
+    ToggleLeft,
+    ToggleRight,
+    Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 
 interface DeductionTypeOption {
@@ -52,7 +60,7 @@ export default function Index({ employee, deductions, deductionTypes }: Props) {
                 }),
                 {
                     onFinish: () => setDeletingId(null),
-                }
+                },
             );
         }
     };
@@ -63,7 +71,7 @@ export default function Index({ employee, deductions, deductionTypes }: Props) {
                 employee: employee.id,
                 deduction: deductionId,
             }),
-            {}
+            {},
         );
     };
 
@@ -71,7 +79,9 @@ export default function Index({ employee, deductions, deductionTypes }: Props) {
         if (!deduction.is_active) return false;
         const now = new Date();
         const from = new Date(deduction.effective_from);
-        const to = deduction.effective_to ? new Date(deduction.effective_to) : null;
+        const to = deduction.effective_to
+            ? new Date(deduction.effective_to)
+            : null;
 
         if (from > now) return false;
         if (to && to < now) return false;
@@ -95,8 +105,10 @@ export default function Index({ employee, deductions, deductionTypes }: Props) {
 
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                     <div>
-                        <h1 className="text-2xl font-bold text-dark-900">Custom Deductions</h1>
-                        <p className="mt-1 text-sm text-dark-600">
+                        <h1 className="text-dark-900 text-2xl font-bold">
+                            Custom Deductions
+                        </h1>
+                        <p className="text-dark-600 mt-1 text-sm">
                             Manage custom deductions for {employee.name}
                         </p>
                     </div>
@@ -109,7 +121,7 @@ export default function Index({ employee, deductions, deductionTypes }: Props) {
                             router.visit(
                                 EmployeeCustomDeductionController.create.url({
                                     employee: employee.id,
-                                })
+                                }),
                             )
                         }
                     >
@@ -128,9 +140,11 @@ export default function Index({ employee, deductions, deductionTypes }: Props) {
                             variant="primary"
                             onClick={() =>
                                 router.visit(
-                                    EmployeeCustomDeductionController.create.url({
-                                        employee: employee.id,
-                                    })
+                                    EmployeeCustomDeductionController.create.url(
+                                        {
+                                            employee: employee.id,
+                                        },
+                                    ),
                                 )
                             }
                         >
@@ -144,68 +158,98 @@ export default function Index({ employee, deductions, deductionTypes }: Props) {
                         <table className="w-full">
                             <thead className="bg-dark-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                                         Deduction Name
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                                         Type
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 px-4 py-3 text-right text-xs font-medium tracking-wider uppercase">
                                         Amount
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                                         Effective Period
                                     </th>
-                                    <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 px-4 py-3 text-center text-xs font-medium tracking-wider uppercase">
                                         Status
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th scope="col" className="text-dark-600 px-4 py-3 text-right text-xs font-medium tracking-wider uppercase">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-dark-200 bg-white">
+                            <tbody className="divide-dark-200 divide-y bg-white">
                                 {deductions.map((deduction) => (
-                                    <tr key={deduction.id} className="hover:bg-dark-50">
+                                    <tr
+                                        key={deduction.id}
+                                        className="hover:bg-dark-50"
+                                    >
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col">
-                                                <span className="font-medium text-dark-900">
+                                                <span className="text-dark-900 font-medium">
                                                     {deduction.deduction_name}
                                                 </span>
                                                 {isEffective(deduction) && (
-                                                    <Badge color="success" size="sm" className="mt-1 w-fit">
+                                                    <Badge
+                                                        color="success"
+                                                        size="sm"
+                                                        className="mt-1 w-fit"
+                                                    >
                                                         Currently Active
                                                     </Badge>
                                                 )}
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className="text-sm text-dark-900">
-                                                {getDeductionTypeLabel(deduction.deduction_type)}
+                                            <span className="text-dark-900 text-sm">
+                                                {getDeductionTypeLabel(
+                                                    deduction.deduction_type,
+                                                )}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 text-right">
-                                            {deduction.deduction_type === 'percentage' ? (
-                                                <span className="text-sm font-medium text-dark-900">
+                                            {deduction.deduction_type ===
+                                            'percentage' ? (
+                                                <span className="text-dark-900 text-sm font-medium">
                                                     {deduction.percentage}%
                                                 </span>
                                             ) : (
-                                                <span className="text-sm font-medium text-dark-900">
-                                                    {formatCurrency(deduction.amount)}
+                                                <span className="text-dark-900 text-sm font-medium">
+                                                    {formatCurrency(
+                                                        deduction.amount,
+                                                    )}
                                                 </span>
                                             )}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <div className="flex flex-col text-sm text-dark-900">
-                                                <span>From: {formatDate(deduction.effective_from)}</span>
+                                            <div className="text-dark-900 flex flex-col text-sm">
+                                                <span>
+                                                    From:{' '}
+                                                    {formatDate(
+                                                        deduction.effective_from,
+                                                    )}
+                                                </span>
                                                 {deduction.effective_to && (
-                                                    <span>To: {formatDate(deduction.effective_to)}</span>
+                                                    <span>
+                                                        To:{' '}
+                                                        {formatDate(
+                                                            deduction.effective_to,
+                                                        )}
+                                                    </span>
                                                 )}
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                            <Badge color={deduction.is_active ? 'success' : 'light'}>
-                                                {deduction.is_active ? 'Active' : 'Inactive'}
+                                            <Badge
+                                                color={
+                                                    deduction.is_active
+                                                        ? 'success'
+                                                        : 'light'
+                                                }
+                                            >
+                                                {deduction.is_active
+                                                    ? 'Active'
+                                                    : 'Inactive'}
                                             </Badge>
                                         </td>
                                         <td className="px-4 py-3 text-right">
@@ -220,25 +264,37 @@ export default function Index({ employee, deductions, deductionTypes }: Props) {
                                                             <ToggleLeft className="h-4 w-4" />
                                                         )
                                                     }
-                                                    onClick={() => handleToggleStatus(deduction.id)}
+                                                    onClick={() =>
+                                                        handleToggleStatus(
+                                                            deduction.id,
+                                                        )
+                                                    }
                                                     title={
                                                         deduction.is_active
                                                             ? 'Deactivate'
                                                             : 'Activate'
                                                     }
                                                 >
-                                                    {deduction.is_active ? 'Deactivate' : 'Activate'}
+                                                    {deduction.is_active
+                                                        ? 'Deactivate'
+                                                        : 'Activate'}
                                                 </Button>
                                                 <Link
-                                                    href={EmployeeCustomDeductionController.edit.url({
-                                                        employee: employee.id,
-                                                        deduction: deduction.id,
-                                                    })}
+                                                    href={EmployeeCustomDeductionController.edit.url(
+                                                        {
+                                                            employee:
+                                                                employee.id,
+                                                            deduction:
+                                                                deduction.id,
+                                                        },
+                                                    )}
                                                 >
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        startIcon={<Edit className="h-4 w-4" />}
+                                                        startIcon={
+                                                            <Edit className="h-4 w-4" />
+                                                        }
                                                     >
                                                         Edit
                                                     </Button>
@@ -246,10 +302,22 @@ export default function Index({ employee, deductions, deductionTypes }: Props) {
                                                 <Button
                                                     variant="destructive"
                                                     size="sm"
-                                                    startIcon={<Trash2 className="h-4 w-4" />}
-                                                    onClick={() => handleDelete(deduction.id)}
-                                                    disabled={deletingId === deduction.id}
-                                                    loading={deletingId === deduction.id}
+                                                    startIcon={
+                                                        <Trash2 className="h-4 w-4" />
+                                                    }
+                                                    onClick={() =>
+                                                        handleDelete(
+                                                            deduction.id,
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        deletingId ===
+                                                        deduction.id
+                                                    }
+                                                    loading={
+                                                        deletingId ===
+                                                        deduction.id
+                                                    }
                                                 >
                                                     Delete
                                                 </Button>

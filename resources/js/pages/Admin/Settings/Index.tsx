@@ -1,21 +1,18 @@
-import AppLayout from '@/layouts/AppLayout';
-import { Head, Form } from '@inertiajs/react';
-import {
-    Server,
-    Database,
-    HardDrive,
-    Users,
-    Package,
-    ShoppingCart,
-    Trash2,
-} from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import AdminSettingsController from '@/actions/App/Http/Controllers/Admin/AdminSettingsController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
-import Label from '@/components/form/Label';
-import Input from '@/components/form/input/InputField';
-import Select from '@/components/form/Select';
-import AdminSettingsController from '@/actions/App/Http/Controllers/Admin/AdminSettingsController';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
+import { Form, Head } from '@inertiajs/react';
+import {
+    Database,
+    HardDrive,
+    Package,
+    Server,
+    ShoppingCart,
+    Trash2,
+    Users,
+} from 'lucide-react';
 
 interface Props {
     settings: {
@@ -52,7 +49,8 @@ export default function Index({ settings, stats }: Props) {
                         System Settings
                     </h1>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Configure platform-wide settings and monitor system health
+                        Configure platform-wide settings and monitor system
+                        health
                     </p>
                 </div>
 
@@ -207,10 +205,14 @@ export default function Index({ settings, stats }: Props) {
                                     <Badge
                                         variant="light"
                                         color={
-                                            settings.app_debug ? 'error' : 'success'
+                                            settings.app_debug
+                                                ? 'error'
+                                                : 'success'
                                         }
                                     >
-                                        {settings.app_debug ? 'Enabled' : 'Disabled'}
+                                        {settings.app_debug
+                                            ? 'Enabled'
+                                            : 'Disabled'}
                                     </Badge>
                                 </div>
 
@@ -332,10 +334,18 @@ export default function Index({ settings, stats }: Props) {
                                 )}
                             </Form>
 
-                            <Button variant="outline" disabled className="w-full">
+                            <Button
+                                variant="outline"
+                                disabled
+                                className="w-full"
+                            >
                                 <Database className="mr-2 h-4 w-4" />
                                 Optimize Database
-                                <Badge variant="light" color="info" className="ml-2">
+                                <Badge
+                                    variant="light"
+                                    color="info"
+                                    className="ml-2"
+                                >
                                     Coming Soon
                                 </Badge>
                             </Button>

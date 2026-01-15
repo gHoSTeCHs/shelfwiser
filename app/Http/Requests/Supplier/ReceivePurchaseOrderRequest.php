@@ -20,4 +20,13 @@ class ReceivePurchaseOrderRequest extends FormRequest
             'items.*.received_quantity' => ['required', 'integer', 'min:0'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'actual_delivery_date.before_or_equal' => 'Delivery date cannot be in the future.',
+            'items.*.received_quantity.required' => 'Please specify the quantity received for each item.',
+            'items.*.received_quantity.min' => 'Received quantity cannot be negative.',
+        ];
+    }
 }

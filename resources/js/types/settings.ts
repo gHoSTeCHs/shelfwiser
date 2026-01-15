@@ -1,5 +1,5 @@
+import { PayFrequency, TaxHandling } from './payroll';
 import { Shop } from './shop';
-import { TaxHandling, PayFrequency } from './payroll';
 
 export interface TaxJurisdiction {
     id: number;

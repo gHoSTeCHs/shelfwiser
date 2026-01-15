@@ -1,25 +1,23 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/AppLayout';
-import { Card } from '@/components/ui/card';
-import Button from '@/components/ui/button/Button';
-import Select from '@/components/form/Select';
-import Input from '@/components/form/input/InputField';
-import Badge from '@/components/ui/badge/Badge';
 import PayrollController from '@/actions/App/Http/Controllers/PayrollController';
 import PayrollReportController from '@/actions/App/Http/Controllers/PayrollReportController';
+import Select from '@/components/form/Select';
+import Input from '@/components/form/input/InputField';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
+import type { PayrollPeriod } from '@/types/payroll';
+import type { Shop } from '@/types/shop';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
-    Download,
+    Building2,
+    DollarSign,
     FileSpreadsheet,
     FileText,
-    DollarSign,
-    Users,
     TrendingUp,
-    Building2,
+    Users,
 } from 'lucide-react';
-import type { PayrollPeriod, PayRunSummary } from '@/types/payroll';
-import type { Shop } from '@/types/shop';
+import { useState } from 'react';
 
 interface ReportData {
     period: PayrollPeriod | null;
@@ -62,7 +60,12 @@ interface Props {
     };
 }
 
-export default function Summary({ reportData, periods, shops, filters }: Props) {
+export default function Summary({
+    reportData,
+    periods,
+    shops,
+    filters,
+}: Props) {
     const [periodId, setPeriodId] = useState(filters.period_id || '');
     const [shopId, setShopId] = useState(filters.shop_id || '');
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
@@ -95,8 +98,13 @@ export default function Summary({ reportData, periods, shops, filters }: Props) 
         if (dateFrom) params.date_from = dateFrom;
         if (dateTo) params.date_to = dateTo;
 
-        const url = new URL(PayrollReportController.exportSummary.url(), window.location.origin);
-        Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
+        const url = new URL(
+            PayrollReportController.exportSummary.url(),
+            window.location.origin,
+        );
+        Object.entries(params).forEach(([key, value]) =>
+            url.searchParams.append(key, value),
+        );
         window.location.href = url.toString();
     };
 
@@ -213,7 +221,11 @@ export default function Summary({ reportData, periods, shops, filters }: Props) 
                     </div>
 
                     <div className="flex items-end">
-                        <Button variant="primary" onClick={handleFilter} fullWidth>
+                        <Button
+                            variant="primary"
+                            onClick={handleFilter}
+                            fullWidth
+                        >
                             Apply Filters
                         </Button>
                     </div>
@@ -246,7 +258,9 @@ export default function Summary({ reportData, periods, shops, filters }: Props) 
                                         Total Gross Pay
                                     </p>
                                     <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
-                                        {formatCurrency(reportData.summary.total_gross)}
+                                        {formatCurrency(
+                                            reportData.summary.total_gross,
+                                        )}
                                     </p>
                                 </div>
                                 <div className="rounded-lg bg-success-100 p-3 dark:bg-success-900/20">
@@ -262,7 +276,9 @@ export default function Summary({ reportData, periods, shops, filters }: Props) 
                                         Total Net Pay
                                     </p>
                                     <p className="mt-1 text-xl font-bold text-success-600 dark:text-success-400">
-                                        {formatCurrency(reportData.summary.total_net)}
+                                        {formatCurrency(
+                                            reportData.summary.total_net,
+                                        )}
                                     </p>
                                 </div>
                                 <div className="rounded-lg bg-success-100 p-3 dark:bg-success-900/20">
@@ -278,7 +294,10 @@ export default function Summary({ reportData, periods, shops, filters }: Props) 
                                         Employer Costs
                                     </p>
                                     <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
-                                        {formatCurrency(reportData.summary.total_employer_costs)}
+                                        {formatCurrency(
+                                            reportData.summary
+                                                .total_employer_costs,
+                                        )}
                                     </p>
                                 </div>
                                 <div className="rounded-lg bg-warning-100 p-3 dark:bg-warning-900/20">
@@ -295,9 +314,13 @@ export default function Summary({ reportData, periods, shops, filters }: Props) 
                             </h3>
                             <div className="space-y-3">
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600 dark:text-gray-300">PAYE Tax</span>
+                                    <span className="text-gray-600 dark:text-gray-300">
+                                        PAYE Tax
+                                    </span>
                                     <span className="font-medium text-gray-900 dark:text-white">
-                                        {formatCurrency(reportData.summary.total_tax)}
+                                        {formatCurrency(
+                                            reportData.summary.total_tax,
+                                        )}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -305,24 +328,39 @@ export default function Summary({ reportData, periods, shops, filters }: Props) 
                                         Employee Pension
                                     </span>
                                     <span className="font-medium text-gray-900 dark:text-white">
-                                        {formatCurrency(reportData.summary.total_pension_employee)}
+                                        {formatCurrency(
+                                            reportData.summary
+                                                .total_pension_employee,
+                                        )}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600 dark:text-gray-300">NHF</span>
+                                    <span className="text-gray-600 dark:text-gray-300">
+                                        NHF
+                                    </span>
                                     <span className="font-medium text-gray-900 dark:text-white">
-                                        {formatCurrency(reportData.summary.total_nhf)}
+                                        {formatCurrency(
+                                            reportData.summary.total_nhf,
+                                        )}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600 dark:text-gray-300">NHIS</span>
+                                    <span className="text-gray-600 dark:text-gray-300">
+                                        NHIS
+                                    </span>
                                     <span className="font-medium text-gray-900 dark:text-white">
-                                        {formatCurrency(reportData.summary.total_nhis)}
+                                        {formatCurrency(
+                                            reportData.summary.total_nhis,
+                                        )}
                                     </span>
                                 </div>
                                 <div className="flex justify-between border-t pt-3 font-semibold">
                                     <span>Total Deductions</span>
-                                    <span>{formatCurrency(reportData.summary.total_deductions)}</span>
+                                    <span>
+                                        {formatCurrency(
+                                            reportData.summary.total_deductions,
+                                        )}
+                                    </span>
                                 </div>
                             </div>
                         </Card>
@@ -337,12 +375,20 @@ export default function Summary({ reportData, periods, shops, filters }: Props) 
                                         Employer Pension
                                     </span>
                                     <span className="font-medium text-gray-900 dark:text-white">
-                                        {formatCurrency(reportData.summary.total_pension_employer)}
+                                        {formatCurrency(
+                                            reportData.summary
+                                                .total_pension_employer,
+                                        )}
                                     </span>
                                 </div>
                                 <div className="flex justify-between border-t pt-3 font-semibold">
                                     <span>Total Employer Costs</span>
-                                    <span>{formatCurrency(reportData.summary.total_employer_costs)}</span>
+                                    <span>
+                                        {formatCurrency(
+                                            reportData.summary
+                                                .total_employer_costs,
+                                        )}
+                                    </span>
                                 </div>
                             </div>
                         </Card>
@@ -359,34 +405,53 @@ export default function Summary({ reportData, periods, shops, filters }: Props) 
                                 <table className="w-full">
                                     <thead className="bg-gray-50 dark:bg-gray-800">
                                         <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Shop
                                             </th>
-                                            <th className="hidden px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
+                                            <th
+                                                scope="col"
+                                                className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400"
+                                            >
                                                 Employees
                                             </th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Gross Pay
                                             </th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Net Pay
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
                                         {reportData.by_shop.map((item) => (
-                                            <tr key={item.shop_id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                            <tr
+                                                key={item.shop_id}
+                                                className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                                            >
                                                 <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
                                                     {item.shop_name}
                                                 </td>
-                                                <td className="hidden px-4 py-3 text-right text-gray-600 dark:text-gray-300 md:table-cell">
+                                                <td className="hidden px-4 py-3 text-right text-gray-600 md:table-cell dark:text-gray-300">
                                                     {item.employee_count}
                                                 </td>
                                                 <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">
-                                                    {formatCurrency(item.total_gross)}
+                                                    {formatCurrency(
+                                                        item.total_gross,
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3 text-right font-semibold text-success-600 dark:text-success-400">
-                                                    {formatCurrency(item.total_net)}
+                                                    {formatCurrency(
+                                                        item.total_net,
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -407,37 +472,59 @@ export default function Summary({ reportData, periods, shops, filters }: Props) 
                                 <table className="w-full">
                                     <thead className="bg-gray-50 dark:bg-gray-800">
                                         <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Department
                                             </th>
-                                            <th className="hidden px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
+                                            <th
+                                                scope="col"
+                                                className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400"
+                                            >
                                                 Employees
                                             </th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Gross Pay
                                             </th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Net Pay
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-                                        {reportData.by_department.map((item, idx) => (
-                                            <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                                                <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                                                    {item.department || 'Unassigned'}
-                                                </td>
-                                                <td className="hidden px-4 py-3 text-right text-gray-600 dark:text-gray-300 md:table-cell">
-                                                    {item.employee_count}
-                                                </td>
-                                                <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">
-                                                    {formatCurrency(item.total_gross)}
-                                                </td>
-                                                <td className="px-4 py-3 text-right font-semibold text-success-600 dark:text-success-400">
-                                                    {formatCurrency(item.total_net)}
-                                                </td>
-                                            </tr>
-                                        ))}
+                                        {reportData.by_department.map(
+                                            (item, idx) => (
+                                                <tr
+                                                    key={idx}
+                                                    className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                                                >
+                                                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                                                        {item.department ||
+                                                            'Unassigned'}
+                                                    </td>
+                                                    <td className="hidden px-4 py-3 text-right text-gray-600 md:table-cell dark:text-gray-300">
+                                                        {item.employee_count}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">
+                                                        {formatCurrency(
+                                                            item.total_gross,
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right font-semibold text-success-600 dark:text-success-400">
+                                                        {formatCurrency(
+                                                            item.total_net,
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ),
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
@@ -449,7 +536,8 @@ export default function Summary({ reportData, periods, shops, filters }: Props) 
             {!reportData && (
                 <Card className="p-8 text-center">
                     <p className="text-gray-500 dark:text-gray-400">
-                        Select filters and click "Apply Filters" to generate the report.
+                        Select filters and click "Apply Filters" to generate the
+                        report.
                     </p>
                 </Card>
             )}

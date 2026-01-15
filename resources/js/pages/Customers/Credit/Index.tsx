@@ -95,8 +95,8 @@ const Index: React.FC<Props> = ({ shop, customers, filters, stats }) => {
                                     {stats.total_customers}
                                 </p>
                             </div>
-                            <div className="bg-brand-100 rounded-full p-3">
-                                <Users className="text-brand-600 h-8 w-8" />
+                            <div className="rounded-full bg-brand-100 p-3">
+                                <Users className="h-8 w-8 text-brand-600" />
                             </div>
                         </div>
                     </Card>
@@ -187,25 +187,46 @@ const Index: React.FC<Props> = ({ shop, customers, filters, stats }) => {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                    >
                                         Customer
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                    >
                                         Contact
                                     </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                    >
                                         Balance
                                     </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                    >
                                         Credit Limit
                                     </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                    >
                                         Available
                                     </th>
-                                    <th className="px-6 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                    >
                                         Status
                                     </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                    >
                                         Actions
                                     </th>
                                 </tr>

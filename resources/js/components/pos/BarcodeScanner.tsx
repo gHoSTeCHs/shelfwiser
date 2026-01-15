@@ -1,4 +1,3 @@
-import Input from '@/components/form/input/InputField';
 import Button from '@/components/ui/button/Button';
 import { useBarcodeScanner } from '@/hooks/useBarcodeScanner';
 import { Camera, CameraOff, Scan, X, Zap } from 'lucide-react';
@@ -108,7 +107,11 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                     onKeyDown={handleKeyDown}
                     disabled={disabled}
                     autoFocus={autoFocus}
-                    className={`h-11 w-full rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs transition-colors focus:outline-none focus:ring-3 pr-24 ${isExternalScanner ? 'pl-14' : 'pl-10'} border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-brand-800`}
+                    aria-label="Barcode or product search"
+                    aria-describedby={
+                        isExternalScanner ? 'scanner-status' : undefined
+                    }
+                    className={`h-11 w-full rounded-lg border px-4 py-2.5 pr-24 text-sm shadow-theme-xs transition-colors focus:ring-3 focus:outline-none ${isExternalScanner ? 'pl-14' : 'pl-10'} border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-brand-800`}
                 />
 
                 <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-1">
@@ -119,9 +122,10 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                             variant="ghost"
                             size="sm"
                             onClick={handleManualSubmit}
+                            aria-label="Search product"
                             className="h-8 w-8 p-0"
                         >
-                            <Scan className="h-4 w-4" />
+                            <Scan className="h-4 w-4" aria-hidden="true" />
                         </Button>
                     )}
 
@@ -133,12 +137,24 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                             size="sm"
                             onClick={toggleCamera}
                             disabled={disabled}
+                            aria-label={
+                                isCameraActive
+                                    ? 'Stop camera scanner'
+                                    : 'Start camera scanner'
+                            }
+                            aria-pressed={isCameraActive}
                             className={`h-8 w-8 p-0 ${isCameraActive ? 'bg-brand-600 text-white' : ''}`}
                         >
                             {isCameraActive ? (
-                                <CameraOff className="h-4 w-4" />
+                                <CameraOff
+                                    className="h-4 w-4"
+                                    aria-hidden="true"
+                                />
                             ) : (
-                                <Camera className="h-4 w-4" />
+                                <Camera
+                                    className="h-4 w-4"
+                                    aria-hidden="true"
+                                />
                             )}
                         </Button>
                     )}
@@ -155,9 +171,13 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                             variant="ghost"
                             size="sm"
                             onClick={closeCamera}
+                            aria-label="Close camera scanner"
                             className="absolute top-2 right-2 z-10 h-8 w-8 rounded-full bg-black/50 p-0 hover:bg-black/70"
                         >
-                            <X className="h-4 w-4 text-white" />
+                            <X
+                                className="h-4 w-4 text-white"
+                                aria-hidden="true"
+                            />
                         </Button>
 
                         {/* Video container */}
@@ -181,7 +201,9 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                             <div className="absolute inset-0 flex items-center justify-center bg-gray-900/90">
                                 <div className="p-4 text-center">
                                     <CameraOff className="mx-auto mb-2 h-8 w-8 text-gray-400" />
-                                    <p className="text-sm text-gray-300">{cameraError}</p>
+                                    <p className="text-sm text-gray-300">
+                                        {cameraError}
+                                    </p>
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -205,8 +227,13 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
             {/* Scanner mode indicator */}
             {isExternalScanner && !showCamera && (
-                <div className="mt-1 flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400">
-                    <Zap className="h-3 w-3" />
+                <div
+                    id="scanner-status"
+                    className="mt-1 flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <Zap className="h-3 w-3" aria-hidden="true" />
                     <span>External scanner detected</span>
                 </div>
             )}

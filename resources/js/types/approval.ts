@@ -3,7 +3,12 @@ import { Shop } from './shop';
 
 export type ApprovalRequestStatus = 'pending' | 'approved' | 'rejected';
 
-export type FundRequestStatus = 'pending' | 'approved' | 'rejected' | 'disbursed' | 'cancelled';
+export type FundRequestStatus =
+    | 'pending'
+    | 'approved'
+    | 'rejected'
+    | 'disbursed'
+    | 'cancelled';
 
 export type FundRequestType =
     | 'repairs'

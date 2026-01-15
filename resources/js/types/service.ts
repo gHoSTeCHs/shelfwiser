@@ -1,5 +1,5 @@
-import { Shop } from '@/types/shop';
 import { Image } from '@/types/image';
+import { Shop } from '@/types/shop';
 
 export type MaterialOption = 'customer_materials' | 'shop_materials' | 'none';
 

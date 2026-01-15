@@ -1,17 +1,16 @@
-import { Head, router } from '@inertiajs/react';
-import { Form } from '@inertiajs/react';
-import { useState } from 'react';
-import AppLayout from '@/layouts/AppLayout';
-import { Card } from '@/components/ui/card';
-import Button from '@/components/ui/button/Button';
-import Select from '@/components/form/Select';
+import PayRunController from '@/actions/App/Http/Controllers/PayRunController';
 import Input from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
-import Label from '@/components/form/Label';
 import InputError from '@/components/form/InputError';
-import PayRunController from '@/actions/App/Http/Controllers/PayRunController';
-import { ArrowLeft, Users, Calendar } from 'lucide-react';
-import type { PayrollPeriod, PayCalendar } from '@/types/payroll';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
+import type { PayCalendar, PayrollPeriod } from '@/types/payroll';
+import { Form, Head, router } from '@inertiajs/react';
+import { ArrowLeft, Calendar, Users } from 'lucide-react';
+import { useState } from 'react';
 
 interface Props {
     periods: PayrollPeriod[];
@@ -19,13 +18,19 @@ interface Props {
     eligibleEmployeesCount: number;
 }
 
-export default function Create({ periods, payCalendars, eligibleEmployeesCount }: Props) {
+export default function Create({
+    periods,
+    payCalendars,
+    eligibleEmployeesCount,
+}: Props) {
     const [selectedPeriodId, setSelectedPeriodId] = useState('');
     const [selectedCalendarId, setSelectedCalendarId] = useState('');
     const [name, setName] = useState('');
     const [notes, setNotes] = useState('');
 
-    const selectedPeriod = periods.find((p) => p.id.toString() === selectedPeriodId);
+    const selectedPeriod = periods.find(
+        (p) => p.id.toString() === selectedPeriodId,
+    );
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-NG', {
@@ -51,7 +56,9 @@ export default function Create({ periods, payCalendars, eligibleEmployeesCount }
             </div>
 
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Pay Run</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Create Pay Run
+                </h1>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     Start a new payroll processing run for a pay period
                 </p>
@@ -68,74 +75,117 @@ export default function Create({ periods, payCalendars, eligibleEmployeesCount }
                                 <div className="space-y-6">
                                     <div>
                                         <Label htmlFor="payroll_period_id">
-                                            Payroll Period <span className="text-error-500">*</span>
+                                            Payroll Period{' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Select
                                             options={[
-                                                { value: '', label: 'Select a payroll period' },
+                                                {
+                                                    value: '',
+                                                    label: 'Select a payroll period',
+                                                },
                                                 ...periods.map((period) => ({
                                                     value: period.id.toString(),
                                                     label: `${period.period_name} (${formatDate(period.start_date)} - ${formatDate(period.end_date)})`,
                                                 })),
                                             ]}
                                             defaultValue={selectedPeriodId}
-                                            onChange={(value) => setSelectedPeriodId(value)}
+                                            onChange={(value) =>
+                                                setSelectedPeriodId(value)
+                                            }
                                         />
-                                        <input type="hidden" name="payroll_period_id" value={selectedPeriodId} />
-                                        <InputError message={errors.payroll_period_id} />
+                                        <input
+                                            type="hidden"
+                                            name="payroll_period_id"
+                                            value={selectedPeriodId}
+                                        />
+                                        <InputError
+                                            message={errors.payroll_period_id}
+                                        />
                                         {periods.length === 0 && (
                                             <p className="mt-1 text-sm text-warning-600">
-                                                No open payroll periods available. Create a payroll period first.
+                                                No open payroll periods
+                                                available. Create a payroll
+                                                period first.
                                             </p>
                                         )}
                                     </div>
 
                                     {payCalendars.length > 0 && (
                                         <div>
-                                            <Label htmlFor="pay_calendar_id">Pay Calendar (Optional)</Label>
+                                            <Label htmlFor="pay_calendar_id">
+                                                Pay Calendar (Optional)
+                                            </Label>
                                             <Select
                                                 options={[
-                                                    { value: '', label: 'All employees' },
-                                                    ...payCalendars.map((cal) => ({
-                                                        value: cal.id.toString(),
-                                                        label: `${cal.name} (${cal.frequency})`,
-                                                    })),
+                                                    {
+                                                        value: '',
+                                                        label: 'All employees',
+                                                    },
+                                                    ...payCalendars.map(
+                                                        (cal) => ({
+                                                            value: cal.id.toString(),
+                                                            label: `${cal.name} (${cal.frequency})`,
+                                                        }),
+                                                    ),
                                                 ]}
-                                                defaultValue={selectedCalendarId}
-                                                onChange={(value) => setSelectedCalendarId(value)}
+                                                defaultValue={
+                                                    selectedCalendarId
+                                                }
+                                                onChange={(value) =>
+                                                    setSelectedCalendarId(value)
+                                                }
                                             />
-                                            <input type="hidden" name="pay_calendar_id" value={selectedCalendarId} />
-                                            <InputError message={errors.pay_calendar_id} />
+                                            <input
+                                                type="hidden"
+                                                name="pay_calendar_id"
+                                                value={selectedCalendarId}
+                                            />
+                                            <InputError
+                                                message={errors.pay_calendar_id}
+                                            />
                                             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                                Filter employees by pay calendar schedule
+                                                Filter employees by pay calendar
+                                                schedule
                                             </p>
                                         </div>
                                     )}
 
                                     <div>
-                                        <Label htmlFor="name">Pay Run Name (Optional)</Label>
+                                        <Label htmlFor="name">
+                                            Pay Run Name (Optional)
+                                        </Label>
                                         <Input
                                             type="text"
                                             name="name"
                                             placeholder="e.g., December 2024 Salary"
                                             value={name}
-                                            onChange={(e) => setName(e.target.value)}
+                                            onChange={(e) =>
+                                                setName(e.target.value)
+                                            }
                                             error={!!errors.name}
                                         />
                                         <InputError message={errors.name} />
                                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                            Leave blank to auto-generate based on period
+                                            Leave blank to auto-generate based
+                                            on period
                                         </p>
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="notes">Notes (Optional)</Label>
+                                        <Label htmlFor="notes">
+                                            Notes (Optional)
+                                        </Label>
                                         <TextArea
                                             name="notes"
                                             placeholder="Any additional notes for this pay run..."
                                             rows={3}
                                             value={notes}
-                                            onChange={(value) => setNotes(value)}
+                                            onChange={(value) =>
+                                                setNotes(value)
+                                            }
                                             error={!!errors.notes}
                                         />
                                         <InputError message={errors.notes} />
@@ -145,14 +195,20 @@ export default function Create({ periods, payCalendars, eligibleEmployeesCount }
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            onClick={() => router.visit(PayRunController.index.url())}
+                                            onClick={() =>
+                                                router.visit(
+                                                    PayRunController.index.url(),
+                                                )
+                                            }
                                         >
                                             Cancel
                                         </Button>
                                         <Button
                                             type="submit"
                                             variant="primary"
-                                            disabled={processing || !selectedPeriodId}
+                                            disabled={
+                                                processing || !selectedPeriodId
+                                            }
                                             loading={processing}
                                         >
                                             Create Pay Run
@@ -200,21 +256,33 @@ export default function Create({ periods, payCalendars, eligibleEmployeesCount }
                                 </div>
                                 <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500 dark:text-gray-400">Start Date</span>
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            Start Date
+                                        </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatDate(selectedPeriod.start_date)}
+                                            {formatDate(
+                                                selectedPeriod.start_date,
+                                            )}
                                         </span>
                                     </div>
                                     <div className="mt-2 flex justify-between text-sm">
-                                        <span className="text-gray-500 dark:text-gray-400">End Date</span>
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            End Date
+                                        </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatDate(selectedPeriod.end_date)}
+                                            {formatDate(
+                                                selectedPeriod.end_date,
+                                            )}
                                         </span>
                                     </div>
                                     <div className="mt-2 flex justify-between text-sm">
-                                        <span className="text-gray-500 dark:text-gray-400">Payment Date</span>
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            Payment Date
+                                        </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatDate(selectedPeriod.payment_date)}
+                                            {formatDate(
+                                                selectedPeriod.payment_date,
+                                            )}
                                         </span>
                                     </div>
                                 </div>

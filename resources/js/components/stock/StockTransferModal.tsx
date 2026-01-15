@@ -51,14 +51,14 @@ export default function StockTransferModal({
         .filter((loc) => loc.id.toString() !== toLocationId)
         .map((location) => ({
             value: location.id.toString(),
-            label: `${location.location?.name || `Location #${location.id}`} - Available: ${location.quantity - location.reserved_quantity}${location.bin_location ? ` (${location.bin_location})` : ''}`,
+            label: `${location.location?.name || `Location #${location.id}`} - Available: ${location.quantity - location.reserved_quantity}`,
         }));
 
     const toLocationOptions = locations
         .filter((loc) => loc.id.toString() !== fromLocationId)
         .map((location) => ({
             value: location.id.toString(),
-            label: `${location.location?.name || `Location #${location.id}`} - Current: ${location.quantity}${location.bin_location ? ` (${location.bin_location})` : ''}`,
+            label: `${location.location?.name || `Location #${location.id}`} - Current: ${location.quantity}`,
         }));
 
     return (

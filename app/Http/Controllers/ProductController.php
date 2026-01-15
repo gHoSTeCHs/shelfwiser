@@ -23,13 +23,11 @@ class ProductController extends Controller
     public function __construct(
         private readonly ProductService $productService,
         //        private  ProductTemplateService $templateService
-    )
-    {
-    }
+    ) {}
 
     public function index(): Response
     {
-        Gate::authorize('create', Product::class);
+        Gate::authorize('viewAny', Product::class);
 
         $tenantId = auth()->user()->tenant_id;
 
