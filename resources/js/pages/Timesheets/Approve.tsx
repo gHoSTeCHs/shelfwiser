@@ -1,17 +1,16 @@
 import TimesheetController from '@/actions/App/Http/Controllers/TimesheetController.ts';
+import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 import AppLayout from '@/layouts/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    Clock,
-    CheckCircle,
-    XCircle,
-    ArrowLeft,
-    User,
-    MapPin,
     AlertCircle,
+    ArrowLeft,
+    CheckCircle,
+    Clock,
+    MapPin,
+    User,
 } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -68,7 +67,11 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
 
     const handleClearFilters = () => {
         setSelectedShop('');
-        router.get('/timesheets/approval-queue', {}, { preserveState: true, preserveScroll: true });
+        router.get(
+            '/timesheets/approval-queue',
+            {},
+            { preserveState: true, preserveScroll: true },
+        );
     };
 
     const formatDate = (datetime: string | null) => {
@@ -117,7 +120,9 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
                         <div className="flex items-center gap-2">
                             <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                             <p className="font-medium text-yellow-900 dark:text-yellow-100">
-                                {timesheets.length} timesheet{timesheets.length !== 1 ? 's' : ''} awaiting your approval
+                                {timesheets.length} timesheet
+                                {timesheets.length !== 1 ? 's' : ''} awaiting
+                                your approval
                             </p>
                         </div>
                     </Card>
@@ -131,8 +136,10 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
                             </label>
                             <select
                                 value={selectedShop}
-                                onChange={(e) => setSelectedShop(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                onChange={(e) =>
+                                    setSelectedShop(e.target.value)
+                                }
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             >
                                 <option value="">All Shops</option>
                                 {shops.map((shop) => (
@@ -144,10 +151,16 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
                         </div>
 
                         <div className="flex items-end gap-2">
-                            <Button onClick={handleFilterChange} className="flex-1">
+                            <Button
+                                onClick={handleFilterChange}
+                                className="flex-1"
+                            >
                                 Apply Filter
                             </Button>
-                            <Button onClick={handleClearFilters} variant="outline">
+                            <Button
+                                onClick={handleClearFilters}
+                                variant="outline"
+                            >
                                 Clear
                             </Button>
                         </div>
@@ -162,7 +175,8 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
                                 All caught up!
                             </h3>
                             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                There are no timesheets waiting for your approval at the moment.
+                                There are no timesheets waiting for your
+                                approval at the moment.
                             </p>
                         </div>
                     </Card>
@@ -185,7 +199,7 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
 
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <div className="flex items-start gap-2">
-                                            <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
+                                            <Clock className="mt-0.5 h-5 w-5 text-gray-400" />
                                             <div>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">
                                                     Date
@@ -197,7 +211,7 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
                                         </div>
 
                                         <div className="flex items-start gap-2">
-                                            <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
+                                            <MapPin className="mt-0.5 h-5 w-5 text-gray-400" />
                                             <div>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">
                                                     Shop
@@ -209,14 +223,16 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
                                         </div>
                                     </div>
 
-                                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                                    <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
                                         <div className="grid grid-cols-3 gap-4 text-center">
                                             <div>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                                     Clock In
                                                 </p>
                                                 <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                                                    {formatTime(timesheet.clock_in)}
+                                                    {formatTime(
+                                                        timesheet.clock_in,
+                                                    )}
                                                 </p>
                                             </div>
                                             <div>
@@ -224,7 +240,9 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
                                                     Clock Out
                                                 </p>
                                                 <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                                                    {formatTime(timesheet.clock_out)}
+                                                    {formatTime(
+                                                        timesheet.clock_out,
+                                                    )}
                                                 </p>
                                             </div>
                                             <div>
@@ -232,13 +250,16 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
                                                     Break
                                                 </p>
                                                 <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                                                    {timesheet.break_duration_minutes}min
+                                                    {
+                                                        timesheet.break_duration_minutes
+                                                    }
+                                                    min
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-3 gap-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                                    <div className="grid grid-cols-3 gap-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
                                         <div className="text-center">
                                             <p className="text-xs text-gray-500 dark:text-gray-400">
                                                 Regular
@@ -266,8 +287,8 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
                                     </div>
 
                                     {timesheet.notes && (
-                                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                                            <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-1">
+                                        <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
+                                            <p className="mb-1 text-xs font-medium text-blue-900 dark:text-blue-100">
                                                 Notes:
                                             </p>
                                             <p className="text-sm text-blue-700 dark:text-blue-300">
@@ -278,10 +299,16 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
 
                                     <div className="flex gap-2 pt-2">
                                         <Link
-                                            href={TimesheetController.show.url({ timesheet: timesheet.id })}
+                                            href={TimesheetController.show.url({
+                                                timesheet: timesheet.id,
+                                            })}
                                             className="flex-1"
                                         >
-                                            <Button variant="outline" fullWidth size="sm">
+                                            <Button
+                                                variant="outline"
+                                                fullWidth
+                                                size="sm"
+                                            >
                                                 View Details
                                             </Button>
                                         </Link>

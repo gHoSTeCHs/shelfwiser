@@ -1,23 +1,22 @@
+import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
 import { AccountOrderDetailProps } from '@/types/storefront';
 import { Head, Link } from '@inertiajs/react';
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
-import Button from '@/components/ui/button/Button';
-import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
+import { motion } from 'framer-motion';
 import {
     ArrowLeft,
-    Package,
-    MapPin,
-    CreditCard,
     Calendar,
+    CreditCard,
+    MapPin,
+    Package,
     Truck,
 } from 'lucide-react';
+import React from 'react';
 
 /**
- * Customer order detail page.
- * Shows complete order information including items, addresses, and tracking.
+ * Customer order detail page with playful-luxury styling.
  */
 const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
     const getStatusColor = (status: string) => {
@@ -55,10 +54,8 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
-            month: 'long',
+            month: 'short',
             day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
         });
     };
 
@@ -66,75 +63,82 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
         <StorefrontLayout shop={shop}>
             <Head title={`Order #${order.order_number} - ${shop.name}`} />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <Link
-                        href={CustomerPortalController.orders.url({
-                            shop: shop.slug,
-                        })}
+            <div className="space-y-6">
+                {/* Back Button */}
+                <Link
+                    href={CustomerPortalController.orders.url({
+                        shop: shop.slug,
+                    })}
+                >
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        startIcon={<ArrowLeft className="h-4 w-4" />}
                     >
-                        <Button variant="outline" size="sm">
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Back to Orders
-                        </Button>
-                    </Link>
+                        Back to Orders
+                    </Button>
+                </Link>
 
-                    <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900">
-                                Order #{order.order_number}
-                            </h1>
-                            <p className="mt-1 text-sm text-gray-600">
-                                Placed on {formatDate(order.created_at)}
-                            </p>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                            <Badge
-                                color={getStatusColor(order.status)}
-                                size="md"
-                            >
-                                {order.status}
-                            </Badge>
-                            <Badge
-                                color={getPaymentStatusColor(
-                                    order.payment_status,
-                                )}
-                                size="md"
-                            >
-                                {order.payment_status}
-                            </Badge>
-                        </div>
+                {/* Header */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl dark:text-white">
+                            Order #{order.order_number}
+                        </h1>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Placed on {formatDate(order.created_at)}
+                        </p>
                     </div>
-                </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="flex flex-wrap gap-2">
+                        <Badge color={getStatusColor(order.status)} size="md">
+                            {order.status}
+                        </Badge>
+                        <Badge
+                            color={getPaymentStatusColor(order.payment_status)}
+                            size="md"
+                        >
+                            {order.payment_status}
+                        </Badge>
+                    </div>
+                </motion.div>
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
                     {/* Main Content */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="space-y-4 lg:col-span-2 lg:space-y-6">
                         {/* Order Items */}
-                        <Card title="Order Items">
-                            <div className="divide-y divide-gray-200">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="rounded-xl border border-gray-200 bg-white sm:rounded-2xl dark:border-navy-700 dark:bg-navy-800"
+                        >
+                            <div className="border-b border-gray-100 p-4 sm:p-5 dark:border-navy-700">
+                                <h2 className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                    <Package className="h-4 w-4 text-brand-500" />
+                                    Order Items
+                                </h2>
+                            </div>
+                            <div className="divide-y divide-gray-100 dark:divide-navy-700">
                                 {order.items?.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="py-4 first:pt-0 last:pb-0"
-                                    >
-                                        <div className="flex gap-4">
-                                            {/* Product Image Placeholder */}
-                                            <div className="flex-shrink-0 w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                <Package className="h-8 w-8 text-gray-400" />
+                                    <div key={item.id} className="p-4 sm:p-5">
+                                        <div className="flex gap-3 sm:gap-4">
+                                            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 sm:h-20 sm:w-20 dark:bg-navy-700">
+                                                <Package className="h-6 w-6 text-gray-400 sm:h-8 sm:w-8 dark:text-gray-500" />
                                             </div>
 
-                                            {/* Product Info */}
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-medium text-gray-900">
+                                            <div className="min-w-0 flex-1">
+                                                <h4 className="text-sm font-medium text-gray-900 sm:text-base dark:text-white">
                                                     {item.productVariant
                                                         ?.product?.name ||
                                                         'Product'}
                                                 </h4>
                                                 {item.productVariant?.sku && (
-                                                    <p className="text-sm text-gray-500">
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
                                                         SKU:{' '}
                                                         {
                                                             item.productVariant
@@ -142,20 +146,13 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                                         }
                                                     </p>
                                                 )}
-                                                {item.packagingType && (
-                                                    <p className="text-sm text-gray-500">
-                                                        Packaging:{' '}
-                                                        {item.packagingType.name}
-                                                    </p>
-                                                )}
-                                                <p className="mt-1 text-sm text-gray-600">
-                                                    Quantity: {item.quantity}
+                                                <p className="mt-1 text-xs text-gray-500 sm:text-sm dark:text-gray-400">
+                                                    Qty: {item.quantity}
                                                 </p>
                                             </div>
 
-                                            {/* Price */}
                                             <div className="text-right">
-                                                <p className="font-semibold text-gray-900">
+                                                <p className="text-sm font-semibold text-gray-900 sm:text-base dark:text-white">
                                                     {shop.currency_symbol}
                                                     {item.unit_price.toLocaleString(
                                                         undefined,
@@ -166,7 +163,7 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                                     )}
                                                 </p>
                                                 {item.quantity > 1 && (
-                                                    <p className="text-sm text-gray-500">
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
                                                         Total:{' '}
                                                         {shop.currency_symbol}
                                                         {(
@@ -186,42 +183,45 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                     </div>
                                 ))}
                             </div>
-                        </Card>
+                        </motion.div>
 
                         {/* Shipping Address */}
                         {order.shipping_address && (
-                            <Card title="Shipping Address">
-                                <div className="flex items-start gap-3">
-                                    <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
-                                    <div>
-                                        <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">
-                                            {order.shipping_address}
-                                        </pre>
-                                    </div>
-                                </div>
-                            </Card>
-                        )}
-
-                        {/* Customer Notes */}
-                        {order.customer_notes && (
-                            <Card title="Order Notes">
-                                <p className="text-sm text-gray-700">
-                                    {order.customer_notes}
-                                </p>
-                            </Card>
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.15 }}
+                                className="rounded-xl border border-gray-200 bg-white p-4 sm:rounded-2xl sm:p-5 dark:border-navy-700 dark:bg-navy-800"
+                            >
+                                <h2 className="mb-3 flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                    <MapPin className="h-4 w-4 text-brand-500" />
+                                    Shipping Address
+                                </h2>
+                                <pre className="font-sans text-sm whitespace-pre-wrap text-gray-600 dark:text-gray-400">
+                                    {order.shipping_address}
+                                </pre>
+                            </motion.div>
                         )}
                     </div>
 
                     {/* Sidebar */}
-                    <div className="space-y-6">
+                    <div className="space-y-4 lg:space-y-6">
                         {/* Order Summary */}
-                        <Card title="Order Summary">
-                            <div className="space-y-3">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="rounded-xl border border-gray-200 bg-white p-4 sm:rounded-2xl sm:p-5 dark:border-navy-700 dark:bg-navy-800"
+                        >
+                            <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">
+                                Order Summary
+                            </h2>
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500 dark:text-gray-400">
                                         Subtotal
                                     </span>
-                                    <span className="font-medium text-gray-900">
+                                    <span className="text-gray-900 dark:text-white">
                                         {shop.currency_symbol}
                                         {order.subtotal.toLocaleString(
                                             undefined,
@@ -234,11 +234,11 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                 </div>
 
                                 {order.tax_amount > 0 && (
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500 dark:text-gray-400">
                                             Tax
                                         </span>
-                                        <span className="font-medium text-gray-900">
+                                        <span className="text-gray-900 dark:text-white">
                                             {shop.currency_symbol}
                                             {order.tax_amount.toLocaleString(
                                                 undefined,
@@ -252,11 +252,11 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                 )}
 
                                 {order.shipping_cost > 0 && (
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500 dark:text-gray-400">
                                             Shipping
                                         </span>
-                                        <span className="font-medium text-gray-900">
+                                        <span className="text-gray-900 dark:text-white">
                                             {shop.currency_symbol}
                                             {order.shipping_cost.toLocaleString(
                                                 undefined,
@@ -269,12 +269,12 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                     </div>
                                 )}
 
-                                <div className="pt-3 border-t border-gray-200">
+                                <div className="border-t border-gray-100 pt-2 dark:border-navy-700">
                                     <div className="flex justify-between">
-                                        <span className="text-base font-semibold text-gray-900">
+                                        <span className="font-semibold text-gray-900 dark:text-white">
                                             Total
                                         </span>
-                                        <span className="text-xl font-bold text-gray-900">
+                                        <span className="text-lg font-bold text-brand-600 dark:text-brand-400">
                                             {shop.currency_symbol}
                                             {order.total_amount.toLocaleString(
                                                 undefined,
@@ -287,70 +287,68 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                     </div>
                                 </div>
                             </div>
-                        </Card>
+                        </motion.div>
 
-                        {/* Payment Information */}
-                        <Card title="Payment Information">
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <CreditCard className="h-4 w-4 text-gray-400" />
-                                    <span className="text-sm text-gray-600">
-                                        Payment Method
-                                    </span>
-                                </div>
-                                <p className="text-sm font-medium text-gray-900 capitalize">
-                                    {order.payment_method.replace('_', ' ')}
-                                </p>
-                            </div>
-                        </Card>
+                        {/* Payment Info */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.25 }}
+                            className="rounded-xl border border-gray-200 bg-white p-4 sm:rounded-2xl sm:p-5 dark:border-navy-700 dark:bg-navy-800"
+                        >
+                            <h2 className="mb-3 flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                <CreditCard className="h-4 w-4 text-brand-500" />
+                                Payment
+                            </h2>
+                            <p className="text-sm font-medium text-gray-900 capitalize dark:text-white">
+                                {order.payment_method.replace('_', ' ')}
+                            </p>
+                        </motion.div>
 
-                        {/* Tracking Information */}
+                        {/* Tracking */}
                         {order.tracking_number && (
-                            <Card title="Tracking Information">
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <Truck className="h-4 w-4 text-gray-400" />
-                                        <span className="text-sm text-gray-600">
-                                            Tracking Number
-                                        </span>
-                                    </div>
-                                    <p className="text-sm font-mono font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded">
-                                        {order.tracking_number}
-                                    </p>
-                                </div>
-                            </Card>
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                className="rounded-xl border border-gray-200 bg-white p-4 sm:rounded-2xl sm:p-5 dark:border-navy-700 dark:bg-navy-800"
+                            >
+                                <h2 className="mb-3 flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                    <Truck className="h-4 w-4 text-brand-500" />
+                                    Tracking
+                                </h2>
+                                <p className="font-mono rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:bg-navy-700 dark:text-white">
+                                    {order.tracking_number}
+                                </p>
+                            </motion.div>
                         )}
 
                         {/* Timeline */}
-                        <Card title="Order Timeline">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.35 }}
+                            className="rounded-xl border border-gray-200 bg-white p-4 sm:rounded-2xl sm:p-5 dark:border-navy-700 dark:bg-navy-800"
+                        >
+                            <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">
+                                Timeline
+                            </h2>
                             <div className="space-y-4">
                                 <div className="flex gap-3">
-                                    <Calendar className="h-4 w-4 text-gray-400 mt-0.5" />
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-500/20">
+                                        <Calendar className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                                    </div>
                                     <div>
-                                        <p className="text-sm font-medium text-gray-900">
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white">
                                             Order Placed
                                         </p>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
                                             {formatDate(order.created_at)}
                                         </p>
                                     </div>
                                 </div>
-
-                                {order.updated_at !== order.created_at && (
-                                    <div className="flex gap-3">
-                                        <Calendar className="h-4 w-4 text-gray-400 mt-0.5" />
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-900">
-                                                Last Updated
-                                            </p>
-                                            <p className="text-xs text-gray-500">
-                                                {formatDate(order.updated_at)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
-                        </Card>
+                        </motion.div>
                     </div>
                 </div>
             </div>

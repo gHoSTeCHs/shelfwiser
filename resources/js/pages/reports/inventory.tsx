@@ -1,10 +1,10 @@
-import { Head } from '@inertiajs/react';
+import MetricCard from '@/components/dashboard/MetricCard';
+import DataTable from '@/components/reports/DataTable';
+import FilterBar from '@/components/reports/FilterBar';
 import AppLayout from '@/layouts/AppLayout';
 import { InventoryReportProps } from '@/types/reports';
-import FilterBar from '@/components/reports/FilterBar';
-import DataTable from '@/components/reports/DataTable';
-import MetricCard from '@/components/dashboard/MetricCard';
-import { Package, DollarSign, AlertTriangle, Box } from 'lucide-react';
+import { Head } from '@inertiajs/react';
+import { AlertTriangle, Box, DollarSign, Package } from 'lucide-react';
 
 export default function InventoryReport({
     summary,
@@ -60,12 +60,8 @@ export default function InventoryReport({
             label: 'Product',
             render: (_: any, row: any) => (
                 <div>
-                    <div className="font-medium">
-                        {row.product?.name}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                        SKU: {row.sku}
-                    </div>
+                    <div className="font-medium">{row.product?.name}</div>
+                    <div className="text-xs text-gray-500">SKU: {row.sku}</div>
                 </div>
             ),
         },
@@ -79,19 +75,27 @@ export default function InventoryReport({
             label: 'Stock Level',
             className: 'text-right',
             render: (_: any, row: any) => {
-                const totalStock = row.inventory_locations?.reduce(
-                    (sum: number, loc: any) => sum + loc.quantity,
-                    0,
-                ) || 0;
+                const totalStock =
+                    row.inventory_locations?.reduce(
+                        (sum: number, loc: any) => sum + loc.quantity,
+                        0,
+                    ) || 0;
 
-                const isLow = row.reorder_level && totalStock <= row.reorder_level;
+                const isLow =
+                    row.reorder_level && totalStock <= row.reorder_level;
 
                 return (
                     <div className="flex items-center justify-end gap-2">
-                        <span className={isLow ? 'font-medium text-error-600' : ''}>
+                        <span
+                            className={
+                                isLow ? 'font-medium text-error-600' : ''
+                            }
+                        >
                             {totalStock.toLocaleString()}
                         </span>
-                        {isLow && <AlertTriangle className="h-4 w-4 text-error-600" />}
+                        {isLow && (
+                            <AlertTriangle className="h-4 w-4 text-error-600" />
+                        )}
                     </div>
                 );
             },
@@ -104,27 +108,28 @@ export default function InventoryReport({
         },
         ...(canViewCosts
             ? [
-                {
-                    key: 'cost_price',
-                    label: 'Cost Price',
-                    className: 'text-right',
-                    render: (value: number | null) =>
-                        value ? formatCurrency(value) : '-',
-                },
-                {
-                    key: 'valuation',
-                    label: 'Total Value',
-                    className: 'text-right',
-                    render: (_: any, row: any) => {
-                        const totalStock = row.inventory_locations?.reduce(
-                            (sum: number, loc: any) => sum + loc.quantity,
-                            0,
-                        ) || 0;
-                        const value = totalStock * (row.cost_price || 0);
-                        return formatCurrency(value);
-                    },
-                },
-            ]
+                  {
+                      key: 'cost_price',
+                      label: 'Cost Price',
+                      className: 'text-right',
+                      render: (value: number | null) =>
+                          value ? formatCurrency(value) : '-',
+                  },
+                  {
+                      key: 'valuation',
+                      label: 'Total Value',
+                      className: 'text-right',
+                      render: (_: any, row: any) => {
+                          const totalStock =
+                              row.inventory_locations?.reduce(
+                                  (sum: number, loc: any) => sum + loc.quantity,
+                                  0,
+                              ) || 0;
+                          const value = totalStock * (row.cost_price || 0);
+                          return formatCurrency(value);
+                      },
+                  },
+              ]
             : []),
     ];
 
@@ -201,4 +206,6 @@ export default function InventoryReport({
     );
 }
 
-InventoryReport.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
+InventoryReport.layout = (page: React.ReactNode) => (
+    <AppLayout>{page}</AppLayout>
+);

@@ -54,6 +54,36 @@ class UpdateStorefrontSettingsRequest extends FormRequest
     }
 
     /**
+     * Get custom messages for validator errors.
+     */
+    public function messages(): array
+    {
+        return [
+            'storefront_enabled.required' => 'Please specify whether the storefront should be enabled.',
+            'currency.required' => 'Please select a currency for your storefront.',
+            'currency.size' => 'Currency code must be exactly 3 characters (e.g., USD, GBP).',
+            'currency.in' => 'The selected currency is not supported.',
+            'currency_symbol.required' => 'Please provide a currency symbol.',
+            'currency_decimals.required' => 'Please specify the number of decimal places for currency.',
+            'currency_decimals.min' => 'Decimal places cannot be negative.',
+            'currency_decimals.max' => 'Decimal places cannot exceed 4.',
+            'vat_enabled.required' => 'Please specify whether tax (VAT) is enabled.',
+            'vat_rate.min' => 'Tax rate cannot be negative.',
+            'vat_rate.max' => 'Tax rate cannot exceed 100%.',
+            'shipping_fee.min' => 'Shipping fee cannot be negative.',
+            'free_shipping_threshold.min' => 'Free shipping threshold cannot be negative.',
+            'theme_color.regex' => 'Theme color must be a valid hex color code (e.g., #FF5733).',
+            'logo_url.url' => 'Logo URL must be a valid web address.',
+            'banner_url.url' => 'Banner URL must be a valid web address.',
+            'social_facebook.url' => 'Facebook URL must be a valid web address.',
+            'social_instagram.url' => 'Instagram URL must be a valid web address.',
+            'social_twitter.url' => 'Twitter URL must be a valid web address.',
+            'meta_title.max' => 'Meta title cannot exceed 100 characters.',
+            'meta_description.max' => 'Meta description cannot exceed 200 characters.',
+        ];
+    }
+
+    /**
      * Get custom attribute names for validation errors.
      */
     public function attributes(): array

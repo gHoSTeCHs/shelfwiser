@@ -1,17 +1,17 @@
 import WageAdvanceController from '@/actions/App/Http/Controllers/WageAdvanceController.ts';
+import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 import AppLayout from '@/layouts/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import {
+    AlertCircle,
+    CheckCircle,
+    Clock,
     DollarSign,
     Plus,
     TrendingUp,
-    CheckCircle,
-    Clock,
     Wallet,
-    AlertCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -106,11 +106,21 @@ const WageAdvancesIndex = ({
 
     const handleClearFilters = () => {
         setSelectedStatus('');
-        router.get(WageAdvanceController.index.url(), {}, { preserveState: true, preserveScroll: true });
+        router.get(
+            WageAdvanceController.index.url(),
+            {},
+            { preserveState: true, preserveScroll: true },
+        );
     };
 
     const getStatusBadge = (status: string) => {
-        const statusConfig: Record<string, { color: 'light' | 'warning' | 'success' | 'error' | 'info', label: string }> = {
+        const statusConfig: Record<
+            string,
+            {
+                color: 'light' | 'warning' | 'success' | 'error' | 'info';
+                label: string;
+            }
+        > = {
             pending: { color: 'warning', label: 'Pending' },
             approved: { color: 'success', label: 'Approved' },
             rejected: { color: 'error', label: 'Rejected' },
@@ -120,7 +130,10 @@ const WageAdvancesIndex = ({
             cancelled: { color: 'light', label: 'Cancelled' },
         };
 
-        const config = statusConfig[status] || { color: 'light' as const, label: status };
+        const config = statusConfig[status] || {
+            color: 'light' as const,
+            label: status,
+        };
         return <Badge color={config.color}>{config.label}</Badge>;
     };
 
@@ -171,7 +184,9 @@ const WageAdvancesIndex = ({
                 </div>
 
                 {eligibility && (
-                    <Card className={`p-4 ${eligibility.is_eligible ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20' : 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20'}`}>
+                    <Card
+                        className={`p-4 ${eligibility.is_eligible ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20' : 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20'}`}
+                    >
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 {eligibility.is_eligible ? (
@@ -180,19 +195,29 @@ const WageAdvancesIndex = ({
                                     <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                                 )}
                                 <div>
-                                    <p className={`font-medium ${eligibility.is_eligible ? 'text-green-900 dark:text-green-100' : 'text-yellow-900 dark:text-yellow-100'}`}>
-                                        {eligibility.is_eligible ? 'You are eligible for a wage advance' : 'Limited eligibility'}
+                                    <p
+                                        className={`font-medium ${eligibility.is_eligible ? 'text-green-900 dark:text-green-100' : 'text-yellow-900 dark:text-yellow-100'}`}
+                                    >
+                                        {eligibility.is_eligible
+                                            ? 'You are eligible for a wage advance'
+                                            : 'Limited eligibility'}
                                     </p>
                                     {eligibility.reason && (
-                                        <p className={`text-sm ${eligibility.is_eligible ? 'text-green-700 dark:text-green-300' : 'text-yellow-700 dark:text-yellow-300'}`}>
+                                        <p
+                                            className={`text-sm ${eligibility.is_eligible ? 'text-green-700 dark:text-green-300' : 'text-yellow-700 dark:text-yellow-300'}`}
+                                        >
                                             {eligibility.reason}
                                         </p>
                                     )}
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Max Available</p>
-                                <p className={`text-lg font-bold ${eligibility.is_eligible ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Max Available
+                                </p>
+                                <p
+                                    className={`text-lg font-bold ${eligibility.is_eligible ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}
+                                >
                                     {formatAmount(eligibility.max_amount)}
                                 </p>
                             </div>
@@ -208,7 +233,9 @@ const WageAdvancesIndex = ({
                                     Total Requested
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                                    {formatAmount(statistics.total_amount_requested)}
+                                    {formatAmount(
+                                        statistics.total_amount_requested,
+                                    )}
                                 </p>
                             </div>
                             <div className="rounded-lg bg-brand-50 p-3 dark:bg-brand-900/20">
@@ -224,7 +251,9 @@ const WageAdvancesIndex = ({
                                     Total Disbursed
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                    {formatAmount(statistics.total_amount_disbursed)}
+                                    {formatAmount(
+                                        statistics.total_amount_disbursed,
+                                    )}
                                 </p>
                             </div>
                             <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
@@ -240,7 +269,9 @@ const WageAdvancesIndex = ({
                                     Total Repaid
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">
-                                    {formatAmount(statistics.total_amount_repaid)}
+                                    {formatAmount(
+                                        statistics.total_amount_repaid,
+                                    )}
                                 </p>
                             </div>
                             <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
@@ -292,12 +323,17 @@ const WageAdvancesIndex = ({
                             </label>
                             <select
                                 value={selectedStatus}
-                                onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                onChange={(e) =>
+                                    setSelectedStatus(e.target.value)
+                                }
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             >
                                 <option value="">All Status</option>
                                 {statusOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
                                         {option.label}
                                     </option>
                                 ))}
@@ -312,7 +348,7 @@ const WageAdvancesIndex = ({
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             />
                         </div>
 
@@ -324,7 +360,7 @@ const WageAdvancesIndex = ({
                                 type="date"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             />
                         </div>
                     </div>
@@ -344,22 +380,22 @@ const WageAdvancesIndex = ({
                         <table className="w-full">
                             <thead className="border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Date
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Amount
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Installments
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Repaid
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Status
                                     </th>
-                                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
                                         Actions
                                     </th>
                                 </tr>
@@ -375,7 +411,9 @@ const WageAdvancesIndex = ({
                                             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
                                                 No wage advances found
                                             </p>
-                                            <Link href={WageAdvanceController.create.url()}>
+                                            <Link
+                                                href={WageAdvanceController.create.url()}
+                                            >
                                                 <Button className="mt-4">
                                                     <Plus className="mr-2 h-4 w-4" />
                                                     Request First Advance
@@ -391,29 +429,44 @@ const WageAdvancesIndex = ({
                                         >
                                             <td className="px-6 py-4">
                                                 <p className="font-medium text-gray-900 dark:text-white">
-                                                    {formatDate(advance.requested_at)}
+                                                    {formatDate(
+                                                        advance.requested_at,
+                                                    )}
                                                 </p>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div>
                                                     <p className="font-semibold text-gray-900 dark:text-white">
-                                                        {formatAmount(advance.amount_approved || advance.amount_requested)}
+                                                        {formatAmount(
+                                                            advance.amount_approved ||
+                                                                advance.amount_requested,
+                                                        )}
                                                     </p>
-                                                    {advance.amount_approved && advance.amount_approved !== advance.amount_requested && (
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                            Requested: {formatAmount(advance.amount_requested)}
-                                                        </p>
-                                                    )}
+                                                    {advance.amount_approved &&
+                                                        advance.amount_approved !==
+                                                            advance.amount_requested && (
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                Requested:{' '}
+                                                                {formatAmount(
+                                                                    advance.amount_requested,
+                                                                )}
+                                                            </p>
+                                                        )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                                                    {advance.repayment_installments} months
+                                                    {
+                                                        advance.repayment_installments
+                                                    }{' '}
+                                                    months
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <p className="font-medium text-green-600 dark:text-green-400">
-                                                    {formatAmount(advance.amount_repaid)}
+                                                    {formatAmount(
+                                                        advance.amount_repaid,
+                                                    )}
                                                 </p>
                                             </td>
                                             <td className="px-6 py-4">
@@ -421,9 +474,17 @@ const WageAdvancesIndex = ({
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <Link
-                                                    href={WageAdvanceController.show.url({ wageAdvance: advance.id })}
+                                                    href={WageAdvanceController.show.url(
+                                                        {
+                                                            wageAdvance:
+                                                                advance.id,
+                                                        },
+                                                    )}
                                                 >
-                                                    <Button variant="outline" size="sm">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                    >
                                                         View
                                                     </Button>
                                                 </Link>

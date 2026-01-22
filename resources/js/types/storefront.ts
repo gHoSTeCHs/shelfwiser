@@ -1,29 +1,14 @@
-import { Product } from './product';
-import { ProductCategory } from './product';
+import { Product, ProductCategory } from './product';
+import {
+    MaterialOption,
+    Service,
+    ServiceAddon,
+    ServiceCategory,
+    ServiceVariant,
+} from './service';
 import { Shop } from './shop';
-import { User } from './index';
-import { ProductVariant, ProductPackagingType } from './stockMovement';
-import { Service, ServiceCategory, ServiceVariant, MaterialOption } from './service';
-
-export interface Customer {
-    id: number;
-    tenant_id: number;
-    preferred_shop_id: number | null;
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone: string | null;
-    email_verified_at: string | null;
-    is_active: boolean;
-    marketing_opt_in: boolean;
-    account_balance: number;
-    credit_limit: number | null;
-    total_purchases: number;
-    last_purchase_at: string | null;
-    created_at: string;
-    updated_at: string;
-    full_name?: string;
-}
+import { ProductPackagingType, ProductVariant } from './stockMovement';
+import { Customer } from './customer';
 
 export interface Order {
     id: number;
@@ -43,13 +28,23 @@ export interface Order {
     billing_address: string;
     customer_notes: string | null;
     staff_notes: string | null;
+    cancellation_reason: string | null;
     tracking_number: string | null;
+    cancelled_at: string | null;
     created_at: string;
     updated_at: string;
     items?: OrderItem[];
     shop?: Shop;
     customer?: Customer;
 }
+
+export type SellableType =
+    | 'App\\Models\\ProductVariant'
+    | 'App\\Models\\ServiceVariant';
+
+export type Sellable =
+    | (ProductVariant & { product?: Product })
+    | (ServiceVariant & { service?: Service });
 
 export interface OrderItem {
     id: number;
@@ -60,7 +55,7 @@ export interface OrderItem {
     product_packaging_type_id?: number | null;
 
     // Polymorphic fields
-    sellable_type: string; // 'App\\Models\\ProductVariant' | 'App\\Models\\ServiceVariant'
+    sellable_type: SellableType;
     sellable_id: number;
 
     quantity: number;
@@ -87,9 +82,7 @@ export interface OrderItem {
         product?: Product;
     };
     packagingType?: ProductPackagingType;
-    sellable?: ServiceVariant & {
-        service?: Service;
-    };
+    sellable?: Sellable;
 }
 
 // Cart Types
@@ -113,7 +106,7 @@ export interface CartItem {
     product_packaging_type_id?: number | null;
 
     // Polymorphic fields
-    sellable_type: string; // 'App\\Models\\ProductVariant' | 'App\\Models\\ServiceVariant'
+    sellable_type: SellableType;
     sellable_id: number;
 
     quantity: number;
@@ -137,9 +130,7 @@ export interface CartItem {
         product?: Product;
     };
     packagingType?: ProductPackagingType;
-    sellable?: ServiceVariant & {
-        service?: Service;
-    };
+    sellable?: Sellable;
     subtotal?: number;
 }
 
@@ -226,7 +217,12 @@ export interface UpdateCartItemData {
 }
 
 // Sort Options
-export type ProductSortOption = 'name' | 'price_low' | 'price_high' | 'newest' | 'featured';
+export type ProductSortOption =
+    | 'name'
+    | 'price_low'
+    | 'price_high'
+    | 'newest'
+    | 'featured';
 
 export interface SortOption {
     value: ProductSortOption;
@@ -280,6 +276,7 @@ export interface CheckoutProps {
     addresses: CustomerAddress[];
     customer: Customer;
     availableGateways?: PaymentGatewayInfo[];
+    paymentReference: string;
 }
 
 export interface CheckoutSuccessProps {
@@ -343,7 +340,7 @@ export interface StorefrontServicesProps {
 export interface StorefrontServiceDetailProps {
     shop: Shop;
     service: Service;
-    categoryAddons: any[];
+    categoryAddons: ServiceAddon[];
     relatedServices: Service[];
     cartSummary: CartSummary;
 }

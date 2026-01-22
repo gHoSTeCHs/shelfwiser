@@ -43,6 +43,19 @@ class UpdateShopRequest extends FormRequest
         return $rules;
     }
 
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Please provide a name for this shop.',
+            'name.max' => 'Shop name cannot exceed 255 characters.',
+            'city.required' => 'Please specify the city where this shop is located.',
+            'state.required' => 'Please specify the state where this shop is located.',
+            'country.required' => 'Please specify the country where this shop is located.',
+            'email.email' => 'Please provide a valid email address for this shop.',
+            'phone.max' => 'Phone number cannot exceed 255 characters.',
+        ];
+    }
+
     protected function getShopType(): ShopType
     {
         $tenantId = $this->user()->tenant_id;

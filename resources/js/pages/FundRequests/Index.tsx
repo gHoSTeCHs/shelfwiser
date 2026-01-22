@@ -1,17 +1,10 @@
 import FundRequestController from '@/actions/App/Http/Controllers/FundRequestController.ts';
+import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 import AppLayout from '@/layouts/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import {
-    DollarSign,
-    Plus,
-    TrendingUp,
-    CheckCircle,
-    XCircle,
-    Clock,
-} from 'lucide-react';
+import { CheckCircle, Clock, DollarSign, Plus, TrendingUp } from 'lucide-react';
 import React, { useState } from 'react';
 
 interface Shop {
@@ -116,11 +109,21 @@ const FundRequestsIndex = ({
         setSelectedShop('');
         setSelectedStatus('');
         setSelectedType('');
-        router.get('/fund-requests', {}, { preserveState: true, preserveScroll: true });
+        router.get(
+            '/fund-requests',
+            {},
+            { preserveState: true, preserveScroll: true },
+        );
     };
 
     const getStatusBadge = (status: string) => {
-        const statusConfig: Record<string, { color: 'light' | 'warning' | 'success' | 'error' | 'info', label: string }> = {
+        const statusConfig: Record<
+            string,
+            {
+                color: 'light' | 'warning' | 'success' | 'error' | 'info';
+                label: string;
+            }
+        > = {
             pending: { color: 'warning', label: 'Pending' },
             approved: { color: 'success', label: 'Approved' },
             rejected: { color: 'error', label: 'Rejected' },
@@ -128,7 +131,10 @@ const FundRequestsIndex = ({
             cancelled: { color: 'light', label: 'Cancelled' },
         };
 
-        const config = statusConfig[status] || { color: 'light' as const, label: status };
+        const config = statusConfig[status] || {
+            color: 'light' as const,
+            label: status,
+        };
         return <Badge color={config.color}>{config.label}</Badge>;
     };
 
@@ -186,7 +192,9 @@ const FundRequestsIndex = ({
                                     Total Requested
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                                    {formatAmount(statistics.total_amount_requested)}
+                                    {formatAmount(
+                                        statistics.total_amount_requested,
+                                    )}
                                 </p>
                             </div>
                             <div className="rounded-lg bg-brand-50 p-3 dark:bg-brand-900/20">
@@ -202,7 +210,9 @@ const FundRequestsIndex = ({
                                     Total Approved
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">
-                                    {formatAmount(statistics.total_amount_approved)}
+                                    {formatAmount(
+                                        statistics.total_amount_approved,
+                                    )}
                                 </p>
                             </div>
                             <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
@@ -218,7 +228,9 @@ const FundRequestsIndex = ({
                                     Total Disbursed
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                    {formatAmount(statistics.total_amount_disbursed)}
+                                    {formatAmount(
+                                        statistics.total_amount_disbursed,
+                                    )}
                                 </p>
                             </div>
                             <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
@@ -270,8 +282,10 @@ const FundRequestsIndex = ({
                             </label>
                             <select
                                 value={selectedShop}
-                                onChange={(e) => setSelectedShop(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                onChange={(e) =>
+                                    setSelectedShop(e.target.value)
+                                }
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             >
                                 <option value="">All Shops</option>
                                 {shops.map((shop) => (
@@ -288,12 +302,17 @@ const FundRequestsIndex = ({
                             </label>
                             <select
                                 value={selectedStatus}
-                                onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                onChange={(e) =>
+                                    setSelectedStatus(e.target.value)
+                                }
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             >
                                 <option value="">All Status</option>
                                 {statusOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
                                         {option.label}
                                     </option>
                                 ))}
@@ -306,12 +325,17 @@ const FundRequestsIndex = ({
                             </label>
                             <select
                                 value={selectedType}
-                                onChange={(e) => setSelectedType(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                onChange={(e) =>
+                                    setSelectedType(e.target.value)
+                                }
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             >
                                 <option value="">All Types</option>
                                 {typeOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
                                         {option.label}
                                     </option>
                                 ))}
@@ -326,7 +350,7 @@ const FundRequestsIndex = ({
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             />
                         </div>
 
@@ -338,7 +362,7 @@ const FundRequestsIndex = ({
                                 type="date"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             />
                         </div>
                     </div>
@@ -358,22 +382,40 @@ const FundRequestsIndex = ({
                         <table className="w-full">
                             <thead className="border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Date
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Type
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Shop
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Amount
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Status
                                     </th>
-                                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Actions
                                     </th>
                                 </tr>
@@ -389,7 +431,9 @@ const FundRequestsIndex = ({
                                             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
                                                 No fund requests found
                                             </p>
-                                            <Link href={FundRequestController.create.url()}>
+                                            <Link
+                                                href={FundRequestController.create.url()}
+                                            >
                                                 <Button className="mt-4">
                                                     <Plus className="mr-2 h-4 w-4" />
                                                     Create First Request
@@ -405,12 +449,17 @@ const FundRequestsIndex = ({
                                         >
                                             <td className="px-6 py-4">
                                                 <p className="font-medium text-gray-900 dark:text-white">
-                                                    {formatDate(request.requested_at)}
+                                                    {formatDate(
+                                                        request.requested_at,
+                                                    )}
                                                 </p>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="text-sm capitalize text-gray-700 dark:text-gray-300">
-                                                    {request.request_type.replace('_', ' ')}
+                                                <span className="text-sm text-gray-700 capitalize dark:text-gray-300">
+                                                    {request.request_type.replace(
+                                                        '_',
+                                                        ' ',
+                                                    )}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
@@ -420,7 +469,9 @@ const FundRequestsIndex = ({
                                             </td>
                                             <td className="px-6 py-4">
                                                 <p className="font-semibold text-gray-900 dark:text-white">
-                                                    {formatAmount(request.amount)}
+                                                    {formatAmount(
+                                                        request.amount,
+                                                    )}
                                                 </p>
                                             </td>
                                             <td className="px-6 py-4">
@@ -428,9 +479,17 @@ const FundRequestsIndex = ({
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <Link
-                                                    href={FundRequestController.show.url({ fundRequest: request.id })}
+                                                    href={FundRequestController.show.url(
+                                                        {
+                                                            fundRequest:
+                                                                request.id,
+                                                        },
+                                                    )}
                                                 >
-                                                    <Button variant="outline" size="sm">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                    >
                                                         View
                                                     </Button>
                                                 </Link>

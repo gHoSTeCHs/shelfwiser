@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class TransferStockRequest extends FormRequest
 {
@@ -13,11 +14,31 @@ class TransferStockRequest extends FormRequest
 
     public function rules(): array
     {
+        $tenantId = $this->user()->tenant_id;
+
         return [
-            'product_variant_id' => ['required', 'exists:product_variants,id'],
-            'from_location_id' => ['required', 'exists:inventory_locations,id', 'different:to_location_id'],
-            'to_location_id' => ['required', 'exists:inventory_locations,id', 'different:from_location_id'],
-            'quantity' => ['required', 'integer', 'min:1'],
+            'product_variant_id' => [
+                'bail',
+                'required',
+                Rule::exists('product_variants', 'id')
+                    ->where(fn ($query) => $query->whereIn(
+                        'product_id',
+                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    )),
+            ],
+            'from_location_id' => [
+                'bail',
+                'required',
+                Rule::exists('inventory_locations', 'id')->where('tenant_id', $tenantId),
+                'different:to_location_id',
+            ],
+            'to_location_id' => [
+                'bail',
+                'required',
+                Rule::exists('inventory_locations', 'id')->where('tenant_id', $tenantId),
+                'different:from_location_id',
+            ],
+            'quantity' => ['bail', 'required', 'integer', 'min:1'],
             'reason' => ['nullable', 'string', 'max:500'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];

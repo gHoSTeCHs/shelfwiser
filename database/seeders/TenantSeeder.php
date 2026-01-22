@@ -52,7 +52,10 @@ class TenantSeeder extends Seeder
         ];
 
         foreach ($tenants as $tenantData) {
-            Tenant::query()->create($tenantData);
+            Tenant::updateOrCreate(
+                ['slug' => $tenantData['slug']],
+                $tenantData
+            );
         }
     }
 }

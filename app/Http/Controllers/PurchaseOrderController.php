@@ -30,7 +30,7 @@ class PurchaseOrderController extends Controller
      */
     public function index(Request $request): Response
     {
-        Gate::authorize('viewAny', PurchaseOrder::class);
+        Gate::authorize('purchaseOrder.viewAny', PurchaseOrder::class);
 
         $tenantId = auth()->user()->tenant_id;
         $shopId = $request->input('shop_id');
@@ -57,7 +57,7 @@ class PurchaseOrderController extends Controller
      */
     public function supplier(): Response
     {
-        //        Gate::authorize('viewAsSupplier', auth()->user()->tenant);
+        Gate::authorize('purchaseOrder.viewAsSupplier', auth()->user()->tenant);
 
         $purchaseOrders = PurchaseOrder::forSupplier(auth()->user()->tenant_id)
             ->with(['buyerTenant', 'shop', 'items.productVariant', 'createdBy'])
@@ -71,7 +71,7 @@ class PurchaseOrderController extends Controller
 
     public function create(Request $request): Response
     {
-        Gate::authorize('viewAny', PurchaseOrder::class);
+        Gate::authorize('purchaseOrder.viewAny', PurchaseOrder::class);
 
         $tenantId = auth()->user()->tenant_id;
         $shops = Shop::where('tenant_id', $tenantId)->get(['id', 'name']);
@@ -79,16 +79,27 @@ class PurchaseOrderController extends Controller
         $connections = $this->connectionService->getConnectionsForBuyer(auth()->user()->tenant);
         $approvedConnections = $connections->filter(fn ($conn) => $conn->status->canOrder());
 
-        $supplierCatalog = [];
+        $supplierCatalog = null;
         $selectedSupplierId = $request->input('supplier');
 
         if ($selectedSupplierId) {
             $supplierTenant = Tenant::findOrFail($selectedSupplierId);
-            $supplierCatalog = $supplierTenant->supplierProfile
+            $search = $request->input('search', '');
+            $perPage = min((int) $request->input('per_page', 20), 50);
+
+            $query = $supplierTenant->supplierProfile
                 ->catalogItems()
                 ->where('is_available', true)
-                ->with(['product', 'pricingTiers'])
-                ->get();
+                ->with(['product', 'pricingTiers']);
+
+            if ($search) {
+                $query->whereHas('product', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%");
+                });
+            }
+
+            $supplierCatalog = $query->orderBy('created_at', 'desc')->paginate($perPage);
         }
 
         return Inertia::render('PurchaseOrders/Create', [
@@ -123,7 +134,7 @@ class PurchaseOrderController extends Controller
 
     public function show(PurchaseOrder $purchaseOrder): Response
     {
-        Gate::authorize('view', $purchaseOrder);
+        Gate::authorize('purchaseOrder.view', $purchaseOrder);
 
         $purchaseOrder->load([
             'items.productVariant.product',
@@ -151,7 +162,7 @@ class PurchaseOrderController extends Controller
 
     public function submit(PurchaseOrder $purchaseOrder): RedirectResponse
     {
-        Gate::authorize('submit', $purchaseOrder);
+        Gate::authorize('purchaseOrder.submit', $purchaseOrder);
 
         $this->purchaseOrderService->submitPurchaseOrder($purchaseOrder, auth()->user());
 
@@ -161,7 +172,7 @@ class PurchaseOrderController extends Controller
 
     public function approve(PurchaseOrder $purchaseOrder): RedirectResponse
     {
-        Gate::authorize('approve', $purchaseOrder);
+        Gate::authorize('purchaseOrder.approve', $purchaseOrder);
 
         $this->purchaseOrderService->approvePurchaseOrder($purchaseOrder, auth()->user());
 
@@ -171,7 +182,7 @@ class PurchaseOrderController extends Controller
 
     public function ship(PurchaseOrder $purchaseOrder): RedirectResponse
     {
-        Gate::authorize('ship', $purchaseOrder);
+        Gate::authorize('purchaseOrder.ship', $purchaseOrder);
 
         $this->purchaseOrderService->shipPurchaseOrder($purchaseOrder, auth()->user());
 
@@ -193,7 +204,7 @@ class PurchaseOrderController extends Controller
 
     public function cancel(Request $request, PurchaseOrder $purchaseOrder): RedirectResponse
     {
-        Gate::authorize('cancel', $purchaseOrder);
+        Gate::authorize('purchaseOrder.cancel', $purchaseOrder);
 
         $this->purchaseOrderService->cancelPurchaseOrder(
             $purchaseOrder,

@@ -22,4 +22,18 @@ class RecordPaymentRequest extends FormRequest
             'notes' => ['nullable', 'string', 'max:500'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'amount.required' => 'Please enter the payment amount.',
+            'amount.min' => 'Payment amount must be at least 0.01.',
+            'payment_date.required' => 'Please specify when the payment was made.',
+            'payment_date.before_or_equal' => 'Payment date cannot be in the future.',
+            'payment_method.required' => 'Please select a payment method.',
+            'payment_method.max' => 'Payment method cannot exceed 50 characters.',
+            'reference_number.max' => 'Reference number cannot exceed 100 characters.',
+            'notes.max' => 'Notes cannot exceed 500 characters.',
+        ];
+    }
 }

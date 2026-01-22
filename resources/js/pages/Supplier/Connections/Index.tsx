@@ -2,10 +2,11 @@ import SupplierConnectionController from '@/actions/App/Http/Controllers/Supplie
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
 import { ConnectionStatus, SupplierConnection } from '@/types/supplier';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import {
     Building2,
     CheckCircle,
@@ -14,6 +15,14 @@ import {
     Play,
     XCircle,
 } from 'lucide-react';
+import { useState } from 'react';
+
+type ConnectionAction = 'approve' | 'reject' | 'suspend' | 'activate' | null;
+
+interface ConfirmState {
+    action: ConnectionAction;
+    connectionId: number | null;
+}
 
 interface Props {
     buyerConnections: SupplierConnection[];
@@ -34,40 +43,90 @@ const statusConfig: Record<
     rejected: { label: 'Rejected', variant: 'error' },
 };
 
+const actionConfig: Record<
+    Exclude<ConnectionAction, null>,
+    {
+        title: string;
+        message: string;
+        confirmLabel: string;
+        variant: 'danger' | 'warning' | 'info' | 'success';
+    }
+> = {
+    approve: {
+        title: 'Approve Connection',
+        message:
+            'Are you sure you want to approve this connection request? The buyer will be able to place orders.',
+        confirmLabel: 'Approve',
+        variant: 'success',
+    },
+    reject: {
+        title: 'Reject Connection',
+        message:
+            'Are you sure you want to reject this connection request? This action cannot be undone.',
+        confirmLabel: 'Reject',
+        variant: 'danger',
+    },
+    suspend: {
+        title: 'Suspend Connection',
+        message:
+            'Are you sure you want to suspend this connection? The buyer will not be able to place new orders.',
+        confirmLabel: 'Suspend',
+        variant: 'warning',
+    },
+    activate: {
+        title: 'Activate Connection',
+        message:
+            'Are you sure you want to activate this connection? The buyer will be able to place orders.',
+        confirmLabel: 'Activate',
+        variant: 'success',
+    },
+};
+
 export default function Index({
     buyerConnections,
     supplierConnections,
 }: Props) {
-    const handleApprove = (id: number) => {
-        if (confirm('Approve this connection request?')) {
-            SupplierConnectionController.approve({
-                id: id,
-            });
-        }
+    const [confirmState, setConfirmState] = useState<ConfirmState>({
+        action: null,
+        connectionId: null,
+    });
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const openConfirm = (
+        action: Exclude<ConnectionAction, null>,
+        connectionId: number,
+    ) => {
+        setConfirmState({ action, connectionId });
     };
 
-    const handleReject = (id: number) => {
-        if (confirm('Reject this connection request?')) {
-            SupplierConnectionController.reject({
-                id: id,
-            });
-        }
+    const closeConfirm = () => {
+        setConfirmState({ action: null, connectionId: null });
     };
 
-    const handleSuspend = (id: number) => {
-        SupplierConnectionController.suspend({
-            id: id,
-        });
-    };
+    const handleConfirmAction = () => {
+        if (!confirmState.action || !confirmState.connectionId) return;
 
-    const handleActivate = (id: number) => {
-        SupplierConnectionController.activate({
-            id: id,
-        });
+        setIsProcessing(true);
+        const id = confirmState.connectionId;
+
+        const actionMap: Record<Exclude<ConnectionAction, null>, () => void> = {
+            approve: () =>
+                router.post(SupplierConnectionController.approve.url({ id })),
+            reject: () =>
+                router.post(SupplierConnectionController.reject.url({ id })),
+            suspend: () =>
+                router.post(SupplierConnectionController.suspend.url({ id })),
+            activate: () =>
+                router.post(SupplierConnectionController.activate.url({ id })),
+        };
+
+        actionMap[confirmState.action]();
+        setIsProcessing(false);
+        closeConfirm();
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Supplier Connections" />
 
             <div className="space-y-8">
@@ -219,7 +278,10 @@ export default function Index({
                                                 <Button
                                                     size="sm"
                                                     onClick={() =>
-                                                        handleApprove(conn.id)
+                                                        openConfirm(
+                                                            'approve',
+                                                            conn.id,
+                                                        )
                                                     }
                                                     className="flex-1"
                                                 >
@@ -230,7 +292,10 @@ export default function Index({
                                                     size="sm"
                                                     variant="outline"
                                                     onClick={() =>
-                                                        handleReject(conn.id)
+                                                        openConfirm(
+                                                            'reject',
+                                                            conn.id,
+                                                        )
                                                     }
                                                     className="flex-1"
                                                 >
@@ -247,7 +312,10 @@ export default function Index({
                                                     size="sm"
                                                     variant="outline"
                                                     onClick={() =>
-                                                        handleSuspend(conn.id)
+                                                        openConfirm(
+                                                            'suspend',
+                                                            conn.id,
+                                                        )
                                                     }
                                                     className="w-full"
                                                 >
@@ -262,7 +330,10 @@ export default function Index({
                                                 <Button
                                                     size="sm"
                                                     onClick={() =>
-                                                        handleActivate(conn.id)
+                                                        openConfirm(
+                                                            'activate',
+                                                            conn.id,
+                                                        )
                                                     }
                                                     className="w-full"
                                                 >
@@ -278,6 +349,23 @@ export default function Index({
                     )}
                 </section>
             </div>
-        </AppLayout>
+
+            {confirmState.action && (
+                <ConfirmDialog
+                    isOpen={!!confirmState.action}
+                    onClose={closeConfirm}
+                    onConfirm={handleConfirmAction}
+                    title={actionConfig[confirmState.action].title}
+                    message={actionConfig[confirmState.action].message}
+                    confirmLabel={
+                        actionConfig[confirmState.action].confirmLabel
+                    }
+                    variant={actionConfig[confirmState.action].variant}
+                    isLoading={isProcessing}
+                />
+            )}
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

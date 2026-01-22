@@ -1,18 +1,19 @@
-import StorefrontLayout from '@/layouts/StorefrontLayout';
-import { StorefrontProductDetailProps } from '@/types/storefront';
-import React from 'react';
+import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import Select from '@/components/form/Select';
+import AddToCartButton from '@/components/storefront/AddToCartButton';
 import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import PriceDisplay from '@/components/storefront/PriceDisplay';
-import QuantitySelector from '@/components/storefront/QuantitySelector';
-import AddToCartButton from '@/components/storefront/AddToCartButton';
 import ProductCard from '@/components/storefront/ProductCard';
+import QuantitySelector from '@/components/storefront/QuantitySelector';
 import Badge from '@/components/ui/badge/Badge';
-import { Card } from '@/components/ui/card';
-import Select from '@/components/form/Select';
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import StorefrontLayout from '@/layouts/StorefrontLayout';
+import { StorefrontProductDetailProps } from '@/types/storefront';
+import { motion } from 'framer-motion';
+import { ImageIcon } from 'lucide-react';
+import React from 'react';
 
 /**
- * Individual product detail page.
+ * Individual product detail page with playful-luxury styling.
  * Shows product images, variants, description, and add to cart functionality.
  */
 const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
@@ -22,166 +23,257 @@ const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
     cartSummary,
 }) => {
     const [selectedVariantId, setSelectedVariantId] = React.useState(
-        product.variants?.[0]?.id || 0
+        product.variants?.[0]?.id || 0,
     );
-    const [selectedPackagingId, setSelectedPackagingId] = React.useState<number | null>(null);
+    const [selectedPackagingId, setSelectedPackagingId] = React.useState<
+        number | null
+    >(null);
     const [quantity, setQuantity] = React.useState(1);
 
-    const selectedVariant = product.variants?.find(v => v.id === selectedVariantId);
+    const selectedVariant = product.variants?.find(
+        (v) => v.id === selectedVariantId,
+    );
     const availableStock = selectedVariant?.available_stock || 0;
 
-    const variantOptions = product.variants?.map(variant => ({
-        value: variant.id.toString(),
-        label: `${variant.sku} - ${shop.currency_symbol}${Number(variant.price).toFixed(2)}`,
-    })) || [];
+    const variantOptions =
+        product.variants?.map((variant) => ({
+            value: variant.id.toString(),
+            label: `${variant.sku} - ${shop.currency_symbol}${Number(variant.price).toFixed(2)}`,
+        })) || [];
 
-    const packagingOptions = selectedVariant?.packaging_types?.map(packaging => ({
-        value: packaging.id.toString(),
-        label: packaging.name,
-    })) || [];
+    const packagingOptions =
+        selectedVariant?.packaging_types?.map((packaging) => ({
+            value: packaging.id.toString(),
+            label: packaging.name,
+        })) || [];
 
     return (
         <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count}>
-            <div className="space-y-8">
+            <div className="space-y-8 sm:space-y-12">
                 <Breadcrumbs
                     items={[
-                        { label: 'Home', href: StorefrontController.index.url({ shop: shop.slug }) },
-                        { label: 'Products', href: StorefrontController.products.url({ shop: shop.slug }) },
-                        ...(product.category ? [{ label: product.category.name }] : []),
+                        {
+                            label: 'Home',
+                            href: StorefrontController.index.url({
+                                shop: shop.slug,
+                            }),
+                        },
+                        {
+                            label: 'Products',
+                            href: StorefrontController.products.url({
+                                shop: shop.slug,
+                            }),
+                        },
+                        ...(product.category
+                            ? [{ label: product.category.name }]
+                            : []),
                         { label: product.name },
                     ]}
                 />
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-12">
+                    {/* Product Image */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="group relative aspect-square overflow-hidden rounded-2xl bg-gray-100 sm:rounded-3xl dark:bg-navy-800"
+                    >
                         {product.image ? (
                             <img
                                 src={product.image}
                                 alt={product.name}
-                                className="w-full h-full object-cover"
+                                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                <svg className="w-32 h-32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
+                            <div className="flex h-full w-full items-center justify-center text-gray-300 dark:text-navy-500">
+                                <ImageIcon
+                                    className="h-24 w-24 sm:h-32 sm:w-32"
+                                    strokeWidth={1}
+                                />
                             </div>
                         )}
-                    </div>
 
-                    <div className="space-y-6">
+                        {/* Stock badge overlay */}
+                        <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
+                            {availableStock > 0 ? (
+                                availableStock <= 10 && (
+                                    <Badge color="warning" size="sm">
+                                        Only {availableStock} left
+                                    </Badge>
+                                )
+                            ) : (
+                                <Badge color="error" size="sm">
+                                    Out of Stock
+                                </Badge>
+                            )}
+                        </div>
+                    </motion.div>
+
+                    {/* Product Info */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.1 }}
+                        className="space-y-5 sm:space-y-6"
+                    >
+                        {/* Category & Name */}
                         <div>
                             {product.category && (
-                                <p className="text-sm text-gray-500 mb-2">
+                                <p className="mb-2 text-xs font-medium tracking-wide text-brand-600 uppercase sm:text-sm dark:text-brand-400">
                                     {product.category.name}
                                 </p>
                             )}
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl lg:text-4xl dark:text-white">
                                 {product.name}
                             </h1>
                             {selectedVariant && (
-                                <p className="text-sm text-gray-500">
+                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                                     SKU: {selectedVariant.sku}
                                 </p>
                             )}
                         </div>
 
+                        {/* Price */}
                         {selectedVariant && (
-                            <PriceDisplay
-                                price={selectedVariant.price}
-                                retailPrice={selectedVariant.retail_price}
-                                shop={shop}
-                                size="lg"
-                                showTaxLabel={true}
-                            />
+                            <div className="flex items-baseline gap-3">
+                                <PriceDisplay
+                                    price={selectedVariant.price}
+                                    retailPrice={selectedVariant.retail_price}
+                                    shop={shop}
+                                    size="lg"
+                                    showTaxLabel={true}
+                                />
+                            </div>
                         )}
 
-                        <div className="flex items-center gap-2">
+                        {/* Stock Status */}
+                        <div className="flex items-center gap-3">
                             {availableStock > 0 ? (
                                 <>
-                                    <Badge color="success">In Stock</Badge>
-                                    <span className="text-sm text-gray-600">
-                                        {availableStock} available
+                                    <span className="flex h-2.5 w-2.5 rounded-full bg-success-500" />
+                                    <span className="text-sm font-medium text-success-700 dark:text-success-400">
+                                        In Stock
+                                    </span>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                        ({availableStock} available)
                                     </span>
                                 </>
                             ) : (
-                                <Badge color="error">Out of Stock</Badge>
+                                <>
+                                    <span className="flex h-2.5 w-2.5 rounded-full bg-error-500" />
+                                    <span className="text-sm font-medium text-error-600 dark:text-error-400">
+                                        Out of Stock
+                                    </span>
+                                </>
                             )}
                         </div>
 
+                        {/* Description */}
                         {product.description && (
-                            <div className="prose prose-sm max-w-none">
-                                <p className="text-gray-600">{product.description}</p>
-                            </div>
+                            <p className="text-sm leading-relaxed text-gray-600 sm:text-base dark:text-gray-400">
+                                {product.description}
+                            </p>
                         )}
 
-                        <Card className="p-6 space-y-4">
-                            {product.variants && product.variants.length > 1 && (
+                        {/* Purchase Options Card */}
+                        <div className="rounded-xl border border-gray-200 bg-white p-4 sm:rounded-2xl sm:p-6 dark:border-navy-700 dark:bg-navy-800">
+                            <div className="space-y-4">
+                                {/* Variant Selection */}
+                                {product.variants &&
+                                    product.variants.length > 1 && (
+                                        <div>
+                                            <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                                                Select Variant
+                                            </label>
+                                            <Select
+                                                options={variantOptions}
+                                                defaultValue={selectedVariantId.toString()}
+                                                onChange={(value) => {
+                                                    setSelectedVariantId(
+                                                        parseInt(value),
+                                                    );
+                                                    setQuantity(1);
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+
+                                {/* Packaging Selection */}
+                                {packagingOptions.length > 0 && (
+                                    <div>
+                                        <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                                            Packaging Type{' '}
+                                            <span className="text-gray-400">
+                                                (Optional)
+                                            </span>
+                                        </label>
+                                        <Select
+                                            options={[
+                                                {
+                                                    value: '',
+                                                    label: 'Standard',
+                                                },
+                                                ...packagingOptions,
+                                            ]}
+                                            defaultValue={
+                                                selectedPackagingId?.toString() ||
+                                                ''
+                                            }
+                                            onChange={(value) =>
+                                                setSelectedPackagingId(
+                                                    value
+                                                        ? parseInt(value)
+                                                        : null,
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Quantity */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                                        Select Variant
+                                    <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                                        Quantity
                                     </label>
-                                    <Select
-                                        options={variantOptions}
-                                        defaultValue={selectedVariantId.toString()}
-                                        onChange={(value) => {
-                                            setSelectedVariantId(parseInt(value));
-                                            setQuantity(1);
-                                        }}
+                                    <QuantitySelector
+                                        quantity={quantity}
+                                        onChange={setQuantity}
+                                        min={1}
+                                        max={availableStock}
+                                        disabled={availableStock === 0}
                                     />
                                 </div>
-                            )}
 
-                            {packagingOptions.length > 0 && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                                        Packaging Type (Optional)
-                                    </label>
-                                    <Select
-                                        options={[
-                                            { value: '', label: 'Standard' },
-                                            ...packagingOptions,
-                                        ]}
-                                        defaultValue={selectedPackagingId?.toString() || ''}
-                                        onChange={(value) => setSelectedPackagingId(value ? parseInt(value) : null)}
+                                {/* Add to Cart */}
+                                {selectedVariant && (
+                                    <AddToCartButton
+                                        shop={shop}
+                                        variantId={selectedVariant.id}
+                                        quantity={quantity}
+                                        packagingTypeId={selectedPackagingId}
+                                        availableStock={availableStock}
+                                        fullWidth
+                                        size="lg"
                                     />
-                                </div>
-                            )}
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-900 mb-2">
-                                    Quantity
-                                </label>
-                                <QuantitySelector
-                                    quantity={quantity}
-                                    onChange={setQuantity}
-                                    min={1}
-                                    max={availableStock}
-                                    disabled={availableStock === 0}
-                                />
+                                )}
                             </div>
-
-                            {selectedVariant && (
-                                <AddToCartButton
-                                    shop={shop}
-                                    variantId={selectedVariant.id}
-                                    quantity={quantity}
-                                    packagingTypeId={selectedPackagingId}
-                                    availableStock={availableStock}
-                                    fullWidth
-                                    size="lg"
-                                />
-                            )}
-                        </Card>
-                    </div>
+                        </div>
+                    </motion.div>
                 </div>
 
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                        Related Products
-                    </h2>
-                    {relatedProducts && relatedProducts.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Related Products */}
+                {relatedProducts && relatedProducts.length > 0 && (
+                    <motion.section
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <h2 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
+                            You May Also Like
+                        </h2>
+                        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
                             {relatedProducts.map((relatedProduct) => (
                                 <ProductCard
                                     key={relatedProduct.id}
@@ -190,12 +282,8 @@ const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
                                 />
                             ))}
                         </div>
-                    ) : (
-                        <div className="text-center py-8 text-gray-500">
-                            <p>No related products available at this time.</p>
-                        </div>
-                    )}
-                </div>
+                    </motion.section>
+                )}
             </div>
         </StorefrontLayout>
     );

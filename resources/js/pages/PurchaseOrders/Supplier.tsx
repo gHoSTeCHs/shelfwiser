@@ -65,7 +65,7 @@ export default function Supplier({ purchaseOrders }: Props) {
     ).length;
 
     return (
-        <AppLayout>
+        <>
             <Head title="Supplier Orders" />
 
             <div className="space-y-6">
@@ -324,6 +324,8 @@ export default function Supplier({ purchaseOrders }: Props) {
                     </div>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Supplier.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

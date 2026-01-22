@@ -2,6 +2,8 @@
 
 namespace App\Policies;
 
+use App\Enums\ConnectionStatus;
+use App\Models\SupplierConnection;
 use App\Models\SupplierProfile;
 use App\Models\Tenant;
 use App\Models\User;
@@ -45,6 +47,10 @@ class SupplierPolicy
             return $user->role->hasPermission('manage_supplier_catalog');
         }
 
-        return true;
+        return SupplierConnection::query()
+            ->where('supplier_tenant_id', $supplierTenant->id)
+            ->where('buyer_tenant_id', $user->tenant_id)
+            ->whereIn('status', [ConnectionStatus::APPROVED, ConnectionStatus::ACTIVE])
+            ->exists();
     }
 }

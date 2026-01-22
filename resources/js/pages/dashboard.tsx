@@ -1,31 +1,31 @@
-import AppLayout from '@/layouts/AppLayout';
-import {
-    DashboardProps,
-    DashboardMetrics,
-    SupplierData,
-    SalesData,
-    InventoryData,
-    FinancialData,
-} from '@/types/dashboard';
-import { Head, router } from '@inertiajs/react';
-import React, { useState } from 'react';
-import Select from '@/components/form/Select';
-import DatePicker from '@/components/form/date-picker';
-import {
-    RefreshCw,
-    BarChart3,
-    Package,
-    TrendingUp,
-    Truck,
-    DollarSign,
-} from 'lucide-react';
-import Button from '@/components/ui/button/Button';
-import { TabList, TabTrigger, TabContent } from '@/components/ui/tabs/Tab';
+import FinancialsTab from '@/components/dashboard/tabs/FinancialsTab';
+import InventoryTab from '@/components/dashboard/tabs/InventoryTab';
 import OverviewTab from '@/components/dashboard/tabs/OverviewTab';
 import SalesTab from '@/components/dashboard/tabs/SalesTab';
-import InventoryTab from '@/components/dashboard/tabs/InventoryTab';
 import SuppliersTab from '@/components/dashboard/tabs/SuppliersTab';
-import FinancialsTab from '@/components/dashboard/tabs/FinancialsTab';
+import Select from '@/components/form/Select';
+import DatePicker from '@/components/form/date-picker';
+import Button from '@/components/ui/button/Button';
+import { TabContent, TabList, TabTrigger } from '@/components/ui/tabs/Tab';
+import AppLayout from '@/layouts/AppLayout';
+import {
+    DashboardMetrics,
+    DashboardProps,
+    FinancialData,
+    InventoryData,
+    SalesData,
+    SupplierData,
+} from '@/types/dashboard';
+import { Head, router } from '@inertiajs/react';
+import {
+    BarChart3,
+    DollarSign,
+    Package,
+    RefreshCw,
+    TrendingUp,
+    Truck,
+} from 'lucide-react';
+import React, { useState } from 'react';
 
 export default function Dashboard({
     activeTab,

@@ -6,12 +6,15 @@ import {
     Box,
     Briefcase,
     Building2,
+    Calculator,
+    FileSpreadsheet,
     FileUser,
     LayoutTemplate,
     Network,
     Settings,
     ShoppingBag,
     Store,
+    Users,
     Wrench,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -37,6 +40,7 @@ const navItems: NavItem[] = [
             { name: 'Products', path: '/products' },
             { name: 'Categories', path: '/categories' },
             { name: 'Stock Movements', path: '/stock-movements' },
+            { name: 'Reorder Alerts', path: '/reorder-alerts' },
         ],
     },
     {
@@ -52,9 +56,15 @@ const navItems: NavItem[] = [
         name: 'Sales & Orders',
         subItems: [
             { name: 'Orders', path: '/orders' },
+            { name: 'Returns', path: '/returns' },
             { name: 'Receipts', path: '/receipts' },
             { name: 'Purchase Orders', path: '/purchase-orders' },
         ],
+    },
+    {
+        icon: <Users />,
+        name: 'Customers',
+        path: '/customers',
     },
     {
         icon: <BarChart3 />,
@@ -95,11 +105,35 @@ const navItems: NavItem[] = [
         icon: <Briefcase />,
         name: 'HR & Payroll',
         subItems: [
-            { name: 'Payroll', path: '/payroll' },
-            { name: 'My Payslips', path: '/payroll/my-payslips' },
+            { name: 'Overview', path: '/payroll' },
+            { name: 'Pay Runs', path: '/pay-runs', new: true },
             { name: 'Timesheets', path: '/timesheets' },
-            { name: 'Fund Requests', path: '/fund-requests' },
             { name: 'Wage Advances', path: '/wage-advances' },
+            { name: 'Fund Requests', path: '/fund-requests' },
+            { name: 'My Payslips', path: '/payroll/my-payslips' },
+        ],
+    },
+    {
+        icon: <FileSpreadsheet />,
+        name: 'Payroll Reports',
+        subItems: [
+            { name: 'Summary Report', path: '/payroll/reports/summary' },
+            { name: 'Tax Remittance', path: '/payroll/reports/tax' },
+            { name: 'Pension Report', path: '/payroll/reports/pension' },
+            { name: 'Bank Schedule', path: '/payroll/reports/bank-schedule' },
+        ],
+    },
+    {
+        icon: <Calculator />,
+        name: 'Payroll Settings',
+        subItems: [
+            { name: 'Earning Types', path: '/payroll/settings/earning-types' },
+            {
+                name: 'Deduction Types',
+                path: '/payroll/settings/deduction-types',
+            },
+            { name: 'Pay Calendars', path: '/payroll/settings/pay-calendars' },
+            { name: 'Tax Settings', path: '/payroll/settings/tax' },
         ],
     },
 ];
@@ -151,9 +185,16 @@ const AppSidebar: React.FC = () => {
 
     useEffect(() => {
         let submenuMatched = false;
-        const menuTypes = isSuperAdmin ? ['main', 'others', 'admin'] : ['main', 'others'];
+        const menuTypes = isSuperAdmin
+            ? ['main', 'others', 'admin']
+            : ['main', 'others'];
         menuTypes.forEach((menuType) => {
-            const items = menuType === 'main' ? navItems : menuType === 'admin' ? adminItems : othersItems;
+            const items =
+                menuType === 'main'
+                    ? navItems
+                    : menuType === 'admin'
+                      ? adminItems
+                      : othersItems;
             items.forEach((nav, index) => {
                 if (nav.subItems) {
                     nav.subItems.forEach((subItem) => {
@@ -202,7 +243,10 @@ const AppSidebar: React.FC = () => {
         });
     };
 
-    const renderMenuItems = (items: NavItem[], menuType: 'main' | 'others' | 'admin') => (
+    const renderMenuItems = (
+        items: NavItem[],
+        menuType: 'main' | 'others' | 'admin',
+    ) => (
         <ul className="flex flex-col gap-4">
             {items.map((nav, index) => (
                 <li key={nav.name}>

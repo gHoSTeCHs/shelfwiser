@@ -110,31 +110,35 @@ class WageAdvanceService
         ?int $installments = null,
         ?string $notes = null
     ): WageAdvance {
-        if (! $wageAdvance->status->canApprove()) {
-            throw new \RuntimeException('Wage advance cannot be approved in current status');
-        }
-
         $approvedAmount = $amountApproved ?? $wageAdvance->amount_requested;
 
-        $eligibility = $this->calculateEligibility($wageAdvance->user, $wageAdvance->shop);
-        if ($approvedAmount > $eligibility['available_amount']) {
-            throw new \RuntimeException('Approved amount exceeds available limit');
-        }
-
         return DB::transaction(function () use ($wageAdvance, $approver, $approvedAmount, $installments, $notes) {
-            $wageAdvance->update([
+            $lockedAdvance = WageAdvance::lockForUpdate()->find($wageAdvance->id);
+
+            if (! $lockedAdvance->status->canApprove()) {
+                throw new \RuntimeException('Wage advance cannot be approved in current status');
+            }
+
+            $lockedUser = User::lockForUpdate()->find($lockedAdvance->user_id);
+
+            $eligibility = $this->calculateEligibility($lockedUser, $lockedAdvance->shop);
+            if ($approvedAmount > $eligibility['available_amount']) {
+                throw new \RuntimeException('Approved amount exceeds available limit');
+            }
+
+            $lockedAdvance->update([
                 'status' => WageAdvanceStatus::APPROVED,
                 'amount_approved' => $approvedAmount,
                 'approved_by_user_id' => $approver->id,
                 'approved_at' => now(),
                 'rejection_reason' => null,
-                'repayment_installments' => $installments ?? $wageAdvance->repayment_installments,
-                'notes' => $notes ?? $wageAdvance->notes,
+                'repayment_installments' => $installments ?? $lockedAdvance->repayment_installments,
+                'notes' => $notes ?? $lockedAdvance->notes,
             ]);
 
-            $this->clearCache($wageAdvance->tenant_id);
+            $this->clearCache($lockedAdvance->tenant_id);
 
-            $freshAdvance = $wageAdvance->fresh(['user', 'shop', 'approvedBy']);
+            $freshAdvance = $lockedAdvance->fresh(['user', 'shop', 'approvedBy']);
 
             $this->notificationService->notifyWageAdvanceApproved($freshAdvance, $approver);
 
@@ -208,6 +212,10 @@ class WageAdvanceService
     {
         if (! $wageAdvance->status->canRecordRepayment()) {
             throw new \RuntimeException('Cannot record repayment for this wage advance');
+        }
+
+        if ($amount <= 0) {
+            throw new \InvalidArgumentException('Repayment amount must be greater than zero');
         }
 
         return DB::transaction(function () use ($wageAdvance, $amount) {

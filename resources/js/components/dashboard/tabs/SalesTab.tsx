@@ -1,9 +1,9 @@
-import { DollarSign, ShoppingCart, TrendingUp, Tag } from 'lucide-react';
-import MetricCard from '../MetricCard';
-import { SalesData } from '@/types/dashboard';
-import { Card } from '@/components/ui/card';
-import ReusableLineChart from '@/components/charts/ReusableLineChart';
 import ReusableBarChart from '@/components/charts/ReusableBarChart';
+import ReusableLineChart from '@/components/charts/ReusableLineChart';
+import { Card } from '@/components/ui/card';
+import { SalesData } from '@/types/dashboard';
+import { DollarSign, ShoppingCart, Tag, TrendingUp } from 'lucide-react';
+import MetricCard from '../MetricCard';
 
 interface SalesTabProps {
     data: SalesData;
@@ -73,16 +73,16 @@ export default function SalesTab({ data }: SalesTabProps) {
                     <table className="w-full">
                         <thead className="border-b border-gray-200 dark:border-gray-700">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Product
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     SKU
                                 </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Quantity Sold
                                 </th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                     Revenue
                                 </th>
                             </tr>

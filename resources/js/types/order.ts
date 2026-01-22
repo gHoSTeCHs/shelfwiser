@@ -1,6 +1,7 @@
-import { ProductVariant, ProductPackagingType } from './stockMovement';
-import { Shop } from './shop';
 import { User } from '@/types/index';
+import { Shop } from './shop';
+import { ProductPackagingType, ProductVariant } from './stockMovement';
+import { Customer } from './customer';
 
 export type OrderStatus =
     | 'pending'
@@ -19,17 +20,23 @@ export type PaymentStatus =
     | 'refunded'
     | 'failed';
 
+export type OrderType = 'pos' | 'customer' | 'purchase_order' | 'internal';
+
 export interface OrderItem {
     id: number;
     order_id: number;
-    product_variant_id: number;
+    tenant_id: number;
+    product_variant_id: number | null;
     product_packaging_type_id: number | null;
+    sellable_type?: string;
+    sellable_id?: number;
     packaging_description: string | null;
     quantity: number;
     unit_price: number;
     discount_amount: number;
     tax_amount: number;
     total_amount: number;
+    metadata?: Record<string, unknown>;
     product_variant?: ProductVariant;
     packaging_type?: ProductPackagingType;
     package_quantity?: number;
@@ -45,6 +52,7 @@ export interface Order {
     shop_id: number;
     customer_id: number | null;
     order_number: string;
+    order_type?: OrderType;
     status: OrderStatus;
     payment_status: PaymentStatus;
     payment_method: string | null;
@@ -53,20 +61,43 @@ export interface Order {
     discount_amount: number;
     shipping_cost: number;
     total_amount: number;
+    paid_amount: number;
     customer_notes: string | null;
     internal_notes: string | null;
     shipping_address: string | null;
     billing_address: string | null;
+    tracking_number: string | null;
+    shipping_carrier: string | null;
+    customer_shipping_address_id: number | null;
+    customer_billing_address_id: number | null;
+    estimated_delivery_date: string | null;
+    actual_delivery_date: string | null;
     confirmed_at: string | null;
+    packed_at: string | null;
     shipped_at: string | null;
     delivered_at: string | null;
+    refunded_at: string | null;
+
     created_by: number;
+    packed_by: number | null;
+    shipped_by: number | null;
+    delivered_by: number | null;
+    refunded_by: number | null;
+
     created_at: string;
     updated_at: string;
+
     shop?: Shop;
-    customer?: User;
+    customer?: Customer;
     items?: OrderItem[];
     items_count?: number;
+
+    createdBy?: User;
+    packedByUser?: User;
+    shippedByUser?: User;
+    deliveredByUser?: User;
+    refundedByUser?: User;
+
     created_by_user?: User;
 }
 

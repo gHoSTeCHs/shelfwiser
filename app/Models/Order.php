@@ -3,7 +3,10 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Enums\OrderType;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,17 +16,21 @@ use Illuminate\Support\Carbon;
 
 class Order extends Model
 {
-    use HasFactory, SoftDeletes;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
         'shop_id',
         'customer_id',
         'order_number',
+        'offline_id',
+        'order_type',
         'tracking_number',
+        'shipping_carrier',
         'status',
         'payment_status',
         'payment_method',
+        'payment_reference',
         'subtotal',
         'tax_amount',
         'discount_amount',
@@ -32,21 +39,32 @@ class Order extends Model
         'paid_amount',
         'customer_notes',
         'internal_notes',
+        'cancellation_reason',
         'shipping_address',
         'billing_address',
         'customer_shipping_address_id',
         'customer_billing_address_id',
         'confirmed_at',
+        'packed_at',
         'shipped_at',
         'delivered_at',
+        'cancelled_at',
+        'refunded_at',
         'estimated_delivery_date',
         'actual_delivery_date',
         'created_by',
+        'packed_by',
+        'shipped_by',
+        'delivered_by',
+        'cancelled_by',
+        'refunded_by',
     ];
 
     protected $casts = [
         'status' => OrderStatus::class,
+        'order_type' => OrderType::class,
         'payment_status' => PaymentStatus::class,
+        'payment_method' => PaymentMethod::class,
         'subtotal' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
@@ -54,8 +72,11 @@ class Order extends Model
         'total_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'confirmed_at' => 'datetime',
+        'packed_at' => 'datetime',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'refunded_at' => 'datetime',
         'estimated_delivery_date' => 'date',
         'actual_delivery_date' => 'date',
     ];
@@ -106,9 +127,44 @@ class Order extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function packedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'packed_by');
+    }
+
+    public function shippedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'shipped_by');
+    }
+
+    public function deliveredByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'delivered_by');
+    }
+
+    public function refundedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'refunded_by');
+    }
+
+    public function cancelledByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(OrderPayment::class);
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(OrderReturn::class, 'order_id');
+    }
+
+    public function receipts(): HasMany
+    {
+        return $this->hasMany(Receipt::class);
     }
 
     public function scopeForTenant($query, int $tenantId)
@@ -141,6 +197,26 @@ class Order extends Model
         return $query->whereIn('status', OrderStatus::activeStatuses());
     }
 
+    public function scopeWithType($query, OrderType $type)
+    {
+        return $query->where('order_type', $type);
+    }
+
+    public function scopePosSales($query)
+    {
+        return $query->where('order_type', OrderType::POS);
+    }
+
+    public function scopeCustomerOrders($query)
+    {
+        return $query->where('order_type', OrderType::CUSTOMER);
+    }
+
+    public function scopeSalesOrders($query)
+    {
+        return $query->whereIn('order_type', OrderType::salesTypes());
+    }
+
     public function canEdit(): bool
     {
         return $this->status->canEdit();
@@ -154,6 +230,21 @@ class Order extends Model
     public function isComplete(): bool
     {
         return $this->status === OrderStatus::DELIVERED;
+    }
+
+    public function isPOSSale(): bool
+    {
+        return $this->order_type === OrderType::POS;
+    }
+
+    public function isCustomerOrder(): bool
+    {
+        return $this->order_type === OrderType::CUSTOMER;
+    }
+
+    public function isSalesOrder(): bool
+    {
+        return in_array($this->order_type, OrderType::salesTypes());
     }
 
     public function calculateTotals(): void

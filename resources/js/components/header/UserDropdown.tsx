@@ -26,8 +26,12 @@ export default function UserDropdown() {
     return (
         <div className="relative">
             <button
+                id="user-dropdown-trigger"
                 onClick={toggleDropdown}
                 className="dropdown-toggle flex items-center text-gray-700 dark:text-gray-400"
+                aria-haspopup="menu"
+                aria-expanded={isOpen}
+                aria-controls="user-dropdown-menu"
             >
                 <span className="mr-3 h-11 w-11 overflow-hidden rounded-full">
                     <img src={'/images/user/owner.jpg'} alt="User" />
@@ -45,6 +49,7 @@ export default function UserDropdown() {
                     viewBox="0 0 18 20"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
                 >
                     <path
                         d="M4.3125 8.65625L9 13.3437L13.6875 8.65625"
@@ -57,6 +62,8 @@ export default function UserDropdown() {
             </button>
 
             <Dropdown
+                id="user-dropdown-menu"
+                triggerId="user-dropdown-trigger"
                 isOpen={isOpen}
                 onClose={closeDropdown}
                 className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"

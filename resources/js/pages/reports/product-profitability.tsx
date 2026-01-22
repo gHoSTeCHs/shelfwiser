@@ -1,10 +1,16 @@
-import { Head } from '@inertiajs/react';
+import MetricCard from '@/components/dashboard/MetricCard';
+import DataTable from '@/components/reports/DataTable';
+import FilterBar from '@/components/reports/FilterBar';
 import AppLayout from '@/layouts/AppLayout';
 import { ProductProfitabilityProps } from '@/types/reports';
-import FilterBar from '@/components/reports/FilterBar';
-import DataTable from '@/components/reports/DataTable';
-import MetricCard from '@/components/dashboard/MetricCard';
-import { Package, DollarSign, TrendingUp, PercentIcon, ShoppingCart } from 'lucide-react';
+import { Head } from '@inertiajs/react';
+import {
+    DollarSign,
+    Package,
+    PercentIcon,
+    ShoppingCart,
+    TrendingUp,
+} from 'lucide-react';
 
 export default function ProductProfitability({
     summary,
@@ -19,8 +25,7 @@ export default function ProductProfitability({
             currency: 'NGN',
         }).format(value);
 
-    const formatPercent = (value: number) =>
-        `${value.toFixed(2)}%`;
+    const formatPercent = (value: number) => `${value.toFixed(2)}%`;
 
     const filterConfig = [
         {
@@ -112,7 +117,13 @@ export default function ProductProfitability({
             label: 'Gross Profit',
             className: 'text-right',
             render: (value: number) => (
-                <span className={value >= 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-600 dark:text-red-400 font-medium'}>
+                <span
+                    className={
+                        value >= 0
+                            ? 'font-medium text-green-600 dark:text-green-400'
+                            : 'font-medium text-red-600 dark:text-red-400'
+                    }
+                >
                     {formatCurrency(value)}
                 </span>
             ),
@@ -122,7 +133,13 @@ export default function ProductProfitability({
             label: 'Margin %',
             className: 'text-right',
             render: (value: number) => (
-                <span className={value >= 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-600 dark:text-red-400 font-medium'}>
+                <span
+                    className={
+                        value >= 0
+                            ? 'font-medium text-green-600 dark:text-green-400'
+                            : 'font-medium text-red-600 dark:text-red-400'
+                    }
+                >
                     {formatPercent(value)}
                 </span>
             ),
@@ -152,7 +169,8 @@ export default function ProductProfitability({
                         Product Profitability
                     </h1>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Analyze product-level profitability, margins, and performance
+                        Analyze product-level profitability, margins, and
+                        performance
                     </p>
                 </div>
 
@@ -219,4 +237,6 @@ export default function ProductProfitability({
     );
 }
 
-ProductProfitability.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
+ProductProfitability.layout = (page: React.ReactNode) => (
+    <AppLayout>{page}</AppLayout>
+);

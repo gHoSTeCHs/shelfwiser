@@ -41,7 +41,7 @@ export const flattenCategories = (
  * >
  * ```
  */
-export const transformConfigBySchema = <T extends Record<string, any>>(
+export const transformConfigBySchema = <T extends Record<string, unknown>>(
     data: T,
     schemaProperties?: Record<string, SchemaProperty>,
 ): T => {
@@ -49,7 +49,7 @@ export const transformConfigBySchema = <T extends Record<string, any>>(
         return data;
     }
 
-    const transformedConfig: Record<string, any> = {};
+    const transformedConfig: Record<string, unknown> = {};
 
     Object.entries(data.config).forEach(([key, value]) => {
         const schema = schemaProperties[key] as SchemaProperty | undefined;
@@ -75,7 +75,6 @@ export const transformConfigBySchema = <T extends Record<string, any>>(
     };
 };
 
-
 export const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleString('en-US', {
@@ -87,3 +86,31 @@ export const formatDate = (dateString: string): string => {
     });
 };
 
+/**
+ * Format a number as currency with the appropriate symbol.
+ *
+ * @param amount - The numeric amount to format
+ * @param currency - Currency code (default: 'NGN' for Nigerian Naira)
+ * @returns Formatted currency string (e.g., "₦1,234.56")
+ *
+ * @example
+ * formatCurrency(1234.56) // "₦1,234.56"
+ * formatCurrency(1234.56, 'USD') // "$1,234.56"
+ * formatCurrency(1234.56, 'EUR') // "€1,234.56"
+ */
+export const formatCurrency = (
+    amount: number,
+    currency: string = 'NGN',
+): string => {
+    const symbols: Record<string, string> = {
+        NGN: '₦',
+        USD: '$',
+        EUR: '€',
+        GBP: '£',
+        KES: 'KSh',
+        GHS: '₵',
+        ZAR: 'R',
+    };
+    const symbol = symbols[currency] || currency + ' ';
+    return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};

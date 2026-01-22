@@ -1,7 +1,7 @@
-import { ProductPackagingType, ProductVariant } from '@/types/stockMovement';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
 import Input from '@/components/form/input/InputField';
+import { ProductPackagingType, ProductVariant } from '@/types/stockMovement';
 import { useMemo } from 'react';
 
 interface PackagingSelectorProps {
@@ -34,7 +34,10 @@ export default function PackagingSelector({
 
     const selectedPackaging = useMemo(() => {
         if (!selectedPackagingTypeId) return null;
-        return packagingTypes.find((pt) => pt.id === selectedPackagingTypeId) || null;
+        return (
+            packagingTypes.find((pt) => pt.id === selectedPackagingTypeId) ||
+            null
+        );
     }, [selectedPackagingTypeId, packagingTypes]);
 
     const availableStock = useMemo(() => {
@@ -46,7 +49,10 @@ export default function PackagingSelector({
     }, [variant]);
 
     const getPackageStock = (packagingType: ProductPackagingType): number => {
-        if (!packagingType.units_per_package || packagingType.units_per_package === 0) {
+        if (
+            !packagingType.units_per_package ||
+            packagingType.units_per_package === 0
+        ) {
             return 0;
         }
         return Math.floor(availableStock / packagingType.units_per_package);
@@ -86,17 +92,23 @@ export default function PackagingSelector({
                     };
                 })}
                 placeholder="Select packaging type"
-                onChange={(value) => onPackagingTypeChange(value ? parseInt(value) : null)}
+                onChange={(value) =>
+                    onPackagingTypeChange(value ? parseInt(value) : null)
+                }
                 defaultValue={selectedPackagingTypeId?.toString() || ''}
-
             />
 
             {selectedPackaging && (
                 <div className="space-y-3 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
                     <div>
                         <Label>
-                            Number of {selectedPackaging.display_name || selectedPackaging.name}(s)
-                            {required && <span className="text-error-500"> *</span>}
+                            Number of{' '}
+                            {selectedPackaging.display_name ||
+                                selectedPackaging.name}
+                            (s)
+                            {required && (
+                                <span className="text-error-500"> *</span>
+                            )}
                         </Label>
                         <Input
                             type="number"
@@ -104,33 +116,52 @@ export default function PackagingSelector({
                             max={getPackageStock(selectedPackaging)}
                             value={packageQuantity}
                             onChange={(e) =>
-                                onPackageQuantityChange(parseInt(e.target.value) || 1)
+                                onPackageQuantityChange(
+                                    parseInt(e.target.value) || 1,
+                                )
                             }
                         />
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Max: {getPackageStock(selectedPackaging)} packages available
+                            Max: {getPackageStock(selectedPackaging)} packages
+                            available
                         </p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
-                            <p className="text-gray-600 dark:text-gray-400">Total Units</p>
+                            <p className="text-gray-600 dark:text-gray-400">
+                                Total Units
+                            </p>
                             <p className="font-medium text-gray-900 dark:text-white">
-                                {packageQuantity * selectedPackaging.units_per_package}{' '}
+                                {packageQuantity *
+                                    selectedPackaging.units_per_package}{' '}
                                 {variant.base_unit_name}
-                                {packageQuantity * selectedPackaging.units_per_package > 1 ? 's' : ''}
+                                {packageQuantity *
+                                    selectedPackaging.units_per_package >
+                                1
+                                    ? 's'
+                                    : ''}
                             </p>
                         </div>
                         <div>
-                            <p className="text-gray-600 dark:text-gray-400">Price per unit</p>
+                            <p className="text-gray-600 dark:text-gray-400">
+                                Price per unit
+                            </p>
                             <p className="font-medium text-gray-900 dark:text-white">
-                                {formatCurrency(selectedPackaging.price / selectedPackaging.units_per_package)}
+                                {formatCurrency(
+                                    selectedPackaging.price /
+                                        selectedPackaging.units_per_package,
+                                )}
                             </p>
                         </div>
                         <div className="col-span-2">
-                            <p className="text-gray-600 dark:text-gray-400">Line Total</p>
+                            <p className="text-gray-600 dark:text-gray-400">
+                                Line Total
+                            </p>
                             <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {formatCurrency(packageQuantity * selectedPackaging.price)}
+                                {formatCurrency(
+                                    packageQuantity * selectedPackaging.price,
+                                )}
                             </p>
                         </div>
                     </div>

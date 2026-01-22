@@ -1,17 +1,16 @@
-import AppLayout from '@/layouts/AppLayout';
-import { Head, Link } from '@inertiajs/react';
-import { Card } from '@/components/ui/card';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
+import { Head, Link } from '@inertiajs/react';
 import {
-    Building2,
-    Users,
-    Store,
-    Package,
-    ShoppingCart,
-    Clock,
-    ArrowRight,
     AlertTriangle,
+    ArrowRight,
+    Building2,
+    Clock,
+    ShoppingCart,
+    Store,
+    Users,
 } from 'lucide-react';
 
 interface Tenant {
@@ -75,7 +74,7 @@ export default function Dashboard({
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Admin Dashboard" />
 
             <div className="space-y-6">
@@ -91,8 +90,8 @@ export default function Dashboard({
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <Card className="p-4">
                         <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-primary-100 p-3 dark:bg-primary-900/30">
-                                <Building2 className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                            <div className="rounded-lg bg-brand-100 p-3 dark:bg-brand-900/30">
+                                <Building2 className="h-5 w-5 text-brand-600 dark:text-brand-400" />
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -142,8 +141,8 @@ export default function Dashboard({
 
                     <Card className="p-4">
                         <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-info-100 p-3 dark:bg-info-900/30">
-                                <ShoppingCart className="h-5 w-5 text-info-600 dark:text-info-400" />
+                            <div className="bg-info-100 dark:bg-info-900/30 rounded-lg p-3">
+                                <ShoppingCart className="text-info-600 dark:text-info-400 h-5 w-5" />
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -167,25 +166,33 @@ export default function Dashboard({
                                 <span className="text-sm text-gray-600 dark:text-gray-400">
                                     Trial
                                 </span>
-                                <Badge color="warning">{subscriptionBreakdown.trial}</Badge>
+                                <Badge color="warning">
+                                    {subscriptionBreakdown.trial}
+                                </Badge>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-sm text-gray-600 dark:text-gray-400">
                                     Basic
                                 </span>
-                                <Badge color="info">{subscriptionBreakdown.basic}</Badge>
+                                <Badge color="info">
+                                    {subscriptionBreakdown.basic}
+                                </Badge>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-sm text-gray-600 dark:text-gray-400">
                                     Professional
                                 </span>
-                                <Badge color="primary">{subscriptionBreakdown.professional}</Badge>
+                                <Badge color="primary">
+                                    {subscriptionBreakdown.professional}
+                                </Badge>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-sm text-gray-600 dark:text-gray-400">
                                     Enterprise
                                 </span>
-                                <Badge color="success">{subscriptionBreakdown.enterprise}</Badge>
+                                <Badge color="success">
+                                    {subscriptionBreakdown.enterprise}
+                                </Badge>
                             </div>
                         </div>
                     </Card>
@@ -196,7 +203,11 @@ export default function Dashboard({
                                 Recent Tenants
                             </h3>
                             <Link href="/admin/tenants">
-                                <Button variant="ghost" size="sm" endIcon={<ArrowRight className="h-4 w-4" />}>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    endIcon={<ArrowRight className="h-4 w-4" />}
+                                >
                                     View All
                                 </Button>
                             </Link>
@@ -205,16 +216,28 @@ export default function Dashboard({
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-gray-200 dark:border-gray-700">
-                                        <th className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400"
+                                        >
                                             Name
                                         </th>
-                                        <th className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400"
+                                        >
                                             Plan
                                         </th>
-                                        <th className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400"
+                                        >
                                             Users
                                         </th>
-                                        <th className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400"
+                                        >
                                             Status
                                         </th>
                                     </tr>
@@ -225,7 +248,7 @@ export default function Dashboard({
                                             <td className="py-2">
                                                 <Link
                                                     href={`/admin/tenants/${tenant.id}`}
-                                                    className="font-medium text-gray-900 hover:text-primary-600 dark:text-white dark:hover:text-primary-400"
+                                                    className="font-medium text-gray-900 hover:text-brand-600 dark:text-white dark:hover:text-brand-400"
                                                 >
                                                     {tenant.name}
                                                 </Link>
@@ -235,7 +258,9 @@ export default function Dashboard({
                                             </td>
                                             <td className="py-2">
                                                 <Badge
-                                                    color={getPlanColor(tenant.subscription_plan)}
+                                                    color={getPlanColor(
+                                                        tenant.subscription_plan,
+                                                    )}
                                                     size="sm"
                                                 >
                                                     {tenant.subscription_plan}
@@ -246,10 +271,16 @@ export default function Dashboard({
                                             </td>
                                             <td className="py-2">
                                                 <Badge
-                                                    color={tenant.is_active ? 'success' : 'error'}
+                                                    color={
+                                                        tenant.is_active
+                                                            ? 'success'
+                                                            : 'error'
+                                                    }
                                                     size="sm"
                                                 >
-                                                    {tenant.is_active ? 'Active' : 'Inactive'}
+                                                    {tenant.is_active
+                                                        ? 'Active'
+                                                        : 'Inactive'}
                                                 </Badge>
                                             </td>
                                         </tr>
@@ -277,7 +308,7 @@ export default function Dashboard({
                                     <div>
                                         <Link
                                             href={`/admin/tenants/${tenant.id}`}
-                                            className="font-medium text-gray-900 hover:text-primary-600 dark:text-white dark:hover:text-primary-400"
+                                            className="font-medium text-gray-900 hover:text-brand-600 dark:text-white dark:hover:text-brand-400"
                                         >
                                             {tenant.name}
                                         </Link>
@@ -297,6 +328,8 @@ export default function Dashboard({
                     </Card>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Dashboard.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

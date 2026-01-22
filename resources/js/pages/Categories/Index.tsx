@@ -35,7 +35,6 @@ function CategoryTreeItem({
     category: Category;
     level?: number;
 }) {
-
     const [isExpanded, setIsExpanded] = useState(level === 0);
     const hasChildren = category.children && category.children.length > 0;
 
@@ -137,9 +136,8 @@ function CategoryTreeItem({
 }
 
 export default function Index({ categories }: Props) {
-
     return (
-        <AppLayout>
+        <>
             <Head title="Product Categories" />
 
             <div className="space-y-6">
@@ -188,6 +186,8 @@ export default function Index({ categories }: Props) {
                     </Card>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

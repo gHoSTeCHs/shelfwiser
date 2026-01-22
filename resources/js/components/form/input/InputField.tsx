@@ -17,7 +17,15 @@ interface InputProps {
     success?: boolean;
     error?: boolean;
     hint?: string;
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    onKeyUp?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
+    onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+    autoFocus?: boolean;
     required?: boolean;
+    ariaLabel?: string;
+    label?: string;
 }
 
 const Input: FC<InputProps> = ({
@@ -36,9 +44,17 @@ const Input: FC<InputProps> = ({
     success = false,
     error = false,
     hint,
+    onKeyDown,
+    onKeyUp,
+    onKeyPress,
+    onFocus,
+    onBlur,
+    autoFocus = false,
     required = false,
+    ariaLabel,
+    label,
 }) => {
-    let inputClasses = ` h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3  dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
+    let inputClasses = ` h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-base shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3  dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
 
     if (disabled) {
         inputClasses += ` text-gray-500 border-gray-300 opacity-40 bg-gray-100 cursor-not-allowed dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 opacity-40`;
@@ -50,6 +66,9 @@ const Input: FC<InputProps> = ({
         inputClasses += ` bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:text-white/90  dark:focus:border-brand-800`;
     }
 
+    const errorId = error && id ? `${id}-error` : undefined;
+    const hintId = hint && id ? `${id}-hint` : undefined;
+
     return (
         <div className="relative">
             <input
@@ -60,16 +79,27 @@ const Input: FC<InputProps> = ({
                 value={value}
                 defaultValue={defaultValue}
                 onChange={onChange}
+                onKeyDown={onKeyDown}
+                onKeyUp={onKeyUp}
+                onKeyPress={onKeyPress}
+                onFocus={onFocus}
+                onBlur={onBlur}
                 min={min}
                 max={max}
                 step={step}
                 disabled={disabled}
                 className={inputClasses}
                 required={required}
+                autoFocus={autoFocus}
+                aria-label={ariaLabel || label}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={errorId || hintId}
             />
 
             {hint && (
                 <p
+                    id={hintId}
+                    role={error ? 'alert' : undefined}
                     className={`mt-1.5 text-xs ${
                         error
                             ? 'text-error-500'

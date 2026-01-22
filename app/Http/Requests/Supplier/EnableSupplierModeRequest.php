@@ -26,4 +26,15 @@ class EnableSupplierModeRequest extends FormRequest
             'settings' => ['nullable', 'array'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'connection_approval_mode.required' => 'Please specify how you want to approve new buyer connections.',
+            'lead_time_days.min' => 'Lead time must be at least 1 day.',
+            'lead_time_days.max' => 'Lead time cannot exceed 365 days.',
+            'minimum_order_value.min' => 'Minimum order value cannot be negative.',
+            'payment_terms.max' => 'Payment terms cannot exceed 50 characters.',
+        ];
+    }
 }

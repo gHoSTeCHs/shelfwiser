@@ -1,7 +1,7 @@
 import WageAdvanceController from '@/actions/App/Http/Controllers/WageAdvanceController';
 import InputError from '@/components/form/InputError';
-import Input from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
+import Input from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
@@ -11,18 +11,17 @@ import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
+    AlertCircle,
     ArrowLeft,
     Building2,
-    Calendar,
     CheckCircle,
+    Clock,
     CreditCard,
     DollarSign,
+    Trash2,
     TrendingUp,
     User,
     XCircle,
-    AlertCircle,
-    Clock,
-    Trash2,
 } from 'lucide-react';
 import { FormEvent } from 'react';
 
@@ -164,7 +163,7 @@ export default function Show({
                 onSuccess: () => {
                     approveModal.closeModal();
                 },
-            }
+            },
         );
     };
 
@@ -178,7 +177,7 @@ export default function Show({
                 onSuccess: () => {
                     rejectModal.closeModal();
                 },
-            }
+            },
         );
     };
 
@@ -192,7 +191,7 @@ export default function Show({
                 onSuccess: () => {
                     disburseModal.closeModal();
                 },
-            }
+            },
         );
     };
 
@@ -206,7 +205,7 @@ export default function Show({
                 onSuccess: () => {
                     repaymentModal.closeModal();
                 },
-            }
+            },
         );
     };
 
@@ -220,7 +219,7 @@ export default function Show({
                 onSuccess: () => {
                     cancelModal.closeModal();
                 },
-            }
+            },
         );
     };
 
@@ -264,7 +263,7 @@ export default function Show({
         100;
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Wage Advance #${wageAdvance.id}`} />
 
             <div className="space-y-6">
@@ -379,7 +378,7 @@ export default function Show({
                                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                             Requested:{' '}
                                             {formatCurrency(
-                                                wageAdvance.amount_requested
+                                                wageAdvance.amount_requested,
                                             )}
                                         </p>
                                     )}
@@ -517,7 +516,7 @@ export default function Show({
                                 </p>
                                 <p className="font-medium text-gray-900 dark:text-white">
                                     {formatShortDate(
-                                        wageAdvance.repayment_start_date
+                                        wageAdvance.repayment_start_date,
                                     )}
                                 </p>
                             </div>
@@ -528,7 +527,7 @@ export default function Show({
                                 </p>
                                 <p className="font-medium text-gray-900 dark:text-white">
                                     {formatShortDate(
-                                        wageAdvance.repayment_end_date
+                                        wageAdvance.repayment_end_date,
                                     )}
                                 </p>
                             </div>
@@ -561,15 +560,18 @@ export default function Show({
                                             Approved
                                         </p>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {formatDate(wageAdvance.approved_at)}
+                                            {formatDate(
+                                                wageAdvance.approved_at,
+                                            )}
                                         </p>
                                         {wageAdvance.approved_by && (
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                by {wageAdvance.approved_by.name}
+                                                by{' '}
+                                                {wageAdvance.approved_by.name}
                                             </p>
                                         )}
                                         {wageAdvance.approval_notes && (
-                                            <p className="mt-1 text-sm italic text-gray-600 dark:text-gray-400">
+                                            <p className="mt-1 text-sm text-gray-600 italic dark:text-gray-400">
                                                 "{wageAdvance.approval_notes}"
                                             </p>
                                         )}
@@ -585,10 +587,12 @@ export default function Show({
                                             Rejected
                                         </p>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {formatDate(wageAdvance.rejected_at)}
+                                            {formatDate(
+                                                wageAdvance.rejected_at,
+                                            )}
                                         </p>
                                         {wageAdvance.rejection_reason && (
-                                            <p className="mt-1 text-sm italic text-red-600 dark:text-red-400">
+                                            <p className="mt-1 text-sm text-red-600 italic dark:text-red-400">
                                                 "{wageAdvance.rejection_reason}"
                                             </p>
                                         )}
@@ -604,11 +608,14 @@ export default function Show({
                                             Disbursed
                                         </p>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {formatDate(wageAdvance.disbursed_at)}
+                                            {formatDate(
+                                                wageAdvance.disbursed_at,
+                                            )}
                                         </p>
                                         {wageAdvance.disbursed_by && (
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                by {wageAdvance.disbursed_by.name}
+                                                by{' '}
+                                                {wageAdvance.disbursed_by.name}
                                             </p>
                                         )}
                                     </div>
@@ -623,7 +630,9 @@ export default function Show({
                                             Cancelled
                                         </p>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {formatDate(wageAdvance.cancelled_at)}
+                                            {formatDate(
+                                                wageAdvance.cancelled_at,
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -653,7 +662,7 @@ export default function Show({
                             onChange={(e) =>
                                 approveForm.setData(
                                     'amount_approved',
-                                    e.target.value
+                                    e.target.value,
                                 )
                             }
                             step="0.01"
@@ -773,10 +782,10 @@ export default function Show({
                             onChange={(e) =>
                                 disburseForm.setData(
                                     'disbursement_method',
-                                    e.target.value
+                                    e.target.value,
                                 )
                             }
-                            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             required
                         >
                             <option value="bank_transfer">Bank Transfer</option>
@@ -800,17 +809,13 @@ export default function Show({
                             onChange={(e) =>
                                 disburseForm.setData(
                                     'disbursement_reference',
-                                    e.target.value
+                                    e.target.value,
                                 )
                             }
-                            error={
-                                !!disburseForm.errors.disbursement_reference
-                            }
+                            error={!!disburseForm.errors.disbursement_reference}
                         />
                         <InputError
-                            message={
-                                disburseForm.errors.disbursement_reference
-                            }
+                            message={disburseForm.errors.disbursement_reference}
                         />
                     </div>
 
@@ -823,7 +828,7 @@ export default function Show({
                             onChange={(value) =>
                                 disburseForm.setData(
                                     'disbursement_notes',
-                                    value
+                                    value,
                                 )
                             }
                             rows={3}
@@ -898,7 +903,7 @@ export default function Show({
                             onChange={(e) =>
                                 repaymentForm.setData(
                                     'payment_date',
-                                    e.target.value
+                                    e.target.value,
                                 )
                             }
                             error={!!repaymentForm.errors.payment_date}
@@ -961,10 +966,7 @@ export default function Show({
                             name="cancellation_reason"
                             value={cancelForm.data.cancellation_reason}
                             onChange={(value) =>
-                                cancelForm.setData(
-                                    'cancellation_reason',
-                                    value
-                                )
+                                cancelForm.setData('cancellation_reason', value)
                             }
                             rows={3}
                             error={!!cancelForm.errors.cancellation_reason}
@@ -995,6 +997,8 @@ export default function Show({
                     </div>
                 </form>
             </Modal>
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

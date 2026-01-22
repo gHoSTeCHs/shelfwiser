@@ -1,7 +1,7 @@
 import ServiceVariantController from '@/actions/App/Http/Controllers/ServiceVariantController';
+import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
-import Checkbox from '@/components/form/input/Checkbox';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
@@ -241,7 +241,7 @@ export default function VariantFormModal({
                             />
                             <Label
                                 htmlFor="is_active"
-                                className="ml-2 mb-0 cursor-pointer"
+                                className="mb-0 ml-2 cursor-pointer"
                             >
                                 Active
                             </Label>

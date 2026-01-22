@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,7 +10,16 @@ use Illuminate\Support\Facades\Cache;
 
 class ShopType extends Model
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
+
+    protected $fillable = [
+        'tenant_id',
+        'label',
+        'slug',
+        'description',
+        'config_schema',
+        'is_active',
+    ];
 
     protected $casts = [
         'config_schema' => 'array',

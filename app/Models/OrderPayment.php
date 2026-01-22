@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentMethod;
+use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderPayment extends Model
 {
-    use SoftDeletes;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'order_id',
@@ -27,51 +30,46 @@ class OrderPayment extends Model
         'reference_number',
         'notes',
         'recorded_by',
+        'refund_amount',
+        'refund_status',
+        'refund_reference',
+        'refund_reason',
+        'refund_notes',
+        'refunded_at',
+        'refunded_by',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'refund_amount' => 'decimal:2',
         'gateway_fee' => 'decimal:2',
         'gateway_response' => 'array',
+        'payment_method' => PaymentMethod::class,
         'payment_date' => 'date',
         'verified_at' => 'datetime',
+        'refunded_at' => 'datetime',
     ];
 
-    /**
-     * Get the order that this payment belongs to
-     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    /**
-     * Get the tenant that this payment belongs to
-     */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
     }
 
-    /**
-     * Get the shop where this payment was recorded
-     */
     public function shop(): BelongsTo
     {
         return $this->belongsTo(Shop::class);
     }
 
-    /**
-     * Get the user who recorded this payment
-     */
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
     }
 
-    /**
-     * Auto-update order's paid_amount and payment_status when payments are created or deleted
-     */
     protected static function booted(): void
     {
         static::created(function (OrderPayment $payment) {

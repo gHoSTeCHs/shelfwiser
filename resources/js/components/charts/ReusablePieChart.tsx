@@ -1,5 +1,5 @@
-import Chart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
+import Chart from 'react-apexcharts';
 
 interface PieChartProps {
     data: number[];
@@ -52,7 +52,12 @@ export default function ReusablePieChart({
 
     return (
         <div className="flex justify-center">
-            <Chart options={options} series={data} type={type} height={height} />
+            <Chart
+                options={options}
+                series={data}
+                type={type}
+                height={height}
+            />
         </div>
     );
 }

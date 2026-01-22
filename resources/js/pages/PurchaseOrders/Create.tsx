@@ -6,24 +6,28 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
+import Skeleton from '@/components/ui/Skeleton';
 import AppLayout from '@/layouts/AppLayout';
+import { PaginatedResponse } from '@/types';
 import { Shop } from '@/types/shop';
 import { SupplierCatalogItem, SupplierConnection } from '@/types/supplier';
 import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     Building2,
+    Loader2,
     Minus,
     Package,
     Plus,
+    Search,
     ShoppingCart,
     Trash2,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 interface Props {
     shops: Shop[];
     supplierConnections: SupplierConnection[];
-    supplierCatalog?: SupplierCatalogItem[];
+    supplierCatalog?: PaginatedResponse<SupplierCatalogItem> | null;
     selectedSupplierId?: number;
 }
 
@@ -34,10 +38,56 @@ interface CartItem {
     unit_price: number;
 }
 
+interface CatalogItemProps {
+    item: SupplierCatalogItem;
+    isInCart: boolean;
+    onAddToCart: (item: SupplierCatalogItem) => void;
+}
+
+const CatalogItem = memo(function CatalogItem({
+    item,
+    isInCart,
+    onAddToCart,
+}: CatalogItemProps) {
+    return (
+        <div className="flex items-center justify-between rounded-lg border p-4 dark:border-gray-700">
+            <div className="flex-1">
+                <div className="flex items-center gap-2">
+                    <h4 className="font-medium text-gray-900 dark:text-white">
+                        {item.product?.name}
+                    </h4>
+                    {item.pricing_tiers && item.pricing_tiers.length > 0 && (
+                        <Badge variant="light" color="primary" size="sm">
+                            Volume Pricing
+                        </Badge>
+                    )}
+                </div>
+                <div className="mt-1 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                    <span>Base: ${item.base_wholesale_price.toFixed(2)}</span>
+                    <span>Min. Order: {item.min_order_quantity}</span>
+                </div>
+                {item.description && (
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        {item.description}
+                    </p>
+                )}
+            </div>
+            <Button
+                size="sm"
+                onClick={() => onAddToCart(item)}
+                disabled={isInCart}
+            >
+                <Plus className="mr-1 h-4 w-4" />
+                {isInCart ? 'Added' : 'Add'}
+            </Button>
+        </div>
+    );
+});
+
 export default function Create({
     shops,
     supplierConnections,
-    supplierCatalog = [],
+    supplierCatalog,
     selectedSupplierId,
 }: Props) {
     const [selectedShop, setSelectedShop] = useState<string>(
@@ -46,19 +96,47 @@ export default function Create({
     const [selectedSupplier, setSelectedSupplier] = useState<string>(
         selectedSupplierId?.toString() || '',
     );
-    const [catalog, setCatalog] =
-        useState<SupplierCatalogItem[]>(supplierCatalog);
+    const [catalog, setCatalog] = useState<SupplierCatalogItem[]>(
+        supplierCatalog?.data || [],
+    );
+    const [catalogMeta, setCatalogMeta] = useState<{
+        currentPage: number;
+        lastPage: number;
+        total: number;
+    } | null>(
+        supplierCatalog
+            ? {
+                  currentPage: supplierCatalog.current_page,
+                  lastPage: supplierCatalog.last_page,
+                  total: supplierCatalog.total,
+              }
+            : null,
+    );
     const [cart, setCart] = useState<CartItem[]>([]);
     const [loadingCatalog, setLoadingCatalog] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('');
     const [notes, setNotes] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     useEffect(() => {
         if (selectedSupplier) {
             setLoadingCatalog(true);
+            setCatalog([]);
             router.get(
                 PurchaseOrderController.create.url({
-                    query: { supplier: selectedSupplier },
+                    query: {
+                        supplier: selectedSupplier,
+                        search: debouncedSearch || undefined,
+                    },
                 }),
                 {},
                 {
@@ -66,89 +144,166 @@ export default function Create({
                     preserveScroll: true,
                     only: ['supplierCatalog'],
                     onSuccess: (page: any) => {
-                        setCatalog(page.props.supplierCatalog || []);
+                        const newCatalog = page.props.supplierCatalog;
+                        setCatalog(newCatalog?.data || []);
+                        setCatalogMeta(
+                            newCatalog
+                                ? {
+                                      currentPage: newCatalog.current_page,
+                                      lastPage: newCatalog.last_page,
+                                      total: newCatalog.total,
+                                  }
+                                : null,
+                        );
                         setLoadingCatalog(false);
                     },
                     onError: () => setLoadingCatalog(false),
                 },
             );
         }
-    }, [selectedSupplier]);
+    }, [selectedSupplier, debouncedSearch]);
 
-    const calculateItemPrice = (
-        item: SupplierCatalogItem,
-        quantity: number,
-    ): number => {
-        if (!item.pricing_tiers || item.pricing_tiers.length === 0) {
-            return item.base_wholesale_price;
+    const loadMoreCatalog = useCallback(() => {
+        if (
+            !catalogMeta ||
+            loadingMore ||
+            catalogMeta.currentPage >= catalogMeta.lastPage
+        ) {
+            return;
         }
 
-        const applicableTier = item.pricing_tiers
-            .filter((tier) => {
-                const meetsMin = quantity >= tier.min_quantity;
-                const meetsMax =
-                    tier.max_quantity === null || quantity <= tier.max_quantity;
-                return meetsMin && meetsMax;
-            })
-            .sort((a, b) => b.min_quantity - a.min_quantity)[0];
-
-        return applicableTier?.price || item.base_wholesale_price;
-    };
-
-    const addToCart = (catalogItem: SupplierCatalogItem) => {
-        const existingItem = cart.find(
-            (item) => item.catalog_item_id === catalogItem.id,
-        );
-
-        if (existingItem) {
-            updateQuantity(
-                catalogItem.id,
-                existingItem.quantity + catalogItem.min_order_quantity,
-            );
-        } else {
-            const quantity = catalogItem.min_order_quantity;
-            const unit_price = calculateItemPrice(catalogItem, quantity);
-
-            setCart([
-                ...cart,
-                {
-                    catalog_item_id: catalogItem.id,
-                    catalog_item: catalogItem,
-                    quantity,
-                    unit_price,
+        setLoadingMore(true);
+        router.get(
+            PurchaseOrderController.create.url({
+                query: {
+                    supplier: selectedSupplier,
+                    search: debouncedSearch || undefined,
+                    page: catalogMeta.currentPage + 1,
                 },
-            ]);
-        }
-    };
+            }),
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['supplierCatalog'],
+                onSuccess: (page: any) => {
+                    const newCatalog = page.props.supplierCatalog;
+                    if (newCatalog?.data) {
+                        setCatalog((prev) => [...prev, ...newCatalog.data]);
+                        setCatalogMeta({
+                            currentPage: newCatalog.current_page,
+                            lastPage: newCatalog.last_page,
+                            total: newCatalog.total,
+                        });
+                    }
+                    setLoadingMore(false);
+                },
+                onError: () => setLoadingMore(false),
+            },
+        );
+    }, [catalogMeta, loadingMore, selectedSupplier, debouncedSearch]);
 
-    const updateQuantity = (catalogItemId: number, newQuantity: number) => {
-        const updatedCart = cart.map((item) => {
-            if (item.catalog_item_id === catalogItemId) {
-                const unit_price = calculateItemPrice(
-                    item.catalog_item,
-                    newQuantity,
-                );
-                return { ...item, quantity: newQuantity, unit_price };
+    const calculateItemPrice = useCallback(
+        (item: SupplierCatalogItem, quantity: number): number => {
+            if (!item.pricing_tiers || item.pricing_tiers.length === 0) {
+                return item.base_wholesale_price;
             }
-            return item;
-        });
-        setCart(updatedCart);
-    };
 
-    const removeFromCart = (catalogItemId: number) => {
-        setCart(cart.filter((item) => item.catalog_item_id !== catalogItemId));
-    };
+            const applicableTier = item.pricing_tiers
+                .filter((tier) => {
+                    const meetsMin = quantity >= tier.min_quantity;
+                    const meetsMax =
+                        tier.max_quantity === null ||
+                        quantity <= tier.max_quantity;
+                    return meetsMin && meetsMax;
+                })
+                .sort((a, b) => b.min_quantity - a.min_quantity)[0];
 
-    const calculateSubtotal = (): number => {
+            return applicableTier?.price || item.base_wholesale_price;
+        },
+        [],
+    );
+
+    const addToCart = useCallback(
+        (catalogItem: SupplierCatalogItem) => {
+            setCart((prevCart) => {
+                const existingItem = prevCart.find(
+                    (item) => item.catalog_item_id === catalogItem.id,
+                );
+
+                if (existingItem) {
+                    const newQuantity =
+                        existingItem.quantity + catalogItem.min_order_quantity;
+                    const unit_price = calculateItemPrice(
+                        catalogItem,
+                        newQuantity,
+                    );
+                    return prevCart.map((item) =>
+                        item.catalog_item_id === catalogItem.id
+                            ? { ...item, quantity: newQuantity, unit_price }
+                            : item,
+                    );
+                }
+
+                const quantity = catalogItem.min_order_quantity;
+                const unit_price = calculateItemPrice(catalogItem, quantity);
+
+                return [
+                    ...prevCart,
+                    {
+                        catalog_item_id: catalogItem.id,
+                        catalog_item: catalogItem,
+                        quantity,
+                        unit_price,
+                    },
+                ];
+            });
+        },
+        [calculateItemPrice],
+    );
+
+    const updateQuantity = useCallback(
+        (catalogItemId: number, newQuantity: number) => {
+            setCart((prevCart) =>
+                prevCart.map((item) => {
+                    if (item.catalog_item_id === catalogItemId) {
+                        const unit_price = calculateItemPrice(
+                            item.catalog_item,
+                            newQuantity,
+                        );
+                        return { ...item, quantity: newQuantity, unit_price };
+                    }
+                    return item;
+                }),
+            );
+        },
+        [calculateItemPrice],
+    );
+
+    const removeFromCart = useCallback((catalogItemId: number) => {
+        setCart((prevCart) =>
+            prevCart.filter((item) => item.catalog_item_id !== catalogItemId),
+        );
+    }, []);
+
+    const subtotal = useMemo(() => {
         return cart.reduce(
             (sum, item) => sum + item.quantity * item.unit_price,
             0,
         );
-    };
+    }, [cart]);
+
+    const cartItemIds = useMemo(() => {
+        return new Set(cart.map((item) => item.catalog_item_id));
+    }, [cart]);
+
+    const availableCatalog = useMemo(() => {
+        return catalog.filter((item) => item.is_available);
+    }, [catalog]);
 
     if (supplierConnections.length === 0) {
         return (
-            <AppLayout>
+            <>
                 <Head title="Create Purchase Order" />
                 <div className="space-y-6">
                     <EmptyState
@@ -162,12 +317,12 @@ export default function Create({
                         }
                     />
                 </div>
-            </AppLayout>
+            </>
         );
     }
 
     return (
-        <AppLayout>
+        <>
             <Head title="Create Purchase Order" />
 
             <div className="space-y-6">
@@ -297,110 +452,106 @@ export default function Create({
 
                                 {selectedSupplier && (
                                     <Card className="mt-6 p-6">
-                                        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-                                            Supplier Catalog
-                                        </h3>
+                                        <div className="mb-4 flex items-center justify-between">
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                Supplier Catalog
+                                                {catalogMeta && (
+                                                    <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                                                        ({catalogMeta.total}{' '}
+                                                        items)
+                                                    </span>
+                                                )}
+                                            </h3>
+                                        </div>
+
+                                        <div className="relative mb-4">
+                                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                            <Input
+                                                type="text"
+                                                placeholder="Search products..."
+                                                value={searchQuery}
+                                                onChange={(e) =>
+                                                    setSearchQuery(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="pl-10"
+                                            />
+                                        </div>
 
                                         {loadingCatalog ? (
-                                            <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-                                                Loading catalog...
-                                            </p>
-                                        ) : catalog.length === 0 ? (
+                                            <div className="space-y-3">
+                                                {[1, 2, 3].map((i) => (
+                                                    <div
+                                                        key={i}
+                                                        className="rounded-lg border p-4 dark:border-gray-700"
+                                                    >
+                                                        <Skeleton className="mb-2 h-5 w-3/4" />
+                                                        <Skeleton className="h-4 w-1/2" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : availableCatalog.length === 0 ? (
                                             <EmptyState
                                                 icon={
                                                     <Package className="h-10 w-10" />
                                                 }
-                                                title="No products available"
-                                                description="This supplier has no products in their catalog"
+                                                title={
+                                                    searchQuery
+                                                        ? 'No products found'
+                                                        : 'No products available'
+                                                }
+                                                description={
+                                                    searchQuery
+                                                        ? 'Try adjusting your search terms'
+                                                        : 'This supplier has no products in their catalog'
+                                                }
                                             />
                                         ) : (
-                                            <div className="space-y-3">
-                                                {catalog
-                                                    .filter(
-                                                        (item) =>
-                                                            item.is_available,
-                                                    )
-                                                    .map((item) => (
-                                                        <div
-                                                            key={item.id}
-                                                            className="flex items-center justify-between rounded-lg border p-4 dark:border-gray-700"
-                                                        >
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center gap-2">
-                                                                    <h4 className="font-medium text-gray-900 dark:text-white">
-                                                                        {
-                                                                            item
-                                                                                .product
-                                                                                ?.name
-                                                                        }
-                                                                    </h4>
-                                                                    {item.pricing_tiers &&
-                                                                        item
-                                                                            .pricing_tiers
-                                                                            .length >
-                                                                            0 && (
-                                                                            <Badge
-                                                                                variant="light"
-                                                                                color="primary"
-                                                                                size="sm"
-                                                                            >
-                                                                                Volume
-                                                                                Pricing
-                                                                            </Badge>
-                                                                        )}
-                                                                </div>
-                                                                <div className="mt-1 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                                                                    <span>
-                                                                        Base: $
-                                                                        {item.base_wholesale_price.toFixed(
-                                                                            2,
-                                                                        )}
-                                                                    </span>
-                                                                    <span>
-                                                                        Min.
-                                                                        Order:{' '}
-                                                                        {
-                                                                            item.min_order_quantity
-                                                                        }
-                                                                    </span>
-                                                                </div>
-                                                                {item.description && (
-                                                                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                                                                        {
-                                                                            item.description
-                                                                        }
-                                                                    </p>
+                                            <>
+                                                <div className="space-y-3">
+                                                    {availableCatalog.map(
+                                                        (item) => (
+                                                            <CatalogItem
+                                                                key={item.id}
+                                                                item={item}
+                                                                isInCart={cartItemIds.has(
+                                                                    item.id,
                                                                 )}
-                                                            </div>
-                                                            <Button
-                                                                size="sm"
-                                                                onClick={() =>
-                                                                    addToCart(
-                                                                        item,
-                                                                    )
+                                                                onAddToCart={
+                                                                    addToCart
                                                                 }
-                                                                disabled={cart.some(
-                                                                    (
-                                                                        cartItem,
-                                                                    ) =>
-                                                                        cartItem.catalog_item_id ===
-                                                                        item.id,
-                                                                )}
+                                                            />
+                                                        ),
+                                                    )}
+                                                </div>
+
+                                                {catalogMeta &&
+                                                    catalogMeta.currentPage <
+                                                        catalogMeta.lastPage && (
+                                                        <div className="mt-4 text-center">
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                onClick={
+                                                                    loadMoreCatalog
+                                                                }
+                                                                disabled={
+                                                                    loadingMore
+                                                                }
                                                             >
-                                                                <Plus className="mr-1 h-4 w-4" />
-                                                                {cart.some(
-                                                                    (
-                                                                        cartItem,
-                                                                    ) =>
-                                                                        cartItem.catalog_item_id ===
-                                                                        item.id,
-                                                                )
-                                                                    ? 'Added'
-                                                                    : 'Add'}
+                                                                {loadingMore ? (
+                                                                    <>
+                                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                                        Loading...
+                                                                    </>
+                                                                ) : (
+                                                                    `Load More (${catalogMeta.total - availableCatalog.length} remaining)`
+                                                                )}
                                                             </Button>
                                                         </div>
-                                                    ))}
-                                            </div>
+                                                    )}
+                                            </>
                                         )}
                                     </Card>
                                 )}
@@ -516,10 +667,7 @@ export default function Create({
                                                 <div className="flex justify-between text-base font-semibold text-gray-900 dark:text-white">
                                                     <span>Subtotal</span>
                                                     <span>
-                                                        $
-                                                        {calculateSubtotal().toFixed(
-                                                            2,
-                                                        )}
+                                                        ${subtotal.toFixed(2)}
                                                     </span>
                                                 </div>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -553,6 +701,8 @@ export default function Create({
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

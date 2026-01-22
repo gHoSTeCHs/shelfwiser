@@ -1,5 +1,5 @@
-import Chart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
+import Chart from 'react-apexcharts';
 
 interface BarChartProps {
     data: number[];
@@ -92,7 +92,7 @@ export default function ReusableBarChart({
     ];
 
     return (
-        <div className="max-w-full overflow-x-auto custom-scrollbar">
+        <div className="custom-scrollbar max-w-full overflow-x-auto">
             <div className="min-w-full">
                 <Chart
                     options={options}

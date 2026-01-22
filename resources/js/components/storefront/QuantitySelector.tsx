@@ -1,5 +1,5 @@
-import React from 'react';
 import { Minus, Plus } from 'lucide-react';
+import React from 'react';
 
 interface QuantitySelectorProps {
     quantity: number;
@@ -47,10 +47,10 @@ const QuantitySelector: React.FC<QuantitySelectorProps> = ({
                 type="button"
                 onClick={handleDecrement}
                 disabled={disabled || quantity <= min}
-                className="px-3 py-2 border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                className="rounded-l-md border border-gray-300 px-3 py-2 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Decrease quantity"
             >
-                <Minus className="w-4 h-4" />
+                <Minus className="h-4 w-4" />
             </button>
 
             <input
@@ -60,7 +60,7 @@ const QuantitySelector: React.FC<QuantitySelectorProps> = ({
                 min={min}
                 max={max}
                 disabled={disabled}
-                className="w-16 px-3 py-2 border-t border-b border-gray-300 text-center focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-16 border-t border-b border-gray-300 px-3 py-2 text-center focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Quantity"
             />
 
@@ -68,10 +68,10 @@ const QuantitySelector: React.FC<QuantitySelectorProps> = ({
                 type="button"
                 onClick={handleIncrement}
                 disabled={disabled || quantity >= max}
-                className="px-3 py-2 border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                className="rounded-r-md border border-gray-300 px-3 py-2 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Increase quantity"
             >
-                <Plus className="w-4 h-4" />
+                <Plus className="h-4 w-4" />
             </button>
         </div>
     );

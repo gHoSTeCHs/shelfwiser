@@ -31,7 +31,7 @@ interface Notification {
     } | null;
 }
 
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     'file-text': FileText,
     'check-circle': CheckCircle,
     'x-circle': XCircle,
@@ -153,8 +153,13 @@ export default function NotificationDropdown() {
     return (
         <div className="relative">
             <button
+                id="notification-dropdown-trigger"
                 className="dropdown-toggle relative flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
                 onClick={toggleDropdown}
+                aria-haspopup="menu"
+                aria-expanded={isOpen}
+                aria-controls="notification-dropdown-menu"
+                aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
             >
                 {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-semibold text-white">
@@ -167,6 +172,7 @@ export default function NotificationDropdown() {
                     height="20"
                     viewBox="0 0 20 20"
                     xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
                 >
                     <path
                         fillRule="evenodd"
@@ -177,6 +183,8 @@ export default function NotificationDropdown() {
                 </svg>
             </button>
             <Dropdown
+                id="notification-dropdown-menu"
+                triggerId="notification-dropdown-trigger"
                 isOpen={isOpen}
                 onClose={closeDropdown}
                 className="absolute -right-[240px] mt-[17px] flex h-[480px] w-[350px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg sm:w-[361px] lg:right-0 dark:border-gray-800 dark:bg-gray-dark"
@@ -189,7 +197,7 @@ export default function NotificationDropdown() {
                         {unreadCount > 0 && (
                             <button
                                 onClick={handleMarkAllAsRead}
-                                className="text-primary-600 hover:text-primary-700 text-xs"
+                                className="text-xs text-brand-600 hover:text-brand-700"
                             >
                                 Mark all read
                             </button>
@@ -237,6 +245,8 @@ export default function NotificationDropdown() {
                             return (
                                 <li key={notification.id}>
                                     <button
+                                        role="menuitem"
+                                        tabIndex={0}
                                         onClick={() =>
                                             handleNotificationClick(
                                                 notification,
@@ -244,7 +254,7 @@ export default function NotificationDropdown() {
                                         }
                                         className={`flex w-full gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 text-left transition hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
                                             !notification.is_read
-                                                ? 'bg-primary-50/30'
+                                                ? 'bg-brand-50/30'
                                                 : ''
                                         }`}
                                     >
@@ -286,7 +296,7 @@ export default function NotificationDropdown() {
                                         </span>
 
                                         {!notification.is_read && (
-                                            <span className="bg-primary-600 mt-2 h-2 w-2 flex-shrink-0 rounded-full"></span>
+                                            <span className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-brand-600"></span>
                                         )}
                                     </button>
                                 </li>

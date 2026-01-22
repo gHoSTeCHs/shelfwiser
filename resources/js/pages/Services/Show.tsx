@@ -70,7 +70,7 @@ export default function Show({ service, category_addons, can_manage }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={service.name} />
 
             <div className="space-y-6">
@@ -219,14 +219,14 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                     <div>
                         <Card title="Quick Stats">
                             <div className="space-y-4">
-                                <div className="bg-primary-50 dark:bg-primary-900/20 flex items-center justify-between rounded-lg p-3">
+                                <div className="flex items-center justify-between rounded-lg bg-brand-50 p-3 dark:bg-brand-900/20">
                                     <div className="flex items-center gap-2">
-                                        <Sparkles className="text-primary-600 dark:text-primary-400 h-5 w-5" />
+                                        <Sparkles className="h-5 w-5 text-brand-600 dark:text-brand-400" />
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Variants
                                         </span>
                                     </div>
-                                    <span className="text-primary-600 dark:text-primary-400 text-lg font-bold">
+                                    <span className="text-lg font-bold text-brand-600 dark:text-brand-400">
                                         {service.variants?.length || 0}
                                     </span>
                                 </div>
@@ -624,6 +624,8 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                     />
                 </>
             )}
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

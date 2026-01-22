@@ -17,14 +17,16 @@ class TimesheetController extends Controller
 {
     public function __construct(
         private TimesheetService $timesheetService
-    ) {}
+    )
+    {
+    }
 
     /**
      * Display a listing of timesheets
      */
     public function index(Request $request): Response
     {
-        Gate::authorize('viewAny', Timesheet::class);
+        Gate::authorize('timesheet.viewAny', Timesheet::class);
 
         $user = $request->user();
         $shopId = $request->input('shop_id');
@@ -55,7 +57,7 @@ class TimesheetController extends Controller
                 'end_date' => $endDate->toDateString(),
             ],
             'shops' => $user->shops,
-            'statusOptions' => collect(TimesheetStatus::cases())->map(fn ($case) => [
+            'statusOptions' => collect(TimesheetStatus::cases())->map(fn($case) => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),

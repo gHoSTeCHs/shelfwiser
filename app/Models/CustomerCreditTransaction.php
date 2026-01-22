@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CustomerCreditTransaction extends Model
 {
-    use SoftDeletes;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'customer_id',
@@ -31,41 +33,26 @@ class CustomerCreditTransaction extends Model
         'balance_after' => 'decimal:2',
     ];
 
-    /**
-     * Get the customer this transaction belongs to
-     */
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
     }
 
-    /**
-     * Get the order associated with this transaction (if any)
-     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    /**
-     * Get the tenant this transaction belongs to
-     */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
     }
 
-    /**
-     * Get the shop where this transaction was recorded
-     */
     public function shop(): BelongsTo
     {
         return $this->belongsTo(Shop::class);
     }
 
-    /**
-     * Get the user who recorded this transaction
-     */
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');

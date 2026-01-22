@@ -16,11 +16,13 @@ use Inertia\Response;
 
 class SupplierCatalogController extends Controller
 {
-    public function __construct(private readonly SupplierService $supplierService) {}
+    public function __construct(private readonly SupplierService $supplierService)
+    {
+    }
 
     public function index(): Response
     {
-        //        Gate::authorize('manageCatalog', auth()->user()->tenant);
+        Gate::authorize('catalog.manage', auth()->user()->tenant);
 
         $tenantId = auth()->user()->tenant_id;
 
@@ -36,7 +38,7 @@ class SupplierCatalogController extends Controller
 
     public function create(): Response
     {
-        Gate::authorize('manageCatalog', auth()->user()->tenant);
+        Gate::authorize('catalog.manage', auth()->user()->tenant);
 
         $tenantId = auth()->user()->tenant_id;
 
@@ -67,7 +69,7 @@ class SupplierCatalogController extends Controller
 
     public function edit(SupplierCatalogItem $catalogItem): Response
     {
-        Gate::authorize('manageCatalog', auth()->user()->tenant);
+        Gate::authorize('catalog.manage', auth()->user()->tenant);
 
         $catalogItem->load(['product.variants', 'pricingTiers']);
 
@@ -86,7 +88,7 @@ class SupplierCatalogController extends Controller
 
     public function destroy(SupplierCatalogItem $catalogItem): RedirectResponse
     {
-        Gate::authorize('manageCatalog', auth()->user()->tenant);
+        Gate::authorize('catalog.manage', auth()->user()->tenant);
 
         $this->supplierService->removeFromCatalog($catalogItem);
 
@@ -99,7 +101,7 @@ class SupplierCatalogController extends Controller
         $buyerTenant = auth()->user()->tenant;
 
         if ($supplier) {
-            Gate::authorize('viewCatalog', $supplier);
+            Gate::authorize('catalog.viewCatalog', $supplier);
         }
 
         $catalogItems = $this->supplierService->getAvailableCatalog($supplier, $buyerTenant);

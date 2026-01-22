@@ -34,7 +34,7 @@ class ShopController extends Controller
 
         $shops = Shop::query()->where('tenant_id', auth()->user()->tenant_id)
             ->with('type', 'users')
-            ->withCount('products')
+            ->withCount('products', 'users')
             ->latest()
             ->paginate(20);
 
@@ -87,11 +87,11 @@ class ShopController extends Controller
      */
     public function show(Shop $shop)
     {
-        Gate::authorize('view', $shop);
+        Gate::authorize('shop.view', $shop);
 
         return Inertia::render('Shops/Show', [
             'shop' => (new ShopResource($shop->load('type', 'users')))->toArray(request()),
-            'can_manage' => auth()->user()->can('manage', 'shop'),
+            'can_manage' => auth()->user()->can('shop.manage', $shop),
         ]);
     }
 
@@ -100,7 +100,7 @@ class ShopController extends Controller
      */
     public function edit(Shop $shop): Response
     {
-        Gate::authorize('manage', $shop);
+        Gate::authorize('shop.manage', $shop);
 
         $shop->load('type');
 
@@ -145,7 +145,7 @@ class ShopController extends Controller
      */
     public function editStorefrontSettings(Shop $shop): Response
     {
-        Gate::authorize('manage', $shop);
+        Gate::authorize('shop.manage', $shop);
 
         return Inertia::render('Shops/StorefrontSettings', [
             'shop' => $shop,

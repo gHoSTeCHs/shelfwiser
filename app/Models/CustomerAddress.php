@@ -2,17 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CustomerAddress extends Model
 {
+    use BelongsToTenant, HasFactory;
+
     /**
-     * The attributes that are mass assignable.
-     *
      * @var array<int, string>
      */
     protected $fillable = [
+        'tenant_id',
         'customer_id',
         'type',
         'is_default',
@@ -28,33 +31,27 @@ class CustomerAddress extends Model
     ];
 
     /**
-     * The attributes that should be cast.
-     *
      * @var array<string, string>
      */
     protected $casts = [
         'is_default' => 'boolean',
     ];
 
-    /**
-     * Get the customer that owns the address.
-     */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
 
-    /**
-     * Scope a query to only include default addresses.
-     */
     public function scopeDefault($query)
     {
         return $query->where('is_default', true);
     }
 
-    /**
-     * Scope a query to filter by address type.
-     */
     public function scopeOfType($query, string $type)
     {
         return $query->where(function ($q) use ($type) {
@@ -63,17 +60,11 @@ class CustomerAddress extends Model
         });
     }
 
-    /**
-     * Get full name.
-     */
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
     }
 
-    /**
-     * Get formatted address.
-     */
     public function getFormattedAddressAttribute(): string
     {
         $parts = array_filter([

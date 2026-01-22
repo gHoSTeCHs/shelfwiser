@@ -1,10 +1,10 @@
-import { Head, Link } from '@inertiajs/react';
-import AppLayout from '@/layouts/AppLayout';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
-import EmptyState from '@/components/ui/EmptyState';
 import PayrollController from '@/actions/App/Http/Controllers/PayrollController';
-import { FileText, Calendar } from 'lucide-react';
+import Badge from '@/components/ui/badge/Badge';
+import { Card } from '@/components/ui/card';
+import EmptyState from '@/components/ui/EmptyState';
+import AppLayout from '@/layouts/AppLayout';
+import { Head, Link } from '@inertiajs/react';
+import { Calendar, FileText } from 'lucide-react';
 
 interface PayrollPeriod {
     id: number;
@@ -25,7 +25,7 @@ interface Payslip {
     gross_pay: string;
     total_deductions: string;
     net_pay: string;
-    base_salary: string;
+    basic_salary: string;
     regular_hours: string;
     regular_pay: string;
     overtime_hours: string;
@@ -75,20 +75,22 @@ export default function MyPayslips({ payslips }: Props) {
 
     const totalGrossPay = payslips.reduce(
         (sum, payslip) => sum + parseFloat(payslip.gross_pay),
-        0
+        0,
     );
     const totalNetPay = payslips.reduce(
         (sum, payslip) => sum + parseFloat(payslip.net_pay),
-        0
+        0,
     );
 
     return (
-        <AppLayout>
+        <>
             <Head title="My Payslips" />
 
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-dark-900">My Payslips</h1>
-                <p className="mt-1 text-sm text-dark-600">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    My Payslips
+                </h1>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                     View your payment history and payslip details
                 </p>
             </div>
@@ -97,10 +99,10 @@ export default function MyPayslips({ payslips }: Props) {
                 <div className="mb-6 grid gap-4 sm:grid-cols-2">
                     <Card className="p-4">
                         <div>
-                            <p className="text-sm font-medium text-dark-600">
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                                 Total Gross Pay (All Time)
                             </p>
-                            <p className="mt-1 text-2xl font-bold text-dark-900">
+                            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(totalGrossPay)}
                             </p>
                         </div>
@@ -108,10 +110,10 @@ export default function MyPayslips({ payslips }: Props) {
 
                     <Card className="p-4">
                         <div>
-                            <p className="text-sm font-medium text-dark-600">
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                                 Total Net Pay (All Time)
                             </p>
-                            <p className="mt-1 text-2xl font-bold text-success-600">
+                            <p className="mt-1 text-2xl font-bold text-success-600 dark:text-success-400">
                                 {formatCurrency(totalNetPay)}
                             </p>
                         </div>
@@ -120,8 +122,10 @@ export default function MyPayslips({ payslips }: Props) {
             )}
 
             <Card className="overflow-hidden">
-                <div className="border-b border-dark-200 bg-dark-50 p-4">
-                    <h2 className="text-lg font-semibold text-dark-900">Payslip History</h2>
+                <div className="border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Payslip History
+                    </h2>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -135,97 +139,142 @@ export default function MyPayslips({ payslips }: Props) {
                         </div>
                     ) : (
                         <table className="w-full">
-                            <thead className="bg-dark-50">
+                            <thead className="bg-gray-50 dark:bg-gray-800">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th
+                                        scope="col"
+                                        className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400"
+                                    >
                                         Period
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase md:table-cell dark:text-gray-400"
+                                    >
                                         Shop
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase md:table-cell dark:text-gray-400"
+                                    >
                                         Payment Date
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase lg:table-cell dark:text-gray-400"
+                                    >
                                         Hours
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase md:table-cell dark:text-gray-400"
+                                    >
                                         Gross Pay
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase lg:table-cell dark:text-gray-400"
+                                    >
                                         Deductions
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th
+                                        scope="col"
+                                        className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400"
+                                    >
                                         Net Pay
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th
+                                        scope="col"
+                                        className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400"
+                                    >
                                         Status
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-dark-600">
+                                    <th
+                                        scope="col"
+                                        className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400"
+                                    >
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-dark-200 bg-white">
+                            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
                                 {payslips.map((payslip) => (
-                                    <tr key={payslip.id} className="hover:bg-dark-50">
+                                    <tr
+                                        key={payslip.id}
+                                        className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                                    >
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col">
-                                                <span className="font-medium text-dark-900">
-                                                    {payslip.payroll_period.period_name}
+                                                <span className="font-medium text-gray-900 dark:text-white">
+                                                    {
+                                                        payslip.payroll_period
+                                                            .period_name
+                                                    }
                                                 </span>
-                                                <span className="text-xs text-dark-500">
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">
                                                     {formatDate(
-                                                        payslip.payroll_period.start_date
+                                                        payslip.payroll_period
+                                                            .start_date,
                                                     )}{' '}
                                                     -{' '}
-                                                    {formatDate(payslip.payroll_period.end_date)}
+                                                    {formatDate(
+                                                        payslip.payroll_period
+                                                            .end_date,
+                                                    )}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-dark-600">
-                                            {payslip.shop ? payslip.shop.name : 'N/A'}
+                                        <td className="hidden px-4 py-3 text-sm text-gray-600 md:table-cell dark:text-gray-400">
+                                            {payslip.shop
+                                                ? payslip.shop.name
+                                                : 'N/A'}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-dark-600">
+                                        <td className="hidden px-4 py-3 text-sm text-gray-600 md:table-cell dark:text-gray-400">
                                             <div className="flex items-center gap-1">
-                                                <Calendar className="h-4 w-4 text-dark-400" />
+                                                <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                                                 {formatDate(
-                                                    payslip.payroll_period.payment_date
+                                                    payslip.payroll_period
+                                                        .payment_date,
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm text-dark-900">
+                                        <td className="hidden px-4 py-3 text-right text-sm text-gray-900 lg:table-cell dark:text-white">
                                             <div className="flex flex-col">
                                                 <span>
-                                                    {parseFloat(payslip.regular_hours).toFixed(
-                                                        2
-                                                    )}
+                                                    {parseFloat(
+                                                        payslip.regular_hours,
+                                                    ).toFixed(2)}
                                                     h
                                                 </span>
-                                                {parseFloat(payslip.overtime_hours) > 0 && (
-                                                    <span className="text-xs text-warning-600">
+                                                {parseFloat(
+                                                    payslip.overtime_hours,
+                                                ) > 0 && (
+                                                    <span className="text-xs text-warning-600 dark:text-warning-400">
                                                         +
                                                         {parseFloat(
-                                                            payslip.overtime_hours
+                                                            payslip.overtime_hours,
                                                         ).toFixed(2)}
                                                         h OT
                                                     </span>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm font-medium text-dark-900">
+                                        <td className="hidden px-4 py-3 text-right text-sm font-medium text-gray-900 md:table-cell dark:text-white">
                                             {formatCurrency(payslip.gross_pay)}
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm text-warning-600">
-                                            {formatCurrency(payslip.total_deductions)}
+                                        <td className="hidden px-4 py-3 text-right text-sm text-warning-600 lg:table-cell dark:text-warning-400">
+                                            {formatCurrency(
+                                                payslip.total_deductions,
+                                            )}
                                         </td>
-                                        <td className="px-4 py-3 text-right text-sm font-semibold text-success-600">
+                                        <td className="px-4 py-3 text-right text-sm font-semibold text-success-600 dark:text-success-400">
                                             {formatCurrency(payslip.net_pay)}
                                         </td>
                                         <td className="px-4 py-3">
                                             <Badge
                                                 color={getStatusColor(
-                                                    payslip.payroll_period.status
+                                                    payslip.payroll_period
+                                                        .status,
                                                 )}
                                                 size="sm"
                                             >
@@ -234,10 +283,12 @@ export default function MyPayslips({ payslips }: Props) {
                                         </td>
                                         <td className="px-4 py-3 text-right">
                                             <Link
-                                                href={PayrollController.showPayslip.url({
-                                                    payslip: payslip.id,
-                                                })}
-                                                className="text-sm font-medium text-primary-600 hover:text-primary-700"
+                                                href={PayrollController.showPayslip.url(
+                                                    {
+                                                        payslip: payslip.id,
+                                                    },
+                                                )}
+                                                className="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                                             >
                                                 View Details
                                             </Link>
@@ -249,6 +300,8 @@ export default function MyPayslips({ payslips }: Props) {
                     )}
                 </div>
             </Card>
-        </AppLayout>
+        </>
     );
 }
+
+MyPayslips.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

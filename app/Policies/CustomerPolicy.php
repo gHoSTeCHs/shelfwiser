@@ -12,7 +12,7 @@ class CustomerPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role->hasPermission('view_customers');
+        return $user->role->hasPermission('manage_customers');
     }
 
     /**
@@ -24,7 +24,7 @@ class CustomerPolicy
             return false;
         }
 
-        return $user->role->hasPermission('view_customers');
+        return $user->role->hasPermission('manage_customers');
     }
 
     /**

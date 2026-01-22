@@ -1,11 +1,11 @@
 import PayrollController from '@/actions/App/Http/Controllers/PayrollController.ts';
+import Input from '@/components/form/input/InputField';
+import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Input from '@/components/form/input/InputField';
-import Label from '@/components/form/Label';
-import InputError from '@/components/form/InputError';
 import AppLayout from '@/layouts/AppLayout';
-import { Head, Link, Form } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Calendar, DollarSign } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -44,7 +44,7 @@ const PayrollCreate = ({ shops }: Props) => {
     }, [startDate, endDate]);
 
     return (
-        <AppLayout>
+        <>
             <Head title="Create Payroll Period" />
 
             <div className="space-y-6">
@@ -87,7 +87,7 @@ const PayrollCreate = ({ shops }: Props) => {
                                             onChange={(e) =>
                                                 setShopId(e.target.value)
                                             }
-                                            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                                         >
                                             <option value="">All Shops</option>
                                             {shops.map((shop) => (
@@ -234,8 +234,8 @@ const PayrollCreate = ({ shops }: Props) => {
                                     </h3>
                                     <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-400">
                                         <li>
-                                            • Payroll will be calculated based on
-                                            employee salary configurations
+                                            • Payroll will be calculated based
+                                            on employee salary configurations
                                         </li>
                                         <li>
                                             • Deductions and wage advances will
@@ -268,8 +268,10 @@ const PayrollCreate = ({ shops }: Props) => {
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 };
+
+PayrollCreate.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
 
 export default PayrollCreate;

@@ -1,18 +1,10 @@
 import TimesheetController from '@/actions/App/Http/Controllers/TimesheetController.ts';
+import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 import AppLayout from '@/layouts/AppLayout';
-import { Head, Link, router, Form } from '@inertiajs/react';
-import {
-    Clock,
-    Calendar,
-    Coffee,
-    CheckCircle,
-    XCircle,
-    AlertCircle,
-    TrendingUp,
-} from 'lucide-react';
+import { Form, Head, Link, router } from '@inertiajs/react';
+import { Calendar, CheckCircle, Clock, Coffee, TrendingUp } from 'lucide-react';
 import React, { useState } from 'react';
 
 interface Shop {
@@ -93,9 +85,7 @@ const TimesheetsIndex = ({
     const [selectedShop, setSelectedShop] = useState(
         filters.shop_id?.toString() || '',
     );
-    const [selectedStatus, setSelectedStatus] = useState(
-        filters.status || '',
-    );
+    const [selectedStatus, setSelectedStatus] = useState(filters.status || '');
     const [startDate, setStartDate] = useState(filters.start_date);
     const [endDate, setEndDate] = useState(filters.end_date);
     const [processing, setProcessing] = useState(false);
@@ -116,11 +106,21 @@ const TimesheetsIndex = ({
     const handleClearFilters = () => {
         setSelectedShop('');
         setSelectedStatus('');
-        router.get('/timesheets', {}, { preserveState: true, preserveScroll: true });
+        router.get(
+            '/timesheets',
+            {},
+            { preserveState: true, preserveScroll: true },
+        );
     };
 
     const getStatusBadge = (status: string) => {
-        const statusConfig: Record<string, { color: 'light' | 'warning' | 'success' | 'error' | 'info', label: string }> = {
+        const statusConfig: Record<
+            string,
+            {
+                color: 'light' | 'warning' | 'success' | 'error' | 'info';
+                label: string;
+            }
+        > = {
             draft: { color: 'light', label: 'Draft' },
             submitted: { color: 'warning', label: 'Submitted' },
             approved: { color: 'success', label: 'Approved' },
@@ -128,7 +128,10 @@ const TimesheetsIndex = ({
             paid: { color: 'info', label: 'Paid' },
         };
 
-        const config = statusConfig[status] || { color: 'light' as const, label: status };
+        const config = statusConfig[status] || {
+            color: 'light' as const,
+            label: status,
+        };
         return <Badge color={config.color}>{config.label}</Badge>;
     };
 
@@ -160,7 +163,8 @@ const TimesheetsIndex = ({
                             My Timesheets
                         </h1>
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Track your work hours and submit timesheets for approval
+                            Track your work hours and submit timesheets for
+                            approval
                         </p>
                     </div>
                     <Link href={TimesheetController.approvalQueue.url()}>
@@ -183,38 +187,63 @@ const TimesheetsIndex = ({
                                 </div>
                                 <div className="mt-2 space-y-1 text-sm">
                                     <p className="text-gray-700 dark:text-gray-300">
-                                        Shop: <span className="font-medium">{activeTimesheet.shop.name}</span>
+                                        Shop:{' '}
+                                        <span className="font-medium">
+                                            {activeTimesheet.shop.name}
+                                        </span>
                                     </p>
                                     <p className="text-gray-700 dark:text-gray-300">
-                                        Clock In: <span className="font-medium">{formatTime(activeTimesheet.clock_in)}</span>
+                                        Clock In:{' '}
+                                        <span className="font-medium">
+                                            {formatTime(
+                                                activeTimesheet.clock_in,
+                                            )}
+                                        </span>
                                     </p>
-                                    {activeTimesheet.break_start && !activeTimesheet.break_end && (
-                                        <p className="text-orange-700 dark:text-orange-400">
-                                            <Coffee className="mr-1 inline h-4 w-4" />
-                                            On Break since {formatTime(activeTimesheet.break_start)}
-                                        </p>
-                                    )}
+                                    {activeTimesheet.break_start &&
+                                        !activeTimesheet.break_end && (
+                                            <p className="text-orange-700 dark:text-orange-400">
+                                                <Coffee className="mr-1 inline h-4 w-4" />
+                                                On Break since{' '}
+                                                {formatTime(
+                                                    activeTimesheet.break_start,
+                                                )}
+                                            </p>
+                                        )}
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                {activeTimesheet.break_start && !activeTimesheet.break_end ? (
+                                {activeTimesheet.break_start &&
+                                !activeTimesheet.break_end ? (
                                     <Form
-                                        action={TimesheetController.endBreak.url({ timesheet: activeTimesheet.id })}
+                                        action={TimesheetController.endBreak.url(
+                                            { timesheet: activeTimesheet.id },
+                                        )}
                                         method="post"
                                     >
                                         {({ processing }) => (
-                                            <Button type="submit" variant="outline" disabled={processing}>
+                                            <Button
+                                                type="submit"
+                                                variant="outline"
+                                                disabled={processing}
+                                            >
                                                 End Break
                                             </Button>
                                         )}
                                     </Form>
                                 ) : (
                                     <Form
-                                        action={TimesheetController.startBreak.url({ timesheet: activeTimesheet.id })}
+                                        action={TimesheetController.startBreak.url(
+                                            { timesheet: activeTimesheet.id },
+                                        )}
                                         method="post"
                                     >
                                         {({ processing }) => (
-                                            <Button type="submit" variant="outline" disabled={processing}>
+                                            <Button
+                                                type="submit"
+                                                variant="outline"
+                                                disabled={processing}
+                                            >
                                                 <Coffee className="mr-2 h-4 w-4" />
                                                 Start Break
                                             </Button>
@@ -222,11 +251,16 @@ const TimesheetsIndex = ({
                                     </Form>
                                 )}
                                 <Form
-                                    action={TimesheetController.clockOut.url({ timesheet: activeTimesheet.id })}
+                                    action={TimesheetController.clockOut.url({
+                                        timesheet: activeTimesheet.id,
+                                    })}
                                     method="post"
                                 >
                                     {({ processing }) => (
-                                        <Button type="submit" disabled={processing}>
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                        >
                                             Clock Out
                                         </Button>
                                     )}
@@ -253,8 +287,15 @@ const TimesheetsIndex = ({
                             >
                                 {({ processing }) => (
                                     <>
-                                        <input type="hidden" name="shop_id" value={shops[0].id} />
-                                        <Button type="submit" disabled={processing}>
+                                        <input
+                                            type="hidden"
+                                            name="shop_id"
+                                            value={shops[0].id}
+                                        />
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                        >
                                             <Clock className="mr-2 h-4 w-4" />
                                             Clock In
                                         </Button>
@@ -357,8 +398,10 @@ const TimesheetsIndex = ({
                             </label>
                             <select
                                 value={selectedShop}
-                                onChange={(e) => setSelectedShop(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                onChange={(e) =>
+                                    setSelectedShop(e.target.value)
+                                }
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             >
                                 <option value="">All Shops</option>
                                 {shops.map((shop) => (
@@ -375,12 +418,17 @@ const TimesheetsIndex = ({
                             </label>
                             <select
                                 value={selectedStatus}
-                                onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                onChange={(e) =>
+                                    setSelectedStatus(e.target.value)
+                                }
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             >
                                 <option value="">All Status</option>
                                 {statusOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
                                         {option.label}
                                     </option>
                                 ))}
@@ -395,7 +443,7 @@ const TimesheetsIndex = ({
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             />
                         </div>
 
@@ -407,7 +455,7 @@ const TimesheetsIndex = ({
                                 type="date"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                             />
                         </div>
                     </div>
@@ -427,22 +475,22 @@ const TimesheetsIndex = ({
                         <table className="w-full">
                             <thead className="border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Date
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Shop
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Clock In / Out
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Hours
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Status
                                     </th>
-                                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
                                         Actions
                                     </th>
                                 </tr>
@@ -456,7 +504,8 @@ const TimesheetsIndex = ({
                                         >
                                             <Clock className="mx-auto h-12 w-12 text-gray-400" />
                                             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                                                No timesheets found for the selected period
+                                                No timesheets found for the
+                                                selected period
                                             </p>
                                         </td>
                                     </tr>
@@ -479,11 +528,22 @@ const TimesheetsIndex = ({
                                             <td className="px-6 py-4">
                                                 <div className="text-sm">
                                                     <p className="text-gray-900 dark:text-white">
-                                                        {formatTime(timesheet.clock_in)} - {formatTime(timesheet.clock_out)}
+                                                        {formatTime(
+                                                            timesheet.clock_in,
+                                                        )}{' '}
+                                                        -{' '}
+                                                        {formatTime(
+                                                            timesheet.clock_out,
+                                                        )}
                                                     </p>
-                                                    {timesheet.break_duration_minutes > 0 && (
+                                                    {timesheet.break_duration_minutes >
+                                                        0 && (
                                                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                            Break: {timesheet.break_duration_minutes}min
+                                                            Break:{' '}
+                                                            {
+                                                                timesheet.break_duration_minutes
+                                                            }
+                                                            min
                                                         </p>
                                                     )}
                                                 </div>
@@ -493,21 +553,37 @@ const TimesheetsIndex = ({
                                                     <p className="font-medium text-gray-900 dark:text-white">
                                                         {timesheet.total_hours}h
                                                     </p>
-                                                    {parseFloat(timesheet.overtime_hours) > 0 && (
+                                                    {parseFloat(
+                                                        timesheet.overtime_hours,
+                                                    ) > 0 && (
                                                         <p className="text-xs text-orange-600 dark:text-orange-400">
-                                                            OT: {timesheet.overtime_hours}h
+                                                            OT:{' '}
+                                                            {
+                                                                timesheet.overtime_hours
+                                                            }
+                                                            h
                                                         </p>
                                                     )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                {getStatusBadge(timesheet.status)}
+                                                {getStatusBadge(
+                                                    timesheet.status,
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <Link
-                                                    href={TimesheetController.show.url({ timesheet: timesheet.id })}
+                                                    href={TimesheetController.show.url(
+                                                        {
+                                                            timesheet:
+                                                                timesheet.id,
+                                                        },
+                                                    )}
                                                 >
-                                                    <Button variant="outline" size="sm">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                    >
                                                         View
                                                     </Button>
                                                 </Link>

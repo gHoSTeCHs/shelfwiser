@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { usePage } from '@inertiajs/react';
 import { UserRole, UserRoleValue } from '@/types/user-role';
+import { usePage } from '@inertiajs/react';
+import { useMemo } from 'react';
 
 export function useUserRole(currentUserRole: UserRoleValue) {
     const page = usePage();
@@ -10,7 +10,7 @@ export function useUserRole(currentUserRole: UserRoleValue) {
     }, [page.props.userRoles]);
 
     const role = useMemo<UserRole | undefined>(() => {
-        return userRoles.find(r => r.value === currentUserRole);
+        return userRoles.find((r) => r.value === currentUserRole);
     }, [userRoles, currentUserRole]);
 
     const hasPermission = (permission: string): boolean => {
@@ -18,12 +18,23 @@ export function useUserRole(currentUserRole: UserRoleValue) {
     };
 
     const canAccessMultipleStores = useMemo(() => {
-        return ['owner', 'general_manager'].includes(currentUserRole);
+        return ['super_admin', 'owner', 'general_manager'].includes(
+            currentUserRole,
+        );
     }, [currentUserRole]);
 
     const isManagement = useMemo(() => {
-        return ['owner', 'general_manager', 'store_manager', 'assistant_manager']
-            .includes(currentUserRole);
+        return [
+            'super_admin',
+            'owner',
+            'general_manager',
+            'store_manager',
+            'assistant_manager',
+        ].includes(currentUserRole);
+    }, [currentUserRole]);
+
+    const isSuperAdmin = useMemo(() => {
+        return currentUserRole === 'super_admin';
     }, [currentUserRole]);
 
     return {
@@ -31,6 +42,7 @@ export function useUserRole(currentUserRole: UserRoleValue) {
         hasPermission,
         canAccessMultipleStores,
         isManagement,
+        isSuperAdmin,
         level: role?.level ?? 0,
         allRoles: userRoles,
     };

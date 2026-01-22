@@ -19,9 +19,9 @@ interface Props {
 }
 
 export default function StockMovementHistory({
-                                                 movements,
-                                                 showVariantInfo = false,
-                                             }: Props) {
+    movements,
+    showVariantInfo = false,
+}: Props) {
     const getMovementIcon = (type: string) => {
         switch (type) {
             case 'purchase':
@@ -68,7 +68,7 @@ export default function StockMovementHistory({
     };
 
     const getMovementBadgeColor = (
-        type: string
+        type: string,
     ): 'success' | 'warning' | 'error' | 'info' | 'primary' => {
         const isIncrease = [
             'purchase',
@@ -104,7 +104,8 @@ export default function StockMovementHistory({
                             No stock movements
                         </h3>
                         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                            No stock movement history available for this variant.
+                            No stock movement history available for this
+                            variant.
                         </p>
                     </div>
                 </Card>
@@ -112,126 +113,135 @@ export default function StockMovementHistory({
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
-                        <tr className="border-b border-gray-200 dark:border-gray-700">
-                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                Date & Time
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                Type
-                            </th>
-                            {showVariantInfo && (
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                    Product
+                            <tr className="border-b border-gray-200 dark:border-gray-700">
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                    Date & Time
                                 </th>
-                            )}
-                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                Location
-                            </th>
-                            <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                Quantity
-                            </th>
-                            <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                Before
-                            </th>
-                            <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                After
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                Reason
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                Reference
-                            </th>
-                        </tr>
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                    Type
+                                </th>
+                                {showVariantInfo && (
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        Product
+                                    </th>
+                                )}
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                    Location
+                                </th>
+                                <th scope="col" className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                    Quantity
+                                </th>
+                                <th scope="col" className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                    Before
+                                </th>
+                                <th scope="col" className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                    After
+                                </th>
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                    Reason
+                                </th>
+                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                    Reference
+                                </th>
+                            </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {movements.map((movement) => (
-                            <tr
-                                key={movement.id}
-                                className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                            >
-                                <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-900 dark:text-white">
-                                    {formatDate(movement.created_at)}
-                                    {movement.created_by_user && (
-                                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                            by {movement.created_by_user.name}
-                                        </div>
-                                    )}
-                                </td>
-                                <td className="px-4 py-4">
-                                    <div className="flex items-center gap-2">
-                                        {getMovementIcon(movement.type)}
-                                        <Badge
-                                            variant="light"
-                                            size="sm"
-                                            color={getMovementBadgeColor(
-                                                movement.type
-                                            )}
-                                        >
-                                            {getMovementLabel(movement.type)}
-                                        </Badge>
-                                    </div>
-                                </td>
-                                {showVariantInfo && (
-                                    <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
-                                        {movement.product_variant?.product
-                                            ?.name || 'N/A'}
-                                        {movement.product_variant?.name && (
-                                            <div className="text-xs text-gray-500">
-                                                {movement.product_variant.name}
+                            {movements.map((movement) => (
+                                <tr
+                                    key={movement.id}
+                                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                                >
+                                    <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900 dark:text-white">
+                                        {formatDate(movement.created_at)}
+                                        {movement.created_by_user && (
+                                            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                by{' '}
+                                                {movement.created_by_user.name}
                                             </div>
                                         )}
-                                        <div className="text-xs text-gray-500">
-                                            SKU: {movement.product_variant?.sku}
+                                    </td>
+                                    <td className="px-4 py-4">
+                                        <div className="flex items-center gap-2">
+                                            {getMovementIcon(movement.type)}
+                                            <Badge
+                                                variant="light"
+                                                size="sm"
+                                                color={getMovementBadgeColor(
+                                                    movement.type,
+                                                )}
+                                            >
+                                                {getMovementLabel(
+                                                    movement.type,
+                                                )}
+                                            </Badge>
                                         </div>
                                     </td>
-                                )}
-                                <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
-                                    {movement.type.includes('transfer') ? (
-                                        <div className="space-y-1">
-                                            <div>
-                                                From:{' '}
-                                                {movement.from_location?.location
-                                                    ?.name || 'N/A'}
+                                    {showVariantInfo && (
+                                        <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                                            {movement.product_variant?.product
+                                                ?.name || 'N/A'}
+                                            {movement.product_variant?.name && (
+                                                <div className="text-xs text-gray-500">
+                                                    {
+                                                        movement.product_variant
+                                                            .name
+                                                    }
+                                                </div>
+                                            )}
+                                            <div className="text-xs text-gray-500">
+                                                SKU:{' '}
+                                                {movement.product_variant?.sku}
                                             </div>
+                                        </td>
+                                    )}
+                                    <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                                        {movement.type.includes('transfer') ? (
+                                            <div className="space-y-1">
+                                                <div>
+                                                    From:{' '}
+                                                    {movement.from_location
+                                                        ?.location?.name ||
+                                                        'N/A'}
+                                                </div>
+                                                <div>
+                                                    To:{' '}
+                                                    {movement.to_location
+                                                        ?.location?.name ||
+                                                        'N/A'}
+                                                </div>
+                                            </div>
+                                        ) : (
                                             <div>
-                                                To:{' '}
                                                 {movement.to_location?.location
-                                                    ?.name || 'N/A'}
+                                                    ?.name ||
+                                                    movement.from_location
+                                                        ?.location?.name ||
+                                                    'N/A'}
                                             </div>
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            {movement.to_location?.location
-                                                    ?.name ||
-                                                movement.from_location?.location
-                                                    ?.name ||
-                                                'N/A'}
-                                        </div>
-                                    )}
-                                </td>
-                                <td className="px-4 py-4 text-center text-sm font-medium text-gray-900 dark:text-white">
-                                    {movement.quantity}
-                                </td>
-                                <td className="px-4 py-4 text-center text-sm text-gray-600 dark:text-gray-400">
-                                    {movement.quantity_before ?? '-'}
-                                </td>
-                                <td className="px-4 py-4 text-center text-sm text-gray-600 dark:text-gray-400">
-                                    {movement.quantity_after ?? '-'}
-                                </td>
-                                <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-400">
-                                    {movement.reason || '-'}
-                                    {movement.notes && (
-                                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">
-                                            {movement.notes}
-                                        </div>
-                                    )}
-                                </td>
-                                <td className="px-4 py-4 text-sm font-mono text-gray-500 dark:text-gray-400">
-                                    {movement.reference_number || '-'}
-                                </td>
-                            </tr>
-                        ))}
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-4 text-center text-sm font-medium text-gray-900 dark:text-white">
+                                        {movement.quantity}
+                                    </td>
+                                    <td className="px-4 py-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                                        {movement.quantity_before ?? '-'}
+                                    </td>
+                                    <td className="px-4 py-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                                        {movement.quantity_after ?? '-'}
+                                    </td>
+                                    <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-400">
+                                        {movement.reason || '-'}
+                                        {movement.notes && (
+                                            <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+                                                {movement.notes}
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td className="font-mono px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                        {movement.reference_number || '-'}
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>

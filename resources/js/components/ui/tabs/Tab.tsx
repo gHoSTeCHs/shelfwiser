@@ -24,7 +24,7 @@ export const TabList = ({
 }: TabListProps) => {
 	const variantClasses = {
 		default: 'gap-2 p-1 bg-gray-100 rounded-lg dark:bg-gray-900',
-		underline: 'border-b border-gray-200 dark:border-gray-800',
+		underline: 'gap-4 border-b border-gray-200 dark:border-gray-800',
 		icon: 'flex-nowrap overflow-x-auto gap-8 border-b border-gray-200 dark:border-gray-800',
 		badge: 'flex-nowrap overflow-x-auto gap-2',
 	};

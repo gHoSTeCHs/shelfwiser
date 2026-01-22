@@ -17,6 +17,7 @@ import {
     Plus,
     Search,
     Settings,
+    Store,
     Users,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -51,7 +52,7 @@ export default function Index({ shops, shopTypes }: Props) {
     });
 
     return (
-        <AppLayout>
+        <>
             <Head title="Shops" />
 
             <div className="space-y-6">
@@ -132,17 +133,33 @@ export default function Index({ shops, shopTypes }: Props) {
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
                                             {shop.slug}
                                         </p>
-                                        <Badge
-                                            variant={
-                                                shop.is_active
-                                                    ? 'light'
-                                                    : 'solid'
-                                            }
-                                        >
-                                            {shop.is_active
-                                                ? 'Active'
-                                                : 'Inactive'}
-                                        </Badge>
+                                        <div className="flex gap-2">
+                                            <Badge
+                                                variant={
+                                                    shop.is_active
+                                                        ? 'light'
+                                                        : 'solid'
+                                                }
+                                                color={
+                                                    shop.is_active
+                                                        ? 'success'
+                                                        : 'error'
+                                                }
+                                            >
+                                                {shop.is_active
+                                                    ? 'Active'
+                                                    : 'Inactive'}
+                                            </Badge>
+                                            {shop.storefront_enabled && (
+                                                <Badge
+                                                    variant="light"
+                                                    color="info"
+                                                >
+                                                    <Store className="mr-1 h-3 w-3" />
+                                                    Storefront
+                                                </Badge>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">
@@ -156,7 +173,8 @@ export default function Index({ shops, shopTypes }: Props) {
                                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                                                 <MapPin className="mr-2 h-4 w-4" />
                                                 {shop.city}
-                                                {shop.state && `, ${shop.state}`}
+                                                {shop.state &&
+                                                    `, ${shop.state}`}
                                             </div>
                                         )}
 
@@ -188,27 +206,45 @@ export default function Index({ shops, shopTypes }: Props) {
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-2">
+                                    <div className="space-y-2">
+                                        <div className="flex gap-2">
+                                            <Link
+                                                href={`/shops/${shop.id}`}
+                                                className="flex-1"
+                                                onClick={(e) =>
+                                                    e.stopPropagation()
+                                                }
+                                            >
+                                                <Button
+                                                    variant="outline"
+                                                    className="w-full"
+                                                >
+                                                    View
+                                                </Button>
+                                            </Link>
+                                            <Link
+                                                href={`/shops/${shop.id}/edit`}
+                                                className="flex-1"
+                                                onClick={(e) =>
+                                                    e.stopPropagation()
+                                                }
+                                            >
+                                                <Button className="w-full">
+                                                    <Settings className="mr-2 h-4 w-4" />
+                                                    Manage
+                                                </Button>
+                                            </Link>
+                                        </div>
                                         <Link
-                                            href={`/shops/${shop.id}`}
-                                            className="flex-1"
+                                            href={`/shops/${shop.id}/storefront-settings`}
                                             onClick={(e) => e.stopPropagation()}
                                         >
                                             <Button
                                                 variant="outline"
                                                 className="w-full"
                                             >
-                                                View
-                                            </Button>
-                                        </Link>
-                                        <Link
-                                            href={`/shops/${shop.id}/edit`}
-                                            className="flex-1"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <Button className="w-full">
-                                                <Settings className="mr-2 h-4 w-4" />
-                                                Manage
+                                                <Store className="mr-2 h-4 w-4" />
+                                                Storefront Settings
                                             </Button>
                                         </Link>
                                     </div>
@@ -218,6 +254,8 @@ export default function Index({ shops, shopTypes }: Props) {
                     </div>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

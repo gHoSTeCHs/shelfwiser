@@ -1,31 +1,38 @@
-import React from 'react';
-import Input from '@/components/form/input/InputField';
-import Label from '@/components/form/Label';
-import Select from '@/components/form/Select';
 import Checkbox from '@/components/form/input/Checkbox';
+import Input from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
 import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
+
+type SchemaPropertyValue =
+    | string
+    | number
+    | boolean
+    | null
+    | string[]
+    | number[];
 
 interface SchemaProperty {
     type: 'string' | 'integer' | 'number' | 'boolean' | 'array' | 'object';
     title?: string;
-    default?: any;
-    enum?: any[];
+    default?: SchemaPropertyValue;
+    enum?: SchemaPropertyValue[];
     minimum?: number;
     maximum?: number;
     minLength?: number;
     maxLength?: number;
     items?: {
         type?: string;
-        enum?: any[];
+        enum?: SchemaPropertyValue[];
     };
 }
 
 interface DynamicSchemaFieldProps {
     fieldName: string;
     schema: SchemaProperty;
-    value: any;
-    onChange: (value: any) => void;
+    value: SchemaPropertyValue;
+    onChange: (value: SchemaPropertyValue) => void;
     error?: string;
     required?: boolean;
 }
@@ -129,12 +136,11 @@ export default function DynamicSchemaField({
                                         <Checkbox
                                             id={`${fieldId}_${option}`}
                                             name={`${fieldName}[]`}
-                                            checked={
-                                                (value ??
-                                                    schema.default ??
-                                                    []
-                                                ).includes(option)
-                                            }
+                                            checked={(
+                                                value ??
+                                                schema.default ??
+                                                []
+                                            ).includes(option)}
                                             onChange={(checked) => {
                                                 const currentValues =
                                                     value ??
@@ -157,7 +163,7 @@ export default function DynamicSchemaField({
                                         />
                                         <Label
                                             htmlFor={`${fieldId}_${option}`}
-                                            className="mb-0 font-normal capitalize text-gray-700 dark:text-gray-400"
+                                            className="mb-0 font-normal text-gray-700 capitalize dark:text-gray-400"
                                         >
                                             {option.replace(/_/g, ' ')}
                                         </Label>
@@ -224,8 +230,7 @@ export default function DynamicSchemaField({
                     );
                 }
 
-                const isLongText =
-                    schema.maxLength && schema.maxLength > 100;
+                const isLongText = schema.maxLength && schema.maxLength > 100;
 
                 if (isLongText) {
                     return (

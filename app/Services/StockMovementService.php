@@ -11,10 +11,16 @@ use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class StockMovementService
 {
+    /**
+     * Constructor
+     */
+    public function __construct(private ReorderAlertService $reorderAlertService) {}
+
     /**
      * @throws Throwable
      */
@@ -35,7 +41,12 @@ class StockMovementService
         ]);
 
         try {
-            return DB::transaction(function () use ($variant, $location, $quantity, $type, $user, $reason, $notes) {
+            $movement = DB::transaction(function () use ($variant, $location, $quantity, $type, $user, $reason, $notes) {
+                // Use pessimistic locking to prevent race conditions
+                $location = InventoryLocation::where('id', $location->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
                 $quantityBefore = $location->quantity;
 
                 if ($type->isIncrease()) {
@@ -72,6 +83,10 @@ class StockMovementService
 
                 return $movement;
             });
+
+            $this->reorderAlertService->clearCache($user->tenant, null);
+
+            return $movement;
         } catch (Throwable $e) {
             Log::error('Stock adjustment failed.', [
                 'variant_id' => $variant->id,
@@ -103,7 +118,28 @@ class StockMovementService
         ]);
 
         try {
-            return DB::transaction(function () use ($variant, $fromLocation, $toLocation, $quantity, $user, $reason, $notes) {
+            $movements = DB::transaction(function () use ($variant, $fromLocation, $toLocation, $quantity, $user, $reason, $notes) {
+                if ($fromLocation->tenant_id !== $user->tenant_id) {
+                    throw new Exception('Source location does not belong to your tenant');
+                }
+
+                if ($toLocation->tenant_id !== $user->tenant_id) {
+                    throw new Exception('Destination location does not belong to your tenant');
+                }
+
+                // Lock both locations to prevent race conditions
+                // Lock in ID order to prevent deadlocks
+                $lockIds = [$fromLocation->id, $toLocation->id];
+                sort($lockIds);
+
+                $lockedLocations = InventoryLocation::whereIn('id', $lockIds)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id');
+
+                $fromLocation = $lockedLocations[$fromLocation->id];
+                $toLocation = $lockedLocations[$toLocation->id];
+
                 if ($fromLocation->quantity < $quantity) {
                     throw new Exception('Insufficient stock at source location. Available: '.$fromLocation->quantity);
                 }
@@ -171,6 +207,10 @@ class StockMovementService
                     'in' => $inMovement,
                 ];
             });
+
+            $this->reorderAlertService->clearCache($user->tenant, null);
+
+            return $movements;
         } catch (Throwable $e) {
             Log::error('Stock transfer failed.', [
                 'variant_id' => $variant->id,
@@ -205,7 +245,7 @@ class StockMovementService
         ]);
 
         try {
-            return DB::transaction(function () use (
+            $movement = DB::transaction(function () use (
                 $variant,
                 $location,
                 $packageQuantity,
@@ -224,8 +264,13 @@ class StockMovementService
                 $location->quantity += $baseUnits;
                 $location->save();
 
+                $shopId = $location->location_type === \App\Models\Shop::class
+                    ? $location->location_id
+                    : $variant->product->shop_id;
+
                 $movement = StockMovement::query()->create([
                     'tenant_id' => $user->tenant_id,
+                    'shop_id' => $shopId,
                     'product_variant_id' => $variant->id,
                     'product_packaging_type_id' => $packagingType->id,
                     'to_location_id' => $location->id,
@@ -249,6 +294,10 @@ class StockMovementService
 
                 return $movement;
             });
+
+            $this->reorderAlertService->clearCache($user->tenant, null);
+
+            return $movement;
         } catch (Throwable $e) {
             Log::error('Purchase recording failed.', [
                 'variant_id' => $variant->id,
@@ -272,7 +321,8 @@ class StockMovementService
         ?ProductPackagingType $packagingType,
         User $user,
         ?string $referenceNumber = null,
-        ?string $notes = null
+        ?string $notes = null,
+        bool $releaseReservation = false
     ): StockMovement {
         Log::info('Sale recording process started.', [
             'variant_id' => $variant->id,
@@ -281,19 +331,24 @@ class StockMovementService
         ]);
 
         try {
-            return DB::transaction(function () use (
+            $movement = DB::transaction(function () use (
                 $variant,
                 $location,
                 $quantity,
                 $packagingType,
                 $user,
                 $referenceNumber,
-                $notes
+                $notes,
+                $releaseReservation
             ) {
                 $quantityBefore = $location->quantity;
 
                 if ($location->quantity < $quantity) {
                     throw new Exception('Insufficient stock. Available: '.$location->quantity);
+                }
+
+                if ($releaseReservation && $location->reserved_quantity >= $quantity) {
+                    $location->reserved_quantity -= $quantity;
                 }
 
                 $location->quantity -= $quantity;
@@ -304,8 +359,13 @@ class StockMovementService
                     $packageQuantity = (int) ($quantity / $packagingType->units_per_package);
                 }
 
+                $shopId = $location->location_type === \App\Models\Shop::class
+                    ? $location->location_id
+                    : $variant->product->shop_id;
+
                 $movement = StockMovement::query()->create([
                     'tenant_id' => $user->tenant_id,
+                    'shop_id' => $shopId,
                     'product_variant_id' => $variant->id,
                     'product_packaging_type_id' => $packagingType?->id,
                     'from_location_id' => $location->id,
@@ -323,6 +383,10 @@ class StockMovementService
 
                 return $movement;
             });
+
+            $this->reorderAlertService->clearCache($user->tenant, null);
+
+            return $movement;
         } catch (Throwable $e) {
             Log::error('Sale recording failed.', [
                 'variant_id' => $variant->id,
@@ -351,7 +415,7 @@ class StockMovementService
         ]);
 
         try {
-            return DB::transaction(function () use ($variant, $location, $actualQuantity, $user, $notes) {
+            $movement = DB::transaction(function () use ($variant, $location, $actualQuantity, $user, $notes) {
                 $quantityBefore = $location->quantity;
                 $difference = $actualQuantity - $quantityBefore;
 
@@ -367,8 +431,13 @@ class StockMovementService
                 //                $type = $difference > 0 ? StockMovementType::ADJUSTMENT_IN : StockMovementType::ADJUSTMENT_OUT;
                 $quantity = abs($difference);
 
+                $shopId = $location->location_type === \App\Models\Shop::class
+                    ? $location->location_id
+                    : $variant->product->shop_id;
+
                 $movement = StockMovement::query()->create([
                     'tenant_id' => $user->tenant_id,
+                    'shop_id' => $shopId,
                     'product_variant_id' => $variant->id,
                     'to_location_id' => $location->id,
                     'type' => StockMovementType::STOCK_TAKE,
@@ -385,6 +454,12 @@ class StockMovementService
 
                 return $movement;
             });
+
+            if ($movement !== null) {
+                $this->reorderAlertService->clearCache($user->tenant, null);
+            }
+
+            return $movement;
         } catch (Throwable $e) {
             Log::error('Stock take failed.', [
                 'variant_id' => $variant->id,
@@ -401,6 +476,35 @@ class StockMovementService
      */
     public function recordMovement(array $data): StockMovement
     {
+        $requiredFields = ['tenant_id', 'product_variant_id', 'type', 'quantity'];
+        foreach ($requiredFields as $field) {
+            if (! isset($data[$field])) {
+                throw new Exception("Missing required field: {$field}");
+            }
+        }
+
+        if (! $data['type'] instanceof StockMovementType) {
+            throw new Exception('Invalid stock movement type');
+        }
+
+        $variant = ProductVariant::where('id', $data['product_variant_id'])
+            ->whereHas('product', fn ($q) => $q->where('tenant_id', $data['tenant_id']))
+            ->first();
+
+        if (! $variant) {
+            throw new Exception('Product variant not found or does not belong to tenant');
+        }
+
+        if (isset($data['shop_id'])) {
+            $shopBelongsToTenant = \App\Models\Shop::where('id', $data['shop_id'])
+                ->where('tenant_id', $data['tenant_id'])
+                ->exists();
+
+            if (! $shopBelongsToTenant) {
+                throw new Exception('Shop does not belong to tenant');
+            }
+        }
+
         return DB::transaction(function () use ($data) {
             $movement = StockMovement::create($data);
 
@@ -411,6 +515,60 @@ class StockMovementService
 
             return $movement;
         });
+    }
+
+    /**
+     * Check if sufficient stock is available for a variant at a specific shop.
+     */
+    public function checkStockAvailability(
+        ProductVariant $variant,
+        int $quantity,
+        ?int $shopId = null
+    ): bool {
+        if (! ($variant->product->track_stock ?? true)) {
+            return true;
+        }
+
+        $location = $this->getInventoryLocation($variant, $shopId);
+
+        if (! $location) {
+            return false;
+        }
+
+        return $location->available_quantity >= $quantity;
+    }
+
+    /**
+     * Get available stock quantity for a variant at a specific shop.
+     */
+    public function getAvailableStock(
+        ProductVariant $variant,
+        ?int $shopId = null
+    ): int {
+        if (! ($variant->product->track_stock ?? true)) {
+            return PHP_INT_MAX;
+        }
+
+        $location = $this->getInventoryLocation($variant, $shopId);
+
+        return $location?->available_quantity ?? 0;
+    }
+
+    /**
+     * Get the inventory location for a variant at a specific shop.
+     */
+    private function getInventoryLocation(
+        ProductVariant $variant,
+        ?int $shopId = null
+    ): ?InventoryLocation {
+        $query = $variant->inventoryLocations()
+            ->where('location_type', \App\Models\Shop::class);
+
+        if ($shopId) {
+            $query->where('location_id', $shopId);
+        }
+
+        return $query->first();
     }
 
     private function generateReferenceNumber(StockMovementType $type): string
@@ -429,6 +587,6 @@ class StockMovementService
             StockMovementType::PURCHASE_ORDER_RECEIVED => 'PO-RCV',
         };
 
-        return $prefix.'-'.strtoupper(uniqid());
+        return $prefix.'-'.strtoupper(Str::ulid());
     }
 }

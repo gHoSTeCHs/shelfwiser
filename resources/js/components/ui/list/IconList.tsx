@@ -32,7 +32,7 @@ export const IconListItem = ({
         className
       )}
     >
-      <span className="text-gray-400 dark:text-gray-500">{icon}</span>
+      <span className="text-gray-400 dark:text-gray-300">{icon}</span>
       {children}
     </div>
   );

@@ -1,13 +1,13 @@
-import AppLayout from '@/layouts/AppLayout';
 import AdminTenantController from '@/actions/App/Http/Controllers/Admin/AdminTenantController';
-import { Head, Link, Form } from '@inertiajs/react';
-import { Card } from '@/components/ui/card';
-import Button from '@/components/ui/button/Button';
-import Input from '@/components/form/input/InputField';
-import Select from '@/components/form/Select';
-import Label from '@/components/form/Label';
-import InputError from '@/components/form/InputError';
 import Checkbox from '@/components/form/input/Checkbox';
+import Input from '@/components/form/input/InputField';
+import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
+import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useState } from 'react';
 
@@ -26,7 +26,9 @@ export default function Create({ subscriptionPlans }: Props) {
     const [selectedPlan, setSelectedPlan] = useState('trial');
     const [maxShops, setMaxShops] = useState(subscriptionPlans.trial.max_shops);
     const [maxUsers, setMaxUsers] = useState(subscriptionPlans.trial.max_users);
-    const [maxProducts, setMaxProducts] = useState(subscriptionPlans.trial.max_products);
+    const [maxProducts, setMaxProducts] = useState(
+        subscriptionPlans.trial.max_products,
+    );
     const [isActive, setIsActive] = useState(true);
 
     const handlePlanChange = (plan: string) => {
@@ -39,7 +41,7 @@ export default function Create({ subscriptionPlans }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Create Tenant" />
 
             <div className="space-y-6">
@@ -59,10 +61,7 @@ export default function Create({ subscriptionPlans }: Props) {
                     </div>
                 </div>
 
-                <Form
-                    action={AdminTenantController.store.url()}
-                    method="post"
-                >
+                <Form action={AdminTenantController.store.url()} method="post">
                     {({ errors, processing }) => (
                         <div className="space-y-6">
                             <Card className="p-6">
@@ -72,7 +71,10 @@ export default function Create({ subscriptionPlans }: Props) {
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <div>
                                         <Label htmlFor="name">
-                                            Tenant Name <span className="text-error-500">*</span>
+                                            Tenant Name{' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Input
                                             id="name"
@@ -87,7 +89,10 @@ export default function Create({ subscriptionPlans }: Props) {
 
                                     <div>
                                         <Label htmlFor="slug">
-                                            Slug <span className="text-error-500">*</span>
+                                            Slug{' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Input
                                             id="slug"
@@ -102,7 +107,10 @@ export default function Create({ subscriptionPlans }: Props) {
 
                                     <div>
                                         <Label htmlFor="owner_email">
-                                            Owner Email <span className="text-error-500">*</span>
+                                            Owner Email{' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Input
                                             id="owner_email"
@@ -112,7 +120,9 @@ export default function Create({ subscriptionPlans }: Props) {
                                             error={!!errors.owner_email}
                                             required
                                         />
-                                        <InputError message={errors.owner_email} />
+                                        <InputError
+                                            message={errors.owner_email}
+                                        />
                                     </div>
 
                                     <div>
@@ -128,7 +138,9 @@ export default function Create({ subscriptionPlans }: Props) {
                                     </div>
 
                                     <div className="sm:col-span-2">
-                                        <Label htmlFor="business_type">Business Type</Label>
+                                        <Label htmlFor="business_type">
+                                            Business Type
+                                        </Label>
                                         <Input
                                             id="business_type"
                                             name="business_type"
@@ -136,7 +148,9 @@ export default function Create({ subscriptionPlans }: Props) {
                                             placeholder="e.g., Retail, Restaurant, etc."
                                             error={!!errors.business_type}
                                         />
-                                        <InputError message={errors.business_type} />
+                                        <InputError
+                                            message={errors.business_type}
+                                        />
                                     </div>
                                 </div>
                             </Card>
@@ -148,18 +162,29 @@ export default function Create({ subscriptionPlans }: Props) {
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <div className="sm:col-span-2">
                                         <Label>
-                                            Subscription Plan <span className="text-error-500">*</span>
+                                            Subscription Plan{' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Select
-                                            options={Object.entries(subscriptionPlans).map(([key, plan]) => ({
+                                            options={Object.entries(
+                                                subscriptionPlans,
+                                            ).map(([key, plan]) => ({
                                                 value: key,
                                                 label: plan.label,
                                             }))}
                                             defaultValue={selectedPlan}
                                             onChange={handlePlanChange}
                                         />
-                                        <input type="hidden" name="subscription_plan" value={selectedPlan} />
-                                        <InputError message={errors.subscription_plan} />
+                                        <input
+                                            type="hidden"
+                                            name="subscription_plan"
+                                            value={selectedPlan}
+                                        />
+                                        <InputError
+                                            message={errors.subscription_plan}
+                                        />
                                     </div>
                                 </div>
                             </Card>
@@ -171,50 +196,80 @@ export default function Create({ subscriptionPlans }: Props) {
                                 <div className="grid gap-4 sm:grid-cols-3">
                                     <div>
                                         <Label htmlFor="max_shops">
-                                            Max Shops <span className="text-error-500">*</span>
+                                            Max Shops{' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Input
                                             id="max_shops"
                                             name="max_shops"
                                             type="number"
                                             value={maxShops}
-                                            onChange={(e) => setMaxShops(parseInt(e.target.value) || 1)}
+                                            onChange={(e) =>
+                                                setMaxShops(
+                                                    parseInt(e.target.value) ||
+                                                        1,
+                                                )
+                                            }
                                             error={!!errors.max_shops}
                                             required
                                         />
-                                        <InputError message={errors.max_shops} />
+                                        <InputError
+                                            message={errors.max_shops}
+                                        />
                                     </div>
 
                                     <div>
                                         <Label htmlFor="max_users">
-                                            Max Users <span className="text-error-500">*</span>
+                                            Max Users{' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Input
                                             id="max_users"
                                             name="max_users"
                                             type="number"
                                             value={maxUsers}
-                                            onChange={(e) => setMaxUsers(parseInt(e.target.value) || 1)}
+                                            onChange={(e) =>
+                                                setMaxUsers(
+                                                    parseInt(e.target.value) ||
+                                                        1,
+                                                )
+                                            }
                                             error={!!errors.max_users}
                                             required
                                         />
-                                        <InputError message={errors.max_users} />
+                                        <InputError
+                                            message={errors.max_users}
+                                        />
                                     </div>
 
                                     <div>
                                         <Label htmlFor="max_products">
-                                            Max Products <span className="text-error-500">*</span>
+                                            Max Products{' '}
+                                            <span className="text-error-500">
+                                                *
+                                            </span>
                                         </Label>
                                         <Input
                                             id="max_products"
                                             name="max_products"
                                             type="number"
                                             value={maxProducts}
-                                            onChange={(e) => setMaxProducts(parseInt(e.target.value) || 1)}
+                                            onChange={(e) =>
+                                                setMaxProducts(
+                                                    parseInt(e.target.value) ||
+                                                        1,
+                                                )
+                                            }
                                             error={!!errors.max_products}
                                             required
                                         />
-                                        <InputError message={errors.max_products} />
+                                        <InputError
+                                            message={errors.max_products}
+                                        />
                                     </div>
                                 </div>
                             </Card>
@@ -227,10 +282,19 @@ export default function Create({ subscriptionPlans }: Props) {
                                     <Checkbox
                                         id="is_active"
                                         checked={isActive}
-                                        onChange={(e) => setIsActive(e.target.checked)}
+                                        onChange={(e) =>
+                                            setIsActive(e.target.checked)
+                                        }
                                     />
-                                    <input type="hidden" name="is_active" value={isActive ? '1' : '0'} />
-                                    <Label htmlFor="is_active" className="mb-0 cursor-pointer">
+                                    <input
+                                        type="hidden"
+                                        name="is_active"
+                                        value={isActive ? '1' : '0'}
+                                    />
+                                    <Label
+                                        htmlFor="is_active"
+                                        className="mb-0 cursor-pointer"
+                                    >
                                         Active
                                     </Label>
                                 </div>
@@ -256,6 +320,8 @@ export default function Create({ subscriptionPlans }: Props) {
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

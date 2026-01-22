@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Enums\WageAdvanceStatus;
 use App\Models\Shop;
 use App\Models\WageAdvance;
+use App\Models\WageAdvanceRepayment;
+use App\Services\WageAdvanceRepaymentService;
 use App\Services\WageAdvanceService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -16,7 +18,8 @@ use Inertia\Response;
 class WageAdvanceController extends Controller
 {
     public function __construct(
-        private WageAdvanceService $wageAdvanceService
+        private WageAdvanceService $wageAdvanceService,
+        private WageAdvanceRepaymentService $repaymentService
     ) {}
 
     /**
@@ -152,15 +155,23 @@ class WageAdvanceController extends Controller
 
         $wageAdvance->load(['user', 'shop', 'approvedBy', 'disbursedBy']);
 
+        $repayments = $this->repaymentService->getRepayments($wageAdvance);
+        $repaymentStatistics = $this->repaymentService->getRepaymentStatistics($wageAdvance);
+        $repaymentSchedule = $this->repaymentService->calculateRepaymentSchedule($wageAdvance);
+
         return Inertia::render('WageAdvances/Show', [
             'wageAdvance' => $wageAdvance,
             'remainingBalance' => $wageAdvance->getRemainingBalance(),
             'installmentAmount' => $wageAdvance->getInstallmentAmount(),
+            'repayments' => $repayments,
+            'repaymentStatistics' => $repaymentStatistics,
+            'repaymentSchedule' => $repaymentSchedule,
             'canUpdate' => Gate::allows('update', $wageAdvance),
             'canApprove' => Gate::allows('approve', $wageAdvance),
             'canReject' => Gate::allows('reject', $wageAdvance),
             'canDisburse' => Gate::allows('disburse', $wageAdvance),
             'canRecordRepayment' => Gate::allows('recordRepayment', $wageAdvance),
+            'canDeleteRepayment' => Gate::allows('deleteRepayment', $wageAdvance),
             'canCancel' => Gate::allows('cancel', $wageAdvance),
             'canDelete' => Gate::allows('delete', $wageAdvance),
         ]);
@@ -287,17 +298,46 @@ class WageAdvanceController extends Controller
 
         $validated = $request->validate([
             'amount' => ['required', 'numeric', 'min:0.01'],
+            'repayment_date' => ['nullable', 'date'],
+            'payment_method' => ['nullable', 'string', 'in:deducted_from_salary,cash,bank_transfer'],
+            'reference_number' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
         try {
-            $this->wageAdvanceService->recordRepayment(
+            $this->repaymentService->recordRepayment(
                 $wageAdvance,
-                $validated['amount']
+                auth()->user(),
+                $validated
             );
 
             return redirect()
                 ->route('wage-advances.show', $wageAdvance)
                 ->with('success', 'Repayment recorded successfully');
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->back()
+                ->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a repayment record
+     */
+    public function deleteRepayment(WageAdvance $wageAdvance, WageAdvanceRepayment $repayment): RedirectResponse
+    {
+        Gate::authorize('deleteRepayment', $wageAdvance);
+
+        if ($repayment->wage_advance_id !== $wageAdvance->id) {
+            abort(403, 'Repayment does not belong to this wage advance');
+        }
+
+        try {
+            $this->repaymentService->deleteRepayment($repayment, auth()->user());
+
+            return redirect()
+                ->route('wage-advances.show', $wageAdvance)
+                ->with('success', 'Repayment deleted successfully');
         } catch (\RuntimeException $e) {
             return redirect()
                 ->back()

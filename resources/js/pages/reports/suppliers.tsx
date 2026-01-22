@@ -1,9 +1,9 @@
-import { Head } from '@inertiajs/react';
+import DataTable from '@/components/reports/DataTable';
+import FilterBar from '@/components/reports/FilterBar';
+import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { SupplierReportProps } from '@/types/reports';
-import FilterBar from '@/components/reports/FilterBar';
-import DataTable from '@/components/reports/DataTable';
-import { Card } from '@/components/ui/card';
+import { Head } from '@inertiajs/react';
 
 export default function SupplierReport({
     performanceSummary,
@@ -23,10 +23,10 @@ export default function SupplierReport({
     const formatDate = (dateString: string | null) =>
         dateString
             ? new Date(dateString).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-            })
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+              })
             : '-';
 
     const filterConfig = [
@@ -105,7 +105,7 @@ export default function SupplierReport({
             key: 'status',
             label: 'Status',
             render: (value: string) => (
-                <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium capitalize text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 capitalize dark:bg-gray-800 dark:text-gray-200">
                     {value.replace('_', ' ')}
                 </span>
             ),
@@ -119,8 +119,8 @@ export default function SupplierReport({
                         value === 'paid'
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                             : value === 'overdue'
-                                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                     }`}
                 >
                     {value}
@@ -156,22 +156,22 @@ export default function SupplierReport({
                             <table className="w-full">
                                 <thead className="border-b border-gray-200 dark:border-gray-700">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Supplier
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             PO Count
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Total Spend
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Avg PO Value
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Completion Rate
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                             Avg Lead Time
                                         </th>
                                     </tr>
@@ -189,16 +189,28 @@ export default function SupplierReport({
                                                 {supplier.po_count}
                                             </td>
                                             <td className="px-4 py-4 text-right text-sm font-medium text-gray-900 dark:text-white">
-                                                {formatCurrency(supplier.total_spend)}
+                                                {formatCurrency(
+                                                    supplier.total_spend,
+                                                )}
                                             </td>
                                             <td className="px-4 py-4 text-right text-sm text-gray-900 dark:text-white">
-                                                {formatCurrency(supplier.avg_po_value)}
+                                                {formatCurrency(
+                                                    supplier.avg_po_value,
+                                                )}
                                             </td>
                                             <td className="px-4 py-4 text-right text-sm text-gray-900 dark:text-white">
-                                                {((supplier.completed_count / supplier.po_count) * 100).toFixed(1)}%
+                                                {(
+                                                    (supplier.completed_count /
+                                                        supplier.po_count) *
+                                                    100
+                                                ).toFixed(1)}
+                                                %
                                             </td>
                                             <td className="px-4 py-4 text-right text-sm text-gray-900 dark:text-white">
-                                                {Number(supplier.avg_lead_time).toFixed(0)} days
+                                                {Number(
+                                                    supplier.avg_lead_time,
+                                                ).toFixed(0)}{' '}
+                                                days
                                             </td>
                                         </tr>
                                     ))}
@@ -232,4 +244,6 @@ export default function SupplierReport({
     );
 }
 
-SupplierReport.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
+SupplierReport.layout = (page: React.ReactNode) => (
+    <AppLayout>{page}</AppLayout>
+);

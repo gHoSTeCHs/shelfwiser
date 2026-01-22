@@ -2,17 +2,23 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderItem extends Model
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'order_id',
+        'tenant_id',
         'product_variant_id',
         'product_packaging_type_id',
         'sellable_type',
@@ -44,6 +50,11 @@ class OrderItem extends Model
         });
     }
 
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
@@ -59,25 +70,16 @@ class OrderItem extends Model
         return $this->belongsTo(ProductPackagingType::class, 'product_packaging_type_id');
     }
 
-    /**
-     * Polymorphic relationship to either ProductVariant or ServiceVariant
-     */
     public function sellable(): MorphTo
     {
         return $this->morphTo();
     }
 
-    /**
-     * Check if this order item is for a product
-     */
     public function isProduct(): bool
     {
         return $this->sellable_type === ProductVariant::class;
     }
 
-    /**
-     * Check if this order item is for a service
-     */
     public function isService(): bool
     {
         return $this->sellable_type === ServiceVariant::class;
@@ -89,9 +91,6 @@ class OrderItem extends Model
         $this->total_amount = $subtotal + $this->tax_amount - $this->discount_amount;
     }
 
-    /**
-     * Get the number of packages sold
-     */
     public function getPackageQuantityAttribute(): ?int
     {
         if (! $this->product_packaging_type_id) {
@@ -106,9 +105,6 @@ class OrderItem extends Model
         return (int) ($this->quantity / $packagingType->units_per_package);
     }
 
-    /**
-     * Get profit for this line item
-     */
     public function getProfitAttribute(): float
     {
         $cost = $this->quantity * ($this->productVariant->cost_price ?? 0);
@@ -116,9 +112,6 @@ class OrderItem extends Model
         return $this->total_amount - $cost;
     }
 
-    /**
-     * Get profit margin percentage
-     */
     public function getMarginPercentageAttribute(): float
     {
         if ($this->total_amount <= 0) {

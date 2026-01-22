@@ -129,7 +129,10 @@ class StaffManagementService
     {
         $query = User::query()
             ->where('tenant_id', $tenant->id)
-            ->with(['shops' => fn ($q) => $q->select('shops.id', 'shops.name', 'shops.slug')])
+            ->with([
+                'shops' => fn ($q) => $q->select('shops.id', 'shops.name', 'shops.slug'),
+                'employeePayrollDetail' => fn ($q) => $q->select('id', 'user_id', 'employment_type', 'pay_type'),
+            ])
             ->orderBy('created_at', 'desc');
 
         if (! empty($filters['role'])) {

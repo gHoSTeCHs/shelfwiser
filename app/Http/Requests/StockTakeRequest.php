@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StockTakeRequest extends FormRequest
 {
@@ -13,10 +14,24 @@ class StockTakeRequest extends FormRequest
 
     public function rules(): array
     {
+        $tenantId = $this->user()->tenant_id;
+
         return [
-            'product_variant_id' => ['required', 'exists:product_variants,id'],
-            'inventory_location_id' => ['required', 'exists:inventory_locations,id'],
-            'actual_quantity' => ['required', 'integer', 'min:0'],
+            'product_variant_id' => [
+                'bail',
+                'required',
+                Rule::exists('product_variants', 'id')
+                    ->where(fn ($query) => $query->whereIn(
+                        'product_id',
+                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                    )),
+            ],
+            'inventory_location_id' => [
+                'bail',
+                'required',
+                Rule::exists('inventory_locations', 'id')->where('tenant_id', $tenantId),
+            ],
+            'actual_quantity' => ['bail', 'required', 'integer', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }

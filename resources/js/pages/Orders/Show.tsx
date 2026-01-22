@@ -126,7 +126,7 @@ export default function Show({
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Order ${order.order_number}`} />
 
             <div className="space-y-6">
@@ -217,6 +217,22 @@ export default function Show({
                                             </Button>
                                         </>
                                     )}
+                                {(order.status === 'delivered' ||
+                                    order.status === 'completed') &&
+                                    order.status !== 'refunded' && (
+                                        <Link
+                                            href={`/orders/${order.id}/return`}
+                                        >
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-warning-600 hover:text-warning-700"
+                                            >
+                                                <Package className="mr-2 h-4 w-4" />
+                                                Process Return
+                                            </Button>
+                                        </Link>
+                                    )}
                             </>
                         )}
                     </div>
@@ -229,22 +245,40 @@ export default function Show({
                                 <table className="w-full">
                                     <thead className="border-b border-gray-200 dark:border-gray-700">
                                         <tr className="text-left text-sm text-gray-500 dark:text-gray-400">
-                                            <th className="pb-3 font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 font-medium"
+                                            >
                                                 Product
                                             </th>
-                                            <th className="pb-3 font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 font-medium"
+                                            >
                                                 SKU
                                             </th>
-                                            <th className="pb-3 font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 font-medium"
+                                            >
                                                 Packaging
                                             </th>
-                                            <th className="pb-3 text-right font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 text-right font-medium"
+                                            >
                                                 Quantity
                                             </th>
-                                            <th className="pb-3 text-right font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 text-right font-medium"
+                                            >
                                                 Unit Price
                                             </th>
-                                            <th className="pb-3 text-right font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 text-right font-medium"
+                                            >
                                                 Total
                                             </th>
                                         </tr>
@@ -512,11 +546,27 @@ export default function Show({
                                         </span>
                                     </div>
                                 )}
+                                {order.packed_at && (
+                                    <div className="flex items-center text-sm">
+                                        <Package className="mr-2 h-4 w-4 text-gray-400" />
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            Packed
+                                        </span>
+                                        <span className="ml-auto text-gray-900 dark:text-white">
+                                            {formatDate(order.packed_at)}
+                                        </span>
+                                    </div>
+                                )}
                                 {order.shipped_at && (
                                     <div className="flex items-center text-sm">
                                         <Truck className="mr-2 h-4 w-4 text-gray-400" />
                                         <span className="text-gray-500 dark:text-gray-400">
                                             Shipped
+                                            {order.tracking_number && (
+                                                <span className="ml-2 text-xs text-gray-400">
+                                                    ({order.tracking_number})
+                                                </span>
+                                            )}
                                         </span>
                                         <span className="ml-auto text-gray-900 dark:text-white">
                                             {formatDate(order.shipped_at)}
@@ -525,12 +575,23 @@ export default function Show({
                                 )}
                                 {order.delivered_at && (
                                     <div className="flex items-center text-sm">
-                                        <Package className="mr-2 h-4 w-4 text-gray-400" />
+                                        <CheckCircle className="mr-2 h-4 w-4 text-gray-400" />
                                         <span className="text-gray-500 dark:text-gray-400">
                                             Delivered
                                         </span>
                                         <span className="ml-auto text-gray-900 dark:text-white">
                                             {formatDate(order.delivered_at)}
+                                        </span>
+                                    </div>
+                                )}
+                                {order.refunded_at && (
+                                    <div className="flex items-center text-sm">
+                                        <XCircle className="mr-2 h-4 w-4 text-gray-400" />
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            Refunded
+                                        </span>
+                                        <span className="ml-auto text-gray-900 dark:text-white">
+                                            {formatDate(order.refunded_at)}
                                         </span>
                                     </div>
                                 )}
@@ -782,6 +843,8 @@ export default function Show({
                     </div>
                 </form>
             </Modal>
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

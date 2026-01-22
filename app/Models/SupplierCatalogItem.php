@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use App\Enums\CatalogVisibility;
+use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SupplierCatalogItem extends Model
 {
+    use BelongsToTenant, HasFactory;
+
     protected $fillable = [
         'supplier_tenant_id',
         'product_id',
@@ -81,15 +85,25 @@ class SupplierCatalogItem extends Model
         return $query->where('supplier_tenant_id', $tenantId);
     }
 
+    /**
+     * Scope to filter catalog items visible to a specific buyer.
+     * Uses direct subquery for better performance instead of nested whereHas.
+     */
     public function scopeVisibleTo($query, $buyerTenantId)
     {
         return $query->where(function ($q) use ($buyerTenantId) {
             $q->where('visibility', CatalogVisibility::PUBLIC)
                 ->orWhere(function ($subQ) use ($buyerTenantId) {
                     $subQ->where('visibility', CatalogVisibility::CONNECTIONS_ONLY)
-                        ->whereHas('supplierTenant.supplierProfile.connections', function ($connQ) use ($buyerTenantId) {
-                            $connQ->where('buyer_tenant_id', $buyerTenantId)
-                                ->approved();
+                        ->whereExists(function ($existsQuery) use ($buyerTenantId) {
+                            $existsQuery->selectRaw('1')
+                                ->from('supplier_connections')
+                                ->whereColumn('supplier_connections.supplier_tenant_id', 'supplier_catalog_items.supplier_tenant_id')
+                                ->where('supplier_connections.buyer_tenant_id', $buyerTenantId)
+                                ->whereIn('supplier_connections.status', [
+                                    \App\Enums\ConnectionStatus::APPROVED->value,
+                                    \App\Enums\ConnectionStatus::ACTIVE->value,
+                                ]);
                         });
                 });
         });

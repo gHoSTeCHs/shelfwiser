@@ -1,3 +1,5 @@
+import FlashMessage from '@/components/FlashMessage.tsx';
+import { ErrorBoundary, ErrorFallbackMinimal } from '@/components/error';
 import { UserRoleProvider } from '@/context/UserRoleContext.tsx';
 import { SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
@@ -6,11 +8,34 @@ import { SidebarProvider, useSidebar } from '../context/SidebarContext';
 import AppHeader from './AppHeader';
 import AppSidebar from './AppSidebar';
 import Backdrop from './Backdrop';
-import FlashMessage from '@/components/FlashMessage.tsx';
 
 interface LayoutContentProps {
     children: React.ReactNode;
 }
+
+/**
+ * Page-level error fallback that fits within the layout
+ */
+const PageErrorFallback: React.FC<{
+    error: Error;
+    errorInfo: import('@/types/error').ErrorInfo;
+    resetError: () => void;
+    isResetting?: boolean;
+}> = ({ error, errorInfo, resetError, isResetting }) => {
+    return (
+        <div className="flex min-h-[50vh] items-center justify-center p-4">
+            <div className="w-full max-w-lg">
+                <ErrorFallbackMinimal
+                    error={error}
+                    errorInfo={errorInfo}
+                    resetError={resetError}
+                    isResetting={isResetting}
+                    className="shadow-theme-md"
+                />
+            </div>
+        </div>
+    );
+};
 
 const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
     const { isExpanded, isHovered, isMobileOpen } = useSidebar();
@@ -29,9 +54,30 @@ const LayoutContent: React.FC<LayoutContentProps> = ({ children }) => {
             >
                 <AppHeader />
                 <FlashMessage />
-                <div className="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6 ">
+                <div className="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">
                     <UserRoleProvider userRole={auth.user.role}>
-                        {children}
+                        <ErrorBoundary
+                            fallback={PageErrorFallback}
+                            onError={(error, errorInfo) => {
+                                // Log page-level errors
+                                if (import.meta.env.DEV) {
+                                    console.error(
+                                        '[AppLayout] Page error:',
+                                        error,
+                                    );
+                                }
+                            }}
+                            onReset={() => {
+                                // Optionally refresh data on reset
+                                if (import.meta.env.DEV) {
+                                    console.info(
+                                        '[AppLayout] Error boundary reset',
+                                    );
+                                }
+                            }}
+                        >
+                            {children}
+                        </ErrorBoundary>
                     </UserRoleProvider>
                 </div>
             </div>

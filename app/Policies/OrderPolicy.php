@@ -60,4 +60,83 @@ class OrderPolicy
 
         return false;
     }
+
+    public function update(User $user, Order $order): bool
+    {
+        if ($user->tenant_id !== $order->tenant_id) {
+            return false;
+        }
+
+        if (! in_array($order->status, ['pending', 'confirmed'])) {
+            return false;
+        }
+
+        return $user->role->hasPermission('manage_orders');
+    }
+
+    public function cancel(User $user, Order $order): bool
+    {
+        if ($user->tenant_id !== $order->tenant_id) {
+            return false;
+        }
+
+        if (in_array($order->status, ['completed', 'cancelled'])) {
+            return false;
+        }
+
+        if ($user->role->level() < UserRole::STORE_MANAGER->level()) {
+            return false;
+        }
+
+        return $user->role->hasPermission('manage_orders');
+    }
+
+    public function refund(User $user, Order $order): bool
+    {
+        if ($user->tenant_id !== $order->tenant_id) {
+            return false;
+        }
+
+        if ($order->status !== 'completed') {
+            return false;
+        }
+
+        if ($user->role->level() < UserRole::GENERAL_MANAGER->level()) {
+            return false;
+        }
+
+        return $user->role->hasPermission('manage_orders');
+    }
+
+    public function export(User $user): bool
+    {
+        return $user->role->hasPermission('export_orders') ||
+               $user->role->hasPermission('manage_orders');
+    }
+
+    public function fulfill(User $user, Order $order): bool
+    {
+        if ($user->tenant_id !== $order->tenant_id) {
+            return false;
+        }
+
+        if ($order->status !== 'confirmed') {
+            return false;
+        }
+
+        return $user->role->hasPermission('manage_orders');
+    }
+
+    public function ship(User $user, Order $order): bool
+    {
+        if ($user->tenant_id !== $order->tenant_id) {
+            return false;
+        }
+
+        if ($order->status !== 'fulfilled') {
+            return false;
+        }
+
+        return $user->role->hasPermission('manage_orders');
+    }
 }

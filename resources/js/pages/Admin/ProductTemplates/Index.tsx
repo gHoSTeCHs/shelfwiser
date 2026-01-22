@@ -1,13 +1,21 @@
-import AppLayout from '@/layouts/AppLayout';
 import AdminProductTemplateController from '@/actions/App/Http/Controllers/Admin/AdminProductTemplateController';
-import { Head, Link, router } from '@inertiajs/react';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
-import Button from '@/components/ui/button/Button';
 import Input from '@/components/form/input/InputField';
 import Select from '@/components/form/Select';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
-import { Plus, Search, LayoutTemplate, Eye, Edit, Trash2, Package } from 'lucide-react';
+import AppLayout from '@/layouts/AppLayout';
+import { Head, Link, router } from '@inertiajs/react';
+import {
+    Edit,
+    Eye,
+    LayoutTemplate,
+    Package,
+    Plus,
+    Search,
+    Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 
 interface ProductType {
@@ -62,32 +70,50 @@ interface Props {
     statistics: Statistics;
 }
 
-export default function Index({ templates, productTypes, categories, filters, statistics }: Props) {
+export default function Index({
+    templates,
+    productTypes,
+    categories,
+    filters,
+    statistics,
+}: Props) {
     const [search, setSearch] = useState(filters.search || '');
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get(AdminProductTemplateController.index.url(), { ...filters, search }, { preserveState: true });
+        router.get(
+            AdminProductTemplateController.index.url(),
+            { ...filters, search },
+            { preserveState: true },
+        );
     };
 
     const handleFilterChange = (key: string, value: string) => {
         const newFilters = { ...filters, [key]: value };
         if (!value) delete newFilters[key as keyof typeof newFilters];
-        router.get(AdminProductTemplateController.index.url(), newFilters, { preserveState: true });
+        router.get(AdminProductTemplateController.index.url(), newFilters, {
+            preserveState: true,
+        });
     };
 
     const handleDelete = (template: ProductTemplate) => {
         if (template.usage_count > 0) {
-            alert('Cannot delete template that has been used to create products.');
+            alert(
+                'Cannot delete template that has been used to create products.',
+            );
             return;
         }
         if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
-            router.delete(AdminProductTemplateController.destroy.url({ product_template: template.id }));
+            router.delete(
+                AdminProductTemplateController.destroy.url({
+                    product_template: template.id,
+                }),
+            );
         }
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Product Templates" />
 
             <div className="space-y-6">
@@ -97,7 +123,8 @@ export default function Index({ templates, productTypes, categories, filters, st
                             Product Templates
                         </h1>
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Manage system-wide product templates for quick product creation
+                            Manage system-wide product templates for quick
+                            product creation
                         </p>
                     </div>
                     <Link href={AdminProductTemplateController.create.url()}>
@@ -111,12 +138,16 @@ export default function Index({ templates, productTypes, categories, filters, st
                 <div className="grid gap-4 sm:grid-cols-3">
                     <Card className="p-4">
                         <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-primary-100 p-2 dark:bg-primary-900">
-                                <LayoutTemplate className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                            <div className="rounded-lg bg-brand-100 p-2 dark:bg-brand-900">
+                                <LayoutTemplate className="h-5 w-5 text-brand-600 dark:text-brand-400" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Total Templates</p>
-                                <p className="text-xl font-semibold text-gray-900 dark:text-white">{statistics.total}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Total Templates
+                                </p>
+                                <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                                    {statistics.total}
+                                </p>
                             </div>
                         </div>
                     </Card>
@@ -126,19 +157,27 @@ export default function Index({ templates, productTypes, categories, filters, st
                                 <Package className="h-5 w-5 text-success-600 dark:text-success-400" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Active Templates</p>
-                                <p className="text-xl font-semibold text-gray-900 dark:text-white">{statistics.active}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Active Templates
+                                </p>
+                                <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                                    {statistics.active}
+                                </p>
                             </div>
                         </div>
                     </Card>
                     <Card className="p-4">
                         <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-info-100 p-2 dark:bg-info-900">
-                                <Package className="h-5 w-5 text-info-600 dark:text-info-400" />
+                            <div className="bg-info-100 dark:bg-info-900 rounded-lg p-2">
+                                <Package className="text-info-600 dark:text-info-400 h-5 w-5" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Products Created</p>
-                                <p className="text-xl font-semibold text-gray-900 dark:text-white">{statistics.total_usage}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Products Created
+                                </p>
+                                <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                                    {statistics.total_usage}
+                                </p>
                             </div>
                         </div>
                     </Card>
@@ -148,7 +187,7 @@ export default function Index({ templates, productTypes, categories, filters, st
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                         <form onSubmit={handleSearch} className="flex-1">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                                 <Input
                                     type="text"
                                     placeholder="Search templates..."
@@ -162,24 +201,28 @@ export default function Index({ templates, productTypes, categories, filters, st
                             <Select
                                 options={[
                                     { value: '', label: 'All Types' },
-                                    ...productTypes.map(type => ({
+                                    ...productTypes.map((type) => ({
                                         value: type.id.toString(),
                                         label: type.label,
                                     })),
                                 ]}
                                 defaultValue={filters.product_type_id || ''}
-                                onChange={(value) => handleFilterChange('product_type_id', value)}
+                                onChange={(value) =>
+                                    handleFilterChange('product_type_id', value)
+                                }
                             />
                             <Select
                                 options={[
                                     { value: '', label: 'All Categories' },
-                                    ...categories.map(cat => ({
+                                    ...categories.map((cat) => ({
                                         value: cat.id.toString(),
                                         label: cat.name,
                                     })),
                                 ]}
                                 defaultValue={filters.category_id || ''}
-                                onChange={(value) => handleFilterChange('category_id', value)}
+                                onChange={(value) =>
+                                    handleFilterChange('category_id', value)
+                                }
                             />
                         </div>
                     </div>
@@ -191,8 +234,12 @@ export default function Index({ templates, productTypes, categories, filters, st
                         title="No templates found"
                         description="Get started by creating your first product template."
                         action={
-                            <Link href={AdminProductTemplateController.create.url()}>
-                                <Button startIcon={<Plus className="h-4 w-4" />}>
+                            <Link
+                                href={AdminProductTemplateController.create.url()}
+                            >
+                                <Button
+                                    startIcon={<Plus className="h-4 w-4" />}
+                                >
                                     Create Template
                                 </Button>
                             </Link>
@@ -204,49 +251,81 @@ export default function Index({ templates, productTypes, categories, filters, st
                             <table className="w-full">
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Template
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Type
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Category
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Variants
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Usage
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Status
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Actions
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
                                     {templates.data.map((template) => (
-                                        <tr key={template.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                        <tr
+                                            key={template.id}
+                                            className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                                        >
                                             <td className="px-4 py-3">
                                                 <div>
                                                     <Link
-                                                        href={AdminProductTemplateController.show.url({ product_template: template.id })}
-                                                        className="font-medium text-gray-900 hover:text-primary-600 dark:text-white dark:hover:text-primary-400"
+                                                        href={AdminProductTemplateController.show.url(
+                                                            {
+                                                                product_template:
+                                                                    template.id,
+                                                            },
+                                                        )}
+                                                        className="font-medium text-gray-900 hover:text-brand-600 dark:text-white dark:hover:text-brand-400"
                                                     >
                                                         {template.name}
                                                     </Link>
                                                     {template.description && (
-                                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
-                                                            {template.description}
+                                                        <p className="mt-1 line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
+                                                            {
+                                                                template.description
+                                                            }
                                                         </p>
                                                     )}
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                                {template.product_type?.label || '-'}
+                                                {template.product_type?.label ||
+                                                    '-'}
                                             </td>
                                             <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                                 {template.category?.name || '-'}
@@ -258,27 +337,62 @@ export default function Index({ templates, productTypes, categories, filters, st
                                                 {template.usage_count} products
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Badge color={template.is_active ? 'success' : 'error'}>
-                                                    {template.is_active ? 'Active' : 'Inactive'}
+                                                <Badge
+                                                    color={
+                                                        template.is_active
+                                                            ? 'success'
+                                                            : 'error'
+                                                    }
+                                                >
+                                                    {template.is_active
+                                                        ? 'Active'
+                                                        : 'Inactive'}
                                                 </Badge>
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Link href={AdminProductTemplateController.show.url({ product_template: template.id })}>
-                                                        <Button variant="ghost" size="sm">
+                                                    <Link
+                                                        href={AdminProductTemplateController.show.url(
+                                                            {
+                                                                product_template:
+                                                                    template.id,
+                                                            },
+                                                        )}
+                                                    >
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                        >
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
-                                                    <Link href={AdminProductTemplateController.edit.url({ product_template: template.id })}>
-                                                        <Button variant="ghost" size="sm">
+                                                    <Link
+                                                        href={AdminProductTemplateController.edit.url(
+                                                            {
+                                                                product_template:
+                                                                    template.id,
+                                                            },
+                                                        )}
+                                                    >
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                        >
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => handleDelete(template)}
-                                                        disabled={template.usage_count > 0}
+                                                        onClick={() =>
+                                                            handleDelete(
+                                                                template,
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            template.usage_count >
+                                                            0
+                                                        }
                                                     >
                                                         <Trash2 className="h-4 w-4 text-error-500" />
                                                     </Button>
@@ -292,22 +406,28 @@ export default function Index({ templates, productTypes, categories, filters, st
                         {templates.last_page > 1 && (
                             <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
                                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                                    Showing page {templates.current_page} of {templates.last_page} ({templates.total} total)
+                                    Showing page {templates.current_page} of{' '}
+                                    {templates.last_page} ({templates.total}{' '}
+                                    total)
                                 </div>
                                 <div className="flex gap-1">
                                     {templates.links.map((link, index) => (
                                         <button
                                             key={index}
-                                            onClick={() => link.url && router.get(link.url)}
+                                            onClick={() =>
+                                                link.url && router.get(link.url)
+                                            }
                                             disabled={!link.url}
                                             className={`rounded px-3 py-1 text-sm ${
                                                 link.active
-                                                    ? 'bg-primary-600 text-white'
+                                                    ? 'bg-brand-600 text-white'
                                                     : link.url
-                                                    ? 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
-                                                    : 'cursor-not-allowed text-gray-300 dark:text-gray-600'
+                                                      ? 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+                                                      : 'cursor-not-allowed text-gray-300 dark:text-gray-600'
                                             }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                            dangerouslySetInnerHTML={{
+                                                __html: link.label,
+                                            }}
                                         />
                                     ))}
                                 </div>
@@ -316,6 +436,8 @@ export default function Index({ templates, productTypes, categories, filters, st
                     </Card>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

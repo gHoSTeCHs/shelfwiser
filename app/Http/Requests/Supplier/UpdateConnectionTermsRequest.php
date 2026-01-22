@@ -20,4 +20,13 @@ class UpdateConnectionTermsRequest extends FormRequest
             'supplier_notes' => ['sometimes', 'nullable', 'string', 'max:1000'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'credit_limit.min' => 'Credit limit cannot be negative.',
+            'payment_terms_override.max' => 'Payment terms cannot exceed 50 characters.',
+            'supplier_notes.max' => 'Notes cannot exceed 1000 characters.',
+        ];
+    }
 }

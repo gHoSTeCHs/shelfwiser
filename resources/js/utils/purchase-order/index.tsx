@@ -1,8 +1,8 @@
+import { BadgeColor } from '@/components/ui/badge/Badge.tsx';
 import {
     PurchaseOrderPaymentStatus,
     PurchaseOrderStatus,
 } from '@/types/supplier.ts';
-import { BadgeColor } from '@/components/ui/badge/Badge.tsx';
 
 export const statusConfig: Record<
     PurchaseOrderStatus,

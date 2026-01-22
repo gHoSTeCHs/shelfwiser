@@ -23,7 +23,7 @@ class CartController extends Controller
      */
     public function index(Shop $shop): Response
     {
-        $cart = $this->cartService->getCart($shop, auth()->id());
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
         $cartSummary = $this->cartService->getCartSummary($cart);
 
         return Inertia::render('Storefront/Cart', [
@@ -49,7 +49,7 @@ class CartController extends Controller
         ]);
 
         try {
-            $cart = $this->cartService->getCart($shop, auth()->id());
+            $cart = $this->cartService->getCart($shop, auth('customer')->id());
 
             $this->cartService->addItem(
                 $cart,
@@ -79,7 +79,7 @@ class CartController extends Controller
         ]);
 
         try {
-            $cart = $this->cartService->getCart($shop, auth()->id());
+            $cart = $this->cartService->getCart($shop, auth('customer')->id());
 
             // Convert material option string to enum
             $materialOption = isset($validated['material_option'])
@@ -109,7 +109,7 @@ class CartController extends Controller
     public function update(Request $request, Shop $shop, CartItem $item): RedirectResponse
     {
         // Ensure cart item belongs to current cart
-        $cart = $this->cartService->getCart($shop, auth()->id());
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
         if ($item->cart_id !== $cart->id) {
             abort(403, 'Unauthorized');
         }
@@ -133,7 +133,7 @@ class CartController extends Controller
     public function destroy(Shop $shop, CartItem $item): RedirectResponse
     {
         // Ensure cart item belongs to current cart
-        $cart = $this->cartService->getCart($shop, auth()->id());
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
         if ($item->cart_id !== $cart->id) {
             abort(403, 'Unauthorized');
         }

@@ -1,6 +1,6 @@
+import { User } from './index';
 import { Order } from './order';
 import { Shop } from './shop';
-import { User } from './index';
 
 export type ReceiptType = 'order' | 'payment';
 

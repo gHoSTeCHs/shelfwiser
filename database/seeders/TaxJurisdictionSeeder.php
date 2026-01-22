@@ -84,7 +84,10 @@ class TaxJurisdictionSeeder extends Seeder
         ];
 
         foreach ($jurisdictions as $jurisdiction) {
-            TaxJurisdiction::create($jurisdiction);
+            TaxJurisdiction::updateOrCreate(
+                ['code' => $jurisdiction['code']],
+                $jurisdiction
+            );
         }
     }
 }

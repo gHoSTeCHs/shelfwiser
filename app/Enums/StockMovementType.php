@@ -16,6 +16,8 @@ enum StockMovementType: string
     case STOCK_TAKE = 'stock_take';
     case PURCHASE_ORDER_SHIPPED = 'purchase_order_shipped';
     case PURCHASE_ORDER_RECEIVED = 'purchase_order_received';
+    case PURCHASE_ORDER_RESERVED = 'purchase_order_reserved';
+    case PURCHASE_ORDER_RESERVATION_RELEASED = 'purchase_order_reservation_released';
 
     public function label(): string
     {
@@ -32,6 +34,8 @@ enum StockMovementType: string
             self::STOCK_TAKE => 'Stock Take',
             self::PURCHASE_ORDER_SHIPPED => 'PO Shipped (Supplier)',
             self::PURCHASE_ORDER_RECEIVED => 'PO Received (Buyer)',
+            self::PURCHASE_ORDER_RESERVED => 'PO Stock Reserved',
+            self::PURCHASE_ORDER_RESERVATION_RELEASED => 'PO Reservation Released',
         };
     }
 
@@ -50,6 +54,8 @@ enum StockMovementType: string
             self::STOCK_TAKE => 'Physical inventory count adjustment',
             self::PURCHASE_ORDER_SHIPPED => 'Stock shipped to buyer via purchase order',
             self::PURCHASE_ORDER_RECEIVED => 'Stock received from supplier via purchase order',
+            self::PURCHASE_ORDER_RESERVED => 'Stock reserved for approved purchase order',
+            self::PURCHASE_ORDER_RESERVATION_RELEASED => 'Stock reservation released for cancelled purchase order',
         };
     }
 

@@ -18,6 +18,8 @@ export interface PaymentGateway {
     supportsRefunds: boolean;
 }
 
+export type PaymentMetadataValue = string | number | boolean | null;
+
 export interface PaymentInitiationResult {
     success: boolean;
     reference: string;
@@ -30,7 +32,7 @@ export interface PaymentInitiationResult {
     qrCode?: string;
     expiresAt?: number;
     errorMessage?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, PaymentMetadataValue>;
 }
 
 export interface PaystackInlineData {
@@ -93,6 +95,127 @@ export interface PaymentOption {
 }
 
 /**
+ * Internal Payment Methods (POS, Order Payments)
+ * These map to the PHP PaymentMethod enum.
+ */
+export type InternalPaymentMethod =
+    | 'cash'
+    | 'card'
+    | 'mobile_money'
+    | 'bank_transfer'
+    | 'cheque'
+    | 'customer_credit'
+    | 'paystack'
+    | 'cash_on_delivery';
+
+export interface InternalPaymentMethodOption {
+    value: InternalPaymentMethod;
+    label: string;
+    description?: string;
+    color?: string;
+    icon?: string;
+    requiresReference?: boolean;
+    isInstant?: boolean;
+}
+
+export const INTERNAL_PAYMENT_METHODS: Record<
+    InternalPaymentMethod,
+    InternalPaymentMethodOption
+> = {
+    cash: {
+        value: 'cash',
+        label: 'Cash',
+        description: 'Physical cash payment',
+        color: 'success',
+        icon: 'banknote',
+        requiresReference: false,
+        isInstant: true,
+    },
+    card: {
+        value: 'card',
+        label: 'Card',
+        description: 'Credit or debit card payment',
+        color: 'primary',
+        icon: 'credit-card',
+        requiresReference: true,
+        isInstant: true,
+    },
+    mobile_money: {
+        value: 'mobile_money',
+        label: 'Mobile Money',
+        description: 'Mobile money transfer (M-Pesa, etc.)',
+        color: 'warning',
+        icon: 'smartphone',
+        requiresReference: true,
+        isInstant: true,
+    },
+    bank_transfer: {
+        value: 'bank_transfer',
+        label: 'Bank Transfer',
+        description: 'Direct bank transfer or wire',
+        color: 'info',
+        icon: 'building-2',
+        requiresReference: true,
+        isInstant: false,
+    },
+    cheque: {
+        value: 'cheque',
+        label: 'Cheque',
+        description: 'Payment by cheque',
+        color: 'gray',
+        icon: 'file-text',
+        requiresReference: true,
+        isInstant: false,
+    },
+    customer_credit: {
+        value: 'customer_credit',
+        label: 'Customer Credit',
+        description: 'Payment from customer credit balance',
+        color: 'purple',
+        icon: 'wallet',
+        requiresReference: false,
+        isInstant: true,
+    },
+    paystack: {
+        value: 'paystack',
+        label: 'Paystack',
+        description: 'Online payment via Paystack',
+        color: 'primary',
+        icon: 'credit-card',
+        requiresReference: true,
+        isInstant: true,
+    },
+    cash_on_delivery: {
+        value: 'cash_on_delivery',
+        label: 'Cash on Delivery',
+        description: 'Pay when order is delivered',
+        color: 'warning',
+        icon: 'truck',
+        requiresReference: false,
+        isInstant: false,
+    },
+};
+
+export const POS_PAYMENT_METHODS: InternalPaymentMethod[] = [
+    'cash',
+    'card',
+    'mobile_money',
+    'bank_transfer',
+];
+
+export function getInternalPaymentMethodLabel(
+    method: InternalPaymentMethod,
+): string {
+    return INTERNAL_PAYMENT_METHODS[method]?.label ?? method;
+}
+
+export function getInternalPaymentMethodColor(
+    method: InternalPaymentMethod,
+): string {
+    return INTERNAL_PAYMENT_METHODS[method]?.color ?? 'gray';
+}
+
+/**
  * Props for the PaymentGatewaySelector component
  */
 export interface PaymentGatewaySelectorProps {
@@ -114,7 +237,7 @@ export interface PaystackPaymentProps {
     publicKey: string;
     onSuccess: (response: PaystackCallbackResponse) => void;
     onClose: () => void;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, PaymentMetadataValue>;
     channels?: string[];
     label?: string;
     disabled?: boolean;

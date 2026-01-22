@@ -19,6 +19,11 @@ class PaymentController extends Controller
      */
     public function callback(Request $request, string $gatewayName, Order $order): RedirectResponse
     {
+        // Verify tenant ownership if user is authenticated
+        if (auth()->check() && $order->tenant_id !== auth()->user()->tenant_id) {
+            abort(403, 'Unauthorized access to order');
+        }
+
         $gateway = $this->gatewayManager->gateway($gatewayName);
         $reference = $request->get('reference') ?? $request->get('tx_ref') ?? $order->payment_reference;
 
@@ -75,6 +80,11 @@ class PaymentController extends Controller
      */
     public function initialize(Request $request, Order $order): RedirectResponse|\Illuminate\Http\JsonResponse
     {
+        // Verify tenant ownership
+        if (auth()->check() && $order->tenant_id !== auth()->user()->tenant_id) {
+            abort(403, 'Unauthorized access to order');
+        }
+
         $validated = $request->validate([
             'gateway' => ['required', 'string'],
         ]);
@@ -133,6 +143,11 @@ class PaymentController extends Controller
      */
     public function verify(Request $request, Order $order): \Illuminate\Http\JsonResponse
     {
+        // Verify tenant ownership
+        if (auth()->check() && $order->tenant_id !== auth()->user()->tenant_id) {
+            return response()->json(['error' => 'Unauthorized access to order'], 403);
+        }
+
         $reference = $request->get('reference') ?? $order->payment_reference;
 
         if (! $reference || ! $order->payment_gateway) {

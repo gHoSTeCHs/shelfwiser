@@ -6,14 +6,13 @@
  */
 
 import {
+    getLastSyncTime,
     getPendingActions,
     markActionSynced,
-    putItem,
-    getItem,
-    setLastSyncTime,
-    getLastSyncTime,
     OfflineAction,
+    putItem,
     putItems,
+    setLastSyncTime,
 } from './indexeddb';
 
 /**
@@ -87,7 +86,11 @@ export async function syncOfflineActions(): Promise<void> {
         return;
     }
 
-    updateStatus({ isSyncing: true, pendingCount: pendingActions.length, error: null });
+    updateStatus({
+        isSyncing: true,
+        pendingCount: pendingActions.length,
+        error: null,
+    });
 
     console.log(`[Sync] Processing ${pendingActions.length} pending actions`);
 
@@ -117,7 +120,9 @@ export async function syncOfflineActions(): Promise<void> {
         error: errorCount > 0 ? `${errorCount} actions failed to sync` : null,
     });
 
-    console.log(`[Sync] Completed: ${successCount} success, ${errorCount} errors`);
+    console.log(
+        `[Sync] Completed: ${successCount} success, ${errorCount} errors`,
+    );
 }
 
 /**
@@ -125,7 +130,9 @@ export async function syncOfflineActions(): Promise<void> {
  */
 async function processAction(action: OfflineAction): Promise<boolean> {
     if (action.retries >= MAX_RETRIES) {
-        console.warn(`[Sync] Action ${action.id} exceeded max retries, skipping`);
+        console.warn(
+            `[Sync] Action ${action.id} exceeded max retries, skipping`,
+        );
         return false;
     }
 
@@ -134,11 +141,14 @@ async function processAction(action: OfflineAction): Promise<boolean> {
             method: action.method,
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
+                Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 ...action.headers,
             },
-            body: action.method !== 'GET' ? JSON.stringify(action.data) : undefined,
+            body:
+                action.method !== 'GET'
+                    ? JSON.stringify(action.data)
+                    : undefined,
             credentials: 'same-origin',
         });
 
@@ -153,7 +163,9 @@ async function processAction(action: OfflineAction): Promise<boolean> {
         // Handle specific error responses
         if (response.status === 409) {
             // Conflict - mark as synced to avoid retry loops
-            console.warn(`[Sync] Action ${action.id} conflict, marking as synced`);
+            console.warn(
+                `[Sync] Action ${action.id} conflict, marking as synced`,
+            );
             if (action.id) {
                 await markActionSynced(action.id);
             }
@@ -167,7 +179,8 @@ async function processAction(action: OfflineAction): Promise<boolean> {
         return false;
     } catch (error) {
         action.retries++;
-        action.lastError = error instanceof Error ? error.message : 'Unknown error';
+        action.lastError =
+            error instanceof Error ? error.message : 'Unknown error';
         await putItem('offlineQueue', action);
         return false;
     }
@@ -176,7 +189,10 @@ async function processAction(action: OfflineAction): Promise<boolean> {
 /**
  * Sync data from server to local IndexedDB
  */
-export async function syncFromServer(entity: string, apiUrl: string): Promise<void> {
+export async function syncFromServer(
+    entity: string,
+    apiUrl: string,
+): Promise<void> {
     if (!isOnline()) {
         console.log(`[Sync] Offline, skipping ${entity} sync`);
         return;
@@ -188,7 +204,7 @@ export async function syncFromServer(entity: string, apiUrl: string): Promise<vo
 
         const response = await fetch(url, {
             headers: {
-                'Accept': 'application/json',
+                Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
             },
             credentials: 'same-origin',
@@ -263,11 +279,14 @@ export function initializeSync(): void {
     });
 
     // Periodic sync when online (every 5 minutes)
-    setInterval(async () => {
-        if (isOnline()) {
-            await syncOfflineActions();
-        }
-    }, 5 * 60 * 1000);
+    setInterval(
+        async () => {
+            if (isOnline()) {
+                await syncOfflineActions();
+            }
+        },
+        5 * 60 * 1000,
+    );
 
     // Initial sync check
     if (isOnline()) {

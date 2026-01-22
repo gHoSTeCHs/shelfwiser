@@ -4,10 +4,12 @@ import Label from '@/components/form/Label';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { Modal } from '@/components/ui/modal';
 import AppLayout from '@/layouts/AppLayout';
 import { PurchaseOrder } from '@/types/supplier';
 import { paymentStatusConfig, statusConfig } from '@/utils/purchase-order';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import {
     Building2,
     Calendar,
@@ -27,12 +29,68 @@ interface Props {
     isBuyer: boolean;
 }
 
+type ConfirmAction =
+    | 'submit'
+    | 'approve'
+    | 'ship'
+    | 'receive'
+    | 'cancel'
+    | null;
+
+const confirmActionConfig: Record<
+    Exclude<ConfirmAction, null>,
+    {
+        title: string;
+        message: string;
+        confirmLabel: string;
+        variant: 'danger' | 'warning' | 'info' | 'success';
+    }
+> = {
+    submit: {
+        title: 'Submit Purchase Order',
+        message:
+            'Are you sure you want to submit this purchase order to the supplier?',
+        confirmLabel: 'Submit Order',
+        variant: 'info',
+    },
+    approve: {
+        title: 'Approve Purchase Order',
+        message: 'Are you sure you want to approve this purchase order?',
+        confirmLabel: 'Approve Order',
+        variant: 'success',
+    },
+    ship: {
+        title: 'Mark as Shipped',
+        message:
+            'This will deduct stock from your inventory. Are you sure you want to mark this order as shipped?',
+        confirmLabel: 'Mark as Shipped',
+        variant: 'warning',
+    },
+    receive: {
+        title: 'Confirm Receipt',
+        message:
+            'This will add stock to your inventory. Are you sure you want to confirm receipt of this order?',
+        confirmLabel: 'Confirm Receipt',
+        variant: 'success',
+    },
+    cancel: {
+        title: 'Cancel Order',
+        message:
+            'Are you sure you want to cancel this order? This action cannot be undone.',
+        confirmLabel: 'Cancel Order',
+        variant: 'danger',
+    },
+};
+
 export default function Show({
     purchaseOrder: po,
     isSupplier,
     isBuyer,
 }: Props) {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
+    const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
+    const [cancelReason, setCancelReason] = useState('');
 
     const {
         data: paymentData,
@@ -47,61 +105,59 @@ export default function Show({
         notes: '',
     });
 
-    const handleSubmit = () => {
-        if (confirm('Submit this purchase order to the supplier?')) {
-            PurchaseOrderController.submit({
-                purchaseOrder: po.id,
-            });
+    const handleConfirmAction = () => {
+        switch (confirmAction) {
+            case 'submit':
+                router.post(
+                    PurchaseOrderController.submit.url({
+                        purchaseOrder: po.id,
+                    }),
+                );
+                break;
+            case 'approve':
+                router.post(
+                    PurchaseOrderController.approve.url({
+                        purchaseOrder: po.id,
+                    }),
+                );
+                break;
+            case 'ship':
+                router.post(
+                    PurchaseOrderController.ship.url({ purchaseOrder: po.id }),
+                );
+                break;
+            case 'receive':
+                router.post(
+                    PurchaseOrderController.receive.url({
+                        purchaseOrder: po.id,
+                    }),
+                );
+                break;
+            case 'cancel':
+                setConfirmAction(null);
+                setShowCancelReasonModal(true);
+                return;
         }
+        setConfirmAction(null);
     };
 
-    const handleApprove = () => {
-        if (confirm('Approve this purchase order?')) {
-            PurchaseOrderController.approve({
-                purchaseOrder: po.id,
-            });
-        }
-    };
-
-    const handleShip = () => {
-        if (
-            confirm(
-                'Mark this order as shipped? This will deduct stock from your inventory.',
-            )
-        ) {
-            PurchaseOrderController.ship({
-                purchaseOrder: po.id,
-            });
-        }
-    };
-
-    const handleReceive = () => {
-        if (
-            confirm(
-                'Confirm receipt of this order? This will add stock to your inventory.',
-            )
-        ) {
-            PurchaseOrderController.receive({
-                purchaseOrder: po.id,
-            });
-        }
-    };
-
-    const handleCancel = () => {
-        const reason = prompt('Reason for cancellation:');
-        if (reason) {
-            PurchaseOrderController.cancel.url({
-                purchaseOrder: po.id,
-                // reason: reason
-            });
-        }
+    const handleCancelWithReason = () => {
+        router.post(
+            PurchaseOrderController.cancel.url({ purchaseOrder: po.id }),
+            { reason: cancelReason },
+        );
+        setShowCancelReasonModal(false);
+        setCancelReason('');
     };
 
     const handleRecordPayment: FormEventHandler = (e) => {
         e.preventDefault();
-        // postPayment(route('purchase-orders.record-payment', po.id), {
-        //     onSuccess: () => setShowPaymentModal(false),
-        // });
+        postPayment(
+            PurchaseOrderController.recordPayment.url({ purchaseOrder: po.id }),
+            {
+                onSuccess: () => setShowPaymentModal(false),
+            },
+        );
     };
 
     const renderActions = () => {
@@ -110,7 +166,10 @@ export default function Show({
         if (isBuyer) {
             if (po.status === 'draft') {
                 actions.push(
-                    <Button key="submit" onClick={handleSubmit}>
+                    <Button
+                        key="submit"
+                        onClick={() => setConfirmAction('submit')}
+                    >
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Submit Order
                     </Button>,
@@ -119,7 +178,10 @@ export default function Show({
 
             if (po.status === 'shipped') {
                 actions.push(
-                    <Button key="receive" onClick={handleReceive}>
+                    <Button
+                        key="receive"
+                        onClick={() => setConfirmAction('receive')}
+                    >
                         <Download className="mr-2 h-4 w-4" />
                         Confirm Receipt
                     </Button>,
@@ -131,7 +193,7 @@ export default function Show({
                     <Button
                         key="cancel"
                         variant="outline"
-                        onClick={handleCancel}
+                        onClick={() => setConfirmAction('cancel')}
                     >
                         <XCircle className="mr-2 h-4 w-4" />
                         Cancel Order
@@ -159,7 +221,10 @@ export default function Show({
         if (isSupplier) {
             if (po.status === 'submitted') {
                 actions.push(
-                    <Button key="approve" onClick={handleApprove}>
+                    <Button
+                        key="approve"
+                        onClick={() => setConfirmAction('approve')}
+                    >
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Approve Order
                     </Button>,
@@ -168,7 +233,7 @@ export default function Show({
                     <Button
                         key="reject"
                         variant="outline"
-                        onClick={handleCancel}
+                        onClick={() => setConfirmAction('cancel')}
                     >
                         <XCircle className="mr-2 h-4 w-4" />
                         Reject Order
@@ -178,7 +243,7 @@ export default function Show({
 
             if (po.status === 'approved' || po.status === 'processing') {
                 actions.push(
-                    <Button key="ship" onClick={handleShip}>
+                    <Button key="ship" onClick={() => setConfirmAction('ship')}>
                         <Truck className="mr-2 h-4 w-4" />
                         Mark as Shipped
                     </Button>,
@@ -190,7 +255,7 @@ export default function Show({
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Purchase Order ${po.po_number}`} />
 
             <div className="space-y-6">
@@ -276,13 +341,15 @@ export default function Show({
                                             <div className="text-right">
                                                 <p className="font-medium text-gray-900 dark:text-white">
                                                     {item.quantity} × $
-                                                    {Number(item.unit_price).toFixed(2)}
+                                                    {Number(
+                                                        item.unit_price,
+                                                    ).toFixed(2)}
                                                 </p>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">
                                                     $
-                                                    {Number(item.total_price).toFixed(
-                                                        2,
-                                                    )}
+                                                    {Number(
+                                                        item.total_price,
+                                                    ).toFixed(2)}
                                                 </p>
                                             </div>
                                         </div>
@@ -323,7 +390,10 @@ export default function Show({
                                             Shipping
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            ${Number(po.shipping_amount).toFixed(2)}
+                                            $
+                                            {Number(po.shipping_amount).toFixed(
+                                                2,
+                                            )}
                                         </span>
                                     </div>
                                 )}
@@ -401,7 +471,10 @@ export default function Show({
                                                     ).toLocaleDateString()}
                                                 </span>
                                                 <span className="font-medium">
-                                                    ${Number(payment.amount).toFixed(2)}
+                                                    $
+                                                    {Number(
+                                                        payment.amount,
+                                                    ).toFixed(2)}
                                                 </span>
                                             </div>
                                         ))}
@@ -446,122 +519,193 @@ export default function Show({
                 </div>
             </div>
 
-            {showPaymentModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <Card className="w-full max-w-md p-6">
-                        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-                            Record Payment
-                        </h3>
-
-                        <form
-                            onSubmit={handleRecordPayment}
-                            className="space-y-4"
-                        >
-                            <div>
-                                <Label htmlFor="amount">Amount</Label>
-                                <Input
-                                    id="amount"
-                                    type="number"
-                                    step="0.01"
-                                    min="0.01"
-                                    max={po.total_amount - po.paid_amount}
-                                    value={paymentData.amount}
-                                    onChange={(e) =>
-                                        setPaymentData('amount', e.target.value)
-                                    }
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="payment_date">
-                                    Payment Date
-                                </Label>
-                                <Input
-                                    id="payment_date"
-                                    type="date"
-                                    value={paymentData.payment_date}
-                                    onChange={(e) =>
-                                        setPaymentData(
-                                            'payment_date',
-                                            e.target.value,
-                                        )
-                                    }
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="payment_method">
-                                    Payment Method
-                                </Label>
-                                <Input
-                                    id="payment_method"
-                                    value={paymentData.payment_method}
-                                    onChange={(e) =>
-                                        setPaymentData(
-                                            'payment_method',
-                                            e.target.value,
-                                        )
-                                    }
-                                    placeholder="e.g., Bank Transfer, Cash"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="reference_number">
-                                    Reference Number
-                                </Label>
-                                <Input
-                                    id="reference_number"
-                                    value={paymentData.reference_number}
-                                    onChange={(e) =>
-                                        setPaymentData(
-                                            'reference_number',
-                                            e.target.value,
-                                        )
-                                    }
-                                    placeholder="Transaction ID or check number"
-                                />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="notes">Notes</Label>
-                                <textarea
-                                    id="notes"
-                                    rows={2}
-                                    value={paymentData.notes}
-                                    onChange={(e) =>
-                                        setPaymentData('notes', e.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                    placeholder="Optional payment notes"
-                                />
-                            </div>
-
-                            <div className="flex gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setShowPaymentModal(false)}
-                                    className="flex-1"
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    disabled={processingPayment}
-                                    className="flex-1"
-                                >
-                                    <DollarSign className="mr-2 h-4 w-4" />
-                                    Record Payment
-                                </Button>
-                            </div>
-                        </form>
-                    </Card>
-                </div>
+            {confirmAction && (
+                <ConfirmDialog
+                    isOpen={!!confirmAction}
+                    onClose={() => setConfirmAction(null)}
+                    onConfirm={handleConfirmAction}
+                    title={confirmActionConfig[confirmAction].title}
+                    message={confirmActionConfig[confirmAction].message}
+                    confirmLabel={
+                        confirmActionConfig[confirmAction].confirmLabel
+                    }
+                    variant={confirmActionConfig[confirmAction].variant}
+                />
             )}
-        </AppLayout>
+
+            <Modal
+                isOpen={showCancelReasonModal}
+                onClose={() => {
+                    setShowCancelReasonModal(false);
+                    setCancelReason('');
+                }}
+                className="mx-4 max-w-md"
+                title="Cancel Order"
+                description="Provide a reason for cancelling this order"
+            >
+                <div className="p-6">
+                    <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+                        Cancel Order
+                    </h3>
+                    <div className="space-y-4">
+                        <div>
+                            <Label htmlFor="cancel_reason">
+                                Reason for Cancellation
+                            </Label>
+                            <textarea
+                                id="cancel_reason"
+                                rows={3}
+                                value={cancelReason}
+                                onChange={(e) =>
+                                    setCancelReason(e.target.value)
+                                }
+                                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                placeholder="Please provide a reason..."
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setShowCancelReasonModal(false);
+                                    setCancelReason('');
+                                }}
+                                className="flex-1"
+                            >
+                                Go Back
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={handleCancelWithReason}
+                                className="flex-1"
+                            >
+                                Cancel Order
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                className="mx-4 max-w-md"
+                title="Record Payment"
+                description="Record a payment for this purchase order"
+            >
+                <div className="p-6">
+                    <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+                        Record Payment
+                    </h3>
+
+                    <form onSubmit={handleRecordPayment} className="space-y-4">
+                        <div>
+                            <Label htmlFor="amount">Amount</Label>
+                            <Input
+                                id="amount"
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                max={po.total_amount - po.paid_amount}
+                                value={paymentData.amount}
+                                onChange={(e) =>
+                                    setPaymentData('amount', e.target.value)
+                                }
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="payment_date">Payment Date</Label>
+                            <Input
+                                id="payment_date"
+                                type="date"
+                                value={paymentData.payment_date}
+                                onChange={(e) =>
+                                    setPaymentData(
+                                        'payment_date',
+                                        e.target.value,
+                                    )
+                                }
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="payment_method">
+                                Payment Method
+                            </Label>
+                            <Input
+                                id="payment_method"
+                                value={paymentData.payment_method}
+                                onChange={(e) =>
+                                    setPaymentData(
+                                        'payment_method',
+                                        e.target.value,
+                                    )
+                                }
+                                placeholder="e.g., Bank Transfer, Cash"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="reference_number">
+                                Reference Number
+                            </Label>
+                            <Input
+                                id="reference_number"
+                                value={paymentData.reference_number}
+                                onChange={(e) =>
+                                    setPaymentData(
+                                        'reference_number',
+                                        e.target.value,
+                                    )
+                                }
+                                placeholder="Transaction ID or check number"
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="notes">Notes</Label>
+                            <textarea
+                                id="notes"
+                                rows={2}
+                                value={paymentData.notes}
+                                onChange={(e) =>
+                                    setPaymentData('notes', e.target.value)
+                                }
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                placeholder="Optional payment notes"
+                            />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setShowPaymentModal(false)}
+                                className="flex-1"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={processingPayment}
+                                className="flex-1"
+                            >
+                                <DollarSign className="mr-2 h-4 w-4" />
+                                Record Payment
+                            </Button>
+                        </div>
+                    </form>
+                </div>
+            </Modal>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

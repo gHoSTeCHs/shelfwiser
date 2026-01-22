@@ -6,15 +6,19 @@ import { User } from '@/types';
 import { Shop } from '@/types/shop';
 import { Head, Link } from '@inertiajs/react';
 import {
+    AlertTriangle,
     Building2,
     Calendar,
     ChevronLeft,
+    ClipboardList,
     Code,
     Edit,
     Mail,
     MapPin,
     Package,
     Phone,
+    Settings,
+    Store,
     TrendingUp,
     Users,
 } from 'lucide-react';
@@ -28,10 +32,8 @@ interface Props {
 export default function ShopsShow({ shop, can_manage }: Props) {
     console.log(shop, can_manage);
 
-    console.log(shop.name);
-
     return (
-        <AppLayout>
+        <>
             <Head title={`${shop.name} - Shop Details`} />
 
             <div className="mx-auto max-w-4xl space-y-6">
@@ -315,6 +317,32 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                         </Card>
 
                         <div className="space-y-3">
+                            {can_manage && (
+                                <>
+                                    <Link href={`/shops/${shop.id}/settings`}>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full gap-2"
+                                        >
+                                            <Settings className="h-4 w-4" />
+                                            Shop Settings
+                                        </Button>
+                                    </Link>
+
+                                    <Link
+                                        href={`/shops/${shop.id}/storefront-settings`}
+                                    >
+                                        <Button
+                                            variant="outline"
+                                            className="w-full gap-2"
+                                        >
+                                            <Store className="h-4 w-4" />
+                                            Storefront Settings
+                                        </Button>
+                                    </Link>
+                                </>
+                            )}
+
                             <Link href={`/shops/${shop.id}/products`}>
                                 <Button
                                     variant="outline"
@@ -325,6 +353,32 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                                 </Button>
                             </Link>
 
+                            {can_manage && (
+                                <>
+                                    <Link href={`/shops/${shop.id}/stock-take`}>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full gap-2"
+                                        >
+                                            <ClipboardList className="h-4 w-4" />
+                                            Stock Take
+                                        </Button>
+                                    </Link>
+
+                                    <Link
+                                        href={`/shops/${shop.id}/reorder-alerts`}
+                                    >
+                                        <Button
+                                            variant="outline"
+                                            className="w-full gap-2"
+                                        >
+                                            <AlertTriangle className="h-4 w-4" />
+                                            Reorder Alerts
+                                        </Button>
+                                    </Link>
+                                </>
+                            )}
+
                             <Link href={`/shops/${shop.id}/reports`}>
                                 <Button
                                     variant="outline"
@@ -334,10 +388,24 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                                     View Reports
                                 </Button>
                             </Link>
+
+                            {can_manage && (
+                                <Link href={`/shops/${shop.id}/tax-settings`}>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full gap-2"
+                                    >
+                                        <Settings className="h-4 w-4" />
+                                        Tax Settings
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+ShopsShow.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

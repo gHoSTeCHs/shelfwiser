@@ -39,7 +39,7 @@ class ReportsController extends Controller
         $user = $request->user();
 
         // Check permission
-       Gate::authorize('reports.view');
+        Gate::authorize('reports.view');
 
         $validated = $request->validate([
             'shop' => ['nullable', 'integer', 'exists:shops,id'],
@@ -208,7 +208,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->role->hasPermission('view_reports')) {
+        if (!$user->role->hasPermission('reports.view')) {
             abort(403, 'You do not have permission to view reports');
         }
 
@@ -397,7 +397,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->can('viewFinancials', DashboardPolicy::class)) {
+        if (!$user->can('dashboard.view_financials', DashboardPolicy::class)) {
             abort(403, 'You do not have permission to view financial reports');
         }
 
@@ -591,7 +591,7 @@ class ReportsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->can('viewFinancials', DashboardPolicy::class)) {
+        if (!$user->can('dashboard.view_financials', DashboardPolicy::class)) {
             abort(403, 'You do not have permission to view product profitability');
         }
 

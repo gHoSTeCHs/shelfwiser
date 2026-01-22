@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\InventoryModel;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Shop extends Model
 {
-    use HasFactory, SoftDeletes;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'tenant_id', 'shop_type_id', 'name', 'slug', 'config', 'inventory_model',
@@ -49,7 +50,10 @@ class Shop extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class)->withTimestamps();
+        return $this->belongsToMany(User::class, 'shop_user')
+            ->using(ShopUser::class)
+            ->withPivot('tenant_id')
+            ->withTimestamps();
     }
 
     public function products(): HasMany

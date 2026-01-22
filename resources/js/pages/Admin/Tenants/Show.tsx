@@ -1,24 +1,22 @@
-import AppLayout from '@/layouts/AppLayout';
-import AdminTenantController from '@/actions/App/Http/Controllers/Admin/AdminTenantController';
-import { Head, Link, router, Form } from '@inertiajs/react';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
-import Button from '@/components/ui/button/Button';
 import Input from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
+import { Card } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
-    Edit,
-    Clock,
-    Users,
-    Store,
-    Package,
-    Calendar,
-    Mail,
-    Phone,
     Building2,
-    Power,
+    Calendar,
+    Edit,
+    Mail,
+    Package,
+    Phone,
     Plus,
+    Power,
+    Store,
+    Users,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -91,7 +89,7 @@ export default function Show({ tenant }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Tenant: ${tenant.name}`} />
 
             <div className="space-y-6">
@@ -121,7 +119,10 @@ export default function Show({ tenant }: Props) {
                             {tenant.is_active ? 'Deactivate' : 'Activate'}
                         </Button>
                         <Link href={`/admin/tenants/${tenant.id}/edit`}>
-                            <Button size="sm" startIcon={<Edit className="h-4 w-4" />}>
+                            <Button
+                                size="sm"
+                                startIcon={<Edit className="h-4 w-4" />}
+                            >
                                 Edit
                             </Button>
                         </Link>
@@ -201,13 +202,22 @@ export default function Show({ tenant }: Props) {
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="border-b border-gray-200 dark:border-gray-700">
-                                                <th className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400">
+                                                <th
+                                                    scope="col"
+                                                    className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400"
+                                                >
                                                     Name
                                                 </th>
-                                                <th className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400">
+                                                <th
+                                                    scope="col"
+                                                    className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400"
+                                                >
                                                     Role
                                                 </th>
-                                                <th className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400">
+                                                <th
+                                                    scope="col"
+                                                    className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400"
+                                                >
                                                     Status
                                                 </th>
                                             </tr>
@@ -230,10 +240,16 @@ export default function Show({ tenant }: Props) {
                                                     </td>
                                                     <td className="py-2">
                                                         <Badge
-                                                            color={user.is_active ? 'success' : 'error'}
+                                                            color={
+                                                                user.is_active
+                                                                    ? 'success'
+                                                                    : 'error'
+                                                            }
                                                             size="sm"
                                                         >
-                                                            {user.is_active ? 'Active' : 'Inactive'}
+                                                            {user.is_active
+                                                                ? 'Active'
+                                                                : 'Inactive'}
                                                         </Badge>
                                                     </td>
                                                 </tr>
@@ -259,13 +275,22 @@ export default function Show({ tenant }: Props) {
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="border-b border-gray-200 dark:border-gray-700">
-                                                <th className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400">
+                                                <th
+                                                    scope="col"
+                                                    className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400"
+                                                >
                                                     Name
                                                 </th>
-                                                <th className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400">
+                                                <th
+                                                    scope="col"
+                                                    className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400"
+                                                >
                                                     Status
                                                 </th>
-                                                <th className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400">
+                                                <th
+                                                    scope="col"
+                                                    className="pb-2 text-left font-medium text-gray-500 dark:text-gray-400"
+                                                >
                                                     Created
                                                 </th>
                                             </tr>
@@ -278,10 +303,16 @@ export default function Show({ tenant }: Props) {
                                                     </td>
                                                     <td className="py-2">
                                                         <Badge
-                                                            color={shop.is_active ? 'success' : 'error'}
+                                                            color={
+                                                                shop.is_active
+                                                                    ? 'success'
+                                                                    : 'error'
+                                                            }
                                                             size="sm"
                                                         >
-                                                            {shop.is_active ? 'Active' : 'Inactive'}
+                                                            {shop.is_active
+                                                                ? 'Active'
+                                                                : 'Inactive'}
                                                         </Badge>
                                                     </td>
                                                     <td className="py-2 text-gray-600 dark:text-gray-400">
@@ -306,7 +337,11 @@ export default function Show({ tenant }: Props) {
                                     <span className="text-sm text-gray-500 dark:text-gray-400">
                                         Plan
                                     </span>
-                                    <Badge color={getPlanColor(tenant.subscription_plan)}>
+                                    <Badge
+                                        color={getPlanColor(
+                                            tenant.subscription_plan,
+                                        )}
+                                    >
                                         {tenant.subscription_plan}
                                     </Badge>
                                 </div>
@@ -314,8 +349,16 @@ export default function Show({ tenant }: Props) {
                                     <span className="text-sm text-gray-500 dark:text-gray-400">
                                         Status
                                     </span>
-                                    <Badge color={tenant.has_active_subscription ? 'success' : 'error'}>
-                                        {tenant.has_active_subscription ? 'Active' : 'Expired'}
+                                    <Badge
+                                        color={
+                                            tenant.has_active_subscription
+                                                ? 'success'
+                                                : 'error'
+                                        }
+                                    >
+                                        {tenant.has_active_subscription
+                                            ? 'Active'
+                                            : 'Expired'}
                                     </Badge>
                                 </div>
                                 {tenant.is_on_trial && tenant.trial_ends_at && (
@@ -328,16 +371,17 @@ export default function Show({ tenant }: Props) {
                                         </span>
                                     </div>
                                 )}
-                                {!tenant.is_on_trial && tenant.subscription_ends_at && (
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                                            Subscription Ends
-                                        </span>
-                                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                            {tenant.subscription_ends_at}
-                                        </span>
-                                    </div>
-                                )}
+                                {!tenant.is_on_trial &&
+                                    tenant.subscription_ends_at && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                                                Subscription Ends
+                                            </span>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                                {tenant.subscription_ends_at}
+                                            </span>
+                                        </div>
+                                    )}
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm text-gray-500 dark:text-gray-400">
                                         Days Remaining
@@ -356,7 +400,10 @@ export default function Show({ tenant }: Props) {
                             >
                                 {({ processing }) => (
                                     <div>
-                                        <Label htmlFor="days" className="text-sm">
+                                        <Label
+                                            htmlFor="days"
+                                            className="text-sm"
+                                        >
                                             Extend Subscription
                                         </Label>
                                         <div className="mt-2 flex gap-2">
@@ -365,7 +412,13 @@ export default function Show({ tenant }: Props) {
                                                 name="days"
                                                 type="number"
                                                 value={extendDays}
-                                                onChange={(e) => setExtendDays(parseInt(e.target.value) || 1)}
+                                                onChange={(e) =>
+                                                    setExtendDays(
+                                                        parseInt(
+                                                            e.target.value,
+                                                        ) || 1,
+                                                    )
+                                                }
                                                 className="w-24"
                                             />
                                             <Button
@@ -373,7 +426,9 @@ export default function Show({ tenant }: Props) {
                                                 size="sm"
                                                 disabled={processing}
                                                 loading={processing}
-                                                startIcon={<Plus className="h-3 w-3" />}
+                                                startIcon={
+                                                    <Plus className="h-3 w-3" />
+                                                }
                                             >
                                                 Add Days
                                             </Button>
@@ -396,7 +451,8 @@ export default function Show({ tenant }: Props) {
                                         </span>
                                     </div>
                                     <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                        {tenant.users_count} / {tenant.max_users}
+                                        {tenant.users_count} /{' '}
+                                        {tenant.max_users}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between">
@@ -407,7 +463,8 @@ export default function Show({ tenant }: Props) {
                                         </span>
                                     </div>
                                     <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                        {tenant.shops_count} / {tenant.max_shops}
+                                        {tenant.shops_count} /{' '}
+                                        {tenant.max_shops}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between">
@@ -426,6 +483,8 @@ export default function Show({ tenant }: Props) {
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

@@ -41,6 +41,22 @@ class CreateShopRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Please provide a name for this shop.',
+            'name.max' => 'Shop name cannot exceed 255 characters.',
+            'shop_type_slug.required' => 'Please select a shop type.',
+            'shop_type_slug.exists' => 'The selected shop type does not exist.',
+            'inventory_model.required' => 'Please select an inventory management model.',
+            'city.required' => 'Please specify the city where this shop is located.',
+            'state.required' => 'Please specify the state where this shop is located.',
+            'country.required' => 'Please specify the country where this shop is located.',
+            'email.email' => 'Please provide a valid email address for this shop.',
+            'config.required' => 'Shop configuration is required.',
+        ];
+    }
+
     protected function getShopType(): ShopType
     {
         $tenantId = $this->user()->tenant_id;

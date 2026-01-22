@@ -6,6 +6,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency } from '@/lib/utils';
 import { ProductListResponse } from '@/types/product.ts';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -42,7 +43,7 @@ export default function Index({ products }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Products" />
 
             <div className="space-y-6">
@@ -122,21 +123,26 @@ export default function Index({ products }: Props) {
                                       )
                                     : 0;
 
-                            const totalStock = product.variants.reduce(
+                            const totalStock = (product.variants || []).reduce(
                                 (sum, variant) => {
                                     const variantStock =
-                                        variant.inventory_locations?.reduce(
-                                            (vSum, loc) =>
-                                                vSum +
-                                                (loc.quantity -
-                                                    loc.reserved_quantity),
-                                            0,
-                                        ) || 0;
+                                        variant.inventory_locations &&
+                                        Array.isArray(
+                                            variant.inventory_locations,
+                                        )
+                                            ? variant.inventory_locations.reduce(
+                                                  (vSum, loc) =>
+                                                      vSum +
+                                                      ((loc?.quantity || 0) -
+                                                          (loc?.reserved_quantity ||
+                                                              0)),
+                                                  0,
+                                              )
+                                            : 0;
                                     return sum + variantStock;
                                 },
                                 0,
                             );
-
                             return (
                                 <Card
                                     key={product.id}
@@ -200,8 +206,12 @@ export default function Index({ products }: Props) {
                                                 <div className="flex items-center text-sm font-medium text-gray-900 dark:text-white">
                                                     <DollarSign className="mr-1 h-4 w-4" />
                                                     {product.has_variants
-                                                        ? `From ₦${minPrice.toLocaleString()}`
-                                                        : `₦${parseFloat(product.variants[0].price.toString()).toLocaleString()}`}
+                                                        ? `From ${formatCurrency(minPrice)}`
+                                                        : formatCurrency(
+                                                              product
+                                                                  .variants[0]
+                                                                  .price,
+                                                          )}
                                                 </div>
                                             )}
                                         </div>
@@ -250,6 +260,8 @@ export default function Index({ products }: Props) {
                     </div>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

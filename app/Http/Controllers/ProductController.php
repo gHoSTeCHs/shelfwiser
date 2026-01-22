@@ -27,18 +27,19 @@ class ProductController extends Controller
 
     public function index(): Response
     {
-        Gate::authorize('create', Product::class);
+        Gate::authorize('viewAny', Product::class);
 
         $tenantId = auth()->user()->tenant_id;
 
         return Inertia::render('Products/Index', [
-            'products' => Product::where('tenant_id', $tenantId)
+            'products' => Product::query()->where('tenant_id', $tenantId)
                 ->with([
                     'type:id,slug,label',
                     'category:id,name,slug',
                     'shop:id,name,slug',
+                    'variants.inventoryLocations',
                     'images' => function ($query) {
-                        $query->ordered()->limit(1); // Only load primary image for list view
+                        $query->ordered()->limit(1);
                     },
                 ])
                 ->withCount('variants')
@@ -176,6 +177,9 @@ class ProductController extends Controller
         ]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
         $this->productService->update($product, $request->validated());

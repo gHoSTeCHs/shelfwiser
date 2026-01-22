@@ -1,21 +1,28 @@
+import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
+import Checkbox from '@/components/form/input/Checkbox';
+import Input from '@/components/form/input/InputField';
+import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Badge from '@/components/ui/badge/Badge';
+import Button from '@/components/ui/button/Button';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
 import { AccountProfileProps } from '@/types/storefront';
 import { Head, useForm } from '@inertiajs/react';
-import React, { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
-import Button from '@/components/ui/button/Button';
-import Input from '@/components/form/input/InputField';
-import Label from '@/components/form/Label';
-import InputError from '@/components/form/InputError';
-import Checkbox from '@/components/form/input/Checkbox';
-import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
-import { User, MapPin, Plus, Edit, Trash2, Mail, Phone } from 'lucide-react';
-import { FormEvent } from 'react';
+import { motion } from 'framer-motion';
+import {
+    Edit,
+    Lock,
+    Mail,
+    MapPin,
+    Phone,
+    Plus,
+    Trash2,
+    User,
+} from 'lucide-react';
+import React, { FormEvent, useState } from 'react';
 
 /**
- * Customer profile and address management page.
- * Allows customers to update their information and manage addresses.
+ * Customer profile with playful-luxury styling.
  */
 const Profile: React.FC<AccountProfileProps> = ({
     shop,
@@ -57,44 +64,58 @@ const Profile: React.FC<AccountProfileProps> = ({
         }
     };
 
-    const formatAddress = (
-        address: any,
-    ): string => {
-        const parts = [
-            address.address_line_1,
-            address.address_line_2,
-            address.city,
-            address.state,
-            address.postal_code,
-            address.country,
-        ].filter(Boolean);
-
-        return parts.join(', ');
-    };
-
     return (
         <StorefrontLayout shop={shop} customer={customer}>
             <Head title={`My Profile - ${shop.name}`} />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="space-y-6">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                >
+                    <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl dark:text-white">
                         My Profile
                     </h1>
-                    <p className="mt-2 text-gray-600">
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         Manage your personal information and addresses
                     </p>
-                </div>
+                </motion.div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Profile Information */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <Card title="Personal Information">
-                            {editingProfile ? (
-                                <form onSubmit={handleProfileSubmit}>
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
+                    {/* Main Content */}
+                    <div className="space-y-4 lg:col-span-2 lg:space-y-6">
+                        {/* Personal Information */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="rounded-xl border border-gray-200 bg-white sm:rounded-2xl dark:border-navy-700 dark:bg-navy-800"
+                        >
+                            <div className="flex items-center justify-between border-b border-gray-100 p-4 sm:p-5 dark:border-navy-700">
+                                <h2 className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                    <User className="h-4 w-4 text-brand-500" />
+                                    Personal Information
+                                </h2>
+                                {!editingProfile && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setEditingProfile(true)}
+                                        startIcon={<Edit className="h-4 w-4" />}
+                                    >
+                                        Edit
+                                    </Button>
+                                )}
+                            </div>
+
+                            <div className="p-4 sm:p-5">
+                                {editingProfile ? (
+                                    <form
+                                        onSubmit={handleProfileSubmit}
+                                        className="space-y-4"
+                                    >
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                             <div>
                                                 <Label htmlFor="first_name">
                                                     First Name{' '}
@@ -233,208 +254,233 @@ const Profile: React.FC<AccountProfileProps> = ({
                                                 Cancel
                                             </Button>
                                         </div>
+                                    </form>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-navy-700">
+                                                <User className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    Full Name
+                                                </p>
+                                                <p className="font-medium text-gray-900 dark:text-white">
+                                                    {customer.first_name}{' '}
+                                                    {customer.last_name}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-navy-700">
+                                                <Mail className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    Email
+                                                </p>
+                                                <p className="font-medium text-gray-900 dark:text-white">
+                                                    {customer.email}
+                                                </p>
+                                                {customer.email_verified_at && (
+                                                    <Badge
+                                                        color="success"
+                                                        size="sm"
+                                                        className="mt-1"
+                                                    >
+                                                        Verified
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {customer.phone && (
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-navy-700">
+                                                    <Phone className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                        Phone
+                                                    </p>
+                                                    <p className="font-medium text-gray-900 dark:text-white">
+                                                        {customer.phone}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {customer.marketing_opt_in && (
+                                            <Badge color="info" size="sm">
+                                                Subscribed to newsletters
+                                            </Badge>
+                                        )}
                                     </div>
-                                </form>
-                            ) : (
-                                <div className="space-y-4">
-                                    <div className="flex items-start justify-between">
-                                        <div className="space-y-3 flex-1">
-                                            <div className="flex items-center gap-3">
-                                                <User className="h-5 w-5 text-gray-400" />
-                                                <div>
-                                                    <p className="text-sm text-gray-500">
-                                                        Full Name
-                                                    </p>
-                                                    <p className="font-medium text-gray-900">
-                                                        {customer.first_name}{' '}
-                                                        {customer.last_name}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                )}
+                            </div>
+                        </motion.div>
 
-                                            <div className="flex items-center gap-3">
-                                                <Mail className="h-5 w-5 text-gray-400" />
-                                                <div>
-                                                    <p className="text-sm text-gray-500">
-                                                        Email
-                                                    </p>
-                                                    <p className="font-medium text-gray-900">
-                                                        {customer.email}
-                                                    </p>
-                                                    {customer.email_verified_at && (
-                                                        <Badge
-                                                            color="success"
+                        {/* Addresses */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.15 }}
+                            className="rounded-xl border border-gray-200 bg-white sm:rounded-2xl dark:border-navy-700 dark:bg-navy-800"
+                        >
+                            <div className="border-b border-gray-100 p-4 sm:p-5 dark:border-navy-700">
+                                <h2 className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                    <MapPin className="h-4 w-4 text-brand-500" />
+                                    Saved Addresses
+                                </h2>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Manage your shipping and billing addresses
+                                </p>
+                            </div>
+
+                            <div className="p-4 sm:p-5">
+                                {addresses.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {addresses.map((address) => (
+                                            <div
+                                                key={address.id}
+                                                className="rounded-xl border border-gray-200 p-4 dark:border-navy-700"
+                                            >
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex-1">
+                                                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                                                            <span className="font-medium text-gray-900 dark:text-white">
+                                                                {
+                                                                    address.first_name
+                                                                }{' '}
+                                                                {
+                                                                    address.last_name
+                                                                }
+                                                            </span>
+                                                            {address.is_default && (
+                                                                <Badge
+                                                                    color="primary"
+                                                                    size="sm"
+                                                                >
+                                                                    Default
+                                                                </Badge>
+                                                            )}
+                                                            <Badge
+                                                                color={getAddressTypeColor(
+                                                                    address.type,
+                                                                )}
+                                                                size="sm"
+                                                            >
+                                                                {address.type}
+                                                            </Badge>
+                                                        </div>
+
+                                                        <div className="space-y-0.5 text-sm text-gray-600 dark:text-gray-400">
+                                                            <p>
+                                                                {
+                                                                    address.address_line_1
+                                                                }
+                                                            </p>
+                                                            {address.address_line_2 && (
+                                                                <p>
+                                                                    {
+                                                                        address.address_line_2
+                                                                    }
+                                                                </p>
+                                                            )}
+                                                            <p>
+                                                                {address.city},{' '}
+                                                                {address.state}{' '}
+                                                                {
+                                                                    address.postal_code
+                                                                }
+                                                            </p>
+                                                            <p>
+                                                                {
+                                                                    address.country
+                                                                }
+                                                            </p>
+                                                            {address.phone && (
+                                                                <p className="mt-1 text-gray-500">
+                                                                    {
+                                                                        address.phone
+                                                                    }
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex gap-1">
+                                                        <Button
+                                                            variant="ghost"
                                                             size="sm"
-                                                            className="mt-1"
                                                         >
-                                                            Verified
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {customer.phone && (
-                                                <div className="flex items-center gap-3">
-                                                    <Phone className="h-5 w-5 text-gray-400" />
-                                                    <div>
-                                                        <p className="text-sm text-gray-500">
-                                                            Phone
-                                                        </p>
-                                                        <p className="font-medium text-gray-900">
-                                                            {customer.phone}
-                                                        </p>
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-error-500" />
+                                                        </Button>
                                                     </div>
                                                 </div>
-                                            )}
-
-                                            {customer.marketing_opt_in && (
-                                                <div className="pt-2">
-                                                    <Badge
-                                                        color="info"
-                                                        size="sm"
-                                                    >
-                                                        Subscribed to
-                                                        newsletters
-                                                    </Badge>
-                                                </div>
-                                            )}
-                                        </div>
+                                            </div>
+                                        ))}
 
                                         <Button
                                             variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                                setEditingProfile(true)
+                                            fullWidth
+                                            startIcon={
+                                                <Plus className="h-4 w-4" />
                                             }
-                                            startIcon={<Edit />}
                                         >
-                                            Edit
+                                            Add New Address
                                         </Button>
                                     </div>
-                                </div>
-                            )}
-                        </Card>
-
-                        {/* Addresses */}
-                        <Card
-                            title="Saved Addresses"
-                            description="Manage your shipping and billing addresses"
-                        >
-                            {addresses.length > 0 ? (
-                                <div className="space-y-4">
-                                    {addresses.map((address) => (
-                                        <div
-                                            key={address.id}
-                                            className="p-4 border border-gray-200 rounded-lg"
-                                        >
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <MapPin className="h-4 w-4 text-gray-400" />
-                                                        <span className="font-medium text-gray-900">
-                                                            {address.first_name}{' '}
-                                                            {address.last_name}
-                                                        </span>
-                                                        {address.is_default && (
-                                                            <Badge
-                                                                color="primary"
-                                                                size="sm"
-                                                            >
-                                                                Default
-                                                            </Badge>
-                                                        )}
-                                                        <Badge
-                                                            color={getAddressTypeColor(
-                                                                address.type,
-                                                            )}
-                                                            size="sm"
-                                                        >
-                                                            {address.type}
-                                                        </Badge>
-                                                    </div>
-
-                                                    <div className="text-sm text-gray-600 space-y-1">
-                                                        <p>
-                                                            {
-                                                                address.address_line_1
-                                                            }
-                                                        </p>
-                                                        {address.address_line_2 && (
-                                                            <p>
-                                                                {
-                                                                    address.address_line_2
-                                                                }
-                                                            </p>
-                                                        )}
-                                                        <p>
-                                                            {address.city},{' '}
-                                                            {address.state}{' '}
-                                                            {address.postal_code}
-                                                        </p>
-                                                        <p>{address.country}</p>
-                                                        {address.phone && (
-                                                            <p className="mt-2">
-                                                                Phone:{' '}
-                                                                {address.phone}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex gap-2 ml-4">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                    >
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-error-500" />
-                                                    </Button>
-                                                </div>
-                                            </div>
+                                ) : (
+                                    <div className="py-8 text-center">
+                                        <MapPin className="mx-auto h-10 w-10 text-gray-300 dark:text-navy-500" />
+                                        <h3 className="mt-4 text-sm font-medium text-gray-900 dark:text-white">
+                                            No saved addresses
+                                        </h3>
+                                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                            Add your first address to save time
+                                            at checkout.
+                                        </p>
+                                        <div className="mt-4">
+                                            <Button
+                                                startIcon={
+                                                    <Plus className="h-4 w-4" />
+                                                }
+                                            >
+                                                Add Address
+                                            </Button>
                                         </div>
-                                    ))}
-
-                                    <Button
-                                        variant="outline"
-                                        fullWidth
-                                        startIcon={<Plus />}
-                                    >
-                                        Add New Address
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="text-center py-8">
-                                    <MapPin className="mx-auto h-12 w-12 text-gray-400" />
-                                    <h3 className="mt-4 text-sm font-medium text-gray-900">
-                                        No saved addresses
-                                    </h3>
-                                    <p className="mt-2 text-sm text-gray-500">
-                                        Add your first address to save time at
-                                        checkout.
-                                    </p>
-                                    <div className="mt-6">
-                                        <Button startIcon={<Plus />}>
-                                            Add Address
-                                        </Button>
                                     </div>
-                                </div>
-                            )}
-                        </Card>
+                                )}
+                            </div>
+                        </motion.div>
                     </div>
 
                     {/* Sidebar */}
-                    <div className="space-y-6">
+                    <div className="space-y-4 lg:space-y-6">
                         {/* Account Info */}
-                        <Card title="Account Information">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="rounded-xl border border-gray-200 bg-white p-4 sm:rounded-2xl sm:p-5 dark:border-navy-700 dark:bg-navy-800"
+                        >
+                            <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">
+                                Account Information
+                            </h2>
                             <div className="space-y-3 text-sm">
                                 <div>
-                                    <p className="text-gray-500">Member since</p>
-                                    <p className="font-medium text-gray-900">
+                                    <p className="text-gray-500 dark:text-gray-400">
+                                        Member since
+                                    </p>
+                                    <p className="font-medium text-gray-900 dark:text-white">
                                         {new Date(
                                             customer.created_at,
                                         ).toLocaleDateString('en-US', {
@@ -445,40 +491,51 @@ const Profile: React.FC<AccountProfileProps> = ({
                                     </p>
                                 </div>
 
-                                <div className="pt-3 border-t border-gray-200">
-                                    <p className="text-gray-500">Account ID</p>
-                                    <p className="font-mono text-xs text-gray-900">
+                                <div className="border-t border-gray-100 pt-3 dark:border-navy-700">
+                                    <p className="text-gray-500 dark:text-gray-400">
+                                        Account ID
+                                    </p>
+                                    <p className="font-mono text-xs text-gray-900 dark:text-white">
                                         #{customer.id}
                                     </p>
                                 </div>
 
-                                {customer.is_active ? (
-                                    <div className="pt-3 border-t border-gray-200">
-                                        <Badge color="success">
-                                            Active Account
-                                        </Badge>
-                                    </div>
-                                ) : (
-                                    <div className="pt-3 border-t border-gray-200">
-                                        <Badge color="error">
-                                            Inactive Account
-                                        </Badge>
-                                    </div>
-                                )}
+                                <div className="border-t border-gray-100 pt-3 dark:border-navy-700">
+                                    <Badge
+                                        color={
+                                            customer.is_active
+                                                ? 'success'
+                                                : 'error'
+                                        }
+                                    >
+                                        {customer.is_active
+                                            ? 'Active Account'
+                                            : 'Inactive Account'}
+                                    </Badge>
+                                </div>
                             </div>
-                        </Card>
+                        </motion.div>
 
                         {/* Security */}
-                        <Card title="Security">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.25 }}
+                            className="rounded-xl border border-gray-200 bg-white p-4 sm:rounded-2xl sm:p-5 dark:border-navy-700 dark:bg-navy-800"
+                        >
+                            <h2 className="mb-4 flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                <Lock className="h-4 w-4 text-brand-500" />
+                                Security
+                            </h2>
                             <div className="space-y-3">
-                                <Button variant="outline" fullWidth>
+                                <Button variant="outline" fullWidth size="sm">
                                     Change Password
                                 </Button>
-                                <Button variant="outline" fullWidth>
+                                <Button variant="outline" fullWidth size="sm">
                                     Enable 2FA
                                 </Button>
                             </div>
-                        </Card>
+                        </motion.div>
                     </div>
                 </div>
             </div>

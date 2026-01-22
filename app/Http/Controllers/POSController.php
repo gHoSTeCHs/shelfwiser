@@ -2,47 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentMethod;
+use App\Http\Requests\HoldSaleRequest;
+use App\Models\HeldSale;
+use App\Models\ProductPackagingType;
 use App\Models\Shop;
+use App\Services\HeldSaleService;
 use App\Services\POSService;
 use App\Services\ReceiptService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class POSController extends Controller
 {
     public function __construct(
-        protected POSService     $posService,
-        protected ReceiptService $receiptService
-    )
-    {
-    }
+        protected POSService $posService,
+        protected ReceiptService $receiptService,
+        protected HeldSaleService $heldSaleService
+    ) {}
 
     /**
      * Display POS interface
      */
     public function index(Shop $shop): Response
     {
-//        $this->authorize('manage', $shop);
+        $this->authorize('shop.manage', $shop);
 
         return Inertia::render('POS/Index', [
             'shop' => $shop,
-            'paymentMethods' => [
-                'cash' => 'Cash',
-                'card' => 'Card',
-                'mobile_money' => 'Mobile Money',
-                'bank_transfer' => 'Bank Transfer',
-            ],
+            'paymentMethods' => PaymentMethod::posOptions(),
+            'heldSalesCount' => $this->heldSaleService->getActiveCount($shop),
         ]);
     }
 
     public function searchProducts(Request $request, Shop $shop): JsonResponse
     {
-//        $this->authorize('manage', $shop);
-
+        $this->authorize('shop.manage', $shop);
 
         $request->validate([
             'query' => ['required', 'string', 'min:1'],
@@ -61,7 +61,7 @@ class POSController extends Controller
 
     public function searchCustomers(Request $request, Shop $shop): JsonResponse
     {
-//        $this->authorize('manage', $shop);
+        $this->authorize('shop.manage', $shop);
 
         $request->validate([
             'query' => ['required', 'string', 'min:1'],
@@ -69,6 +69,7 @@ class POSController extends Controller
 
         $customers = $this->posService->searchCustomers(
             $request->input('query'),
+            $shop,
             10
         );
 
@@ -78,23 +79,35 @@ class POSController extends Controller
     }
 
     /**
-     * Complete POS sale
+     * Complete POS sale.
+     * Returns JSON for AJAX/fetch requests, RedirectResponse for traditional form submissions.
      */
-    public function completeSale(Request $request, Shop $shop): RedirectResponse
+    public function completeSale(Request $request, Shop $shop): JsonResponse|RedirectResponse
     {
-//        $this->authorize('manage', $shop);
+        $this->authorize('shop.manage', $shop);
 
         $validated = $request->validate([
             'items' => ['required', 'array', 'min:1'],
             'items.*.variant_id' => ['required', 'exists:product_variants,id'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
-            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
-            'items.*.packaging_type_id' => ['nullable', 'exists:product_packaging_types,id'],
-            'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'items.*.unit_price' => ['required', 'decimal:0,2', 'min:0'],
+            'items.*.packaging_type_id' => [
+                'nullable',
+                'exists:product_packaging_types,id',
+                function ($attribute, $value, $fail) {
+                    if ($value) {
+                        $packagingType = ProductPackagingType::find($value);
+                        if ($packagingType && $packagingType->productVariant?->product?->tenant_id !== auth()->user()->tenant_id) {
+                            $fail('The selected packaging type does not belong to your organization.');
+                        }
+                    }
+                },
+            ],
+            'items.*.discount_amount' => ['nullable', 'decimal:0,2', 'min:0'],
             'customer_id' => ['nullable', 'exists:customers,id'],
-            'payment_method' => ['required', 'string', 'in:cash,card,mobile_money,bank_transfer'],
-            'amount_tendered' => ['nullable', 'numeric', 'min:0'],
-            'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'payment_method' => ['required', 'string', Rule::enum(PaymentMethod::class)],
+            'amount_tendered' => ['nullable', 'decimal:0,2', 'min:0'],
+            'discount_amount' => ['nullable', 'decimal:0,2', 'min:0'],
             'reference_number' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
@@ -113,14 +126,34 @@ class POSController extends Controller
                 ]
             );
 
-            $receipt = $this->receiptService->generateOrderReceipt($order);
+            $this->receiptService->generateOrderReceipt($order);
+            $receiptUrl = route('receipts.orders.view', $order);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'order' => [
+                        'id' => $order->id,
+                        'order_number' => $order->order_number,
+                    ],
+                    'receipt_url' => $receiptUrl,
+                    'message' => "Sale completed! Order #{$order->order_number}",
+                ]);
+            }
 
             return redirect()
                 ->route('pos.index', $shop)
-                ->with('success', "Sale completed! Order #$order->order_number")
-                ->with('receipt_url', route('receipts.orders.view', $order));
+                ->with('success', "Sale completed! Order #{$order->order_number}")
+                ->with('receipt_url', $receiptUrl);
 
         } catch (Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                ], 422);
+            }
+
             return back()
                 ->with('error', $e->getMessage())
                 ->withInput();
@@ -132,7 +165,7 @@ class POSController extends Controller
      */
     public function sessionSummary(Request $request, Shop $shop): JsonResponse
     {
-//        $this->authorize('manage', $shop);
+        $this->authorize('shop.manage', $shop);
 
         $summary = $this->posService->getSessionSummary(
             $shop,
@@ -146,69 +179,124 @@ class POSController extends Controller
     /**
      * Hold current sale for later
      */
-    public function holdSale(Request $request, Shop $shop): JsonResponse
+    public function holdSale(HoldSaleRequest $request, Shop $shop): JsonResponse
     {
-//        $this->authorize('manage', $shop);
+        $this->authorize('shop.manage', $shop);
 
-        $validated = $request->validate([
-            'items' => ['required', 'array'],
-            'customer_id' => ['nullable', 'exists:customers,id'],
-            'notes' => ['nullable', 'string'],
-        ]);
+        try {
+            $heldSale = $this->heldSaleService->holdSale(
+                shop: $shop,
+                items: $request->validated('items'),
+                customerId: $request->validated('customer_id'),
+                notes: $request->validated('notes')
+            );
 
-        $holdId = uniqid('hold_');
-
-        session()->put("pos_hold_$holdId", [
-            'shop_id' => $shop->id,
-            'items' => $validated['items'],
-            'customer_id' => $validated['customer_id'] ?? null,
-            'notes' => $validated['notes'] ?? null,
-            'held_at' => now()->toDateTimeString(),
-        ]);
-
-        return response()->json([
-            'hold_id' => $holdId,
-            'message' => 'Sale held successfully',
-        ]);
+            return response()->json([
+                'held_sale' => $heldSale->load(['customer', 'heldByUser']),
+                'message' => "Sale held as {$heldSale->hold_reference}",
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
      * Retrieve held sale
      */
-    public function retrieveHeldSale(string $holdId): JsonResponse
+    public function retrieveHeldSale(Shop $shop, HeldSale $heldSale): JsonResponse
     {
-        $heldSale = session()->get("pos_hold_$holdId");
+        $this->authorize('shop.manage', $shop);
 
-        if (!$heldSale) {
+        if ($heldSale->tenant_id !== auth()->user()->tenant_id) {
             return response()->json([
-                'error' => 'Held sale not found',
-            ], 404);
+                'error' => 'Unauthorized access.',
+            ], 403);
         }
 
-        session()->forget("pos_hold_$holdId");
+        if ($heldSale->shop_id !== $shop->id) {
+            return response()->json([
+                'error' => 'Held sale does not belong to this shop.',
+            ], 403);
+        }
 
-        return response()->json([
-            'sale' => $heldSale,
-            'message' => 'Sale retrieved successfully',
-        ]);
+        if ($heldSale->isRetrieved()) {
+            return response()->json([
+                'error' => 'This held sale has already been retrieved.',
+            ], 400);
+        }
+
+        try {
+            $retrievedSale = $this->heldSaleService->retrieveHeldSale($heldSale);
+
+            return response()->json([
+                'held_sale' => $retrievedSale->load(['customer', 'heldByUser']),
+                'message' => "Sale {$retrievedSale->hold_reference} retrieved successfully.",
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
-     * Get list of held sales
+     * Get list of held sales for a shop
      */
-    public function heldSales(): JsonResponse
+    public function heldSales(Shop $shop): JsonResponse
     {
-        $allSessions = session()->all();
-        $heldSales = [];
+        $this->authorize('shop.manage', $shop);
 
-        foreach ($allSessions as $key => $value) {
-            if (str_starts_with($key, 'pos_hold_')) {
-                $heldSales[] = array_merge($value, ['hold_id' => str_replace('pos_hold_', '', $key)]);
-            }
-        }
+        $heldSales = $this->heldSaleService->getActiveHeldSales($shop);
 
         return response()->json([
             'held_sales' => $heldSales,
         ]);
+    }
+
+    /**
+     * Get count of active held sales
+     */
+    public function heldSalesCount(Shop $shop): JsonResponse
+    {
+        $this->authorize('shop.manage', $shop);
+
+        return response()->json([
+            'count' => $this->heldSaleService->getActiveCount($shop),
+        ]);
+    }
+
+    /**
+     * Delete a held sale
+     */
+    public function deleteHeldSale(Shop $shop, HeldSale $heldSale): JsonResponse
+    {
+        $this->authorize('shop.manage', $shop);
+
+        if ($heldSale->tenant_id !== auth()->user()->tenant_id) {
+            return response()->json([
+                'error' => 'Unauthorized access.',
+            ], 403);
+        }
+
+        if ($heldSale->shop_id !== $shop->id) {
+            return response()->json([
+                'error' => 'Held sale does not belong to this shop.',
+            ], 403);
+        }
+
+        try {
+            $reference = $heldSale->hold_reference;
+            $this->heldSaleService->deleteHeldSale($heldSale);
+
+            return response()->json([
+                'message' => "Held sale {$reference} deleted successfully.",
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

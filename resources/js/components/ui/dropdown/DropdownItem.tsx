@@ -74,7 +74,12 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({
 
 	if (tag === 'a' && to && !disabled) {
 		return (
-			<Link href={to} className={combinedClasses} onClick={handleClick}>
+			<Link
+				href={to}
+				className={combinedClasses}
+				onClick={handleClick}
+				role="menuitem"
+				tabIndex={0}>
 				{content}
 			</Link>
 		);
@@ -84,7 +89,9 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({
 		<button
 			onClick={handleClick}
 			className={combinedClasses}
-			disabled={disabled}>
+			disabled={disabled}
+			role="menuitem"
+			tabIndex={0}>
 			{content}
 		</button>
 	);

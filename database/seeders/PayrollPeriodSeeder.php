@@ -8,18 +8,18 @@ use App\Models\PayrollPeriod;
 use App\Models\Shop;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Services\PayrollService;
+use App\Services\PayRunService;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 class PayrollPeriodSeeder extends Seeder
 {
     /**
-     * Seed payroll periods with processed payslips
+     * Seed payroll periods with processed payslips using modern PayRunService
      */
     public function run(): void
     {
-        $payrollService = app(PayrollService::class);
+        $payRunService = app(PayRunService::class);
         $tenants = Tenant::all();
 
         foreach ($tenants as $tenant) {
@@ -37,18 +37,18 @@ class PayrollPeriodSeeder extends Seeder
                 continue;
             }
 
-            $this->createPayrollPeriodsForTenant($tenant, $shop, $processor, $payrollService);
+            $this->createPayrollPeriodsForTenant($tenant, $shop, $processor, $payRunService);
         }
     }
 
     /**
-     * Create multiple payroll periods with different statuses
+     * Create multiple payroll periods with different statuses using PayRunService
      */
     protected function createPayrollPeriodsForTenant(
         Tenant $tenant,
         Shop $shop,
         User $processor,
-        PayrollService $payrollService
+        PayRunService $payRunService
     ): void {
         $lastMonth = Carbon::now()->subMonth();
         $currentMonth = Carbon::now();
@@ -64,17 +64,17 @@ class PayrollPeriodSeeder extends Seeder
         ]);
 
         try {
-            $payrollService->processPayroll($period1->fresh(), $processor);
-            $period1->refresh();
+            $payRun1 = $payRunService->createPayRun($tenant->id, $period1->fresh());
+            $payRunService->calculatePayRun($payRun1);
+            $payRun1->refresh();
 
-            if ($period1->status === PayrollStatus::PROCESSED) {
-                $payrollService->approvePayroll($period1, $processor);
-                $period1->refresh();
+            $payRunService->submitForApproval($payRun1);
+            $payRun1->refresh();
 
-                if ($period1->status === PayrollStatus::APPROVED) {
-                    $payrollService->markAsPaid($period1);
-                }
-            }
+            $payRunService->approvePayRun($payRun1);
+            $payRun1->refresh();
+
+            $payRunService->completePayRun($payRun1);
         } catch (\Exception $e) {
         }
 
@@ -89,7 +89,8 @@ class PayrollPeriodSeeder extends Seeder
         ]);
 
         try {
-            $payrollService->processPayroll($period2->fresh(), $processor);
+            $payRun2 = $payRunService->createPayRun($tenant->id, $period2->fresh());
+            $payRunService->calculatePayRun($payRun2);
         } catch (\Exception $e) {
         }
     }

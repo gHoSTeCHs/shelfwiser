@@ -11,14 +11,45 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
+/**
+ * ProductTemplateController
+ *
+ * Internal/Admin API for product template management and usage.
+ *
+ * IMPORTANT: This controller is for programmatic access only, NOT exposed in user-facing UI.
+ *
+ * Methods:
+ * - available(): Fetch templates accessible to the current tenant (for template selection UI)
+ * - show(): Get full template details with structure
+ * - createProduct(): Create a product from a selected template
+ * - saveAsTemplate(): Save an existing product as a reusable tenant template
+ *
+ * Authorization:
+ * All methods respect multi-tenancy - templates are filtered by tenant_id or system flag.
+ * Product creation requires 'create' policy authorization.
+ *
+ * Response Format:
+ * - GET endpoints return JSON responses
+ * - POST endpoints return redirects with success messages
+ */
 class ProductTemplateController extends Controller
 {
+    /**
+     * Initialize controller with ProductTemplateService.
+     */
     public function __construct(
         protected ProductTemplateService $templateService
     ) {}
 
     /**
      * Get available templates for product creation.
+     *
+     * Returns templates accessible to the current tenant, optionally filtered by
+     * product type or search query. Used by frontend to populate template selection UI.
+     *
+     * Query Parameters:
+     * - search (string): Filter templates by name
+     * - product_type_id (int): Filter by product type
      */
     public function available(Request $request): JsonResponse
     {
@@ -42,6 +73,11 @@ class ProductTemplateController extends Controller
 
     /**
      * Get a specific template with full structure.
+     *
+     * Returns the complete template including its variant structure, custom attributes,
+     * and metadata. Verifies the template is accessible to the current tenant.
+     *
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function show(ProductTemplate $productTemplate): JsonResponse
     {
@@ -58,6 +94,22 @@ class ProductTemplateController extends Controller
 
     /**
      * Create a product from a template.
+     *
+     * Instantiates a new product using the specified template, allowing users to
+     * override template defaults. Validates all variant and product data before creation.
+     *
+     * Request Payload:
+     * - name (string, optional): Override template product name
+     * - description (string, optional): Product description
+     * - custom_attributes (array, optional): Custom product attributes
+     * - is_active (boolean): Whether product is active
+     * - variants (array, required): Variant definitions with prices
+     * - variants[*].sku (string): Stock keeping unit
+     * - variants[*].price (number, required): Selling price
+     * - variants[*].cost_price (number, optional): Cost/wholesale price
+     * - variants[*].packaging_types (array, optional): Packaging options and prices
+     *
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function createProduct(Request $request, ProductTemplate $productTemplate, Shop $shop): RedirectResponse
     {
@@ -100,6 +152,20 @@ class ProductTemplateController extends Controller
 
     /**
      * Save current product as a template (tenant template).
+     *
+     * Creates a reusable tenant template from an existing product. This allows operators
+     * to capture standardized product configurations for future use. Saved templates are
+     * available only to the current tenant.
+     *
+     * Request Payload:
+     * - name (string, required): Template name
+     * - description (string, optional): Template description
+     * - product_type_id (int, required): Product type for the template
+     * - category_id (int, optional): Product category
+     * - custom_attributes (array, optional): Custom attributes to include
+     * - template_structure (array, required): Variant and field definitions
+     * - images (array, optional): Images associated with template
+     * - has_variants (boolean): Whether products from this template can have variants
      */
     public function saveAsTemplate(Request $request): RedirectResponse
     {

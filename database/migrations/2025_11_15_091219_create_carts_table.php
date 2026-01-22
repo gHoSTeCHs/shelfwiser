@@ -8,6 +8,12 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * NOTE: This migration originally had a bug where customer_id referenced the 'users' table
+     * instead of the 'customers' table. This is fixed by the migration:
+     * 2025_11_28_120000_fix_carts_customer_id_foreign_key.php
+     *
+     * Do not modify this migration - the fix migration handles the correction.
      */
     public function up(): void
     {
@@ -19,7 +25,6 @@ return new class extends Migration
             $table->timestamp('expires_at')->nullable()->index();
             $table->timestamps();
 
-            // Index for quick cart lookup
             $table->index(['customer_id', 'shop_id']);
             $table->index(['session_id', 'shop_id']);
         });

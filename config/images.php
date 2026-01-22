@@ -46,6 +46,16 @@ return [
     'max_images_per_model' => env('IMAGE_MAX_PER_MODEL', 10),
 
     /**
+     * Image dimension constraints
+     */
+    'dimensions' => [
+        'min_width' => env('IMAGE_MIN_WIDTH', 10),
+        'min_height' => env('IMAGE_MIN_HEIGHT', 10),
+        'max_width' => env('IMAGE_MAX_WIDTH', 4096),
+        'max_height' => env('IMAGE_MAX_HEIGHT', 4096),
+    ],
+
+    /**
      * Thumbnail settings
      */
     'thumbnails' => [

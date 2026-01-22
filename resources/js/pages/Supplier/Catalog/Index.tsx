@@ -2,13 +2,14 @@ import SupplierCatalogController from '@/actions/App/Http/Controllers/SupplierCa
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
 import {
     CatalogVisibility,
     SupplierCatalogListResponse,
 } from '@/types/supplier';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     DollarSign,
     Edit,
@@ -18,6 +19,7 @@ import {
     Plus,
     Trash2,
 } from 'lucide-react';
+import { useState } from 'react';
 
 interface Props {
     catalogItems: SupplierCatalogListResponse;
@@ -33,22 +35,22 @@ const visibilityConfig: Record<
 };
 
 export default function Index({ catalogItems }: Props) {
-    console.log(catalogItems);
+    const [deleteConfirm, setDeleteConfirm] = useState<{
+        id: number;
+        productName: string;
+    } | null>(null);
 
-    const handleDelete = (id: number, productName: string) => {
-        if (
-            confirm(
-                `Are you sure you want to remove "${productName}" from your supplier catalog?`,
-            )
-        ) {
-            SupplierCatalogController.destroy({
-                id: id,
-            });
+    const handleDelete = () => {
+        if (deleteConfirm) {
+            router.delete(
+                SupplierCatalogController.destroy.url({ id: deleteConfirm.id }),
+            );
+            setDeleteConfirm(null);
         }
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Supplier Catalog" />
 
             <div className="space-y-6">
@@ -126,9 +128,9 @@ export default function Index({ catalogItems }: Props) {
                                             </span>
                                             <span className="font-medium text-gray-900 dark:text-white">
                                                 $
-                                                {Number(item.base_wholesale_price).toFixed(
-                                                    2,
-                                                )}
+                                                {Number(
+                                                    item.base_wholesale_price,
+                                                ).toFixed(2)}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
@@ -191,11 +193,12 @@ export default function Index({ catalogItems }: Props) {
                                     </Link>
                                     <button
                                         onClick={() =>
-                                            handleDelete(
-                                                item.id,
-                                                item.product?.name ||
+                                            setDeleteConfirm({
+                                                id: item.id,
+                                                productName:
+                                                    item.product?.name ||
                                                     'this product',
-                                            )
+                                            })
                                         }
                                         className="flex flex-1 items-center justify-center gap-2 border-l px-4 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-gray-700 dark:text-red-400 dark:hover:bg-red-900/20"
                                     >
@@ -208,6 +211,18 @@ export default function Index({ catalogItems }: Props) {
                     </div>
                 )}
             </div>
-        </AppLayout>
+
+            <ConfirmDialog
+                isOpen={!!deleteConfirm}
+                onClose={() => setDeleteConfirm(null)}
+                onConfirm={handleDelete}
+                title="Remove from Catalog"
+                message={`Are you sure you want to remove "${deleteConfirm?.productName}" from your supplier catalog?`}
+                confirmLabel="Remove"
+                variant="danger"
+            />
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

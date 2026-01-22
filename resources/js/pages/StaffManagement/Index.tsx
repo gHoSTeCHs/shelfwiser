@@ -1,4 +1,6 @@
 import StaffManagementController from '@/actions/App/Http/Controllers/Web/StaffManagementController.ts';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
@@ -15,6 +17,11 @@ interface Shop {
 
 interface StaffMember extends User {
     shops: Shop[];
+    onboarding_status?: 'pending' | 'in_progress' | 'completed';
+    employee_payroll_detail?: {
+        employment_type: string;
+        pay_type: string;
+    } | null;
 }
 
 interface Statistics {
@@ -81,7 +88,8 @@ const StaffManagement = ({
                 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
             sales_rep:
                 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
-            cashier: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+            cashier:
+                'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
             inventory_clerk:
                 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
         };
@@ -194,54 +202,48 @@ const StaffManagement = ({
                 <Card className="p-6">
                     <div className="grid gap-4 sm:grid-cols-4">
                         <div>
-                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Role
-                            </label>
-                            <select
-                                value={selectedRole}
-                                onChange={(e) => setSelectedRole(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                            >
-                                <option value="">All Roles</option>
-                                {Object.entries(roles).map(([value, label]) => (
-                                    <option key={value} value={value}>
-                                        {label}
-                                    </option>
-                                ))}
-                            </select>
+                            <Label htmlFor="role-filter">Role</Label>
+                            <Select
+                                options={[
+                                    { value: '', label: 'All Roles' },
+                                    ...Object.entries(roles).map(
+                                        ([value, label]) => ({
+                                            value,
+                                            label: label as string,
+                                        }),
+                                    ),
+                                ]}
+                                defaultValue={selectedRole}
+                                onChange={(value) => setSelectedRole(value)}
+                            />
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Shop
-                            </label>
-                            <select
-                                value={selectedShop}
-                                onChange={(e) => setSelectedShop(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                            >
-                                <option value="">All Shops</option>
-                                {shops.map((shop) => (
-                                    <option key={shop.id} value={shop.id}>
-                                        {shop.name}
-                                    </option>
-                                ))}
-                            </select>
+                            <Label htmlFor="shop-filter">Shop</Label>
+                            <Select
+                                options={[
+                                    { value: '', label: 'All Shops' },
+                                    ...shops.map((shop) => ({
+                                        value: shop.id.toString(),
+                                        label: shop.name,
+                                    })),
+                                ]}
+                                defaultValue={selectedShop}
+                                onChange={(value) => setSelectedShop(value)}
+                            />
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Status
-                            </label>
-                            <select
-                                value={activeFilter}
-                                onChange={(e) => setActiveFilter(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                            >
-                                <option value="">All Status</option>
-                                <option value="1">Active</option>
-                                <option value="0">Inactive</option>
-                            </select>
+                            <Label htmlFor="status-filter">Status</Label>
+                            <Select
+                                options={[
+                                    { value: '', label: 'All Status' },
+                                    { value: '1', label: 'Active' },
+                                    { value: '0', label: 'Inactive' },
+                                ]}
+                                defaultValue={activeFilter}
+                                onChange={(value) => setActiveFilter(value)}
+                            />
                         </div>
 
                         <div className="flex items-end gap-2">
@@ -267,19 +269,19 @@ const StaffManagement = ({
                         <table className="w-full">
                             <thead className="border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Staff Member
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Role
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="hidden px-6 py-4 text-left text-sm font-semibold text-gray-900 md:table-cell dark:text-white">
                                         Assigned Shops
                                     </th>
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                                         Status
                                     </th>
-                                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th scope="col" className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
                                         Actions
                                     </th>
                                 </tr>
@@ -296,10 +298,7 @@ const StaffManagement = ({
                                                 No staff members found
                                             </p>
                                             <Link
-                                                href={
-                                                    StaffManagementController
-                                                        .create.url()
-                                                }
+                                                href={StaffManagementController.create.url()}
                                             >
                                                 <Button className="mt-4">
                                                     <UserPlus className="mr-2 h-4 w-4" />
@@ -318,8 +317,14 @@ const StaffManagement = ({
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">
                                                         <span className="text-sm font-semibold">
-                                                            {member.first_name[0]}
-                                                            {member.last_name[0]}
+                                                            {
+                                                                member
+                                                                    .first_name[0]
+                                                            }
+                                                            {
+                                                                member
+                                                                    .last_name[0]
+                                                            }
                                                         </span>
                                                     </div>
                                                     <div>
@@ -340,7 +345,7 @@ const StaffManagement = ({
                                                     {roles[member.role]}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4">
+                                            <td className="hidden px-6 py-4 md:table-cell">
                                                 {member.shops.length === 0 ? (
                                                     <span className="text-sm text-gray-500 dark:text-gray-400">
                                                         No shops assigned
@@ -350,7 +355,9 @@ const StaffManagement = ({
                                                         {member.shops.map(
                                                             (shop) => (
                                                                 <span
-                                                                    key={shop.id}
+                                                                    key={
+                                                                        shop.id
+                                                                    }
                                                                     className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300"
                                                                 >
                                                                     {shop.name}
@@ -361,21 +368,30 @@ const StaffManagement = ({
                                                 )}
                                             </td>
                                             <td className="px-6 py-4">
-                                                {member.is_active ? (
-                                                    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                                                        <span className="h-1.5 w-1.5 rounded-full bg-green-600" />
-                                                        Active
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">
-                                                        <span className="h-1.5 w-1.5 rounded-full bg-gray-600" />
-                                                        Inactive
-                                                    </span>
-                                                )}
+                                                <div className="flex flex-col gap-1">
+                                                    {member.is_active ? (
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                                            <span className="h-1.5 w-1.5 rounded-full bg-green-600" />
+                                                            Active
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">
+                                                            <span className="h-1.5 w-1.5 rounded-full bg-gray-600" />
+                                                            Inactive
+                                                        </span>
+                                                    )}
+                                                    {!member.employee_payroll_detail && (
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                                                            Needs Payroll
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <Link
-                                                    href={`/staff/${member.id}/edit`}
+                                                    href={StaffManagementController.edit.url(
+                                                        { staff: member.id },
+                                                    )}
                                                 >
                                                     <Button
                                                         variant="outline"

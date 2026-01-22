@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import ShopController from '@/actions/App/Http/Controllers/ShopController.ts';
 import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
@@ -25,7 +23,7 @@ export default function Create({ shopTypes, inventoryModels }: Props) {
     const [selectedTypeSlug, setSelectedTypeSlug] = useState<string>('');
     const [selectedInventoryModel, setSelectedInventoryModel] =
         useState<string>('simple_retail');
-    const [shopConfig, setShopConfig] = useState<Record<string, any>>({});
+    const [shopConfig, setShopConfig] = useState<Record<string, unknown>>({});
     const [shopName, setShopName] = useState<string>('');
     const [isActive, setIsActive] = useState<boolean>(true);
 
@@ -46,7 +44,7 @@ export default function Create({ shopTypes, inventoryModels }: Props) {
 
     useEffect(() => {
         if (selectedType?.config_schema?.properties) {
-            const defaults: Record<string, any> = {};
+            const defaults: Record<string, unknown> = {};
             Object.entries(selectedType.config_schema.properties).forEach(
                 ([key, prop]) => {
                     if (prop.default !== undefined) {
@@ -60,7 +58,7 @@ export default function Create({ shopTypes, inventoryModels }: Props) {
         }
     }, [selectedTypeSlug]);
 
-    const handleConfigChange = (fieldName: string, value: any) => {
+    const handleConfigChange = (fieldName: string, value: unknown) => {
         setShopConfig((prev) => ({
             ...prev,
             [fieldName]: value,
@@ -68,7 +66,7 @@ export default function Create({ shopTypes, inventoryModels }: Props) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Create Shop" />
 
             <div className="space-y-6">
@@ -301,7 +299,7 @@ export default function Create({ shopTypes, inventoryModels }: Props) {
                                             <div className="mb-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                                                 <span>
                                                     Complexity:{' '}
-                                                    <span className="font-medium capitalize text-gray-700 dark:text-gray-300">
+                                                    <span className="font-medium text-gray-700 capitalize dark:text-gray-300">
                                                         {
                                                             selectedInventoryModelData.complexity
                                                         }
@@ -553,18 +551,16 @@ export default function Create({ shopTypes, inventoryModels }: Props) {
                                                     {Array.isArray(
                                                         shopConfig[fieldName],
                                                     ) ? (
-                                                        shopConfig[
-                                                            fieldName
-                                                        ].map(
+                                                        (shopConfig[fieldName] as unknown[]).map(
                                                             (
-                                                                item: any,
-                                                                index: number,
+                                                                item,
+                                                                index,
                                                             ) => (
                                                                 <input
                                                                     key={index}
                                                                     type="hidden"
                                                                     name={`config[${fieldName}][]`}
-                                                                    value={item}
+                                                                    value={String(item)}
                                                                 />
                                                             ),
                                                         )
@@ -655,6 +651,8 @@ export default function Create({ shopTypes, inventoryModels }: Props) {
                     )}
                 </Form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

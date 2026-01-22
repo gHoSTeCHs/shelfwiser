@@ -31,4 +31,12 @@ enum TaxHandling: string
             self::EXEMPT => 'This employee is exempt from income tax (e.g., income below threshold)',
         };
     }
+
+    public static function options(): array
+    {
+        return array_map(fn ($case) => [
+            'value' => $case->value,
+            'label' => $case->label(),
+        ], self::cases());
+    }
 }

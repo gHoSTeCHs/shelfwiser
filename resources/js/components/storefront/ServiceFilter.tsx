@@ -1,10 +1,10 @@
+import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import Button from '@/components/ui/button/Button';
 import { ServiceCategory } from '@/types/service';
 import { Shop } from '@/types/shop';
 import { router } from '@inertiajs/react';
-import React from 'react';
-import Button from '@/components/ui/button/Button';
 import { X } from 'lucide-react';
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import React from 'react';
 
 interface ServiceFilterProps {
     shop: Shop;
@@ -26,7 +26,7 @@ const ServiceFilter: React.FC<ServiceFilterProps> = ({
     currentSort,
 }) => {
     const handleCategoryClick = (categoryId: number | null) => {
-        const params: any = {};
+        const params: Record<string, string | number> = {};
         if (categoryId) params.category = categoryId;
         if (currentSearch) params.search = currentSearch;
         if (currentSort) params.sort = currentSort;
@@ -34,7 +34,7 @@ const ServiceFilter: React.FC<ServiceFilterProps> = ({
         router.get(
             StorefrontController.services.url({ shop: shop.slug }),
             params,
-            { preserveState: true }
+            { preserveState: true },
         );
     };
 
@@ -42,7 +42,7 @@ const ServiceFilter: React.FC<ServiceFilterProps> = ({
         router.get(
             StorefrontController.services.url({ shop: shop.slug }),
             {},
-            { preserveState: true }
+            { preserveState: true },
         );
     };
 
@@ -50,7 +50,7 @@ const ServiceFilter: React.FC<ServiceFilterProps> = ({
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-gray-900">Filters</h3>
                 {hasActiveFilters && (
                     <Button
@@ -65,13 +65,13 @@ const ServiceFilter: React.FC<ServiceFilterProps> = ({
             </div>
 
             <div>
-                <h4 className="font-medium text-gray-900 mb-3">Categories</h4>
+                <h4 className="mb-3 font-medium text-gray-900">Categories</h4>
                 <div className="space-y-2">
                     <button
                         onClick={() => handleCategoryClick(null)}
-                        className={`w-full text-left px-3 py-2 rounded-md transition ${
+                        className={`w-full rounded-md px-3 py-2 text-left transition ${
                             !currentCategory
-                                ? 'bg-primary-100 text-primary-700 font-medium'
+                                ? 'bg-brand-100 font-medium text-brand-700'
                                 : 'text-gray-700 hover:bg-gray-100'
                         }`}
                     >
@@ -82,9 +82,9 @@ const ServiceFilter: React.FC<ServiceFilterProps> = ({
                         <button
                             key={category.id}
                             onClick={() => handleCategoryClick(category.id)}
-                            className={`w-full text-left px-3 py-2 rounded-md transition flex items-center gap-2 ${
+                            className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition ${
                                 currentCategory === category.id
-                                    ? 'bg-primary-100 text-primary-700 font-medium'
+                                    ? 'bg-brand-100 font-medium text-brand-700'
                                     : 'text-gray-700 hover:bg-gray-100'
                             }`}
                         >
@@ -101,10 +101,14 @@ const ServiceFilter: React.FC<ServiceFilterProps> = ({
             </div>
 
             {currentSearch && (
-                <div className="pt-4 border-t">
-                    <h4 className="font-medium text-gray-900 mb-2">Active Search</h4>
-                    <div className="bg-gray-100 px-3 py-2 rounded-md">
-                        <p className="text-sm text-gray-700">"{currentSearch}"</p>
+                <div className="border-t pt-4">
+                    <h4 className="mb-2 font-medium text-gray-900">
+                        Active Search
+                    </h4>
+                    <div className="rounded-md bg-gray-100 px-3 py-2">
+                        <p className="text-sm text-gray-700">
+                            "{currentSearch}"
+                        </p>
                     </div>
                 </div>
             )}

@@ -18,4 +18,22 @@ enum PayType: string
             self::COMMISSION_BASED => 'Commission Based',
         };
     }
+
+    public function requiresHourlyConfig(): bool
+    {
+        return $this === self::HOURLY;
+    }
+
+    public function requiresCommissionConfig(): bool
+    {
+        return $this === self::COMMISSION_BASED;
+    }
+
+    public static function options(): array
+    {
+        return array_map(fn ($case) => [
+            'value' => $case->value,
+            'label' => $case->label(),
+        ], self::cases());
+    }
 }

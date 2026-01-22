@@ -5,7 +5,7 @@
  * install prompt handling, and online/offline status.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
     prompt: () => Promise<void>;
@@ -32,7 +32,8 @@ export function usePWA() {
         registration: null,
     });
 
-    const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+    const [installPrompt, setInstallPrompt] =
+        useState<BeforeInstallPromptEvent | null>(null);
 
     /**
      * Register service worker
@@ -52,8 +53,10 @@ export function usePWA() {
      * Handle online/offline status
      */
     useEffect(() => {
-        const handleOnline = () => setState((prev) => ({ ...prev, isOnline: true }));
-        const handleOffline = () => setState((prev) => ({ ...prev, isOnline: false }));
+        const handleOnline = () =>
+            setState((prev) => ({ ...prev, isOnline: true }));
+        const handleOffline = () =>
+            setState((prev) => ({ ...prev, isOnline: false }));
 
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
@@ -83,11 +86,17 @@ export function usePWA() {
             setInstallPrompt(null);
         };
 
-        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.addEventListener(
+            'beforeinstallprompt',
+            handleBeforeInstallPrompt,
+        );
         window.addEventListener('appinstalled', handleAppInstalled);
 
         return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener(
+                'beforeinstallprompt',
+                handleBeforeInstallPrompt,
+            );
             window.removeEventListener('appinstalled', handleAppInstalled);
         };
     }, []);
@@ -97,9 +106,12 @@ export function usePWA() {
      */
     const registerServiceWorker = async () => {
         try {
-            const registration = await navigator.serviceWorker.register('/sw.js', {
-                scope: '/',
-            });
+            const registration = await navigator.serviceWorker.register(
+                '/sw.js',
+                {
+                    scope: '/',
+                },
+            );
 
             setState((prev) => ({ ...prev, registration }));
 
@@ -108,8 +120,14 @@ export function usePWA() {
                 const newWorker = registration.installing;
                 if (newWorker) {
                     newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            setState((prev) => ({ ...prev, isUpdateAvailable: true }));
+                        if (
+                            newWorker.state === 'installed' &&
+                            navigator.serviceWorker.controller
+                        ) {
+                            setState((prev) => ({
+                                ...prev,
+                                isUpdateAvailable: true,
+                            }));
                         }
                     });
                 }

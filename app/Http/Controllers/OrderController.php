@@ -12,10 +12,12 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\Shop;
+use App\Services\OrderRefundService;
 use App\Services\OrderService;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -24,7 +26,10 @@ use Throwable;
 
 class OrderController extends Controller
 {
-    public function __construct(private readonly OrderService $orderService) {}
+    public function __construct(
+        private readonly OrderService $orderService,
+        private readonly OrderRefundService $refundService
+    ) {}
 
     /**
      * @throws AuthorizationException
@@ -159,6 +164,20 @@ class OrderController extends Controller
             'payments.recordedBy',
         ]);
 
+        // Load lifecycle user relationships if they exist
+        if ($order->packed_by) {
+            $order->load('packedByUser');
+        }
+        if ($order->shipped_by) {
+            $order->load('shippedByUser');
+        }
+        if ($order->delivered_by) {
+            $order->load('deliveredByUser');
+        }
+        if ($order->refunded_by) {
+            $order->load('refundedByUser');
+        }
+
         return Inertia::render('Orders/Show', [
             'order' => $order,
             'can_manage' => auth()->user()->can('manage', $order),
@@ -252,6 +271,17 @@ class OrderController extends Controller
                 $this->orderService->confirmOrder($order, $request->user());
             } elseif ($newStatus === OrderStatus::PROCESSING) {
                 $this->orderService->fulfillOrder($order, $request->user());
+            } elseif ($newStatus === OrderStatus::PACKED) {
+                $this->orderService->packOrder($order, $request->user());
+            } elseif ($newStatus === OrderStatus::SHIPPED) {
+                $shippingData = [
+                    'tracking_number' => $request->input('tracking_number'),
+                    'carrier' => $request->input('carrier'),
+                    'notes' => $request->input('notes'),
+                ];
+                $this->orderService->shipOrder($order, $request->user(), $shippingData);
+            } elseif ($newStatus === OrderStatus::DELIVERED) {
+                $this->orderService->deliverOrder($order, $request->user(), $request->input('notes'));
             } elseif ($newStatus === OrderStatus::CANCELLED) {
                 $this->orderService->cancelOrder(
                     $order,
@@ -263,17 +293,6 @@ class OrderController extends Controller
                     throw new Exception("Cannot change status from {$order->status->value} to $newStatus->value");
                 }
                 $order->status = $newStatus;
-
-                // Set shipped_at timestamp when status changes to SHIPPED
-                if ($newStatus === OrderStatus::SHIPPED && ! $order->shipped_at) {
-                    $order->shipped_at = now();
-                }
-
-                // Set delivered_at timestamp when status changes to DELIVERED
-                if ($newStatus === OrderStatus::DELIVERED && ! $order->delivered_at) {
-                    $order->delivered_at = now();
-                }
-
                 $order->save();
             }
 
@@ -282,6 +301,35 @@ class OrderController extends Controller
         } catch (Exception $e) {
             return Redirect::back()
                 ->with('error', 'Failed to update order status: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Refund an order
+     * @throws Throwable
+     */
+    public function refund(Request $request, Order $order): RedirectResponse
+    {
+        Gate::authorize('update', $order);
+
+        $validated = $request->validate([
+            'reason' => 'required|string|max:1000',
+            'restock_items' => 'boolean',
+        ]);
+
+        try {
+            $this->refundService->refundOrder(
+                $order,
+                $request->user(),
+                $validated['reason'],
+                $validated['restock_items'] ?? true
+            );
+
+            return Redirect::back()
+                ->with('success', 'Order refunded successfully.');
+        } catch (Exception $e) {
+            return Redirect::back()
+                ->with('error', 'Failed to refund order: '.$e->getMessage());
         }
     }
 

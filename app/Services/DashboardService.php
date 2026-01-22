@@ -674,7 +674,7 @@ class DashboardService
     protected function getRecentStockMovements(Collection $shopIds, int $limit): array
     {
         return StockMovement::whereIn('shop_id', $shopIds)
-            ->with(['productVariant.product:id,name', 'shop:id,name', 'performedBy:id,first_name,last_name'])
+            ->with(['productVariant.product:id,name', 'shop:id,name', 'createdBy:id,first_name,last_name'])
             ->latest()
             ->limit($limit)
             ->get()
@@ -687,8 +687,8 @@ class DashboardService
                     'type' => $movement->type->value,
                     'quantity' => $movement->quantity,
                     'shop_name' => $movement->shop?->name ?? 'Unknown',
-                    'performed_by' => $movement->performedBy
-                        ? "{$movement->performedBy->first_name} {$movement->performedBy->last_name}"
+                    'performed_by' => $movement->createdBy
+                        ? "{$movement->createdBy->first_name} {$movement->createdBy->last_name}"
                         : 'System',
                     'created_at' => $movement->created_at->toIso8601String(),
                 ];

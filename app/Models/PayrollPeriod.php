@@ -3,15 +3,17 @@
 namespace App\Models;
 
 use App\Enums\PayrollStatus;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PayrollPeriod extends Model
 {
-    use HasFactory, SoftDeletes;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
@@ -86,39 +88,45 @@ class PayrollPeriod extends Model
      */
     public function payslips(): HasMany
     {
-        return $this->hasMany(Payslip::class);
+        return $this->hasMany(Payslip::class)->whereNull('payslips.deleted_at');
     }
 
     /**
-     * Check if payroll is draft
+     * PayRun associated with this period
      */
+    public function payRun(): HasOne
+    {
+        return $this->hasOne(PayRun::class);
+    }
+
     public function isDraft(): bool
     {
         return $this->status === PayrollStatus::DRAFT;
     }
 
-    /**
-     * Check if payroll is processed
-     */
     public function isProcessed(): bool
     {
         return $this->status === PayrollStatus::PROCESSED;
     }
 
-    /**
-     * Check if payroll is approved
-     */
     public function isApproved(): bool
     {
         return $this->status === PayrollStatus::APPROVED;
     }
 
-    /**
-     * Check if payroll is paid
-     */
     public function isPaid(): bool
     {
         return $this->status === PayrollStatus::PAID;
+    }
+
+    public function canBeEdited(): bool
+    {
+        return $this->status === PayrollStatus::DRAFT;
+    }
+
+    public function canBeDeleted(): bool
+    {
+        return in_array($this->status, [PayrollStatus::DRAFT, PayrollStatus::CANCELLED]);
     }
 
     /**

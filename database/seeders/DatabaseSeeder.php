@@ -53,10 +53,15 @@ class DatabaseSeeder extends Seeder
 
             // Employee Payroll & HR System
             EmployeePayrollDetailSeeder::class,
+            EmployeeCustomDeductionSeeder::class,
             TimesheetSeeder::class,
             FundRequestSeeder::class,
             WageAdvanceSeeder::class,
+            WageAdvanceRepaymentSeeder::class,
             PayrollPeriodSeeder::class,
+
+            // Approval System
+            ApprovalChainSeeder::class,
         ]);
     }
 }

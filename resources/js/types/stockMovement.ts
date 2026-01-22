@@ -1,3 +1,5 @@
+import { Image } from './image';
+
 export interface StockMovement {
     id: number;
     tenant_id: number;
@@ -52,6 +54,8 @@ export interface ProductPackagingType {
     discount_percentage?: number;
 }
 
+export type ProductAttributeValue = string | number | boolean | null;
+
 export interface ProductVariant {
     id: number;
     product_id: number;
@@ -61,14 +65,16 @@ export interface ProductVariant {
     cost_price: number | null;
     reorder_level: number | null;
     barcode: string | null;
-    attributes: Record<string, any> | null;
+    attributes: Record<string, ProductAttributeValue> | null;
     base_unit_name: string;
     image_url: string | null;
-    images: string[] | null;
+    images?: Image[];
     batch_number?: string;
     expiry_date?: string;
     serial_number?: string;
     is_active: boolean;
+    is_available_online?: boolean;
+    max_order_quantity?: number | null;
     total_stock?: number;
     available_stock?: number;
     created_at: string;
@@ -90,10 +96,6 @@ export interface InventoryLocation {
     location_id: number;
     quantity: number;
     reserved_quantity: number;
-    batch_number: string | null;
-    expiry_date: string | null;
-    serial_number: string | null;
-    bin_location: string | null;
     created_at: string;
     updated_at: string;
     location?: {
@@ -113,7 +115,11 @@ export type StockMovementType =
     | 'return'
     | 'damage'
     | 'loss'
-    | 'stock_take';
+    | 'stock_take'
+    | 'purchase_order_shipped'
+    | 'purchase_order_received'
+    | 'purchase_order_reserved'
+    | 'purchase_order_reservation_released';
 
 export interface StockMovementTypeOption {
     value: StockMovementType;

@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { Form } from '@inertiajs/react';
 import OrderPaymentController from '@/actions/App/Http/Controllers/OrderPaymentController';
 import Input from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
-import Select from '@/components/form/Select';
-import Label from '@/components/form/Label';
 import InputError from '@/components/form/InputError';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import { Form } from '@inertiajs/react';
+import { useState } from 'react';
 
 interface RecordPaymentProps {
     orderId: number;
@@ -15,10 +15,16 @@ interface RecordPaymentProps {
     onSuccess?: () => void;
 }
 
-export default function RecordPayment({ orderId, remainingBalance, onSuccess }: RecordPaymentProps) {
+export default function RecordPayment({
+    orderId,
+    remainingBalance,
+    onSuccess,
+}: RecordPaymentProps) {
     const [amount, setAmount] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('');
-    const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+    const [paymentDate, setPaymentDate] = useState(
+        new Date().toISOString().split('T')[0],
+    );
     const [referenceNumber, setReferenceNumber] = useState('');
     const [notes, setNotes] = useState('');
 
@@ -32,11 +38,14 @@ export default function RecordPayment({ orderId, remainingBalance, onSuccess }: 
     ];
 
     const formatCurrency = (value: number) => {
-        return `¦${value.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        return `ï¿½${value.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 
     return (
-        <Card title="Record Payment" description={`Remaining Balance: ${formatCurrency(remainingBalance)}`}>
+        <Card
+            title="Record Payment"
+            description={`Remaining Balance: ${formatCurrency(remainingBalance)}`}
+        >
             <Form
                 action={OrderPaymentController.store.url({ order: orderId })}
                 method="post"
@@ -66,20 +75,26 @@ export default function RecordPayment({ orderId, remainingBalance, onSuccess }: 
 
                         <div>
                             <Label htmlFor="payment_method">
-                                Payment Method <span className="text-error-500">*</span>
+                                Payment Method{' '}
+                                <span className="text-error-500">*</span>
                             </Label>
                             <Select
                                 options={paymentMethods}
                                 value={paymentMethod}
                                 onChange={(value) => setPaymentMethod(value)}
                             />
-                            <input type="hidden" name="payment_method" value={paymentMethod} />
+                            <input
+                                type="hidden"
+                                name="payment_method"
+                                value={paymentMethod}
+                            />
                             <InputError message={errors.payment_method} />
                         </div>
 
                         <div>
                             <Label htmlFor="payment_date">
-                                Payment Date <span className="text-error-500">*</span>
+                                Payment Date{' '}
+                                <span className="text-error-500">*</span>
                             </Label>
                             <Input
                                 id="payment_date"
@@ -93,7 +108,8 @@ export default function RecordPayment({ orderId, remainingBalance, onSuccess }: 
                             <InputError message={errors.payment_date} />
                         </div>
 
-                        {(paymentMethod === 'bank_transfer' || paymentMethod === 'mobile_money') && (
+                        {(paymentMethod === 'bank_transfer' ||
+                            paymentMethod === 'mobile_money') && (
                             <div>
                                 <Label htmlFor="reference_number">
                                     Reference Number
@@ -103,7 +119,9 @@ export default function RecordPayment({ orderId, remainingBalance, onSuccess }: 
                                     name="reference_number"
                                     type="text"
                                     value={referenceNumber}
-                                    onChange={(e) => setReferenceNumber(e.target.value)}
+                                    onChange={(e) =>
+                                        setReferenceNumber(e.target.value)
+                                    }
                                     error={!!errors.reference_number}
                                     placeholder="TRF-123456789"
                                 />
@@ -112,9 +130,7 @@ export default function RecordPayment({ orderId, remainingBalance, onSuccess }: 
                         )}
 
                         <div>
-                            <Label htmlFor="notes">
-                                Notes
-                            </Label>
+                            <Label htmlFor="notes">Notes</Label>
                             <TextArea
                                 id="notes"
                                 name="notes"
@@ -131,7 +147,9 @@ export default function RecordPayment({ orderId, remainingBalance, onSuccess }: 
                             <Button
                                 type="submit"
                                 variant="primary"
-                                disabled={processing || !amount || !paymentMethod}
+                                disabled={
+                                    processing || !amount || !paymentMethod
+                                }
                                 loading={processing}
                             >
                                 Record Payment
