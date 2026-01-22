@@ -2,8 +2,9 @@ import ProductCategoryController from '@/actions/App/Http/Controllers/ProductCat
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ChevronDown,
     ChevronRight,
@@ -35,8 +36,22 @@ function CategoryTreeItem({
     category: Category;
     level?: number;
 }) {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
     const [isExpanded, setIsExpanded] = useState(level === 0);
     const hasChildren = category.children && category.children.length > 0;
+
+    const handleDelete = async () => {
+        const confirmed = await confirm({
+            title: 'Delete Category',
+            message: 'Are you sure you want to delete this category? This action cannot be undone.',
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
+
+        router.delete(ProductCategoryController.destroy.url({ category: category.id }));
+    };
 
     return (
         <div className="border-l-2 border-gray-200 dark:border-gray-700">
@@ -97,26 +112,14 @@ function CategoryTreeItem({
                             <Edit className="h-4 w-4" />
                         </Button>
                     </Link>
-                    <Link
-                        href={ProductCategoryController.destroy.url({
-                            category: category.id,
-                        })}
-                        method="delete"
-                        as="button"
-                        onBefore={() =>
-                            confirm(
-                                'Are you sure you want to delete this category? This action cannot be undone.',
-                            )
-                        }
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-error-600 hover:bg-error-50 dark:text-error-400 dark:hover:bg-error-900/20"
+                        onClick={handleDelete}
                     >
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-error-600 hover:bg-error-50 dark:text-error-400 dark:hover:bg-error-900/20"
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </Link>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
                 </div>
             </div>
 
@@ -131,6 +134,8 @@ function CategoryTreeItem({
                     ))}
                 </div>
             )}
+
+            <ConfirmDialogComponent />
         </div>
     );
 }

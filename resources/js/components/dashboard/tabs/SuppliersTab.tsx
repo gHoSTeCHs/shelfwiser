@@ -2,6 +2,7 @@ import ReusableBarChart from '@/components/charts/ReusableBarChart';
 import ReusablePieChart from '@/components/charts/ReusablePieChart';
 import Badge from '@/components/ui/badge/Badge';
 import { Card } from '@/components/ui/card';
+import { formatCurrency } from '@/lib/formatters';
 import { SupplierData } from '@/types/dashboard';
 import { AlertTriangle, DollarSign, FileText, TrendingUp } from 'lucide-react';
 import MetricCard from '../MetricCard';
@@ -11,12 +12,6 @@ interface SuppliersTabProps {
 }
 
 export default function SuppliersTab({ data }: SuppliersTabProps) {
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(value);
-
     return (
         <div className="space-y-6">
             {/* Summary Cards */}

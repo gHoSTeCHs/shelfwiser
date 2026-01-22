@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import Skeleton from '@/components/ui/Skeleton';
 import AppLayout from '@/layouts/AppLayout';
+import { calculateSubtotal } from '@/lib/calculations';
+import { formatCurrency } from '@/lib/formatters';
 import { PaginatedResponse } from '@/types';
 import { Shop } from '@/types/shop';
 import { SupplierCatalogItem, SupplierConnection } from '@/types/supplier';
@@ -63,7 +65,7 @@ const CatalogItem = memo(function CatalogItem({
                     )}
                 </div>
                 <div className="mt-1 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                    <span>Base: ${item.base_wholesale_price.toFixed(2)}</span>
+                    <span>Base: {formatCurrency(item.base_wholesale_price, 'USD')}</span>
                     <span>Min. Order: {item.min_order_quantity}</span>
                 </div>
                 {item.description && (
@@ -286,12 +288,7 @@ export default function Create({
         );
     }, []);
 
-    const subtotal = useMemo(() => {
-        return cart.reduce(
-            (sum, item) => sum + item.quantity * item.unit_price,
-            0,
-        );
-    }, [cart]);
+    const subtotal = useMemo(() => calculateSubtotal(cart), [cart]);
 
     const cartItemIds = useMemo(() => {
         return new Set(cart.map((item) => item.catalog_item_id));
@@ -595,10 +592,7 @@ export default function Create({
                                                                     }
                                                                 </h4>
                                                                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                                                    $
-                                                                    {item.unit_price.toFixed(
-                                                                        2,
-                                                                    )}{' '}
+                                                                    {formatCurrency(item.unit_price, 'USD')}{' '}
                                                                     per unit
                                                                 </p>
                                                             </div>
@@ -652,11 +646,7 @@ export default function Create({
                                                                 </button>
                                                             </div>
                                                             <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                                $
-                                                                {(
-                                                                    item.quantity *
-                                                                    item.unit_price
-                                                                ).toFixed(2)}
+                                                                {formatCurrency(item.quantity * item.unit_price, 'USD')}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -667,7 +657,7 @@ export default function Create({
                                                 <div className="flex justify-between text-base font-semibold text-gray-900 dark:text-white">
                                                     <span>Subtotal</span>
                                                     <span>
-                                                        ${subtotal.toFixed(2)}
+                                                        {formatCurrency(subtotal, 'USD')}
                                                     </span>
                                                 </div>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">

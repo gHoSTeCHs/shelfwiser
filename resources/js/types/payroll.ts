@@ -87,6 +87,11 @@ export interface EmployeePayrollDetail {
     pay_amount: string;
     pay_frequency: PayFrequency;
     pay_calendar_id: number | null;
+    pay_calendar?: {
+        id: number;
+        name: string;
+        frequency: PayFrequency;
+    };
     standard_hours_per_week: string;
     commission_rate: string | null;
     commission_cap: string | null;

@@ -7,9 +7,11 @@ import QuantitySelector from '@/components/storefront/QuantitySelector';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import EmptyState from '@/components/ui/EmptyState';
+import useCurrency from '@/hooks/useCurrency';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
+import { Service, ServiceVariant } from '@/types/service';
 import { CartItem, StorefrontCartProps } from '@/types/storefront';
-import { Form, Link } from '@inertiajs/react';
+import { Form, Link, router } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
     ArrowRight,
@@ -25,25 +27,32 @@ import React from 'react';
  * Allows quantity updates, item removal, and proceeding to checkout.
  */
 const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
+    const { formatCurrency } = useCurrency(shop);
     const [updatingItem, setUpdatingItem] = React.useState<number | null>(null);
     const updateTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
     const handleQuantityChange = (
         itemId: number,
         newQuantity: number,
-        submitForm: () => void,
     ) => {
         setUpdatingItem(itemId);
 
-        // Clear previous timeout
         if (updateTimeoutRef.current) {
             clearTimeout(updateTimeoutRef.current);
         }
 
-        // Debounce the auto-submit by 800ms
         updateTimeoutRef.current = setTimeout(() => {
-            submitForm();
-            setUpdatingItem(null);
+            router.patch(
+                CartController.update.url({
+                    shop: shop.slug,
+                    item: itemId,
+                }),
+                { quantity: newQuantity },
+                {
+                    preserveScroll: true,
+                    onFinish: () => setUpdatingItem(null),
+                },
+            );
         }, 800);
     };
 
@@ -71,18 +80,20 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
         if (isProduct(item)) {
             return item.productVariant?.product?.name || 'Product';
         } else if (isService(item)) {
-            return item.sellable?.service?.name || 'Service';
+            const serviceVariant = item.sellable as (ServiceVariant & { service?: Service }) | undefined;
+            return serviceVariant?.service?.name || 'Service';
         }
         return 'Item';
     };
 
-    const getItemImage = (item: CartItem) => {
+    const getItemImage = (item: CartItem): string | undefined => {
         if (isProduct(item)) {
-            return item.productVariant?.product?.image;
+            return item.productVariant?.product?.images?.[0]?.url;
         } else if (isService(item)) {
-            return item.sellable?.service?.image_url;
+            const serviceVariant = item.sellable as (ServiceVariant & { service?: Service }) | undefined;
+            return serviceVariant?.service?.image_url ?? undefined;
         }
-        return null;
+        return undefined;
     };
 
     const getMaterialOptionLabel = (option: string) => {
@@ -241,11 +252,10 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                                     getMaterialOptionLabel(
                                                                         item.material_option,
                                                                     ) && (
-                                                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                                                                             <Badge
                                                                                 color="warning"
                                                                                 size="sm"
-                                                                                className="mt-1"
                                                                             >
                                                                                 {getMaterialOptionLabel(
                                                                                     item.material_option,
@@ -314,105 +324,54 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                 </div>
 
                                                 <div className="mt-4 flex items-center justify-between">
-                                                    {/* Quantity selector */}
-                                                    <Form
-                                                        action={CartController.update.url(
-                                                            {
-                                                                shop: shop.slug,
-                                                                item: item.id,
-                                                            },
+                                                    <div className="flex items-center gap-3">
+                                                        <QuantitySelector
+                                                            quantity={
+                                                                item.quantity
+                                                            }
+                                                            onChange={(
+                                                                newQuantity,
+                                                            ) =>
+                                                                handleQuantityChange(
+                                                                    item.id,
+                                                                    newQuantity,
+                                                                )
+                                                            }
+                                                            min={1}
+                                                            max={
+                                                                isProduct(item)
+                                                                    ? item
+                                                                          .productVariant
+                                                                          ?.available_stock ||
+                                                                      999
+                                                                    : 999
+                                                            }
+                                                            disabled={
+                                                                updatingItem ===
+                                                                item.id
+                                                            }
+                                                        />
+                                                        {updatingItem ===
+                                                            item.id && (
+                                                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                                                                Updating...
+                                                            </span>
                                                         )}
-                                                        method="patch"
-                                                    >
-                                                        {({
-                                                            processing,
-                                                            setData,
-                                                            submit,
-                                                        }) => (
-                                                            <>
-                                                                <div className="flex items-center gap-3">
-                                                                    <QuantitySelector
-                                                                        quantity={
-                                                                            item.quantity
-                                                                        }
-                                                                        onChange={(
-                                                                            newQuantity,
-                                                                        ) => {
-                                                                            setData(
-                                                                                'quantity',
-                                                                                newQuantity,
-                                                                            );
-                                                                            handleQuantityChange(
-                                                                                item.id,
-                                                                                newQuantity,
-                                                                                submit,
-                                                                            );
-                                                                        }}
-                                                                        min={1}
-                                                                        max={
-                                                                            isProduct(
-                                                                                item,
-                                                                            )
-                                                                                ? item
-                                                                                      .productVariant
-                                                                                      ?.available_stock ||
-                                                                                  999
-                                                                                : 999
-                                                                        }
-                                                                        disabled={
-                                                                            processing
-                                                                        }
-                                                                    />
-                                                                    {updatingItem ===
-                                                                        item.id && (
-                                                                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                                            {processing
-                                                                                ? 'Updating...'
-                                                                                : 'Auto-updating...'}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                <input
-                                                                    type="hidden"
-                                                                    name="quantity"
-                                                                    value={
-                                                                        item.quantity
-                                                                    }
-                                                                />
-                                                            </>
-                                                        )}
-                                                    </Form>
+                                                    </div>
 
                                                     {/* Price */}
                                                     <div className="text-right">
                                                         {isService(item) &&
                                                             item.base_price && (
                                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                                    Base:{' '}
-                                                                    {
-                                                                        shop.currency_symbol
-                                                                    }
-                                                                    {item.base_price.toFixed(
-                                                                        2,
-                                                                    )}
+                                                                    Base: {formatCurrency(item.base_price)}
                                                                 </p>
                                                             )}
                                                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                            {
-                                                                shop.currency_symbol
-                                                            }
-                                                            {item.price.toFixed(
-                                                                2,
-                                                            )}{' '}
-                                                            each
+                                                            {formatCurrency(item.price)} each
                                                         </p>
                                                         <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                                            {
-                                                                shop.currency_symbol
-                                                            }
-                                                            {item.subtotal?.toFixed(
-                                                                2,
-                                                            )}
+                                                            {formatCurrency(item.subtotal)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -420,6 +379,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                 {/* Stock warning for products only */}
                                                 {isProduct(item) &&
                                                     item.productVariant &&
+                                                    item.productVariant.available_stock !== undefined &&
                                                     item.quantity >
                                                         item.productVariant
                                                             .available_stock && (

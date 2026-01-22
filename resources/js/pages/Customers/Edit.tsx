@@ -6,18 +6,55 @@ import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import useCurrency from '@/hooks/useCurrency';
 import AppLayout from '@/layouts/AppLayout';
 import type { CustomerEditPageProps } from '@/types/customer';
-import { Form, Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { AlertTriangle, ChevronLeft } from 'lucide-react';
 import React, { useState } from 'react';
 
 export default function Edit({ customer, shops }: CustomerEditPageProps) {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
+    const { formatCurrency } = useCurrency();
     const primaryAddress =
         customer.addresses?.find((a) => a.is_default) ||
         customer.addresses?.[0];
 
     const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
+
+    const { data, setData, put, processing, errors } = useForm({
+        first_name: customer.first_name,
+        last_name: customer.last_name,
+        email: customer.email,
+        phone: customer.phone || '',
+        'address[street]': primaryAddress?.street || '',
+        'address[city]': primaryAddress?.city || '',
+        'address[state]': primaryAddress?.state || '',
+        'address[postal_code]': primaryAddress?.postal_code || '',
+        preferred_shop_id: customer.preferred_shop_id?.toString() || '',
+        is_active: customer.is_active ? '1' : '',
+        marketing_opt_in: customer.marketing_opt_in ? '1' : '',
+        credit_limit: customer.credit_limit || '',
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        put(CustomerController.update.url({ customer: customer.id }));
+    };
+
+    const handleDelete = async () => {
+        const confirmed = await confirm({
+            title: 'Delete Customer',
+            message: 'Are you sure you want to delete this customer? This action cannot be undone.',
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
+
+        router.delete(CustomerController.destroy.url({ customer: customer.id }));
+    };
 
     return (
         <>
@@ -53,28 +90,8 @@ export default function Edit({ customer, shops }: CustomerEditPageProps) {
                     </Badge>
                 </div>
 
-                <Form
-                    action={CustomerController.update.url({
-                        customer: customer.id,
-                    })}
-                    method="put"
-                    defaults={{
-                        first_name: customer.first_name,
-                        last_name: customer.last_name,
-                        email: customer.email,
-                        phone: customer.phone || '',
-                        'address[street]': primaryAddress?.street || '',
-                        'address[city]': primaryAddress?.city || '',
-                        'address[state]': primaryAddress?.state || '',
-                        'address[postal_code]': primaryAddress?.postal_code || '',
-                        preferred_shop_id: customer.preferred_shop_id?.toString() || '',
-                        is_active: customer.is_active ? '1' : '',
-                        marketing_opt_in: customer.marketing_opt_in ? '1' : '',
-                        credit_limit: customer.credit_limit || '',
-                    }}
-                >
-                    {({ data, setData, errors, processing }) => (
-                        <div className="space-y-6">
+                <form onSubmit={handleSubmit}>
+                    <div className="space-y-6">
                             <Card title="Personal Information">
                                 <div className="space-y-6 p-6">
                                     <div className="grid gap-6 sm:grid-cols-2">
@@ -167,10 +184,10 @@ export default function Edit({ customer, shops }: CustomerEditPageProps) {
                                             onChange={(e) =>
                                                 setData('address[street]', e.target.value)
                                             }
-                                            error={!!errors['address.street']}
+                                            error={!!errors['address[street]']}
                                         />
                                         <InputError
-                                            message={errors['address.street']}
+                                            message={errors['address[street]']}
                                         />
                                     </div>
 
@@ -186,10 +203,10 @@ export default function Edit({ customer, shops }: CustomerEditPageProps) {
                                                 onChange={(e) =>
                                                     setData('address[city]', e.target.value)
                                                 }
-                                                error={!!errors['address.city']}
+                                                error={!!errors['address[city]']}
                                             />
                                             <InputError
-                                                message={errors['address.city']}
+                                                message={errors['address[city]']}
                                             />
                                         </div>
 
@@ -205,12 +222,12 @@ export default function Edit({ customer, shops }: CustomerEditPageProps) {
                                                     setData('address[state]', e.target.value)
                                                 }
                                                 error={
-                                                    !!errors['address.state']
+                                                    !!errors['address[state]']
                                                 }
                                             />
                                             <InputError
                                                 message={
-                                                    errors['address.state']
+                                                    errors['address[state]']
                                                 }
                                             />
                                         </div>
@@ -229,16 +246,12 @@ export default function Edit({ customer, shops }: CustomerEditPageProps) {
                                                     setData('address[postal_code]', e.target.value)
                                                 }
                                                 error={
-                                                    !!errors[
-                                                        'address.postal_code'
-                                                    ]
+                                                    !!errors['address[postal_code]']
                                                 }
                                             />
                                             <InputError
                                                 message={
-                                                    errors[
-                                                        'address.postal_code'
-                                                    ]
+                                                    errors['address[postal_code]']
                                                 }
                                             />
                                         </div>
@@ -270,7 +283,7 @@ export default function Edit({ customer, shops }: CustomerEditPageProps) {
                                             onChange={(value) =>
                                                 setData(
                                                     'preferred_shop_id',
-                                                    value ? parseInt(value) : '',
+                                                    value || '',
                                                 )
                                             }
                                         />
@@ -415,10 +428,7 @@ export default function Edit({ customer, shops }: CustomerEditPageProps) {
                                                     <strong>
                                                         Current Balance:
                                                     </strong>{' '}
-                                                    ₦
-                                                    {parseFloat(
-                                                        customer.account_balance,
-                                                    ).toLocaleString()}
+                                                    {formatCurrency(customer.account_balance)}
                                                 </p>
                                             </div>
                                         )}
@@ -429,19 +439,7 @@ export default function Edit({ customer, shops }: CustomerEditPageProps) {
                                 <Button
                                     variant="destructive"
                                     type="button"
-                                    onClick={() => {
-                                        if (
-                                            confirm(
-                                                'Are you sure you want to delete this customer? This action cannot be undone.',
-                                            )
-                                        ) {
-                                            router.delete(
-                                                CustomerController.destroy.url({
-                                                    customer: customer.id,
-                                                }),
-                                            );
-                                        }
-                                    }}
+                                    onClick={handleDelete}
                                 >
                                     Delete Customer
                                 </Button>
@@ -464,9 +462,10 @@ export default function Edit({ customer, shops }: CustomerEditPageProps) {
                                 </div>
                             </div>
                         </div>
-                    )}
-                </Form>
+                </form>
             </div>
+
+            <ConfirmDialogComponent />
         </>
     );
 }

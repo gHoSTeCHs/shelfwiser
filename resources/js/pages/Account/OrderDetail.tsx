@@ -1,7 +1,10 @@
 import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
+import useCurrency from '@/hooks/useCurrency';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
+import { formatDateShort } from '@/lib/formatters';
+import { getOrderStatusColor, getPaymentStatusColor } from '@/lib/status-configs';
 import { AccountOrderDetailProps } from '@/types/storefront';
 import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
@@ -19,46 +22,7 @@ import React from 'react';
  * Customer order detail page with playful-luxury styling.
  */
 const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
-    const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
-            case 'completed':
-            case 'delivered':
-                return 'success';
-            case 'pending':
-                return 'warning';
-            case 'cancelled':
-            case 'failed':
-                return 'error';
-            case 'processing':
-            case 'confirmed':
-                return 'info';
-            default:
-                return 'light';
-        }
-    };
-
-    const getPaymentStatusColor = (paymentStatus: string) => {
-        switch (paymentStatus.toLowerCase()) {
-            case 'paid':
-                return 'success';
-            case 'pending':
-                return 'warning';
-            case 'failed':
-            case 'refunded':
-                return 'error';
-            default:
-                return 'light';
-        }
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
-
+    const { formatCurrency } = useCurrency(shop);
     return (
         <StorefrontLayout shop={shop}>
             <Head title={`Order #${order.order_number} - ${shop.name}`} />
@@ -90,12 +54,12 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                             Order #{order.order_number}
                         </h1>
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Placed on {formatDate(order.created_at)}
+                            Placed on {formatDateShort(order.created_at)}
                         </p>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        <Badge color={getStatusColor(order.status)} size="md">
+                        <Badge color={getOrderStatusColor(order.status)} size="md">
                             {order.status}
                         </Badge>
                         <Badge
@@ -153,29 +117,12 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
 
                                             <div className="text-right">
                                                 <p className="text-sm font-semibold text-gray-900 sm:text-base dark:text-white">
-                                                    {shop.currency_symbol}
-                                                    {item.unit_price.toLocaleString(
-                                                        undefined,
-                                                        {
-                                                            minimumFractionDigits: 2,
-                                                            maximumFractionDigits: 2,
-                                                        },
-                                                    )}
+                                                    {formatCurrency(item.unit_price)}
                                                 </p>
                                                 {item.quantity > 1 && (
                                                     <p className="text-xs text-gray-500 dark:text-gray-400">
                                                         Total:{' '}
-                                                        {shop.currency_symbol}
-                                                        {(
-                                                            item.unit_price *
-                                                            item.quantity
-                                                        ).toLocaleString(
-                                                            undefined,
-                                                            {
-                                                                minimumFractionDigits: 2,
-                                                                maximumFractionDigits: 2,
-                                                            },
-                                                        )}
+                                                        {formatCurrency(item.unit_price * item.quantity)}
                                                     </p>
                                                 )}
                                             </div>
@@ -222,14 +169,7 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                         Subtotal
                                     </span>
                                     <span className="text-gray-900 dark:text-white">
-                                        {shop.currency_symbol}
-                                        {order.subtotal.toLocaleString(
-                                            undefined,
-                                            {
-                                                minimumFractionDigits: 2,
-                                                maximumFractionDigits: 2,
-                                            },
-                                        )}
+                                        {formatCurrency(order.subtotal)}
                                     </span>
                                 </div>
 
@@ -239,14 +179,7 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                             Tax
                                         </span>
                                         <span className="text-gray-900 dark:text-white">
-                                            {shop.currency_symbol}
-                                            {order.tax_amount.toLocaleString(
-                                                undefined,
-                                                {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2,
-                                                },
-                                            )}
+                                            {formatCurrency(order.tax_amount)}
                                         </span>
                                     </div>
                                 )}
@@ -257,14 +190,7 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                             Shipping
                                         </span>
                                         <span className="text-gray-900 dark:text-white">
-                                            {shop.currency_symbol}
-                                            {order.shipping_cost.toLocaleString(
-                                                undefined,
-                                                {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2,
-                                                },
-                                            )}
+                                            {formatCurrency(order.shipping_cost)}
                                         </span>
                                     </div>
                                 )}
@@ -275,14 +201,7 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                             Total
                                         </span>
                                         <span className="text-lg font-bold text-brand-600 dark:text-brand-400">
-                                            {shop.currency_symbol}
-                                            {order.total_amount.toLocaleString(
-                                                undefined,
-                                                {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2,
-                                                },
-                                            )}
+                                            {formatCurrency(order.total_amount)}
                                         </span>
                                     </div>
                                 </div>
@@ -343,7 +262,7 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                             Order Placed
                                         </p>
                                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                                            {formatDate(order.created_at)}
+                                            {formatDateShort(order.created_at)}
                                         </p>
                                     </div>
                                 </div>

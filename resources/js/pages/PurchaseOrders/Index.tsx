@@ -8,6 +8,7 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
 import { Shop } from '@/types/shop';
 import { PurchaseOrderListResponse } from '@/types/supplier';
 import { paymentStatusConfig, statusConfig } from '@/utils/purchase-order';
@@ -162,19 +163,14 @@ export default function Index({ purchaseOrders, shops }: Props) {
                                                         <span className="font-medium">
                                                             Total:
                                                         </span>{' '}
-                                                        $
-                                                        {Number(
-                                                            po.total_amount,
-                                                        ).toFixed(2)}
+                                                        {formatCurrency(po.total_amount, 'USD')}
                                                     </span>
                                                 </div>
 
                                                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                                     <Calendar className="h-4 w-4" />
                                                     <span>
-                                                        {new Date(
-                                                            po.created_at,
-                                                        ).toLocaleDateString()}
+                                                        {formatDateShort(po.created_at)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -182,9 +178,7 @@ export default function Index({ purchaseOrders, shops }: Props) {
                                             {po.expected_delivery_date && (
                                                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                                                     Expected delivery:{' '}
-                                                    {new Date(
-                                                        po.expected_delivery_date,
-                                                    ).toLocaleDateString()}
+                                                    {formatDateShort(po.expected_delivery_date)}
                                                 </p>
                                             )}
                                         </div>

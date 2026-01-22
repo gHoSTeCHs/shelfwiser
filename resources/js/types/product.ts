@@ -123,3 +123,34 @@ export interface ProductTemplateListResponse {
     data: ProductTemplate[];
     total: number;
 }
+
+/**
+ * Form data types for product creation/editing.
+ * These use string types for numeric fields to handle form input state.
+ */
+export interface PackagingTypeFormData {
+    id: string;
+    name: string;
+    display_name: string;
+    units_per_package: number;
+    is_sealed_package: boolean;
+    price: number | string;
+    cost_price: number | string | null;
+    is_base_unit: boolean;
+    can_break_down: boolean;
+    min_order_quantity: number;
+    display_order: number;
+    is_active: boolean;
+}
+
+export interface ProductVariantFormData {
+    id: string;
+    sku: string;
+    name: string;
+    price: string;
+    cost_price: string;
+    barcode: string;
+    base_unit_name: string;
+    attributes: Record<string, unknown>;
+    packaging_types: PackagingTypeFormData[];
+}

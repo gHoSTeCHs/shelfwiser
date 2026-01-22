@@ -1,6 +1,7 @@
 import ReusableBarChart from '@/components/charts/ReusableBarChart';
 import ReusableLineChart from '@/components/charts/ReusableLineChart';
 import { Card } from '@/components/ui/card';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 import { SalesData } from '@/types/dashboard';
 import { DollarSign, ShoppingCart, Tag, TrendingUp } from 'lucide-react';
 import MetricCard from '../MetricCard';
@@ -10,21 +11,12 @@ interface SalesTabProps {
 }
 
 export default function SalesTab({ data }: SalesTabProps) {
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(value);
-
-    const formatNumber = (value: number) =>
-        new Intl.NumberFormat('en-NG').format(value);
-
     return (
         <div className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <MetricCard
                     title="Total Orders"
-                    value={formatNumber(data.summary.total_orders)}
+                    value={formatNumber(data.summary.total_orders, 0, 'en-NG')}
                     icon={ShoppingCart}
                 />
                 <MetricCard
@@ -107,7 +99,7 @@ export default function SalesTab({ data }: SalesTabProps) {
                                         {product.sku}
                                     </td>
                                     <td className="px-4 py-4 text-right text-sm font-medium text-gray-900 dark:text-white">
-                                        {formatNumber(product.total_quantity)}
+                                        {formatNumber(product.total_quantity, 0, 'en-NG')}
                                     </td>
                                     <td className="px-4 py-4 text-right text-sm font-medium text-gray-900 dark:text-white">
                                         {formatCurrency(product.total_revenue)}

@@ -2,6 +2,7 @@ import StaffManagementController from '@/actions/App/Http/Controllers/Web/StaffM
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import AppLayout from '@/layouts/AppLayout';
+import { getOnboardingStatusColor, getOnboardingStatusLabel } from '@/lib/status-configs';
 import type { CreateStaffFormData, StaffEditPageProps } from '@/types/staff';
 import { Form, Head, Link } from '@inertiajs/react';
 import {
@@ -99,16 +100,6 @@ export default function Edit({
         setShowDeactivateConfirm(false);
     }, []);
 
-    const getOnboardingBadge = () => {
-        switch (staff.onboarding_status) {
-            case 'completed':
-                return <Badge color="success">Onboarded</Badge>;
-            case 'in_progress':
-                return <Badge color="warning">Onboarding</Badge>;
-            default:
-                return <Badge color="light">Pending</Badge>;
-        }
-    };
 
     return (
         <>
@@ -134,7 +125,9 @@ export default function Edit({
                                     <h1 className="text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
                                         {staff.full_name}
                                     </h1>
-                                    {getOnboardingBadge()}
+                                    <Badge color={getOnboardingStatusColor(staff.onboarding_status)}>
+                                        {getOnboardingStatusLabel(staff.onboarding_status)}
+                                    </Badge>
                                 </div>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
                                     {staff.role_label} • {staff.email}

@@ -92,7 +92,7 @@ export default function Create({ shops, categories }: Props) {
         );
     };
 
-    const flatCategories = flattenCategories(categories);
+    const flatCategories = flattenCategories(categories as unknown as import('@/types/product').ProductCategory[]);
 
     return (
         <>

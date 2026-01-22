@@ -7,7 +7,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
 import { StorefrontProductsProps } from '@/types/storefront';
 import { router } from '@inertiajs/react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, Variants } from 'framer-motion';
 import {
     ChevronLeft,
     ChevronRight,
@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-const containerVariants = {
+const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
@@ -28,7 +28,7 @@ const containerVariants = {
     },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
     hidden: { opacity: 0, y: 15 },
     visible: {
         opacity: 1,

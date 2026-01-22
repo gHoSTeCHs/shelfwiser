@@ -5,6 +5,7 @@ import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import { formatDateLong } from '@/lib/formatters';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
 import { AccountProfileProps } from '@/types/storefront';
 import { Form } from '@inertiajs/react';
@@ -33,156 +34,116 @@ const Profile: React.FC<AccountProfileProps> = ({
                         </h2>
 
                         <Form
-                            action={CustomerPortalController.updateProfile.url({
+                            {...CustomerPortalController.updateProfile.form({
                                 shop: shop.slug,
                             })}
-                            method="patch"
                         >
-                            {({ errors, processing, data, setData }) => (
-                                <>
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                            <div>
-                                                <Label htmlFor="first_name">
-                                                    First Name{' '}
-                                                    <span className="text-error-500">
-                                                        *
-                                                    </span>
-                                                </Label>
-                                                <Input
-                                                    id="first_name"
-                                                    name="first_name"
-                                                    type="text"
-                                                    value={
-                                                        data.first_name ||
-                                                        customer.first_name
-                                                    }
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'first_name',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    error={!!errors.first_name}
-                                                    required
-                                                />
-                                                <InputError
-                                                    message={errors.first_name}
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <Label htmlFor="last_name">
-                                                    Last Name{' '}
-                                                    <span className="text-error-500">
-                                                        *
-                                                    </span>
-                                                </Label>
-                                                <Input
-                                                    id="last_name"
-                                                    name="last_name"
-                                                    type="text"
-                                                    value={
-                                                        data.last_name ||
-                                                        customer.last_name
-                                                    }
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'last_name',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    error={!!errors.last_name}
-                                                    required
-                                                />
-                                                <InputError
-                                                    message={errors.last_name}
-                                                />
-                                            </div>
-                                        </div>
-
+                            {({ errors, processing }) => (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                         <div>
-                                            <Label htmlFor="email">
-                                                Email Address
+                                            <Label htmlFor="first_name">
+                                                First Name{' '}
+                                                <span className="text-error-500">
+                                                    *
+                                                </span>
                                             </Label>
                                             <Input
-                                                id="email"
-                                                name="email"
-                                                type="email"
-                                                value={customer.email}
-                                                disabled
-                                            />
-                                            <p className="mt-1 text-xs text-gray-500">
-                                                Email cannot be changed. Contact
-                                                support if you need to update
-                                                it.
-                                            </p>
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="phone">
-                                                Phone Number
-                                            </Label>
-                                            <Input
-                                                id="phone"
-                                                name="phone"
-                                                type="tel"
-                                                value={
-                                                    data.phone ||
-                                                    customer.phone ||
-                                                    ''
+                                                id="first_name"
+                                                name="first_name"
+                                                type="text"
+                                                defaultValue={
+                                                    customer.first_name
                                                 }
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'phone',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                error={!!errors.phone}
+                                                error={!!errors.first_name}
+                                                required
                                             />
                                             <InputError
-                                                message={errors.phone}
+                                                message={errors.first_name}
                                             />
                                         </div>
 
-                                        <div className="flex items-start">
-                                            <Checkbox
-                                                id="marketing_opt_in"
-                                                checked={
-                                                    data.marketing_opt_in !==
-                                                    undefined
-                                                        ? data.marketing_opt_in
-                                                        : customer.marketing_opt_in
-                                                }
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'marketing_opt_in',
-                                                        e.target.checked,
-                                                    )
-                                                }
-                                            />
-                                            <Label
-                                                htmlFor="marketing_opt_in"
-                                                className="mb-0 ml-2"
-                                            >
-                                                Send me promotional emails and
-                                                updates about new products and
-                                                offers
+                                        <div>
+                                            <Label htmlFor="last_name">
+                                                Last Name{' '}
+                                                <span className="text-error-500">
+                                                    *
+                                                </span>
                                             </Label>
-                                        </div>
-
-                                        <div className="flex justify-end pt-4">
-                                            <Button
-                                                type="submit"
-                                                variant="primary"
-                                                disabled={processing}
-                                                loading={processing}
-                                            >
-                                                Save Changes
-                                            </Button>
+                                            <Input
+                                                id="last_name"
+                                                name="last_name"
+                                                type="text"
+                                                defaultValue={customer.last_name}
+                                                error={!!errors.last_name}
+                                                required
+                                            />
+                                            <InputError
+                                                message={errors.last_name}
+                                            />
                                         </div>
                                     </div>
-                                </>
+
+                                    <div>
+                                        <Label htmlFor="email">
+                                            Email Address
+                                        </Label>
+                                        <Input
+                                            id="email"
+                                            name="email"
+                                            type="email"
+                                            defaultValue={customer.email}
+                                            disabled
+                                        />
+                                        <p className="mt-1 text-xs text-gray-500">
+                                            Email cannot be changed. Contact
+                                            support if you need to update it.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="phone">
+                                            Phone Number
+                                        </Label>
+                                        <Input
+                                            id="phone"
+                                            name="phone"
+                                            type="tel"
+                                            defaultValue={customer.phone || ''}
+                                            error={!!errors.phone}
+                                        />
+                                        <InputError message={errors.phone} />
+                                    </div>
+
+                                    <div className="flex items-start">
+                                        <Checkbox
+                                            id="marketing_opt_in"
+                                            name="marketing_opt_in"
+                                            defaultChecked={
+                                                customer.marketing_opt_in
+                                            }
+                                        />
+                                        <Label
+                                            htmlFor="marketing_opt_in"
+                                            className="mb-0 ml-2"
+                                        >
+                                            Send me promotional emails and
+                                            updates about new products and
+                                            offers
+                                        </Label>
+                                    </div>
+
+                                    <div className="flex justify-end pt-4">
+                                        <Button
+                                            type="submit"
+                                            variant="primary"
+                                            disabled={processing}
+                                            loading={processing}
+                                        >
+                                            Save Changes
+                                        </Button>
+                                    </div>
+                                </div>
                             )}
                         </Form>
                     </Card>
@@ -265,13 +226,7 @@ const Profile: React.FC<AccountProfileProps> = ({
                                     Account Created
                                 </span>
                                 <span className="font-medium">
-                                    {new Date(
-                                        customer.created_at,
-                                    ).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                    })}
+                                    {formatDateLong(customer.created_at)}
                                 </span>
                             </div>
 

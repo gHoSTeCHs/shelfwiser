@@ -27,7 +27,7 @@ interface Props {
 }
 
 export default function Index({ shop, variants }: Props) {
-    const { toast } = useToast();
+    const toast = useToast();
     const [counts, setCounts] = useState<Record<number, number>>({});
     const [notes, setNotes] = useState('');
 
@@ -95,7 +95,6 @@ export default function Index({ shop, variants }: Props) {
                             shop: shop.id,
                         })}
                         method="post"
-                        data={prepareSubmitData()}
                         onSuccess={() => {
                             toast.success('Stock take completed successfully');
                         }}
@@ -104,6 +103,9 @@ export default function Index({ shop, variants }: Props) {
                         }}
                     >
                         {({ processing }) => (
+                            <>
+                                <input type="hidden" name="counts" value={JSON.stringify(prepareSubmitData().counts)} />
+                                <input type="hidden" name="notes" value={notes} />
                             <div className="space-y-6">
                                 <Card className="overflow-hidden">
                                     <div className="overflow-x-auto">
@@ -252,6 +254,7 @@ export default function Index({ shop, variants }: Props) {
                                     </div>
                                 </Card>
                             </div>
+                            </>
                         )}
                     </Form>
                 )}

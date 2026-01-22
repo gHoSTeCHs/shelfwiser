@@ -1,3 +1,4 @@
+import useCurrency from '@/hooks/useCurrency';
 import { Shop } from '@/types/shop';
 import { CartSummary } from '@/types/storefront';
 import React from 'react';
@@ -21,9 +22,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     showItems = false,
     className = '',
 }) => {
-    const formatPrice = (amount: number) => {
-        return `${shop.currency_symbol}${amount.toFixed(shop.currency_decimals || 2)}`;
-    };
+    const { formatCurrency } = useCurrency(shop);
 
     return (
         <div className={className}>
@@ -48,7 +47,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                                     </p>
                                 </div>
                                 <p className="font-medium text-gray-900">
-                                    {formatPrice(item.subtotal || 0)}
+                                    {formatCurrency(item.subtotal || 0)}
                                 </p>
                             </div>
                         ))}
@@ -59,7 +58,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                     <div className="flex justify-between text-sm">
                         <p className="text-gray-600">Subtotal</p>
                         <p className="font-medium text-gray-900">
-                            {formatPrice(summary.subtotal)}
+                            {formatCurrency(summary.subtotal)}
                         </p>
                     </div>
 
@@ -69,7 +68,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                                 Tax {shop.vat_enabled && `(${shop.vat_rate}%)`}
                             </p>
                             <p className="font-medium text-gray-900">
-                                {formatPrice(summary.tax)}
+                                {formatCurrency(summary.tax)}
                             </p>
                         </div>
                     )}
@@ -78,7 +77,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                         <div className="flex justify-between text-sm">
                             <p className="text-gray-600">Shipping</p>
                             <p className="font-medium text-gray-900">
-                                {formatPrice(summary.shipping_fee)}
+                                {formatCurrency(summary.shipping_fee)}
                             </p>
                         </div>
                     )}
@@ -95,7 +94,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                     <div className="flex justify-between">
                         <p className="text-lg font-bold text-gray-900">Total</p>
                         <p className="text-lg font-bold text-gray-900">
-                            {formatPrice(summary.total)}
+                            {formatCurrency(summary.total)}
                         </p>
                     </div>
                 </div>

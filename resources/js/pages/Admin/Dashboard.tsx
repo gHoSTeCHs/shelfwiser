@@ -2,6 +2,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { getSubscriptionPlanColor } from '@/lib/status-configs';
 import { Head, Link } from '@inertiajs/react';
 import {
     AlertTriangle,
@@ -58,21 +59,6 @@ export default function Dashboard({
     recentTenants,
     expiringTrials,
 }: Props) {
-    const getPlanColor = (plan: string) => {
-        switch (plan) {
-            case 'trial':
-                return 'warning';
-            case 'basic':
-                return 'info';
-            case 'professional':
-                return 'primary';
-            case 'enterprise':
-                return 'success';
-            default:
-                return 'light';
-        }
-    };
-
     return (
         <>
             <Head title="Admin Dashboard" />
@@ -258,7 +244,7 @@ export default function Dashboard({
                                             </td>
                                             <td className="py-2">
                                                 <Badge
-                                                    color={getPlanColor(
+                                                    color={getSubscriptionPlanColor(
                                                         tenant.subscription_plan,
                                                     )}
                                                     size="sm"

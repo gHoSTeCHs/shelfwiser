@@ -5,6 +5,7 @@ import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDateLong } from '@/lib/formatters';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Calendar, DollarSign } from 'lucide-react';
 import React, { useState } from 'react';
@@ -27,13 +28,9 @@ const PayrollCreate = ({ shops }: Props) => {
 
     const generatePeriodName = () => {
         if (startDate && endDate) {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            const monthName = start.toLocaleDateString('en-US', {
-                month: 'long',
-                year: 'numeric',
-            });
-            setPeriodName(`${monthName} Payroll`);
+            const formattedDate = formatDateLong(startDate);
+            const monthYear = formattedDate.split(' ').slice(0, 2).join(' ');
+            setPeriodName(`${monthYear} Payroll`);
         }
     };
 

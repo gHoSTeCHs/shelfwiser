@@ -3,9 +3,10 @@ import EmptyState from '@/components/ui/EmptyState';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
 import { ServiceCategory } from '@/types/service';
-import { Form, Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Edit, Folder, Plus, Sparkles, Trash2 } from 'lucide-react';
 
 interface Props {
@@ -13,6 +14,23 @@ interface Props {
 }
 
 export default function Index({ categories }: Props) {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
+
+    const handleDeleteCategory = async (category: ServiceCategory) => {
+        const confirmed = await confirm({
+            title: 'Delete Category',
+            message: `Are you sure you want to delete "${category.name}"? This will affect ${category.services_count || 0} services.`,
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
+
+        router.delete(ServiceCategoryController.destroy.url({
+            service_category: category.id,
+        }));
+    };
+
     return (
         <>
             <Head title="Service Categories" />
@@ -118,31 +136,15 @@ export default function Index({ categories }: Props) {
                                                     <Edit className="h-4 w-4" />
                                                 </Button>
                                             </Link>
-                                            <Form
-                                                action={ServiceCategoryController.destroy.url(
-                                                    {
-                                                        service_category:
-                                                            category.id,
-                                                    },
-                                                )}
-                                                method="delete"
-                                                onSubmit={(e) => {
-                                                    if (
-                                                        !confirm(
-                                                            `Are you sure you want to delete "${category.name}"? This will affect ${category.services_count || 0} services.`,
-                                                        )
-                                                    ) {
-                                                        e.preventDefault();
-                                                    }
-                                                }}
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() =>
+                                                    handleDeleteCategory(category)
+                                                }
                                             >
-                                                <Button
-                                                    variant="destructive"
-                                                    size="sm"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </Form>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
                                         </div>
                                     </div>
 
@@ -193,33 +195,15 @@ export default function Index({ categories }: Props) {
                                                                         <Edit className="h-4 w-4" />
                                                                     </Button>
                                                                 </Link>
-                                                                <Form
-                                                                    action={ServiceCategoryController.destroy.url(
-                                                                        {
-                                                                            service_category:
-                                                                                child.id,
-                                                                        },
-                                                                    )}
-                                                                    method="delete"
-                                                                    onSubmit={(
-                                                                        e,
-                                                                    ) => {
-                                                                        if (
-                                                                            !confirm(
-                                                                                `Are you sure you want to delete "${child.name}"?`,
-                                                                            )
-                                                                        ) {
-                                                                            e.preventDefault();
-                                                                        }
-                                                                    }}
+                                                                <Button
+                                                                    variant="destructive"
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        handleDeleteCategory(child)
+                                                                    }
                                                                 >
-                                                                    <Button
-                                                                        variant="destructive"
-                                                                        size="sm"
-                                                                    >
-                                                                        <Trash2 className="h-4 w-4" />
-                                                                    </Button>
-                                                                </Form>
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
                                                             </div>
                                                         </div>
                                                     ),
@@ -232,6 +216,8 @@ export default function Index({ categories }: Props) {
                     </div>
                 )}
             </div>
+
+            <ConfirmDialogComponent />
         </>
     );
 }

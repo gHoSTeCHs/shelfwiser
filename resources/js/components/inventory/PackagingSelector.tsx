@@ -1,6 +1,7 @@
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
 import Input from '@/components/form/input/InputField';
+import { formatCurrency } from '@/lib/formatters';
 import { ProductPackagingType, ProductVariant } from '@/types/stockMovement';
 import { useMemo } from 'react';
 
@@ -56,15 +57,6 @@ export default function PackagingSelector({
             return 0;
         }
         return Math.floor(availableStock / packagingType.units_per_package);
-    };
-
-    const formatCurrency = (amount: number): string => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2,
-        }).format(amount);
     };
 
     if (!variant || packagingTypes.length === 0) {

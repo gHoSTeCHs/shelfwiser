@@ -1,21 +1,28 @@
-import type React from 'react';
+import React, { useState } from 'react';
 
 interface CheckboxProps {
     label?: string;
-    checked: boolean;
+    checked?: boolean;
+    defaultChecked?: boolean;
     className?: string;
     id?: string;
     name?: string;
     tabIndex?: number;
-    onChange: (checked: boolean) => void;
+    onChange?: (checked: boolean) => void;
     disabled?: boolean;
     error?: boolean;
     ariaLabel?: string;
 }
 
+/**
+ * Checkbox component supporting both controlled and uncontrolled modes.
+ * - Controlled: pass `checked` and `onChange`
+ * - Uncontrolled: pass `defaultChecked` (for use with Form component)
+ */
 const Checkbox: React.FC<CheckboxProps> = ({
     label,
     checked,
+    defaultChecked,
     id,
     name,
     tabIndex,
@@ -25,6 +32,18 @@ const Checkbox: React.FC<CheckboxProps> = ({
     error = false,
     ariaLabel,
 }) => {
+    const isControlled = checked !== undefined;
+    const [internalChecked, setInternalChecked] = useState(defaultChecked ?? false);
+    const isChecked = isControlled ? checked : internalChecked;
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newChecked = e.target.checked;
+        if (!isControlled) {
+            setInternalChecked(newChecked);
+        }
+        onChange?.(newChecked);
+    };
+
     return (
         <label
             className={`group flex cursor-pointer items-center space-x-3 ${
@@ -38,13 +57,13 @@ const Checkbox: React.FC<CheckboxProps> = ({
                     tabIndex={tabIndex}
                     type="checkbox"
                     className={`h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 checked:border-transparent checked:bg-brand-500 disabled:opacity-60 dark:border-gray-700 ${className}`}
-                    checked={checked}
-                    onChange={(e) => onChange(e.target.checked)}
+                    checked={isChecked}
+                    onChange={handleChange}
                     disabled={disabled}
                     aria-label={ariaLabel || label}
                     aria-invalid={error ? true : undefined}
                 />
-                {checked && (
+                {isChecked && (
                     <svg
                         className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform"
                         xmlns="http://www.w3.org/2000/svg"

@@ -6,12 +6,11 @@ import EmptyState from '@/components/ui/EmptyState';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
 import { StorefrontHomeProps } from '@/types/storefront';
 import { Link } from '@inertiajs/react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { ArrowRight, Clock, Package, Sparkles } from 'lucide-react';
 import React from 'react';
 
-// Animation variants for staggered children
-const containerVariants = {
+const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
@@ -22,7 +21,7 @@ const containerVariants = {
     },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
         opacity: 1,

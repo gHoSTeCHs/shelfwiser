@@ -3,6 +3,8 @@ import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
+import { getSubscriptionPlanColor } from '@/lib/status-configs';
 import { Head } from '@inertiajs/react';
 import {
     CreditCard,
@@ -43,28 +45,6 @@ interface Props {
 
 export default function Index({ subscriptions, stats, filters, plans }: Props) {
     const [search, setSearch] = useState(filters.search || '');
-
-    const formatDate = (date: string | null) => {
-        if (!date) return 'Never';
-        return new Date(date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
-
-    const getPlanBadgeColor = (plan: string) => {
-        switch (plan.toLowerCase()) {
-            case 'enterprise':
-                return 'primary';
-            case 'professional':
-                return 'success';
-            case 'starter':
-                return 'info';
-            default:
-                return 'light';
-        }
-    };
 
     return (
         <>
@@ -138,7 +118,7 @@ export default function Index({ subscriptions, stats, filters, plans }: Props) {
                                     Total Revenue
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                                    ${stats.total_revenue.toLocaleString()}
+                                    {formatCurrency(stats.total_revenue, 'USD')}
                                 </p>
                             </div>
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-900/20">
@@ -173,6 +153,7 @@ export default function Index({ subscriptions, stats, filters, plans }: Props) {
                                 })),
                             ]}
                             defaultValue={filters.plan || ''}
+                            onChange={() => {}}
                         />
 
                         <Select
@@ -183,6 +164,7 @@ export default function Index({ subscriptions, stats, filters, plans }: Props) {
                                 { value: 'inactive', label: 'Inactive' },
                             ]}
                             defaultValue={filters.status || ''}
+                            onChange={() => {}}
                         />
                     </div>
                 </Card>
@@ -239,7 +221,7 @@ export default function Index({ subscriptions, stats, filters, plans }: Props) {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <Badge
                                                 variant="light"
-                                                color={getPlanBadgeColor(
+                                                color={getSubscriptionPlanColor(
                                                     sub.subscription_plan,
                                                 )}
                                             >
@@ -261,12 +243,12 @@ export default function Index({ subscriptions, stats, filters, plans }: Props) {
                                             </Badge>
                                         </td>
                                         <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                                            {formatDate(
+                                            {sub.subscription_ends_at ? formatDateShort(
                                                 sub.subscription_ends_at,
-                                            )}
+                                            ) : 'Never'}
                                         </td>
                                         <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                                            {formatDate(sub.created_at)}
+                                            {formatDateShort(sub.created_at)}
                                         </td>
                                     </tr>
                                 ))}

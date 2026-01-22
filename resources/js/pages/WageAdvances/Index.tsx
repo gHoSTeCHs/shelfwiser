@@ -1,4 +1,6 @@
 import WageAdvanceController from '@/actions/App/Http/Controllers/WageAdvanceController.ts';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
+import { wageAdvanceStatusConfig } from '@/lib/status-configs';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
@@ -113,46 +115,6 @@ const WageAdvancesIndex = ({
         );
     };
 
-    const getStatusBadge = (status: string) => {
-        const statusConfig: Record<
-            string,
-            {
-                color: 'light' | 'warning' | 'success' | 'error' | 'info';
-                label: string;
-            }
-        > = {
-            pending: { color: 'warning', label: 'Pending' },
-            approved: { color: 'success', label: 'Approved' },
-            rejected: { color: 'error', label: 'Rejected' },
-            disbursed: { color: 'info', label: 'Disbursed' },
-            repaying: { color: 'primary' as 'info', label: 'Repaying' },
-            completed: { color: 'success', label: 'Completed' },
-            cancelled: { color: 'light', label: 'Cancelled' },
-        };
-
-        const config = statusConfig[status] || {
-            color: 'light' as const,
-            label: status,
-        };
-        return <Badge color={config.color}>{config.label}</Badge>;
-    };
-
-    const formatDate = (datetime: string | null) => {
-        if (!datetime) return '-';
-        return new Date(datetime).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-    };
-
-    const formatAmount = (amount: string | number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(Number(amount));
-    };
-
     return (
         <div className="h-screen">
             <Head title="Wage Advances" />
@@ -218,7 +180,7 @@ const WageAdvancesIndex = ({
                                 <p
                                     className={`text-lg font-bold ${eligibility.is_eligible ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}
                                 >
-                                    {formatAmount(eligibility.max_amount)}
+                                    {formatCurrency(eligibility.max_amount)}
                                 </p>
                             </div>
                         </div>
@@ -233,7 +195,7 @@ const WageAdvancesIndex = ({
                                     Total Requested
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                                    {formatAmount(
+                                    {formatCurrency(
                                         statistics.total_amount_requested,
                                     )}
                                 </p>
@@ -251,7 +213,7 @@ const WageAdvancesIndex = ({
                                     Total Disbursed
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                    {formatAmount(
+                                    {formatCurrency(
                                         statistics.total_amount_disbursed,
                                     )}
                                 </p>
@@ -269,7 +231,7 @@ const WageAdvancesIndex = ({
                                     Total Repaid
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">
-                                    {formatAmount(
+                                    {formatCurrency(
                                         statistics.total_amount_repaid,
                                     )}
                                 </p>
@@ -429,7 +391,7 @@ const WageAdvancesIndex = ({
                                         >
                                             <td className="px-6 py-4">
                                                 <p className="font-medium text-gray-900 dark:text-white">
-                                                    {formatDate(
+                                                    {formatDateShort(
                                                         advance.requested_at,
                                                     )}
                                                 </p>
@@ -437,7 +399,7 @@ const WageAdvancesIndex = ({
                                             <td className="px-6 py-4">
                                                 <div>
                                                     <p className="font-semibold text-gray-900 dark:text-white">
-                                                        {formatAmount(
+                                                        {formatCurrency(
                                                             advance.amount_approved ||
                                                                 advance.amount_requested,
                                                         )}
@@ -447,7 +409,7 @@ const WageAdvancesIndex = ({
                                                             advance.amount_requested && (
                                                             <p className="text-xs text-gray-500 dark:text-gray-400">
                                                                 Requested:{' '}
-                                                                {formatAmount(
+                                                                {formatCurrency(
                                                                     advance.amount_requested,
                                                                 )}
                                                             </p>
@@ -464,13 +426,15 @@ const WageAdvancesIndex = ({
                                             </td>
                                             <td className="px-6 py-4">
                                                 <p className="font-medium text-green-600 dark:text-green-400">
-                                                    {formatAmount(
+                                                    {formatCurrency(
                                                         advance.amount_repaid,
                                                     )}
                                                 </p>
                                             </td>
                                             <td className="px-6 py-4">
-                                                {getStatusBadge(advance.status)}
+                                                <Badge color={wageAdvanceStatusConfig[advance.status]?.color || 'gray'}>
+                                                    {wageAdvanceStatusConfig[advance.status]?.label || advance.status}
+                                                </Badge>
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <Link

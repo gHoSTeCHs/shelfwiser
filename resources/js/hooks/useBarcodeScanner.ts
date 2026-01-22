@@ -58,15 +58,7 @@ export function useBarcodeScanner(
 
     const inputRef = useRef<HTMLInputElement>(null);
     const videoRef = useRef<HTMLDivElement>(null);
-    const html5QrCodeRef = useRef<{
-        start: (
-            cameraIdOrConfig: unknown,
-            configuration: unknown,
-            qrCodeSuccessCallback: (decodedText: string) => void,
-            qrCodeErrorCallback?: () => void,
-        ) => Promise<void>;
-        stop: () => Promise<void>;
-    } | null>(null);
+    const html5QrCodeRef = useRef<{ stop: () => Promise<void> } | null>(null);
 
     // Track keystroke timing for scanner detection
     const keystrokeTimesRef = useRef<number[]>([]);

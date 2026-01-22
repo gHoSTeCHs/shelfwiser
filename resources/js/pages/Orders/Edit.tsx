@@ -9,6 +9,7 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/useToast';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency } from '@/lib/formatters';
 import { Order, OrderItem } from '@/types/order';
 import { Shop } from '@/types/shop';
 import { ProductVariant } from '@/types/stockMovement';
@@ -50,7 +51,7 @@ export default function Edit({ order, shops, products }: Props) {
     const [items, setItems] = useState<OrderItemForm[]>(
         order.items.map((item) => ({
             id: item.id,
-            product_variant_id: item.product_variant_id,
+            product_variant_id: item.product_variant_id ?? '',
             product_packaging_type_id: item.product_packaging_type_id,
             package_quantity: item.package_quantity || 1,
             quantity: item.quantity,
@@ -92,7 +93,7 @@ export default function Edit({ order, shops, products }: Props) {
 
                     if (field === 'product_variant_id' && value) {
                         const variant = products.find(
-                            (p) => p.id === parseInt(value),
+                            (p) => p.id === parseInt(String(value)),
                         );
                         if (variant) {
                             updated.product_packaging_type_id = null;
@@ -307,8 +308,8 @@ export default function Edit({ order, shops, products }: Props) {
                                                                 .length > 0 && (
                                                                 <div>
                                                                     <PackagingSelector
-                                                                        packagingTypes={
-                                                                            variant.packaging_types
+                                                                        variant={
+                                                                            variant
                                                                         }
                                                                         selectedPackagingTypeId={
                                                                             item.product_packaging_type_id
@@ -316,7 +317,7 @@ export default function Edit({ order, shops, products }: Props) {
                                                                         packageQuantity={
                                                                             item.package_quantity
                                                                         }
-                                                                        onPackagingChange={(
+                                                                        onPackagingTypeChange={(
                                                                             id,
                                                                         ) =>
                                                                             updateItem(
@@ -325,7 +326,7 @@ export default function Edit({ order, shops, products }: Props) {
                                                                                 id,
                                                                             )
                                                                         }
-                                                                        onQuantityChange={(
+                                                                        onPackageQuantityChange={(
                                                                             qty,
                                                                         ) =>
                                                                             updateItem(
@@ -333,9 +334,6 @@ export default function Edit({ order, shops, products }: Props) {
                                                                                 'package_quantity',
                                                                                 qty,
                                                                             )
-                                                                        }
-                                                                        disabled={
-                                                                            !canEdit
                                                                         }
                                                                     />
                                                                     <input
@@ -447,10 +445,7 @@ export default function Edit({ order, shops, products }: Props) {
 
                                                     <div className="mt-3 flex justify-end border-t border-gray-200 pt-3 dark:border-gray-700">
                                                         <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                            Item Total: $
-                                                            {itemTotal.toFixed(
-                                                                2,
-                                                            )}
+                                                            Item Total: {formatCurrency(itemTotal, 'USD')}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -600,10 +595,7 @@ export default function Edit({ order, shops, products }: Props) {
                                                             Subtotal
                                                         </span>
                                                         <span className="font-medium text-gray-900 dark:text-white">
-                                                            $
-                                                            {subtotal.toFixed(
-                                                                2,
-                                                            )}
+                                                            {formatCurrency(subtotal, 'USD')}
                                                         </span>
                                                     </div>
                                                     <div className="flex justify-between text-sm">
@@ -611,10 +603,7 @@ export default function Edit({ order, shops, products }: Props) {
                                                             Shipping
                                                         </span>
                                                         <span className="font-medium text-gray-900 dark:text-white">
-                                                            $
-                                                            {shippingCost.toFixed(
-                                                                2,
-                                                            )}
+                                                            {formatCurrency(shippingCost, 'USD')}
                                                         </span>
                                                     </div>
                                                     <div className="flex justify-between border-t border-gray-200 pt-2 dark:border-gray-700">
@@ -622,7 +611,7 @@ export default function Edit({ order, shops, products }: Props) {
                                                             Total
                                                         </span>
                                                         <span className="text-base font-semibold text-gray-900 dark:text-white">
-                                                            ${total.toFixed(2)}
+                                                            {formatCurrency(total, 'USD')}
                                                         </span>
                                                     </div>
                                                 </div>

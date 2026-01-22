@@ -3,7 +3,10 @@ import StorefrontController from '@/actions/App/Http/Controllers/Storefront/Stor
 import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
+import useCurrency from '@/hooks/useCurrency';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
+import { getOrderStatusColor, getOrderStatusLabel, getPaymentStatusColor, getPaymentStatusLabel } from '@/lib/status-configs';
+import { Service, ServiceVariant } from '@/types/service';
 import { CheckoutSuccessProps, OrderItem } from '@/types/storefront';
 import { Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
@@ -15,6 +18,7 @@ import React from 'react';
  * Shows order details and next steps.
  */
 const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
+    const { formatCurrency } = useCurrency(shop);
     const shippingAddress = JSON.parse(order.shipping_address);
 
     const isProduct = (item: OrderItem) => {
@@ -32,7 +36,8 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
         if (isProduct(item)) {
             return item.productVariant?.product?.name || 'Product';
         } else if (isService(item)) {
-            return item.sellable?.service?.name || 'Service';
+            const serviceVariant = item.sellable as (ServiceVariant & { service?: Service }) | undefined;
+            return serviceVariant?.service?.name || 'Service';
         }
         return 'Item';
     };
@@ -110,8 +115,8 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
                                     {order.order_number}
                                 </p>
                             </div>
-                            <Badge color="primary" size="sm">
-                                {order.status.replace('_', ' ').toUpperCase()}
+                            <Badge color={getOrderStatusColor(order.status)} size="sm">
+                                {getOrderStatusLabel(order.status)}
                             </Badge>
                         </div>
                     </div>
@@ -144,8 +149,7 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
                                         </p>
                                     </div>
                                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                        {shop.currency_symbol}
-                                        {item.total_amount.toFixed(2)}
+                                        {formatCurrency(item.total_amount)}
                                     </p>
                                 </div>
                             ))}
@@ -158,8 +162,7 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
                                     Subtotal
                                 </p>
                                 <p className="text-gray-900 dark:text-white">
-                                    {shop.currency_symbol}
-                                    {order.subtotal.toFixed(2)}
+                                    {formatCurrency(order.subtotal)}
                                 </p>
                             </div>
                             {order.tax_amount > 0 && (
@@ -168,8 +171,7 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
                                         Tax
                                     </p>
                                     <p className="text-gray-900 dark:text-white">
-                                        {shop.currency_symbol}
-                                        {order.tax_amount.toFixed(2)}
+                                        {formatCurrency(order.tax_amount)}
                                     </p>
                                 </div>
                             )}
@@ -179,8 +181,7 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
                                         Shipping
                                     </p>
                                     <p className="text-gray-900 dark:text-white">
-                                        {shop.currency_symbol}
-                                        {order.shipping_cost.toFixed(2)}
+                                        {formatCurrency(order.shipping_cost)}
                                     </p>
                                 </div>
                             )}
@@ -189,8 +190,7 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
                                     Total
                                 </p>
                                 <p className="text-brand-600 dark:text-brand-400">
-                                    {shop.currency_symbol}
-                                    {order.total_amount.toFixed(2)}
+                                    {formatCurrency(order.total_amount)}
                                 </p>
                             </div>
                         </div>
@@ -247,14 +247,10 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
                                     Status:
                                 </span>
                                 <Badge
-                                    color={
-                                        order.payment_status === 'paid'
-                                            ? 'success'
-                                            : 'warning'
-                                    }
+                                    color={getPaymentStatusColor(order.payment_status)}
                                     size="sm"
                                 >
-                                    {order.payment_status.toUpperCase()}
+                                    {getPaymentStatusLabel(order.payment_status)}
                                 </Badge>
                             </div>
                         </div>

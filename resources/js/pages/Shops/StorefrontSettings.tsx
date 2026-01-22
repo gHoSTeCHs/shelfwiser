@@ -22,10 +22,10 @@ interface StorefrontSettingsProps {
  * Admin storefront settings page for configuring shop's e-commerce frontend.
  * Controls storefront status, currency, tax, shipping, appearance, and SEO settings.
  */
-const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
+export default function StorefrontSettings({
     shop,
     currencies,
-}) => {
+}: StorefrontSettingsProps) {
     const [storefrontEnabled, setStorefrontEnabled] = React.useState(
         shop.storefront_enabled,
     );
@@ -115,7 +115,7 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                     })}
                     method="patch"
                 >
-                    {({ errors, processing, data, setData }) => (
+                    {({ errors, processing }) => (
                         <div className="space-y-6">
                             <Card className="p-6">
                                 <h2 className="mb-6 text-xl font-semibold text-gray-900">
@@ -127,17 +127,9 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                         <Checkbox
                                             id="storefront_enabled"
                                             checked={storefrontEnabled}
-                                            onChange={(e) => {
-                                                setStorefrontEnabled(
-                                                    e.target.checked,
-                                                );
-                                                setData(
-                                                    'storefront_enabled',
-                                                    e.target.checked
-                                                        ? '1'
-                                                        : '0',
-                                                );
-                                            }}
+                                            onChange={(checked) =>
+                                                setStorefrontEnabled(checked)
+                                            }
                                         />
                                         <Label
                                             htmlFor="storefront_enabled"
@@ -162,17 +154,11 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                                 <Checkbox
                                                     id="allow_retail_sales"
                                                     checked={allowRetailSales}
-                                                    onChange={(e) => {
+                                                    onChange={(checked) =>
                                                         setAllowRetailSales(
-                                                            e.target.checked,
-                                                        );
-                                                        setData(
-                                                            'allow_retail_sales',
-                                                            e.target.checked
-                                                                ? '1'
-                                                                : '0',
-                                                        );
-                                                    }}
+                                                            checked,
+                                                        )
+                                                    }
                                                 />
                                                 <Label
                                                     htmlFor="allow_retail_sales"
@@ -213,15 +199,9 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                         <Select
                                             options={currencyOptions}
                                             defaultValue={selectedCurrency}
-                                            onChange={(value) => {
-                                                const symbol =
-                                                    handleCurrencyChange(value);
-                                                setData({
-                                                    ...data,
-                                                    currency: value,
-                                                    currency_symbol: symbol,
-                                                });
-                                            }}
+                                            onChange={(value) =>
+                                                handleCurrencyChange(value)
+                                            }
                                         />
                                         <input
                                             type="hidden"
@@ -244,12 +224,6 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                             id="currency_symbol"
                                             defaultValue={shop.currency_symbol}
                                             error={!!errors.currency_symbol}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'currency_symbol',
-                                                    e.target.value,
-                                                )
-                                            }
                                         />
                                         <InputError
                                             message={errors.currency_symbol}
@@ -271,12 +245,6 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                             error={!!errors.currency_decimals}
                                             min={0}
                                             max={4}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'currency_decimals',
-                                                    e.target.value,
-                                                )
-                                            }
                                         />
                                         <InputError
                                             message={errors.currency_decimals}
@@ -295,15 +263,9 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                         <Checkbox
                                             id="vat_enabled"
                                             checked={vatEnabled}
-                                            onChange={(e) => {
-                                                setVatEnabled(e.target.checked);
-                                                setData(
-                                                    'vat_enabled',
-                                                    e.target.checked
-                                                        ? '1'
-                                                        : '0',
-                                                );
-                                            }}
+                                            onChange={(checked) =>
+                                                setVatEnabled(checked)
+                                            }
                                         />
                                         <Label
                                             htmlFor="vat_enabled"
@@ -339,12 +301,6 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                                         min={0}
                                                         max={100}
                                                         step={0.01}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'vat_rate',
-                                                                e.target.value,
-                                                            )
-                                                        }
                                                     />
                                                     <InputError
                                                         message={
@@ -360,19 +316,13 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                                             checked={
                                                                 vatInclusive
                                                             }
-                                                            onChange={(e) => {
+                                                            onChange={(
+                                                                checked,
+                                                            ) =>
                                                                 setVatInclusive(
-                                                                    e.target
-                                                                        .checked,
-                                                                );
-                                                                setData(
-                                                                    'vat_inclusive',
-                                                                    e.target
-                                                                        .checked
-                                                                        ? '1'
-                                                                        : '0',
-                                                                );
-                                                            }}
+                                                                    checked,
+                                                                )
+                                                            }
                                                         />
                                                         <Label
                                                             htmlFor="vat_inclusive"
@@ -424,12 +374,6 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                             error={!!errors.shipping_fee}
                                             min={0}
                                             step={0.01}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'shipping_fee',
-                                                    e.target.value,
-                                                )
-                                            }
                                         />
                                         <InputError
                                             message={errors.shipping_fee}
@@ -455,12 +399,6 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                             min={0}
                                             step={0.01}
                                             hint="Orders above this amount ship for free"
-                                            onChange={(e) =>
-                                                setData(
-                                                    'free_shipping_threshold',
-                                                    e.target.value,
-                                                )
-                                            }
                                         />
                                         <InputError
                                             message={
@@ -481,42 +419,17 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                         <Label htmlFor="theme_color">
                                             Theme Color
                                         </Label>
-                                        <div className="flex gap-3">
-                                            <Input
-                                                type="color"
-                                                name="theme_color"
-                                                id="theme_color"
-                                                defaultValue={
-                                                    shop.storefront_settings
-                                                        ?.theme_color ||
-                                                    '#6366f1'
-                                                }
-                                                error={!!errors.theme_color}
-                                                className="h-10 w-20"
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'theme_color',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                            <Input
-                                                type="text"
-                                                defaultValue={
-                                                    shop.storefront_settings
-                                                        ?.theme_color ||
-                                                    '#6366f1'
-                                                }
-                                                error={!!errors.theme_color}
-                                                className="flex-1"
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'theme_color',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                        </div>
+                                        <Input
+                                            type="color"
+                                            name="theme_color"
+                                            id="theme_color"
+                                            defaultValue={
+                                                shop.storefront_settings
+                                                    ?.theme_color || '#6366f1'
+                                            }
+                                            error={!!errors.theme_color}
+                                            className="h-10 w-20"
+                                        />
                                         <InputError
                                             message={errors.theme_color}
                                         />
@@ -536,12 +449,6 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                             }
                                             error={!!errors.logo_url}
                                             hint="Link to your shop logo image"
-                                            onChange={(e) =>
-                                                setData(
-                                                    'logo_url',
-                                                    e.target.value,
-                                                )
-                                            }
                                         />
                                         <InputError message={errors.logo_url} />
                                     </div>
@@ -560,12 +467,6 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                             }
                                             error={!!errors.banner_url}
                                             hint="Link to your homepage banner image"
-                                            onChange={(e) =>
-                                                setData(
-                                                    'banner_url',
-                                                    e.target.value,
-                                                )
-                                            }
                                         />
                                         <InputError
                                             message={errors.banner_url}
@@ -594,12 +495,6 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                             }
                                             error={!!errors.meta_title}
                                             hint="SEO title for search engines (max 100 characters)"
-                                            onChange={(e) =>
-                                                setData(
-                                                    'meta_title',
-                                                    e.target.value,
-                                                )
-                                            }
                                         />
                                         <InputError
                                             message={errors.meta_title}
@@ -620,12 +515,6 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                             error={!!errors.meta_description}
                                             hint="SEO description for search engines (max 200 characters)"
                                             rows={3}
-                                            onChange={(value) =>
-                                                setData(
-                                                    'meta_description',
-                                                    value,
-                                                )
-                                            }
                                         />
                                         <InputError
                                             message={errors.meta_description}
@@ -654,12 +543,6 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                             }
                                             error={!!errors.social_facebook}
                                             placeholder="https://facebook.com/yourpage"
-                                            onChange={(e) =>
-                                                setData(
-                                                    'social_facebook',
-                                                    e.target.value,
-                                                )
-                                            }
                                         />
                                         <InputError
                                             message={errors.social_facebook}
@@ -680,12 +563,6 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                             }
                                             error={!!errors.social_instagram}
                                             placeholder="https://instagram.com/yourprofile"
-                                            onChange={(e) =>
-                                                setData(
-                                                    'social_instagram',
-                                                    e.target.value,
-                                                )
-                                            }
                                         />
                                         <InputError
                                             message={errors.social_instagram}
@@ -706,12 +583,6 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                             }
                                             error={!!errors.social_twitter}
                                             placeholder="https://twitter.com/yourhandle"
-                                            onChange={(e) =>
-                                                setData(
-                                                    'social_twitter',
-                                                    e.target.value,
-                                                )
-                                            }
                                         />
                                         <InputError
                                             message={errors.social_twitter}
@@ -740,9 +611,6 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
                                         hint="Operating hours for customer reference"
                                         rows={4}
                                         placeholder="Mon-Fri: 9:00 AM - 6:00 PM&#10;Sat: 10:00 AM - 4:00 PM&#10;Sun: Closed"
-                                        onChange={(value) =>
-                                            setData('business_hours', value)
-                                        }
                                     />
                                     <InputError
                                         message={errors.business_hours}
@@ -773,5 +641,3 @@ const StorefrontSettings: React.FC<StorefrontSettingsProps> = ({
 StorefrontSettings.layout = (page: React.ReactNode) => (
     <AppLayout>{page}</AppLayout>
 );
-
-export default StorefrontSettings;

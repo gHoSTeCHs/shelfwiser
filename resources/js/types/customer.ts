@@ -178,16 +178,7 @@ export const DEFAULT_UPDATE_CUSTOMER_FORM_DATA: UpdateCustomerFormData = {
     credit_limit: '',
 };
 
-export function formatCurrency(amount: number | string): string {
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    if (isNaN(num)) return '₦0';
-    return new Intl.NumberFormat('en-NG', {
-        style: 'currency',
-        currency: 'NGN',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(num);
-}
+export { formatCurrency } from '@/lib/formatters';
 
 export function getAvailableCredit(customer: Customer): number | null {
     if (!customer.credit_limit) return null;

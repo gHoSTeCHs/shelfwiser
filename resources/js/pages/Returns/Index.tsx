@@ -4,6 +4,8 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
+import { getReturnStatusColor } from '@/lib/status-configs';
 import { OrderReturn } from '@/types/return';
 import { Head, Link, router } from '@inertiajs/react';
 import { Eye, Filter, Package, RefreshCw } from 'lucide-react';
@@ -24,38 +26,6 @@ interface Props {
 
 export default function Index({ returns, filters }: Props) {
     const [statusFilter, setStatusFilter] = useState(filters.status || '');
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'pending':
-                return 'warning';
-            case 'approved':
-                return 'success';
-            case 'rejected':
-                return 'error';
-            case 'completed':
-                return 'info';
-            default:
-                return 'light';
-        }
-    };
-
-    const formatDate = (dateString: string | null): string => {
-        if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
-
-    const formatCurrency = (amount: number | null): string => {
-        if (!amount) return 'N/A';
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(amount);
-    };
 
     const handleFilterChange = (status: string) => {
         setStatusFilter(status);
@@ -82,7 +52,6 @@ export default function Index({ returns, filters }: Props) {
                     </div>
                 </div>
 
-                {/* Filters */}
                 <Card className="p-4">
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
@@ -106,7 +75,6 @@ export default function Index({ returns, filters }: Props) {
                     </div>
                 </Card>
 
-                {/* Returns List */}
                 {returns.data.length === 0 ? (
                     <EmptyState
                         icon={<Package className="h-12 w-12" />}
@@ -169,7 +137,7 @@ export default function Index({ returns, filters }: Props) {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <Badge
-                                                    color={getStatusColor(
+                                                    color={getReturnStatusColor(
                                                         returnItem.status,
                                                     )}
                                                     size="sm"
@@ -181,12 +149,14 @@ export default function Index({ returns, filters }: Props) {
                                                 {returnItem.reason}
                                             </td>
                                             <td className="px-6 py-4 text-right text-sm whitespace-nowrap text-gray-900 dark:text-white">
-                                                {formatCurrency(
-                                                    returnItem.refund_amount,
-                                                )}
+                                                {returnItem.refund_amount
+                                                    ? formatCurrency(
+                                                          returnItem.refund_amount,
+                                                      )
+                                                    : 'N/A'}
                                             </td>
                                             <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                                                {formatDate(
+                                                {formatDateShort(
                                                     returnItem.created_at,
                                                 )}
                                             </td>
@@ -209,7 +179,6 @@ export default function Index({ returns, filters }: Props) {
                             </table>
                         </div>
 
-                        {/* Pagination */}
                         {returns.last_page > 1 && (
                             <div className="border-t border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-800">
                                 <div className="flex items-center justify-between">

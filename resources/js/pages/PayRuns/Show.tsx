@@ -3,7 +3,10 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateTime, formatPercentage } from '@/lib/formatters';
+import { getPayRunItemStatusColor, getPayRunStatusColor, getPayRunStatusLabel } from '@/lib/status-configs';
 import type { PayRun, PayRunItem, PayRunSummary } from '@/types/payroll';
 import { Form, Head, Link, router } from '@inertiajs/react';
 import {
@@ -29,6 +32,7 @@ interface Props {
 }
 
 export default function Show({ payRun, summary }: Props) {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
     const [selectedItem, setSelectedItem] = useState<PayRunItem | null>(null);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectReason, setRejectReason] = useState('');
@@ -36,72 +40,32 @@ export default function Show({ payRun, summary }: Props) {
     const [excludeReason, setExcludeReason] = useState('');
     const [excludeUserId, setExcludeUserId] = useState<number | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [cancelling, setCancelling] = useState(false);
 
-    const formatCurrency = (amount: string | number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(parseFloat(amount.toString()));
-    };
-
-    const formatDate = (dateString: string | null) => {
-        if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('en-NG', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
+    const handleCancelPayRun = async () => {
+        const confirmed = await confirm({
+            title: 'Cancel Pay Run',
+            message: 'Are you sure you want to cancel this pay run?',
+            variant: 'danger',
+            confirmLabel: 'Cancel Pay Run',
+            cancelLabel: 'Go Back',
         });
-    };
+        if (!confirmed) return;
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'draft':
-                return 'light';
-            case 'calculating':
-            case 'processing':
-                return 'info';
-            case 'pending_review':
-            case 'pending_approval':
-                return 'warning';
-            case 'approved':
-            case 'completed':
-                return 'success';
-            case 'cancelled':
-                return 'error';
-            default:
-                return 'light';
-        }
-    };
-
-    const getItemStatusColor = (status: string) => {
-        switch (status) {
-            case 'pending':
-                return 'light';
-            case 'calculated':
-                return 'success';
-            case 'error':
-                return 'error';
-            case 'excluded':
-                return 'warning';
-            default:
-                return 'light';
-        }
-    };
-
-    const getStatusLabel = (status: string) => {
-        const labels: Record<string, string> = {
-            draft: 'Draft',
-            calculating: 'Calculating',
-            pending_review: 'Pending Review',
-            pending_approval: 'Pending Approval',
-            approved: 'Approved',
-            processing: 'Processing',
-            completed: 'Completed',
-            cancelled: 'Cancelled',
-        };
-        return labels[status] || status;
+        setCancelling(true);
+        setErrorMessage(null);
+        router.post(
+            PayRunController.cancel.url({ payRun: payRun.id }),
+            {},
+            {
+                onError: (errors) => {
+                    setErrorMessage(
+                        Object.values(errors).flat().join(', ') || 'Failed to cancel pay run',
+                    );
+                },
+                onFinish: () => setCancelling(false),
+            },
+        );
     };
 
     const canCalculate =
@@ -144,8 +108,8 @@ export default function Show({ payRun, summary }: Props) {
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                             {payRun.reference}
                         </h1>
-                        <Badge color={getStatusColor(payRun.status)} size="md">
-                            {getStatusLabel(payRun.status)}
+                        <Badge color={getPayRunStatusColor(payRun.status)} size="md">
+                            {getPayRunStatusLabel(payRun.status)}
                         </Badge>
                         {taxLawLabel && (
                             <Badge
@@ -268,56 +232,27 @@ export default function Show({ payRun, summary }: Props) {
                     )}
 
                     {payRun.status === 'completed' && (
-                        <Form
-                            action={PayRunController.downloadPayslips.url({
-                                payRun: payRun.id,
-                            })}
-                            method="post"
+                        <a
+                            href={`/pay-runs/${payRun.id}/download-payslips`}
+                            className="contents"
                         >
-                            {({ processing }) => (
-                                <Button
-                                    type="submit"
-                                    variant="outline"
-                                    startIcon={<Download className="h-4 w-4" />}
-                                    disabled={processing}
-                                    loading={processing}
-                                    className="w-full sm:w-auto"
-                                >
-                                    Download Payslips
-                                </Button>
-                            )}
-                        </Form>
+                            <Button
+                                variant="outline"
+                                startIcon={<Download className="h-4 w-4" />}
+                                className="w-full sm:w-auto"
+                            >
+                                Download Payslips
+                            </Button>
+                        </a>
                     )}
 
                     {canCancel && (
                         <Button
                             variant="destructive"
                             startIcon={<XCircle className="h-4 w-4" />}
-                            onClick={() => {
-                                if (
-                                    confirm(
-                                        'Are you sure you want to cancel this pay run?',
-                                    )
-                                ) {
-                                    setErrorMessage(null);
-                                    router.post(
-                                        PayRunController.cancel.url({
-                                            payRun: payRun.id,
-                                        }),
-                                        {},
-                                        {
-                                            onError: (errors) => {
-                                                setErrorMessage(
-                                                    Object.values(errors)
-                                                        .flat()
-                                                        .join(', ') ||
-                                                        'Failed to cancel pay run',
-                                                );
-                                            },
-                                        },
-                                    );
-                                }
-                            }}
+                            onClick={handleCancelPayRun}
+                            disabled={cancelling}
+                            loading={cancelling}
                             className="w-full sm:w-auto"
                         >
                             Cancel
@@ -560,7 +495,7 @@ export default function Show({ payRun, summary }: Props) {
                                     <td className="px-4 py-3">
                                         <div className="flex flex-col gap-1">
                                             <Badge
-                                                color={getItemStatusColor(
+                                                color={getPayRunItemStatusColor(
                                                     item.status,
                                                 )}
                                                 size="sm"
@@ -624,7 +559,7 @@ export default function Show({ payRun, summary }: Props) {
                                             {canCalculate &&
                                                 item.status === 'excluded' && (
                                                     <Form
-                                                        action={PayRunController.include.url(
+                                                        action={PayRunController.includeEmployee.url(
                                                             {
                                                                 payRun: payRun.id,
                                                                 user: item.user_id,
@@ -685,7 +620,7 @@ export default function Show({ payRun, summary }: Props) {
                             Created
                         </span>
                         <span className="text-gray-900 dark:text-white">
-                            {formatDate(payRun.created_at)}
+                            {formatDateTime(payRun.created_at)}
                         </span>
                     </div>
                     {payRun.calculated_at && (
@@ -694,7 +629,7 @@ export default function Show({ payRun, summary }: Props) {
                                 Calculated
                             </span>
                             <span className="text-gray-900 dark:text-white">
-                                {formatDate(payRun.calculated_at)}
+                                {formatDateTime(payRun.calculated_at)}
                                 {payRun.calculated_by_user &&
                                     ` by ${payRun.calculated_by_user.name}`}
                             </span>
@@ -706,7 +641,7 @@ export default function Show({ payRun, summary }: Props) {
                                 Approved
                             </span>
                             <span className="text-gray-900 dark:text-white">
-                                {formatDate(payRun.approved_at)}
+                                {formatDateTime(payRun.approved_at)}
                                 {payRun.approved_by_user &&
                                     ` by ${payRun.approved_by_user.name}`}
                             </span>
@@ -718,7 +653,7 @@ export default function Show({ payRun, summary }: Props) {
                                 Completed
                             </span>
                             <span className="text-gray-900 dark:text-white">
-                                {formatDate(payRun.completed_at)}
+                                {formatDateTime(payRun.completed_at)}
                                 {payRun.completed_by_user &&
                                     ` by ${payRun.completed_by_user.name}`}
                             </span>
@@ -919,10 +854,10 @@ export default function Show({ payRun, summary }: Props) {
                                     <div className="flex justify-between text-gray-500 dark:text-gray-400">
                                         <span>Effective Rate</span>
                                         <span>
-                                            {selectedItem.tax_calculation.effective_rate?.toFixed(
+                                            {formatPercentage(
+                                                selectedItem.tax_calculation.effective_rate || 0,
                                                 2,
-                                            ) || '0.00'}
-                                            %
+                                            )}
                                         </span>
                                     </div>
                                     {selectedItem.tax_calculation
@@ -1026,7 +961,7 @@ export default function Show({ payRun, summary }: Props) {
                         <Form
                             action={PayRunController.excludeEmployee.url({
                                 payRun: payRun.id,
-                                user: excludeUserId,
+                                user: excludeUserId!,
                             })}
                             method="post"
                             className="w-full sm:w-auto"
@@ -1047,6 +982,8 @@ export default function Show({ payRun, summary }: Props) {
                     </div>
                 </div>
             </Modal>
+
+            <ConfirmDialogComponent />
         </>
     );
 }

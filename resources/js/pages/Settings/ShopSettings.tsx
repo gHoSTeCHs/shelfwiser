@@ -137,8 +137,8 @@ export default function ShopSettings({
                                             id="enable_tax_calculations"
                                             name="enable_tax_calculations"
                                             checked={enableTax}
-                                            onChange={(e) =>
-                                                setEnableTax(e.target.checked)
+                                            onChange={(checked) =>
+                                                setEnableTax(checked)
                                             }
                                         />
                                         <Label htmlFor="enable_tax_calculations">
@@ -353,10 +353,8 @@ export default function ShopSettings({
                                             id="default_pension_enabled"
                                             name="default_pension_enabled"
                                             checked={pensionEnabled}
-                                            onChange={(e) =>
-                                                setPensionEnabled(
-                                                    e.target.checked,
-                                                )
+                                            onChange={(checked) =>
+                                                setPensionEnabled(checked)
                                             }
                                         />
                                         <div>
@@ -375,8 +373,8 @@ export default function ShopSettings({
                                             id="default_nhf_enabled"
                                             name="default_nhf_enabled"
                                             checked={nhfEnabled}
-                                            onChange={(e) =>
-                                                setNhfEnabled(e.target.checked)
+                                            onChange={(checked) =>
+                                                setNhfEnabled(checked)
                                             }
                                         />
                                         <div>
@@ -395,8 +393,8 @@ export default function ShopSettings({
                                             id="default_nhis_enabled"
                                             name="default_nhis_enabled"
                                             checked={nhisEnabled}
-                                            onChange={(e) =>
-                                                setNhisEnabled(e.target.checked)
+                                            onChange={(checked) =>
+                                                setNhisEnabled(checked)
                                             }
                                         />
                                         <div>

@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateTime } from '@/lib/formatters';
+import { getReturnStatusColor } from '@/lib/status-configs';
 import { OrderReturn } from '@/types/return';
 import { Form, Head, Link } from '@inertiajs/react';
 import {
@@ -34,40 +36,6 @@ export default function Show({ return: returnData, can_approve }: Props) {
     const [processRefund, setProcessRefund] = useState(true);
     const [rejectionReason, setRejectionReason] = useState('');
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'pending':
-                return 'warning';
-            case 'approved':
-                return 'success';
-            case 'rejected':
-                return 'error';
-            case 'completed':
-                return 'info';
-            default:
-                return 'light';
-        }
-    };
-
-    const formatDate = (dateString: string | null): string => {
-        if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
-
-    const formatCurrency = (amount: number | null): string => {
-        if (!amount) return 'N/A';
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(amount);
-    };
-
     return (
         <AppLayout>
             <Head title={`Return ${returnData.return_number}`} />
@@ -88,7 +56,7 @@ export default function Show({ return: returnData, can_approve }: Props) {
                             </h1>
                             <Badge
                                 variant="light"
-                                color={getStatusColor(returnData.status)}
+                                color={getReturnStatusColor(returnData.status)}
                             >
                                 {returnData.status}
                             </Badge>
@@ -121,7 +89,6 @@ export default function Show({ return: returnData, can_approve }: Props) {
 
                 <div className="grid gap-6 lg:grid-cols-3">
                     <div className="space-y-6 lg:col-span-2">
-                        {/* Return Items */}
                         <Card title="Returned Items">
                             <div className="overflow-x-auto">
                                 <table className="w-full">
@@ -189,7 +156,6 @@ export default function Show({ return: returnData, can_approve }: Props) {
                             </div>
                         </Card>
 
-                        {/* Return Details */}
                         <Card title="Return Details">
                             <div className="space-y-4">
                                 <div>
@@ -212,7 +178,6 @@ export default function Show({ return: returnData, can_approve }: Props) {
                     </div>
 
                     <div className="space-y-6">
-                        {/* Summary */}
                         <Card title="Summary">
                             <div className="space-y-3">
                                 <div className="flex items-center text-sm">
@@ -231,7 +196,7 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                         Created
                                     </span>
                                     <span className="ml-auto text-gray-900 dark:text-white">
-                                        {formatDate(returnData.created_at)}
+                                        {formatDateTime(returnData.created_at)}
                                     </span>
                                 </div>
 
@@ -260,7 +225,6 @@ export default function Show({ return: returnData, can_approve }: Props) {
                             </div>
                         </Card>
 
-                        {/* Timeline */}
                         <Card title="Timeline">
                             <div className="space-y-3">
                                 <div className="flex items-center text-sm">
@@ -276,7 +240,7 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                         <CheckCircle className="mr-2 h-4 w-4 text-success-500" />
                                         <span className="text-gray-500 dark:text-gray-400">
                                             Approved on{' '}
-                                            {formatDate(returnData.approved_at)}
+                                            {formatDateTime(returnData.approved_at)}
                                         </span>
                                     </div>
                                 )}
@@ -286,7 +250,7 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                         <XCircle className="mr-2 h-4 w-4 text-error-500" />
                                         <span className="text-gray-500 dark:text-gray-400">
                                             Rejected on{' '}
-                                            {formatDate(returnData.rejected_at)}
+                                            {formatDateTime(returnData.rejected_at)}
                                         </span>
                                     </div>
                                 )}
@@ -296,7 +260,7 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                         <Package className="text-info-500 mr-2 h-4 w-4" />
                                         <span className="text-gray-500 dark:text-gray-400">
                                             Completed on{' '}
-                                            {formatDate(
+                                            {formatDateTime(
                                                 returnData.completed_at,
                                             )}
                                         </span>
@@ -308,11 +272,9 @@ export default function Show({ return: returnData, can_approve }: Props) {
                 </div>
             </div>
 
-            {/* Approve Modal */}
             <Modal
-                show={approveModal.isOpen}
+                isOpen={approveModal.isOpen}
                 onClose={approveModal.closeModal}
-                maxWidth="md"
             >
                 <div className="p-6">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -335,8 +297,8 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                     <Checkbox
                                         id="restock_items"
                                         checked={restockItems}
-                                        onChange={(e) =>
-                                            setRestockItems(e.target.checked)
+                                        onChange={(checked) =>
+                                            setRestockItems(checked)
                                         }
                                     />
                                     <input
@@ -353,8 +315,8 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                     <Checkbox
                                         id="process_refund"
                                         checked={processRefund}
-                                        onChange={(e) =>
-                                            setProcessRefund(e.target.checked)
+                                        onChange={(checked) =>
+                                            setProcessRefund(checked)
                                         }
                                     />
                                     <input
@@ -386,11 +348,9 @@ export default function Show({ return: returnData, can_approve }: Props) {
                 </div>
             </Modal>
 
-            {/* Reject Modal */}
             <Modal
-                show={rejectModal.isOpen}
+                isOpen={rejectModal.isOpen}
                 onClose={rejectModal.closeModal}
-                maxWidth="md"
             >
                 <div className="p-6">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">

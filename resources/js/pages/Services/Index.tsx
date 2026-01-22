@@ -4,6 +4,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import useCurrency from '@/hooks/useCurrency';
 import AppLayout from '@/layouts/AppLayout';
 import { ServiceListResponse } from '@/types/service';
 import { Head, Link } from '@inertiajs/react';
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export default function Index({ services }: Props) {
+    const { formatCurrency } = useCurrency(services.data[0]?.shop);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedShop, setSelectedShop] = useState('');
@@ -236,8 +238,7 @@ export default function Index({ services }: Props) {
                                                 service.variants.length > 0 && (
                                                     <div className="flex items-center text-sm font-medium text-gray-900 dark:text-white">
                                                         <DollarSign className="mr-1 h-4 w-4" />
-                                                        From ₦
-                                                        {minPrice.toLocaleString()}
+                                                        From {formatCurrency(minPrice)}
                                                     </div>
                                                 )}
                                         </div>

@@ -6,6 +6,7 @@ import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import { formatCurrency } from '@/lib/formatters';
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -36,10 +37,6 @@ export default function RecordPayment({
         { value: 'mobile_money', label: 'Mobile Money' },
         { value: 'customer_credit', label: 'Customer Credit' },
     ];
-
-    const formatCurrency = (value: number) => {
-        return `�${value.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    };
 
     return (
         <Card

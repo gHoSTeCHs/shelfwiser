@@ -297,7 +297,8 @@ const Calendar: React.FC = () => {
 };
 
 const renderEventContent = (eventInfo: {
-    event: { extendedProps: { calendar: string } };
+    event: { title: string; extendedProps: { calendar: string } };
+    timeText?: string;
 }) => {
     const colorClass = `fc-bg-${eventInfo.event.extendedProps.calendar.toLowerCase()}`;
     return (

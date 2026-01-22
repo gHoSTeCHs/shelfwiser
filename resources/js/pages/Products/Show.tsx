@@ -10,7 +10,7 @@ import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
 import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
 import { ProductCategory, ProductType } from '@/types/product.ts';
 import { Shop } from '@/types/shop.ts';
 import { ProductVariant, StockMovement } from '@/types/stockMovement';
@@ -105,18 +105,6 @@ export default function Show({
 
     const handleVariantSelect = (variant: ProductVariant) => {
         setSelectedVariant(variant);
-    };
-
-    const formatPrice = (price: number): string => {
-        return formatCurrency(price);
-    };
-
-    const formatDate = (dateString: string): string => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
     };
 
     return (
@@ -255,7 +243,7 @@ export default function Show({
                                                             ? JSON.stringify(
                                                                   value,
                                                               )
-                                                            : value}
+                                                            : String(value ?? '')}
                                                 </p>
                                             </div>
                                         ))}
@@ -349,7 +337,7 @@ export default function Show({
                                                         Price
                                                     </p>
                                                     <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
-                                                        {formatPrice(
+                                                        {formatCurrency(
                                                             variant.price,
                                                         )}
                                                     </p>
@@ -361,7 +349,7 @@ export default function Show({
                                                             Cost Price
                                                         </p>
                                                         <p className="mt-1 text-gray-900 dark:text-white">
-                                                            {formatPrice(
+                                                            {formatCurrency(
                                                                 variant.cost_price,
                                                             )}
                                                         </p>
@@ -416,7 +404,7 @@ export default function Show({
                                                             Expiry Date
                                                         </p>
                                                         <p className="mt-1 text-gray-900 dark:text-white">
-                                                            {formatDate(
+                                                            {formatDateShort(
                                                                 variant.expiry_date,
                                                             )}
                                                         </p>
@@ -474,28 +462,29 @@ export default function Show({
                                                                                         ? 's'
                                                                                         : ''}
                                                                                     {packagingType.is_base_unit && (
-                                                                                        <Badge
-                                                                                            variant="light"
-                                                                                            color="brand"
-                                                                                            className="ml-2"
-                                                                                        >
-                                                                                            Base
-                                                                                            Unit
-                                                                                        </Badge>
+                                                                                        <span className="ml-2">
+                                                                                            <Badge
+                                                                                                variant="light"
+                                                                                                color="brand"
+                                                                                            >
+                                                                                                Base
+                                                                                                Unit
+                                                                                            </Badge>
+                                                                                        </span>
                                                                                     )}
                                                                                 </p>
                                                                             </div>
                                                                         </div>
                                                                         <div className="text-right">
                                                                             <p className="font-semibold text-gray-900 dark:text-white">
-                                                                                {formatPrice(
+                                                                                {formatCurrency(
                                                                                     packagingType.price,
                                                                                 )}
                                                                             </p>
                                                                             {!packagingType.is_base_unit &&
                                                                                 packagingType.price_per_unit && (
                                                                                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                                                        {formatPrice(
+                                                                                        {formatCurrency(
                                                                                             packagingType.price_per_unit,
                                                                                         )}
 
@@ -695,7 +684,7 @@ export default function Show({
                                             <span className="text-lg font-semibold text-gray-900 dark:text-white">
                                                 {product.has_variants &&
                                                 product.variants.length > 1
-                                                    ? `${formatPrice(
+                                                    ? `${formatCurrency(
                                                           Math.min(
                                                               ...product.variants.map(
                                                                   (v) =>
@@ -704,7 +693,7 @@ export default function Show({
                                                                       ),
                                                               ),
                                                           ),
-                                                      )} - ${formatPrice(
+                                                      )} - ${formatCurrency(
                                                           Math.max(
                                                               ...product.variants.map(
                                                                   (v) =>
@@ -714,7 +703,7 @@ export default function Show({
                                                               ),
                                                           ),
                                                       )}`
-                                                    : formatPrice(
+                                                    : formatCurrency(
                                                           product.variants[0]
                                                               .price,
                                                       )}
@@ -733,7 +722,7 @@ export default function Show({
                                         Created
                                     </span>
                                     <span className="ml-auto text-gray-900 dark:text-white">
-                                        {formatDate(product.created_at)}
+                                        {formatDateShort(product.created_at)}
                                     </span>
                                 </div>
                                 <div className="flex items-center text-sm">
@@ -742,7 +731,7 @@ export default function Show({
                                         Updated
                                     </span>
                                     <span className="ml-auto text-gray-900 dark:text-white">
-                                        {formatDate(product.updated_at)}
+                                        {formatDateShort(product.updated_at)}
                                     </span>
                                 </div>
                             </div>

@@ -1,3 +1,4 @@
+import EmployeeCustomDeductionController from '@/actions/App/Http/Controllers/EmployeeCustomDeductionController';
 import ShopController from '@/actions/App/Http/Controllers/ShopController';
 import { show as showTaxSettings } from '@/actions/App/Http/Controllers/Web/EmployeeTaxSettingsController';
 import StaffManagementController from '@/actions/App/Http/Controllers/Web/StaffManagementController.ts';
@@ -5,6 +6,8 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateLong } from '@/lib/formatters';
+import { getStaffRoleColor, getStaffRoleLabel } from '@/lib/status-configs';
 import { User } from '@/types';
 import {
     EmployeeCustomDeduction,
@@ -40,6 +43,8 @@ interface StaffMember extends User {
     employeePayrollDetail?: EmployeePayrollDetail;
     taxSettings?: EmployeeTaxSettings;
     customDeductions?: EmployeeCustomDeduction[];
+    onboarding_status?: 'pending' | 'in_progress' | 'completed';
+    onboarded_at?: string | null;
 }
 
 interface Props {
@@ -55,42 +60,6 @@ export default function Show({
     canManageDeductions,
     taxConfigurationStatus,
 }: Props) {
-    const getRoleBadgeColor = (role: string): string => {
-        const colorMap: Record<
-            string,
-            'success' | 'info' | 'warning' | 'error'
-        > = {
-            owner: 'error',
-            general_manager: 'info',
-            store_manager: 'success',
-            assistant_manager: 'warning',
-            sales_rep: 'info',
-            cashier: 'warning',
-            inventory_clerk: 'info',
-        };
-        return colorMap[role] || 'info';
-    };
-
-    const getRoleLabel = (role: string): string => {
-        const labelMap: Record<string, string> = {
-            owner: 'Owner',
-            general_manager: 'General Manager',
-            store_manager: 'Store Manager',
-            assistant_manager: 'Assistant Manager',
-            sales_rep: 'Sales Representative',
-            cashier: 'Cashier',
-            inventory_clerk: 'Inventory Clerk',
-        };
-        return labelMap[role] || role;
-    };
-
-    const formatCurrency = (amount: number | string) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(parseFloat(amount.toString()));
-    };
-
     const formatEmploymentType = (type: string) => {
         return type
             .split('_')
@@ -98,7 +67,8 @@ export default function Show({
             .join(' ');
     };
 
-    const hasPayrollDetails = !!staff.employeePayrollDetail;
+    const payrollDetail = staff.employeePayrollDetail;
+    const hasPayrollDetails = !!payrollDetail;
     const activeCustomDeductions =
         staff.customDeductions?.filter((d) => d.is_active) || [];
     const totalActiveDeductions = activeCustomDeductions.length;
@@ -146,9 +116,9 @@ export default function Show({
                             <div className="mt-2 flex flex-wrap items-center gap-3">
                                 <Badge
                                     variant="light"
-                                    color={getRoleBadgeColor(staff.role)}
+                                    color={getStaffRoleColor(staff.role)}
                                 >
-                                    {getRoleLabel(staff.role)}
+                                    {getStaffRoleLabel(staff.role)}
                                 </Badge>
                                 {staff.is_tenant_owner && (
                                     <Badge variant="light" color="error">
@@ -271,7 +241,7 @@ export default function Show({
                                             </label>
                                             <p className="mt-1 text-sm text-gray-900 dark:text-white">
                                                 {formatEmploymentType(
-                                                    staff.employeePayrollDetail
+                                                    payrollDetail
                                                         .employment_type,
                                                 )}
                                             </p>
@@ -283,7 +253,7 @@ export default function Show({
                                             </label>
                                             <p className="mt-1 text-sm text-gray-900 dark:text-white">
                                                 {formatEmploymentType(
-                                                    staff.employeePayrollDetail
+                                                    payrollDetail
                                                         .pay_type,
                                                 )}
                                             </p>
@@ -295,7 +265,7 @@ export default function Show({
                                             </label>
                                             <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
                                                 {formatCurrency(
-                                                    staff.employeePayrollDetail
+                                                    payrollDetail
                                                         .pay_amount,
                                                 )}
                                             </p>
@@ -307,13 +277,13 @@ export default function Show({
                                             </label>
                                             <p className="mt-1 text-sm text-gray-900 dark:text-white">
                                                 {formatEmploymentType(
-                                                    staff.employeePayrollDetail
+                                                    payrollDetail
                                                         .pay_frequency,
                                                 )}
                                             </p>
                                         </div>
 
-                                        {staff.employeePayrollDetail
+                                        {payrollDetail
                                             .position_title && (
                                             <div>
                                                 <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -321,15 +291,14 @@ export default function Show({
                                                 </label>
                                                 <p className="mt-1 text-sm text-gray-900 dark:text-white">
                                                     {
-                                                        staff
-                                                            .employeePayrollDetail
+                                                        payrollDetail
                                                             .position_title
                                                     }
                                                 </p>
                                             </div>
                                         )}
 
-                                        {staff.employeePayrollDetail
+                                        {payrollDetail
                                             .department && (
                                             <div>
                                                 <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -337,15 +306,14 @@ export default function Show({
                                                 </label>
                                                 <p className="mt-1 text-sm text-gray-900 dark:text-white">
                                                     {
-                                                        staff
-                                                            .employeePayrollDetail
+                                                        payrollDetail
                                                             .department
                                                     }
                                                 </p>
                                             </div>
                                         )}
 
-                                        {staff.employeePayrollDetail
+                                        {payrollDetail
                                             .standard_hours_per_week && (
                                             <div>
                                                 <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -353,8 +321,7 @@ export default function Show({
                                                 </label>
                                                 <p className="mt-1 text-sm text-gray-900 dark:text-white">
                                                     {
-                                                        staff
-                                                            .employeePayrollDetail
+                                                        payrollDetail
                                                             .standard_hours_per_week
                                                     }{' '}
                                                     hrs/week
@@ -362,7 +329,7 @@ export default function Show({
                                             </div>
                                         )}
 
-                                        {staff.employeePayrollDetail
+                                        {payrollDetail
                                             .commission_rate && (
                                             <div>
                                                 <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -370,19 +337,17 @@ export default function Show({
                                                 </label>
                                                 <p className="mt-1 text-sm text-gray-900 dark:text-white">
                                                     {
-                                                        staff
-                                                            .employeePayrollDetail
+                                                        payrollDetail
                                                             .commission_rate
                                                     }
                                                     %
-                                                    {staff.employeePayrollDetail
+                                                    {payrollDetail
                                                         .commission_cap && (
                                                         <span className="text-gray-500">
                                                             {' '}
                                                             (cap:{' '}
                                                             {formatCurrency(
-                                                                staff
-                                                                    .employeePayrollDetail
+                                                                payrollDetail
                                                                     .commission_cap,
                                                             )}
                                                             )
@@ -392,7 +357,7 @@ export default function Show({
                                             </div>
                                         )}
 
-                                        {staff.employeePayrollDetail
+                                        {payrollDetail
                                             .pay_calendar && (
                                             <div>
                                                 <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -400,8 +365,7 @@ export default function Show({
                                                 </label>
                                                 <p className="mt-1 text-sm text-gray-900 dark:text-white">
                                                     {
-                                                        staff
-                                                            .employeePayrollDetail
+                                                        payrollDetail
                                                             .pay_calendar.name
                                                     }
                                                 </p>
@@ -413,7 +377,7 @@ export default function Show({
                                                 Deductions Enabled
                                             </label>
                                             <div className="mt-2 flex flex-wrap gap-2">
-                                                {staff.employeePayrollDetail
+                                                {payrollDetail
                                                     .pension_enabled && (
                                                     <Badge
                                                         color="info"
@@ -421,38 +385,34 @@ export default function Show({
                                                     >
                                                         Pension (
                                                         {
-                                                            staff
-                                                                .employeePayrollDetail
+                                                            payrollDetail
                                                                 .pension_employee_rate
                                                         }
                                                         %)
                                                     </Badge>
                                                 )}
-                                                {staff.employeePayrollDetail
+                                                {payrollDetail
                                                     .nhf_enabled && (
                                                     <Badge
                                                         color="info"
                                                         size="sm"
                                                     >
                                                         NHF
-                                                        {staff
-                                                            .employeePayrollDetail
+                                                        {payrollDetail
                                                             .nhf_rate !=
                                                             null && (
                                                             <>
                                                                 {' '}
                                                                 (
                                                                 {
-                                                                    staff
-                                                                        .employeePayrollDetail
-                                                                        .nhf_rate
+                                                                    payrollDetail?.nhf_rate
                                                                 }
                                                                 %)
                                                             </>
                                                         )}
                                                     </Badge>
                                                 )}
-                                                {staff.employeePayrollDetail
+                                                {payrollDetail
                                                     .nhis_enabled && (
                                                     <Badge
                                                         color="info"
@@ -460,15 +420,14 @@ export default function Show({
                                                     >
                                                         NHIS (
                                                         {formatCurrency(
-                                                            staff
-                                                                .employeePayrollDetail
+                                                            payrollDetail
                                                                 .nhis_amount ||
                                                                 0,
                                                         )}
                                                         )
                                                     </Badge>
                                                 )}
-                                                {staff.employeePayrollDetail
+                                                {payrollDetail
                                                     .enable_tax_calculations && (
                                                     <Badge
                                                         color="info"
@@ -529,8 +488,8 @@ export default function Show({
                                             }
                                             onClick={() =>
                                                 router.visit(
-                                                    StaffManagementController.deductions.url(
-                                                        { staff: staff.id },
+                                                    EmployeeCustomDeductionController.index.url(
+                                                        { employee: staff.id },
                                                     ),
                                                 )
                                             }
@@ -589,8 +548,8 @@ export default function Show({
                                                 fullWidth
                                                 onClick={() =>
                                                     router.visit(
-                                                        StaffManagementController.deductions.url(
-                                                            { staff: staff.id },
+                                                        EmployeeCustomDeductionController.index.url(
+                                                            { employee: staff.id },
                                                         ),
                                                     )
                                                 }
@@ -628,11 +587,11 @@ export default function Show({
                                         <div className="mt-1">
                                             <Badge
                                                 variant="light"
-                                                color={getRoleBadgeColor(
+                                                color={getStaffRoleColor(
                                                     staff.role,
                                                 )}
                                             >
-                                                {getRoleLabel(staff.role)}
+                                                {getStaffRoleLabel(staff.role)}
                                             </Badge>
                                         </div>
                                     </div>
@@ -663,13 +622,9 @@ export default function Show({
                                                 Email Verified
                                             </label>
                                             <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                                {new Date(
+                                                {formatDateLong(
                                                     staff.email_verified_at,
-                                                ).toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric',
-                                                })}
+                                                )}
                                             </p>
                                         </div>
                                     )}
@@ -739,13 +694,7 @@ export default function Show({
                                             Joined
                                         </label>
                                         <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            {new Date(
-                                                staff.created_at,
-                                            ).toLocaleDateString('en-US', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                            })}
+                                            {formatDateLong(staff.created_at)}
                                         </p>
                                     </div>
 
@@ -754,33 +703,20 @@ export default function Show({
                                             Last Updated
                                         </label>
                                         <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            {new Date(
-                                                staff.updated_at,
-                                            ).toLocaleDateString('en-US', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                            })}
+                                            {formatDateLong(staff.updated_at)}
                                         </p>
                                     </div>
 
                                     {hasPayrollDetails &&
-                                        staff.employeePayrollDetail
+                                        payrollDetail
                                             .start_date && (
                                             <div>
                                                 <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                                     Employment Start
                                                 </label>
                                                 <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                                    {new Date(
-                                                        staff.employeePayrollDetail.start_date,
-                                                    ).toLocaleDateString(
-                                                        'en-US',
-                                                        {
-                                                            year: 'numeric',
-                                                            month: 'long',
-                                                            day: 'numeric',
-                                                        },
+                                                    {formatDateLong(
+                                                        payrollDetail.start_date,
                                                     )}
                                                 </p>
                                             </div>
@@ -893,8 +829,8 @@ export default function Show({
 
                             {canManageDeductions && (
                                 <Link
-                                    href={StaffManagementController.deductions.url(
-                                        { staff: staff.id },
+                                    href={EmployeeCustomDeductionController.index.url(
+                                        { employee: staff.id },
                                     )}
                                 >
                                     <Button

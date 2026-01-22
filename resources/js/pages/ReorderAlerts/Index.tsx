@@ -3,6 +3,8 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
+import { formatPercentage } from '@/lib/formatters';
+import { getStockSeverity } from '@/lib/status-configs';
 import { Shop } from '@/types/shop';
 import { ProductVariant } from '@/types/stockMovement';
 import { Head, Link } from '@inertiajs/react';
@@ -37,30 +39,11 @@ interface Props {
 }
 
 export default function Index({ shop, low_stock_items, summary }: Props) {
-    const getSeverityColor = (percentage: number): string => {
-        if (percentage < 25) return 'error';
-        if (percentage < 50) return 'warning';
-        return 'info';
-    };
-
     const getSeverityBadge = (percentage: number) => {
-        if (percentage < 25) {
-            return (
-                <Badge color="error" size="sm">
-                    Critical
-                </Badge>
-            );
-        }
-        if (percentage < 50) {
-            return (
-                <Badge color="warning" size="sm">
-                    Warning
-                </Badge>
-            );
-        }
+        const severity = getStockSeverity(percentage);
         return (
-            <Badge color="info" size="sm">
-                Low
+            <Badge color={severity.color} size="sm">
+                {severity.label}
             </Badge>
         );
     };
@@ -253,10 +236,10 @@ export default function Index({ shop, low_stock_items, summary }: Props) {
                                                         item.percentage,
                                                     )}
                                                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {item.percentage.toFixed(
+                                                        {formatPercentage(
+                                                            item.percentage,
                                                             1,
                                                         )}
-                                                        %
                                                     </span>
                                                 </div>
                                             </td>

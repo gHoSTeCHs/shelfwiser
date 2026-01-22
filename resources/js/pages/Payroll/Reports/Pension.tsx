@@ -6,6 +6,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency } from '@/lib/formatters';
 import type { PayrollPeriod } from '@/types/payroll';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -54,13 +55,6 @@ export default function Pension({ reportData, periods, filters }: Props) {
     const [periodId, setPeriodId] = useState(filters.period_id || '');
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(amount);
-    };
 
     const handleFilter = () => {
         const params: Record<string, string> = {};

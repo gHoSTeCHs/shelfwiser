@@ -2,7 +2,9 @@ import AdminProductTemplateController from '@/actions/App/Http/Controllers/Admin
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDateShort } from '@/lib/formatters';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -76,20 +78,30 @@ interface Props {
 }
 
 export default function Show({ template, usageCount }: Props) {
-    const handleDelete = () => {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
+
+    const handleDelete = async () => {
         if (usageCount > 0) {
             alert(
                 'Cannot delete template that has been used to create products.',
             );
             return;
         }
-        if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
-            router.delete(
-                AdminProductTemplateController.destroy.url({
-                    product_template: template.id,
-                }),
-            );
-        }
+
+        const confirmed = await confirm({
+            title: 'Delete Template',
+            message: `Are you sure you want to delete "${template.name}"?`,
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
+
+        router.delete(
+            AdminProductTemplateController.destroy.url({
+                product_template: template.id,
+            }),
+        );
     };
 
     return (
@@ -406,9 +418,7 @@ export default function Show({ template, usageCount }: Props) {
                                             Created at
                                         </dt>
                                         <dd className="text-sm text-gray-900 dark:text-white">
-                                            {new Date(
-                                                template.created_at,
-                                            ).toLocaleDateString()}
+                                            {formatDateShort(template.created_at)}
                                         </dd>
                                     </div>
                                 </div>
@@ -419,9 +429,7 @@ export default function Show({ template, usageCount }: Props) {
                                             Last updated
                                         </dt>
                                         <dd className="text-sm text-gray-900 dark:text-white">
-                                            {new Date(
-                                                template.updated_at,
-                                            ).toLocaleDateString()}
+                                            {formatDateShort(template.updated_at)}
                                         </dd>
                                     </div>
                                 </div>
@@ -430,6 +438,8 @@ export default function Show({ template, usageCount }: Props) {
                     </div>
                 </div>
             </div>
+
+            <ConfirmDialogComponent />
         </>
     );
 }

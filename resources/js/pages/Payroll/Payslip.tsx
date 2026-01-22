@@ -3,6 +3,8 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateLong, formatNumber, formatPercentage } from '@/lib/formatters';
+import { getPayrollStatusColor } from '@/lib/status-configs';
 import type { AppliedRelief, TaxLawVersion } from '@/types/payroll';
 import { Head, router } from '@inertiajs/react';
 import {
@@ -88,40 +90,6 @@ interface Props {
 }
 
 export default function Payslip({ payslip }: Props) {
-    const formatCurrency = (amount: string | number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(parseFloat(amount.toString()));
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-NG', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
-    };
-
-    const formatPercent = (value: number) => {
-        return `${value.toFixed(2)}%`;
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'paid':
-                return 'success';
-            case 'approved':
-                return 'success';
-            case 'processed':
-                return 'info';
-            case 'cancelled':
-                return 'error';
-            default:
-                return 'light';
-        }
-    };
-
     const handlePrint = () => {
         window.print();
     };
@@ -231,24 +199,24 @@ export default function Payslip({ payslip }: Props) {
                                 <div className="flex items-center gap-2 text-sm">
                                     <Calendar className="h-4 w-4 text-gray-400" />
                                     <span className="text-gray-900 dark:text-white">
-                                        {formatDate(
+                                        {formatDateLong(
                                             payslip.payroll_period.start_date,
                                         )}{' '}
                                         -{' '}
-                                        {formatDate(
+                                        {formatDateLong(
                                             payslip.payroll_period.end_date,
                                         )}
                                     </span>
                                 </div>
                                 <div className="text-sm text-gray-600 dark:text-gray-400">
                                     Payment Date:{' '}
-                                    {formatDate(
+                                    {formatDateLong(
                                         payslip.payroll_period.payment_date,
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Badge
-                                        color={getStatusColor(
+                                        color={getPayrollStatusColor(
                                             payslip.payroll_period.status,
                                         )}
                                         size="sm"
@@ -296,16 +264,10 @@ export default function Payslip({ payslip }: Props) {
                                 {parseFloat(payslip.regular_hours) > 0 && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-600 dark:text-gray-400">
-                                            Regular Pay (
-                                            {parseFloat(
-                                                payslip.regular_hours,
-                                            ).toFixed(2)}{' '}
-                                            hours)
+                                            Regular Pay ({formatNumber(payslip.regular_hours, 2)} hours)
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatCurrency(
-                                                payslip.regular_pay,
-                                            )}
+                                            {formatCurrency(payslip.regular_pay)}
                                         </span>
                                     </div>
                                 )}
@@ -313,16 +275,10 @@ export default function Payslip({ payslip }: Props) {
                                 {parseFloat(payslip.overtime_hours) > 0 && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-600 dark:text-gray-400">
-                                            Overtime Pay (
-                                            {parseFloat(
-                                                payslip.overtime_hours,
-                                            ).toFixed(2)}{' '}
-                                            hours)
+                                            Overtime Pay ({formatNumber(payslip.overtime_hours, 2)} hours)
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatCurrency(
-                                                payslip.overtime_pay,
-                                            )}
+                                            {formatCurrency(payslip.overtime_pay)}
                                         </span>
                                     </div>
                                 )}
@@ -591,8 +547,9 @@ export default function Payslip({ payslip }: Props) {
                                                 Effective Rate
                                             </p>
                                             <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
-                                                {formatPercent(
+                                                {formatPercentage(
                                                     taxBreakdown.effective_rate,
+                                                    2,
                                                 )}
                                             </p>
                                         </div>
@@ -651,7 +608,7 @@ export default function Payslip({ payslip }: Props) {
                                 </p>
                                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                                     on{' '}
-                                    {formatDate(
+                                    {formatDateLong(
                                         payslip.payroll_period.payment_date,
                                     )}
                                 </p>

@@ -1,6 +1,7 @@
 import Badge from '@/components/ui/badge/Badge';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatNumber } from '@/lib/formatters';
 import { Head } from '@inertiajs/react';
 import { Activity, Globe, Key, Zap } from 'lucide-react';
 
@@ -76,7 +77,7 @@ export default function Index({ apiKeys, stats, webhooks, rateLimits }: Props) {
                                     Requests Today
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                                    {stats.total_requests_today.toLocaleString()}
+                                    {formatNumber(stats.total_requests_today, 0)}
                                 </p>
                             </div>
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-900/20">
@@ -92,7 +93,7 @@ export default function Index({ apiKeys, stats, webhooks, rateLimits }: Props) {
                                     Requests This Month
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                                    {stats.total_requests_month.toLocaleString()}
+                                    {formatNumber(stats.total_requests_month, 0)}
                                 </p>
                             </div>
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-900/20">

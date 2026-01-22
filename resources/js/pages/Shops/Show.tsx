@@ -2,6 +2,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDateLong } from '@/lib/formatters';
 import { User } from '@/types';
 import { Shop } from '@/types/shop';
 import { Head, Link } from '@inertiajs/react';
@@ -288,13 +289,7 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                                             Created
                                         </label>
                                         <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            {new Date(
-                                                shop.created_at,
-                                            ).toLocaleDateString('en-US', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                            })}
+                                            {formatDateLong(shop.created_at)}
                                         </p>
                                     </div>
 
@@ -303,13 +298,7 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                                             Last Updated
                                         </label>
                                         <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            {new Date(
-                                                shop.updated_at,
-                                            ).toLocaleDateString('en-US', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                            })}
+                                            {formatDateLong(shop.updated_at)}
                                         </p>
                                     </div>
                                 </div>

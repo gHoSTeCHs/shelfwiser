@@ -9,6 +9,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { getDeductionCategoryColor } from '@/lib/status-configs';
 import type { DeductionTypeModel, EnumOption } from '@/types/payroll';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, Lock, Pencil, Plus, Trash2, X } from 'lucide-react';
@@ -106,9 +107,7 @@ export default function DeductionTypes({
     const handleDelete = (id: number) => {
         setErrorMessage(null);
         router.delete(
-            PayrollSettingsController.destroyDeductionType.url({
-                deductionType: id,
-            }),
+            `/payroll/settings/deduction-types/${id}`,
             {
                 onSuccess: () => setDeleteConfirm(null),
                 onError: (errors) => {
@@ -120,23 +119,6 @@ export default function DeductionTypes({
                 },
             },
         );
-    };
-
-    const getCategoryColor = (category: string) => {
-        switch (category) {
-            case 'statutory':
-                return 'error';
-            case 'voluntary':
-                return 'info';
-            case 'loan':
-                return 'warning';
-            case 'advance':
-                return 'warning';
-            case 'benefit':
-                return 'success';
-            default:
-                return 'light';
-        }
     };
 
     return (
@@ -252,7 +234,7 @@ export default function DeductionTypes({
                                     </td>
                                     <td className="px-4 py-3">
                                         <Badge
-                                            color={getCategoryColor(
+                                            color={getDeductionCategoryColor(
                                                 type.category,
                                             )}
                                             size="sm"
@@ -625,11 +607,8 @@ export default function DeductionTypes({
                                     <Checkbox
                                         id="is_pre_tax"
                                         checked={form.data.is_pre_tax}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'is_pre_tax',
-                                                e.target.checked,
-                                            )
+                                        onChange={(checked) =>
+                                            form.setData('is_pre_tax', checked)
                                         }
                                     />
                                     <Label
@@ -645,11 +624,8 @@ export default function DeductionTypes({
                                     <Checkbox
                                         id="is_mandatory"
                                         checked={form.data.is_mandatory}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'is_mandatory',
-                                                e.target.checked,
-                                            )
+                                        onChange={(checked) =>
+                                            form.setData('is_mandatory', checked)
                                         }
                                     />
                                     <Label
@@ -665,11 +641,8 @@ export default function DeductionTypes({
                                     <Checkbox
                                         id="is_active"
                                         checked={form.data.is_active}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'is_active',
-                                                e.target.checked,
-                                            )
+                                        onChange={(checked) =>
+                                            form.setData('is_active', checked)
                                         }
                                     />
                                     <Label htmlFor="is_active" className="mb-0">

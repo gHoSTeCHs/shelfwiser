@@ -20,6 +20,7 @@ interface ReturnItem {
     quantity: number;
     reason: string;
     condition_notes: string;
+    [key: string]: string | number;
 }
 
 export default function Create({ order }: Props) {
@@ -111,7 +112,7 @@ export default function Create({ order }: Props) {
                         order: order.id,
                     })}
                     method="post"
-                    data={prepareSubmitData()}
+                    transform={() => prepareSubmitData()}
                 >
                     {({ errors, processing }) => (
                         <div className="space-y-6">

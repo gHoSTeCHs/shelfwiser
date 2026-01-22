@@ -75,6 +75,17 @@ export const transformConfigBySchema = <T extends Record<string, unknown>>(
     };
 };
 
+export {
+    formatCurrency,
+    formatDateShort,
+    formatDateLong,
+    formatDateTime,
+    formatTime,
+    formatNumber,
+    formatPercentage,
+} from './formatters';
+
+/** @deprecated Use formatDateTime from @/lib/formatters instead */
 export const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleString('en-US', {
@@ -84,33 +95,4 @@ export const formatDate = (dateString: string): string => {
         hour: '2-digit',
         minute: '2-digit',
     });
-};
-
-/**
- * Format a number as currency with the appropriate symbol.
- *
- * @param amount - The numeric amount to format
- * @param currency - Currency code (default: 'NGN' for Nigerian Naira)
- * @returns Formatted currency string (e.g., "₦1,234.56")
- *
- * @example
- * formatCurrency(1234.56) // "₦1,234.56"
- * formatCurrency(1234.56, 'USD') // "$1,234.56"
- * formatCurrency(1234.56, 'EUR') // "€1,234.56"
- */
-export const formatCurrency = (
-    amount: number,
-    currency: string = 'NGN',
-): string => {
-    const symbols: Record<string, string> = {
-        NGN: '₦',
-        USD: '$',
-        EUR: '€',
-        GBP: '£',
-        KES: 'KSh',
-        GHS: '₵',
-        ZAR: 'R',
-    };
-    const symbol = symbols[currency] || currency + ' ';
-    return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };

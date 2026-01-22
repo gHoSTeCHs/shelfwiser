@@ -4,8 +4,10 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import EmptyState from '@/components/ui/EmptyState';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
 import AppLayout from '@/layouts/AppLayout';
-import { ConnectionStatus, SupplierConnection } from '@/types/supplier';
+import { connectionStatusConfig } from '@/lib/status-configs';
+import { SupplierConnection } from '@/types/supplier';
 import { Head, router } from '@inertiajs/react';
 import {
     Building2,
@@ -28,20 +30,6 @@ interface Props {
     buyerConnections: SupplierConnection[];
     supplierConnections: SupplierConnection[];
 }
-
-const statusConfig: Record<
-    ConnectionStatus,
-    {
-        label: string;
-        variant: 'primary' | 'warning' | 'success' | 'error';
-    }
-> = {
-    pending: { label: 'Pending Approval', variant: 'warning' },
-    approved: { label: 'Approved', variant: 'success' },
-    active: { label: 'Active', variant: 'success' },
-    suspended: { label: 'Suspended', variant: 'error' },
-    rejected: { label: 'Rejected', variant: 'error' },
-};
 
 const actionConfig: Record<
     Exclude<ConnectionAction, null>,
@@ -166,14 +154,14 @@ export default function Index({
                                             <Badge
                                                 variant={'solid'}
                                                 color={
-                                                    statusConfig[conn.status]
-                                                        .variant
+                                                    connectionStatusConfig[conn.status]
+                                                        ?.color ?? 'gray'
                                                 }
                                                 size="sm"
                                             >
                                                 {
-                                                    statusConfig[conn.status]
-                                                        .label
+                                                    connectionStatusConfig[conn.status]
+                                                        ?.label ?? conn.status
                                                 }
                                             </Badge>
 
@@ -193,17 +181,12 @@ export default function Index({
                                                         <span className="font-medium">
                                                             Credit Limit:
                                                         </span>{' '}
-                                                        $
-                                                        {conn.credit_limit.toFixed(
-                                                            2,
-                                                        )}
+                                                        {formatCurrency(conn.credit_limit, 'USD')}
                                                     </p>
                                                 )}
                                                 <p className="text-xs">
                                                     Requested:{' '}
-                                                    {new Date(
-                                                        conn.requested_at,
-                                                    ).toLocaleDateString()}
+                                                    {formatDateShort(conn.requested_at)}
                                                 </p>
                                             </div>
                                         </div>
@@ -245,16 +228,16 @@ export default function Index({
                                                 <Badge
                                                     variant={'light'}
                                                     color={
-                                                        statusConfig[
+                                                        connectionStatusConfig[
                                                             conn.status
-                                                        ].variant
+                                                        ]?.color ?? 'gray'
                                                     }
                                                     size="sm"
                                                 >
                                                     {
-                                                        statusConfig[
+                                                        connectionStatusConfig[
                                                             conn.status
-                                                        ].label
+                                                        ]?.label ?? conn.status
                                                     }
                                                 </Badge>
                                             </div>
@@ -268,9 +251,7 @@ export default function Index({
 
                                         <div className="text-xs text-gray-500 dark:text-gray-400">
                                             Requested:{' '}
-                                            {new Date(
-                                                conn.requested_at,
-                                            ).toLocaleDateString()}
+                                            {formatDateShort(conn.requested_at)}
                                         </div>
 
                                         {conn.status === 'pending' && (

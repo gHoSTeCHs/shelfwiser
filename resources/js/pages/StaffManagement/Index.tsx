@@ -1,9 +1,11 @@
 import StaffManagementController from '@/actions/App/Http/Controllers/Web/StaffManagementController.ts';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
+import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { getStaffRoleColor, getStaffRoleLabel } from '@/lib/status-configs';
 import { User } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { Mail, UserPlus, Users } from 'lucide-react';
@@ -75,28 +77,6 @@ const StaffManagement = ({
         setSelectedShop('');
         setActiveFilter('');
         router.get('/staff', {}, { preserveState: true, preserveScroll: true });
-    };
-
-    const getRoleBadgeColor = (role: string): string => {
-        const colorMap: Record<string, string> = {
-            owner: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
-            general_manager:
-                'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-            store_manager:
-                'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-            assistant_manager:
-                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-            sales_rep:
-                'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
-            cashier:
-                'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
-            inventory_clerk:
-                'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
-        };
-        return (
-            colorMap[role] ||
-            'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
-        );
     };
 
     return (
@@ -339,11 +319,9 @@ const StaffManagement = ({
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span
-                                                    className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getRoleBadgeColor(member.role)}`}
-                                                >
-                                                    {roles[member.role]}
-                                                </span>
+                                                <Badge color={getStaffRoleColor(member.role)}>
+                                                    {getStaffRoleLabel(member.role)}
+                                                </Badge>
                                             </td>
                                             <td className="hidden px-6 py-4 md:table-cell">
                                                 {member.shops.length === 0 ? (

@@ -235,8 +235,8 @@ export default function VariantFormModal({
                             <Checkbox
                                 id="is_active"
                                 checked={data.is_active}
-                                onChange={(e) =>
-                                    setData('is_active', e.target.checked)
+                                onChange={(checked) =>
+                                    setData('is_active', checked)
                                 }
                             />
                             <Label

@@ -2,6 +2,7 @@ import MetricCard from '@/components/dashboard/MetricCard';
 import DataTable from '@/components/reports/DataTable';
 import FilterBar from '@/components/reports/FilterBar';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort, formatNumber, formatPercentage } from '@/lib/formatters';
 import { SalesReportProps } from '@/types/reports';
 import { Head } from '@inertiajs/react';
 import {
@@ -24,20 +25,6 @@ export default function SalesReport({
     canViewCosts,
     canViewProfits,
 }: SalesReportProps) {
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(value);
-
-    const formatDate = (dateString: string) =>
-        new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-
-    // Filter configuration
     const filterConfig = [
         {
             name: 'from',
@@ -129,25 +116,25 @@ export default function SalesReport({
                         key: 'order_count',
                         label: 'Orders',
                         className: 'text-right',
-                        render: (value: number) => value.toLocaleString(),
+                        render: (value: unknown) => formatNumber(value as number, 0),
                     },
                     {
                         key: 'total_quantity',
                         label: 'Quantity Sold',
                         className: 'text-right',
-                        render: (value: number) => value.toLocaleString(),
+                        render: (value: unknown) => formatNumber(value as number, 0),
                     },
                     {
                         key: 'total_revenue',
                         label: 'Revenue',
                         className: 'text-right',
-                        render: (value: number) => formatCurrency(value),
+                        render: (value: unknown) => formatCurrency(value as number),
                     },
                     {
                         key: 'avg_price',
                         label: 'Avg Price',
                         className: 'text-right',
-                        render: (value: number) => formatCurrency(value),
+                        render: (value: unknown) => formatCurrency(value as number),
                     },
                 ];
 
@@ -156,7 +143,7 @@ export default function SalesReport({
                     {
                         key: 'customer',
                         label: 'Customer',
-                        render: (_: any, row: any) => (
+                        render: (_: unknown, row: any) => (
                             <div>
                                 <div className="font-medium">
                                     {row.customer?.first_name}{' '}
@@ -172,24 +159,24 @@ export default function SalesReport({
                         key: 'order_count',
                         label: 'Total Orders',
                         className: 'text-right',
-                        render: (value: number) => value.toLocaleString(),
+                        render: (value: unknown) => formatNumber(value as number, 0),
                     },
                     {
                         key: 'total_revenue',
                         label: 'Total Revenue',
                         className: 'text-right',
-                        render: (value: number) => formatCurrency(value),
+                        render: (value: unknown) => formatCurrency(value as number),
                     },
                     {
                         key: 'avg_order_value',
                         label: 'Avg Order Value',
                         className: 'text-right',
-                        render: (value: number) => formatCurrency(value),
+                        render: (value: unknown) => formatCurrency(value as number),
                     },
                     {
                         key: 'last_order_date',
                         label: 'Last Order',
-                        render: (value: string) => formatDate(value),
+                        render: (value: unknown) => formatDateShort(value as string),
                     },
                 ];
 
@@ -198,31 +185,31 @@ export default function SalesReport({
                     {
                         key: 'shop',
                         label: 'Shop',
-                        render: (_: any, row: any) => row.shop?.name || '-',
+                        render: (_: unknown, row: any) => row.shop?.name || '-',
                     },
                     {
                         key: 'order_count',
                         label: 'Orders',
                         className: 'text-right',
-                        render: (value: number) => value.toLocaleString(),
+                        render: (value: unknown) => formatNumber(value as number, 0),
                     },
                     {
                         key: 'total_revenue',
                         label: 'Revenue',
                         className: 'text-right',
-                        render: (value: number) => formatCurrency(value),
+                        render: (value: unknown) => formatCurrency(value as number),
                     },
                     {
                         key: 'total_discounts',
                         label: 'Discounts',
                         className: 'text-right',
-                        render: (value: number) => formatCurrency(value),
+                        render: (value: unknown) => formatCurrency(value as number),
                     },
                     {
                         key: 'avg_order_value',
                         label: 'Avg Order Value',
                         className: 'text-right',
-                        render: (value: number) => formatCurrency(value),
+                        render: (value: unknown) => formatCurrency(value as number),
                     },
                 ];
 
@@ -231,35 +218,35 @@ export default function SalesReport({
                     {
                         key: 'sale_date',
                         label: 'Date',
-                        render: (value: string) => formatDate(value),
+                        render: (value: unknown) => formatDateShort(value as string),
                     },
                     {
                         key: 'order_count',
                         label: 'Orders',
                         className: 'text-right',
-                        render: (value: number) => value.toLocaleString(),
+                        render: (value: unknown) => formatNumber(value as number, 0),
                     },
                     {
                         key: 'total_revenue',
                         label: 'Revenue',
                         className: 'text-right',
-                        render: (value: number) => formatCurrency(value),
+                        render: (value: unknown) => formatCurrency(value as number),
                     },
                     {
                         key: 'avg_order_value',
                         label: 'Avg Order',
                         className: 'text-right',
-                        render: (value: number) => formatCurrency(value),
+                        render: (value: unknown) => formatCurrency(value as number),
                     },
                     {
                         key: 'total_discounts',
                         label: 'Discounts',
                         className: 'text-right',
-                        render: (value: number) => formatCurrency(value),
+                        render: (value: unknown) => formatCurrency(value as number),
                     },
                 ];
 
-            default: // order
+            default:
                 return [
                     {
                         key: 'order_number',
@@ -268,7 +255,7 @@ export default function SalesReport({
                     {
                         key: 'customer',
                         label: 'Customer',
-                        render: (_: any, row: any) =>
+                        render: (_: unknown, row: any) =>
                             row.customer
                                 ? `${row.customer.first_name} ${row.customer.last_name}`
                                 : 'Walk-in',
@@ -276,42 +263,45 @@ export default function SalesReport({
                     {
                         key: 'shop',
                         label: 'Shop',
-                        render: (_: any, row: any) => row.shop?.name || '-',
+                        render: (_: unknown, row: any) => row.shop?.name || '-',
                     },
                     {
                         key: 'total_amount',
                         label: 'Amount',
                         className: 'text-right',
-                        render: (value: number) => formatCurrency(value),
+                        render: (value: unknown) => formatCurrency(value as number),
                     },
                     {
                         key: 'status',
                         label: 'Status',
-                        render: (value: string) => (
+                        render: (value: unknown) => (
                             <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 capitalize dark:bg-gray-800 dark:text-gray-200">
-                                {value.replace('_', ' ')}
+                                {String(value).replace('_', ' ')}
                             </span>
                         ),
                     },
                     {
                         key: 'payment_status',
                         label: 'Payment',
-                        render: (value: string) => (
-                            <span
-                                className={`inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize ${
-                                    value === 'paid'
-                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                }`}
-                            >
-                                {value}
-                            </span>
-                        ),
+                        render: (value: unknown) => {
+                            const v = value as string;
+                            return (
+                                <span
+                                    className={`inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize ${
+                                        v === 'paid'
+                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                    }`}
+                                >
+                                    {v}
+                                </span>
+                            );
+                        },
                     },
                     {
                         key: 'created_at',
                         label: 'Date',
-                        render: (value: string) => formatDate(value),
+                        render: (value: unknown) => formatDateShort(value as string),
                     },
                 ];
         }
@@ -336,7 +326,7 @@ export default function SalesReport({
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     <MetricCard
                         title="Total Orders"
-                        value={summary.total_orders.toLocaleString()}
+                        value={formatNumber(summary.total_orders, 0)}
                         icon={ShoppingCart}
                         iconColor="text-brand-600 dark:text-brand-400"
                         iconBgColor="bg-brand-100 dark:bg-brand-900/20"
@@ -371,7 +361,7 @@ export default function SalesReport({
                     />
                     <MetricCard
                         title="Payment Rate"
-                        value={`${summary.payment_rate.toFixed(1)}%`}
+                        value={formatPercentage(summary.payment_rate)}
                         subtitle={`${summary.paid_orders} / ${summary.total_orders}`}
                         icon={PercentIcon}
                         iconColor="text-indigo-600 dark:text-indigo-400"

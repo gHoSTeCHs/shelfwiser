@@ -1,7 +1,10 @@
 import POSController from '@/actions/App/Http/Controllers/POSController';
 import Button from '@/components/ui/button/Button';
 import { Modal } from '@/components/ui/modal';
+import useCurrency from '@/hooks/useCurrency';
 import useToast from '@/hooks/useToast';
+import { calculateSubtotal } from '@/lib/calculations';
+import { formatDateShort } from '@/lib/formatters';
 import {
     HeldSale,
     HeldSaleCustomer,
@@ -200,15 +203,10 @@ const HeldSalesModal: React.FC<HeldSalesModalProps> = ({
         if (diffMins < 1) return 'Just now';
         if (diffMins < 60) return `${diffMins}m ago`;
         if (diffHours < 24) return `${diffHours}h ago`;
-        return date.toLocaleDateString();
+        return formatDateShort(dateStr);
     };
 
-    const calculateTotal = (items: POSCartItem[]) => {
-        return items.reduce(
-            (sum, item) => sum + item.unit_price * item.quantity,
-            0,
-        );
-    };
+    const { formatCurrency } = useCurrency(shop);
 
     const isExpiringSoon = (expiresAt: string | null) => {
         if (!expiresAt) return false;
@@ -267,7 +265,7 @@ const HeldSalesModal: React.FC<HeldSalesModalProps> = ({
                         <div
                             key={heldSale.id}
                             role="listitem"
-                            aria-label={`Held sale ${heldSale.hold_reference}, ${heldSale.items.length} items, ${shop.currency_symbol}${calculateTotal(heldSale.items).toFixed(2)}`}
+                            aria-label={`Held sale ${heldSale.hold_reference}, ${heldSale.items.length} items, ${formatCurrency(calculateSubtotal(heldSale.items))}`}
                             className="rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
                         >
                             <div className="flex items-start justify-between">
@@ -317,10 +315,7 @@ const HeldSalesModal: React.FC<HeldSalesModalProps> = ({
 
                                 <div className="flex flex-col items-end gap-2">
                                     <span className="text-lg font-bold text-gray-900 dark:text-white">
-                                        {shop.currency_symbol}
-                                        {calculateTotal(heldSale.items).toFixed(
-                                            2,
-                                        )}
+                                        {formatCurrency(calculateSubtotal(heldSale.items))}
                                     </span>
 
                                     <div className="flex gap-2">

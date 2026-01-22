@@ -4,6 +4,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { getSubscriptionPlanColor } from '@/lib/status-configs';
 import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -68,21 +69,6 @@ interface Props {
 
 export default function Show({ tenant }: Props) {
     const [extendDays, setExtendDays] = useState(30);
-
-    const getPlanColor = (plan: string) => {
-        switch (plan) {
-            case 'trial':
-                return 'warning';
-            case 'basic':
-                return 'info';
-            case 'professional':
-                return 'primary';
-            case 'enterprise':
-                return 'success';
-            default:
-                return 'light';
-        }
-    };
 
     const handleToggleActive = () => {
         router.post(`/admin/tenants/${tenant.id}/toggle-active`);
@@ -338,7 +324,7 @@ export default function Show({ tenant }: Props) {
                                         Plan
                                     </span>
                                     <Badge
-                                        color={getPlanColor(
+                                        color={getSubscriptionPlanColor(
                                             tenant.subscription_plan,
                                         )}
                                     >

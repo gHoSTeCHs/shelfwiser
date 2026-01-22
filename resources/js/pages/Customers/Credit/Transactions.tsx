@@ -3,7 +3,10 @@ import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import useCurrency from '@/hooks/useCurrency';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDateTime } from '@/lib/formatters';
+import { getCreditTransactionTypeColor } from '@/lib/status-configs';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -79,7 +82,7 @@ export default function Transactions({
     transactions,
     filters,
 }: Props) {
-    const currencySymbol = shop.currency_symbol || '$';
+    const { formatCurrency } = useCurrency(shop);
     const [typeFilter, setTypeFilter] = useState(filters.type || '');
 
     const typeOptions = [
@@ -98,10 +101,6 @@ export default function Transactions({
             { type: type || undefined },
             { preserveState: true, preserveScroll: true },
         );
-    };
-
-    const getTransactionTypeColor = (type: string) => {
-        return type === 'charge' ? 'error' : 'success';
     };
 
     const getTransactionTypeIcon = (type: string) => {
@@ -191,7 +190,7 @@ export default function Transactions({
                                                     }`}
                                                 >
                                                     <Badge
-                                                        color={getTransactionTypeColor(
+                                                        color={getCreditTransactionTypeColor(
                                                             transaction.type,
                                                         )}
                                                     >
@@ -231,9 +230,7 @@ export default function Transactions({
                                                     <div className="space-y-1 text-sm">
                                                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                                             <Calendar className="h-3.5 w-3.5" />
-                                                            {new Date(
-                                                                transaction.created_at,
-                                                            ).toLocaleString()}
+                                                            {formatDateTime(transaction.created_at)}
                                                         </div>
 
                                                         {transaction.order && (
@@ -288,27 +285,15 @@ export default function Transactions({
                                                             : 'text-success-600 dark:text-success-400'
                                                     }`}
                                                 >
-                                                    {transaction.type ===
-                                                    'charge'
-                                                        ? '+'
-                                                        : '-'}
-                                                    {currencySymbol}
-                                                    {transaction.amount.toFixed(
-                                                        2,
-                                                    )}
+                                                    {transaction.type === 'charge' ? '+' : '-'}
+                                                    {formatCurrency(transaction.amount)}
                                                 </p>
                                                 <div className="space-y-0.5 text-xs text-gray-500 dark:text-gray-500">
                                                     <p>
-                                                        Before: {currencySymbol}
-                                                        {transaction.balance_before.toFixed(
-                                                            2,
-                                                        )}
+                                                        Before: {formatCurrency(transaction.balance_before)}
                                                     </p>
                                                     <p>
-                                                        After: {currencySymbol}
-                                                        {transaction.balance_after.toFixed(
-                                                            2,
-                                                        )}
+                                                        After: {formatCurrency(transaction.balance_after)}
                                                     </p>
                                                 </div>
                                             </div>

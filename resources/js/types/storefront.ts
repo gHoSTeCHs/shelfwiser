@@ -10,6 +10,8 @@ import { Shop } from './shop';
 import { ProductPackagingType, ProductVariant } from './stockMovement';
 import { Customer } from './customer';
 
+export type { Shop } from './shop';
+
 export interface Order {
     id: number;
     tenant_id: number;

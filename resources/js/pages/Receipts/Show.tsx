@@ -6,6 +6,8 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateLong, formatDateShort } from '@/lib/formatters';
+import { getReceiptTypeColor, getReceiptTypeLabel } from '@/lib/status-configs';
 import { ReceiptShowProps } from '@/types/receipt';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Download, Eye, FileText, Mail } from 'lucide-react';
@@ -14,35 +16,23 @@ import React from 'react';
 /**
  * Receipt detail page showing receipt information with download and email options.
  */
-const Show: React.FC<ReceiptShowProps> = ({ receipt }) => {
+function Show({ receipt }: ReceiptShowProps) {
     const [showEmailForm, setShowEmailForm] = React.useState(false);
-
-    const getReceiptTypeBadge = (type: string) => {
-        return type === 'order' ? (
-            <Badge color="primary">Order Receipt</Badge>
-        ) : (
-            <Badge color="success">Payment Receipt</Badge>
-        );
-    };
-
-    const formatCurrency = (amount: number) => {
-        return `${receipt.shop?.currency_symbol || '₦'}${parseFloat(amount.toString()).toFixed(2)}`;
-    };
 
     const viewUrl =
         receipt.type === 'order' && receipt.order_id
-            ? ReceiptController.orders.view.url({ order: receipt.order_id })
+            ? ReceiptController.viewOrderReceipt.url({ order: receipt.order_id })
             : receipt.type === 'payment' && receipt.order_payment_id
-              ? ReceiptController.payments.view.url({
+              ? ReceiptController.viewPaymentReceipt.url({
                     payment: receipt.order_payment_id,
                 })
               : null;
 
     const downloadUrl =
         receipt.type === 'order' && receipt.order_id
-            ? ReceiptController.orders.download.url({ order: receipt.order_id })
+            ? ReceiptController.downloadOrderReceipt.url({ order: receipt.order_id })
             : receipt.type === 'payment' && receipt.order_payment_id
-              ? ReceiptController.payments.download.url({
+              ? ReceiptController.downloadPaymentReceipt.url({
                     payment: receipt.order_payment_id,
                 })
               : null;
@@ -65,15 +55,7 @@ const Show: React.FC<ReceiptShowProps> = ({ receipt }) => {
                             </h1>
                             <p className="mt-1 text-sm text-gray-600">
                                 Generated on{' '}
-                                {new Date(
-                                    receipt.generated_at,
-                                ).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                })}
+                                {formatDateLong(receipt.generated_at)}
                             </p>
                         </div>
                     </div>
@@ -115,13 +97,15 @@ const Show: React.FC<ReceiptShowProps> = ({ receipt }) => {
                             <div>
                                 <p className="text-sm text-gray-600">Type</p>
                                 <div className="mt-1">
-                                    {getReceiptTypeBadge(receipt.type)}
+                                    <Badge color={getReceiptTypeColor(receipt.type)}>
+                                        {getReceiptTypeLabel(receipt.type)} Receipt
+                                    </Badge>
                                 </div>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-600">Amount</p>
                                 <p className="mt-1 text-2xl font-bold text-gray-900">
-                                    {formatCurrency(receipt.amount)}
+                                    {formatCurrency(receipt.amount, receipt.shop?.currency || 'NGN')}
                                 </p>
                             </div>
                             <div>
@@ -191,9 +175,7 @@ const Show: React.FC<ReceiptShowProps> = ({ receipt }) => {
                                             Sent
                                         </Badge>
                                         <span className="text-sm text-gray-600">
-                                            {new Date(
-                                                receipt.emailed_at,
-                                            ).toLocaleDateString()}
+                                            {formatDateShort(receipt.emailed_at)}
                                         </span>
                                     </div>
                                     {receipt.emailed_to && (
@@ -223,7 +205,7 @@ const Show: React.FC<ReceiptShowProps> = ({ receipt }) => {
 
                     {showEmailForm ? (
                         <Form
-                            action={ReceiptController.email.url({
+                            action={ReceiptController.emailReceipt.url({
                                 receipt: receipt.id,
                             })}
                             method="post"
@@ -326,11 +308,13 @@ const Show: React.FC<ReceiptShowProps> = ({ receipt }) => {
                                                 <td className="px-4 py-3 text-right text-sm text-gray-900">
                                                     {formatCurrency(
                                                         item.unit_price,
+                                                        receipt.shop?.currency || 'NGN',
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">
                                                     {formatCurrency(
                                                         item.total_amount,
+                                                        receipt.shop?.currency || 'NGN',
                                                     )}
                                                 </td>
                                             </tr>
@@ -347,6 +331,7 @@ const Show: React.FC<ReceiptShowProps> = ({ receipt }) => {
                                             <td className="px-4 py-3 text-right text-sm font-bold text-gray-900">
                                                 {formatCurrency(
                                                     receipt.order.total_amount,
+                                                    receipt.shop?.currency || 'NGN',
                                                 )}
                                             </td>
                                         </tr>

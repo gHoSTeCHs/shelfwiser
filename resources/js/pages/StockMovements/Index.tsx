@@ -53,7 +53,7 @@ export default function Index({
     const handleShopChange = (value: string) => {
         const params: Record<string, string> = {};
         if (value) params.shop = value;
-        router.get(route('stock-movements.index'), params, {
+        router.get(StockMovementController.index.url(), params, {
             preserveState: true,
             preserveScroll: true,
         });
@@ -62,7 +62,7 @@ export default function Index({
     const handlePageChange = (page: number) => {
         const params: Record<string, string | number> = { page };
         if (selectedShop) params.shop = selectedShop;
-        router.get(route('stock-movements.index'), params, {
+        router.get(StockMovementController.index.url(), params, {
             preserveState: true,
             preserveScroll: true,
         });

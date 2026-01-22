@@ -136,8 +136,8 @@ export default function AddonFormModal({
                             <Checkbox
                                 id="allows_quantity"
                                 checked={data.allows_quantity}
-                                onChange={(e) =>
-                                    setData('allows_quantity', e.target.checked)
+                                onChange={(checked) =>
+                                    setData('allows_quantity', checked)
                                 }
                             />
                             <Label
@@ -192,8 +192,8 @@ export default function AddonFormModal({
                             <Checkbox
                                 id="is_active"
                                 checked={data.is_active}
-                                onChange={(e) =>
-                                    setData('is_active', e.target.checked)
+                                onChange={(checked) =>
+                                    setData('is_active', checked)
                                 }
                             />
                             <Label

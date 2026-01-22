@@ -1,6 +1,7 @@
 import ReusableBarChart from '@/components/charts/ReusableBarChart';
 import Badge from '@/components/ui/badge/Badge';
 import { Card } from '@/components/ui/card';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 import { InventoryData } from '@/types/dashboard';
 import { AlertTriangle, DollarSign, Layers, Package } from 'lucide-react';
 import MetricCard from '../MetricCard';
@@ -10,26 +11,17 @@ interface InventoryTabProps {
 }
 
 export default function InventoryTab({ data }: InventoryTabProps) {
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(value);
-
-    const formatNumber = (value: number) =>
-        new Intl.NumberFormat('en-NG').format(value);
-
     return (
         <div className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <MetricCard
                     title="Total Products"
-                    value={formatNumber(data.summary.total_products)}
+                    value={formatNumber(data.summary.total_products, 0, 'en-NG')}
                     icon={Package}
                 />
                 <MetricCard
                     title="Total Variants"
-                    value={formatNumber(data.summary.total_variants)}
+                    value={formatNumber(data.summary.total_variants, 0, 'en-NG')}
                     icon={Layers}
                     iconColor="text-blue-light-600 dark:text-blue-light-400"
                     iconBgColor="bg-blue-light-100 dark:bg-blue-light-900/20"
@@ -143,13 +135,13 @@ export default function InventoryTab({ data }: InventoryTabProps) {
                                             {item.sku}
                                         </td>
                                         <td className="px-4 py-4 text-right text-sm font-medium text-error-600">
-                                            {formatNumber(item.current_stock)}
+                                            {formatNumber(item.current_stock, 0, 'en-NG')}
                                         </td>
                                         <td className="px-4 py-4 text-right text-sm text-gray-900 dark:text-white">
-                                            {formatNumber(item.reorder_level)}
+                                            {formatNumber(item.reorder_level, 0, 'en-NG')}
                                         </td>
                                         <td className="px-4 py-4 text-right text-sm font-medium text-error-600">
-                                            -{formatNumber(item.deficit)}
+                                            -{formatNumber(item.deficit, 0, 'en-NG')}
                                         </td>
                                     </tr>
                                 ))}

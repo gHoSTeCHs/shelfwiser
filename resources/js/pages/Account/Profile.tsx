@@ -6,8 +6,10 @@ import Label from '@/components/form/Label';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
+import { formatDateLong } from '@/lib/formatters';
+import { getAddressTypeColor } from '@/lib/status-configs';
 import { AccountProfileProps } from '@/types/storefront';
-import { Head, useForm } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
     Edit,
@@ -19,7 +21,7 @@ import {
     Trash2,
     User,
 } from 'lucide-react';
-import React, { FormEvent, useState } from 'react';
+import React, { useState } from 'react';
 
 /**
  * Customer profile with playful-luxury styling.
@@ -30,39 +32,6 @@ const Profile: React.FC<AccountProfileProps> = ({
     addresses,
 }) => {
     const [editingProfile, setEditingProfile] = useState(false);
-
-    const profileForm = useForm({
-        first_name: customer.first_name || '',
-        last_name: customer.last_name || '',
-        phone: customer.phone || '',
-        marketing_opt_in: customer.marketing_opt_in || false,
-    });
-
-    const handleProfileSubmit = (e: FormEvent) => {
-        e.preventDefault();
-
-        profileForm.patch(
-            CustomerPortalController.updateProfile.url({ shop: shop.slug }),
-            {
-                onSuccess: () => {
-                    setEditingProfile(false);
-                },
-            },
-        );
-    };
-
-    const getAddressTypeColor = (type: string) => {
-        switch (type) {
-            case 'shipping':
-                return 'info';
-            case 'billing':
-                return 'warning';
-            case 'both':
-                return 'success';
-            default:
-                return 'light';
-        }
-    };
 
     return (
         <StorefrontLayout shop={shop} customer={customer}>
@@ -111,150 +80,129 @@ const Profile: React.FC<AccountProfileProps> = ({
 
                             <div className="p-4 sm:p-5">
                                 {editingProfile ? (
-                                    <form
-                                        onSubmit={handleProfileSubmit}
+                                    <Form
+                                        {...CustomerPortalController.updateProfile.form(
+                                            { shop: shop.slug },
+                                        )}
                                         className="space-y-4"
+                                        onSuccess={() =>
+                                            setEditingProfile(false)
+                                        }
                                     >
-                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                            <div>
-                                                <Label htmlFor="first_name">
-                                                    First Name{' '}
-                                                    <span className="text-error-500">
-                                                        *
-                                                    </span>
-                                                </Label>
-                                                <Input
-                                                    id="first_name"
-                                                    type="text"
-                                                    value={
-                                                        profileForm.data
-                                                            .first_name
-                                                    }
-                                                    onChange={(e) =>
-                                                        profileForm.setData(
-                                                            'first_name',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    error={
-                                                        !!profileForm.errors
-                                                            .first_name
-                                                    }
-                                                />
-                                                <InputError
-                                                    message={
-                                                        profileForm.errors
-                                                            .first_name
-                                                    }
-                                                />
-                                            </div>
+                                        {({ errors, processing }) => (
+                                            <>
+                                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                                    <div>
+                                                        <Label htmlFor="first_name">
+                                                            First Name{' '}
+                                                            <span className="text-error-500">
+                                                                *
+                                                            </span>
+                                                        </Label>
+                                                        <Input
+                                                            id="first_name"
+                                                            name="first_name"
+                                                            type="text"
+                                                            defaultValue={
+                                                                customer.first_name
+                                                            }
+                                                            error={
+                                                                !!errors.first_name
+                                                            }
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                errors.first_name
+                                                            }
+                                                        />
+                                                    </div>
 
-                                            <div>
-                                                <Label htmlFor="last_name">
-                                                    Last Name{' '}
-                                                    <span className="text-error-500">
-                                                        *
-                                                    </span>
-                                                </Label>
-                                                <Input
-                                                    id="last_name"
-                                                    type="text"
-                                                    value={
-                                                        profileForm.data
-                                                            .last_name
-                                                    }
-                                                    onChange={(e) =>
-                                                        profileForm.setData(
-                                                            'last_name',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    error={
-                                                        !!profileForm.errors
-                                                            .last_name
-                                                    }
-                                                />
-                                                <InputError
-                                                    message={
-                                                        profileForm.errors
-                                                            .last_name
-                                                    }
-                                                />
-                                            </div>
-                                        </div>
+                                                    <div>
+                                                        <Label htmlFor="last_name">
+                                                            Last Name{' '}
+                                                            <span className="text-error-500">
+                                                                *
+                                                            </span>
+                                                        </Label>
+                                                        <Input
+                                                            id="last_name"
+                                                            name="last_name"
+                                                            type="text"
+                                                            defaultValue={
+                                                                customer.last_name
+                                                            }
+                                                            error={
+                                                                !!errors.last_name
+                                                            }
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                errors.last_name
+                                                            }
+                                                        />
+                                                    </div>
+                                                </div>
 
-                                        <div>
-                                            <Label htmlFor="phone">Phone</Label>
-                                            <Input
-                                                id="phone"
-                                                type="tel"
-                                                value={profileForm.data.phone}
-                                                onChange={(e) =>
-                                                    profileForm.setData(
-                                                        'phone',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                error={
-                                                    !!profileForm.errors.phone
-                                                }
-                                            />
-                                            <InputError
-                                                message={
-                                                    profileForm.errors.phone
-                                                }
-                                            />
-                                        </div>
+                                                <div>
+                                                    <Label htmlFor="phone">
+                                                        Phone
+                                                    </Label>
+                                                    <Input
+                                                        id="phone"
+                                                        name="phone"
+                                                        type="tel"
+                                                        defaultValue={
+                                                            customer.phone || ''
+                                                        }
+                                                        error={!!errors.phone}
+                                                    />
+                                                    <InputError
+                                                        message={errors.phone}
+                                                    />
+                                                </div>
 
-                                        <div className="flex items-center gap-2">
-                                            <Checkbox
-                                                id="marketing_opt_in"
-                                                checked={
-                                                    profileForm.data
-                                                        .marketing_opt_in
-                                                }
-                                                onChange={(e) =>
-                                                    profileForm.setData(
-                                                        'marketing_opt_in',
-                                                        e.target.checked,
-                                                    )
-                                                }
-                                            />
-                                            <Label
-                                                htmlFor="marketing_opt_in"
-                                                className="mb-0 cursor-pointer"
-                                            >
-                                                Send me promotional emails and
-                                                offers
-                                            </Label>
-                                        </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Checkbox
+                                                        id="marketing_opt_in"
+                                                        name="marketing_opt_in"
+                                                        defaultChecked={
+                                                            customer.marketing_opt_in
+                                                        }
+                                                    />
+                                                    <Label
+                                                        htmlFor="marketing_opt_in"
+                                                        className="mb-0 cursor-pointer"
+                                                    >
+                                                        Send me promotional
+                                                        emails and offers
+                                                    </Label>
+                                                </div>
 
-                                        <div className="flex gap-3 pt-2">
-                                            <Button
-                                                type="submit"
-                                                disabled={
-                                                    profileForm.processing
-                                                }
-                                            >
-                                                {profileForm.processing
-                                                    ? 'Saving...'
-                                                    : 'Save Changes'}
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={() => {
-                                                    setEditingProfile(false);
-                                                    profileForm.reset();
-                                                }}
-                                                disabled={
-                                                    profileForm.processing
-                                                }
-                                            >
-                                                Cancel
-                                            </Button>
-                                        </div>
-                                    </form>
+                                                <div className="flex gap-3 pt-2">
+                                                    <Button
+                                                        type="submit"
+                                                        disabled={processing}
+                                                    >
+                                                        {processing
+                                                            ? 'Saving...'
+                                                            : 'Save Changes'}
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            setEditingProfile(
+                                                                false,
+                                                            )
+                                                        }
+                                                        disabled={processing}
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </Form>
                                 ) : (
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-3">
@@ -284,13 +232,14 @@ const Profile: React.FC<AccountProfileProps> = ({
                                                     {customer.email}
                                                 </p>
                                                 {customer.email_verified_at && (
-                                                    <Badge
-                                                        color="success"
-                                                        size="sm"
-                                                        className="mt-1"
-                                                    >
-                                                        Verified
-                                                    </Badge>
+                                                    <span className="mt-1 inline-block">
+                                                        <Badge
+                                                            color="success"
+                                                            size="sm"
+                                                        >
+                                                            Verified
+                                                        </Badge>
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
@@ -481,13 +430,7 @@ const Profile: React.FC<AccountProfileProps> = ({
                                         Member since
                                     </p>
                                     <p className="font-medium text-gray-900 dark:text-white">
-                                        {new Date(
-                                            customer.created_at,
-                                        ).toLocaleDateString('en-US', {
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric',
-                                        })}
+                                        {formatDateLong(customer.created_at)}
                                     </p>
                                 </div>
 

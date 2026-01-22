@@ -3,8 +3,9 @@ import ProductController from '@/actions/App/Http/Controllers/ProductController'
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     Building2,
@@ -65,6 +66,21 @@ interface Props {
 }
 
 export default function Show({ category, breadcrumbs }: Props) {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
+
+    const handleDelete = async () => {
+        const confirmed = await confirm({
+            title: 'Delete Category',
+            message: 'Are you sure you want to delete this category? This action cannot be undone.',
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
+
+        router.delete(ProductCategoryController.destroy.url({ category: category.id }));
+    };
+
     return (
         <>
             <Head title={category.name} />
@@ -92,27 +108,15 @@ export default function Show({ category, breadcrumbs }: Props) {
                                 Edit
                             </Button>
                         </Link>
-                        <Link
-                            href={ProductCategoryController.destroy.url({
-                                category: category.id,
-                            })}
-                            method="delete"
-                            as="button"
-                            onBefore={() =>
-                                confirm(
-                                    'Are you sure you want to delete this category? This action cannot be undone.',
-                                )
-                            }
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-error-600"
+                            onClick={handleDelete}
                         >
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-error-600"
-                            >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                            </Button>
-                        </Link>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                        </Button>
                     </div>
                 </div>
 
@@ -304,6 +308,8 @@ export default function Show({ category, breadcrumbs }: Props) {
                     </div>
                 </div>
             </div>
+
+            <ConfirmDialogComponent />
         </>
     );
 }

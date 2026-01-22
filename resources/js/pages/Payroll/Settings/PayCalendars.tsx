@@ -10,6 +10,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { getPayFrequencyColor, getPayFrequencyLabel } from '@/lib/status-configs';
 import type { EnumOption, PayCalendar } from '@/types/payroll';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
@@ -97,41 +98,11 @@ export default function PayCalendars({ payCalendars, frequencies }: Props) {
 
     const handleDelete = (id: number) => {
         router.delete(
-            PayrollSettingsController.destroyPayCalendar.url({
-                payCalendar: id,
-            }),
+            `/payroll/settings/pay-calendars/${id}`,
             {
                 onSuccess: () => setDeleteConfirm(null),
             },
         );
-    };
-
-    const getFrequencyLabel = (frequency: string) => {
-        const labels: Record<string, string> = {
-            daily: 'Daily',
-            weekly: 'Weekly',
-            bi_weekly: 'Bi-Weekly',
-            semi_monthly: 'Semi-Monthly',
-            monthly: 'Monthly',
-        };
-        return labels[frequency] || frequency;
-    };
-
-    const getFrequencyColor = (frequency: string) => {
-        switch (frequency) {
-            case 'daily':
-                return 'error';
-            case 'weekly':
-                return 'warning';
-            case 'bi_weekly':
-                return 'info';
-            case 'semi_monthly':
-                return 'primary';
-            case 'monthly':
-                return 'success';
-            default:
-                return 'light';
-        }
     };
 
     const getPayDayLabel = (payDay: number, frequency: string) => {
@@ -236,12 +207,12 @@ export default function PayCalendars({ payCalendars, frequencies }: Props) {
                                         )}
                                     </div>
                                     <Badge
-                                        color={getFrequencyColor(
+                                        color={getPayFrequencyColor(
                                             calendar.frequency,
                                         )}
                                         size="sm"
                                     >
-                                        {getFrequencyLabel(calendar.frequency)}
+                                        {getPayFrequencyLabel(calendar.frequency)}
                                     </Badge>
                                 </div>
                             </div>
@@ -486,11 +457,8 @@ export default function PayCalendars({ payCalendars, frequencies }: Props) {
                                     <Checkbox
                                         id="is_default"
                                         checked={form.data.is_default}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'is_default',
-                                                e.target.checked,
-                                            )
+                                        onChange={(checked) =>
+                                            form.setData('is_default', checked)
                                         }
                                     />
                                     <Label
@@ -506,11 +474,8 @@ export default function PayCalendars({ payCalendars, frequencies }: Props) {
                                     <Checkbox
                                         id="is_active"
                                         checked={form.data.is_active}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'is_active',
-                                                e.target.checked,
-                                            )
+                                        onChange={(checked) =>
+                                            form.setData('is_active', checked)
                                         }
                                     />
                                     <Label htmlFor="is_active" className="mb-0">

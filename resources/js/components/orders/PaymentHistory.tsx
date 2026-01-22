@@ -2,8 +2,16 @@ import OrderPaymentController from '@/actions/App/Http/Controllers/OrderPaymentC
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import { Form } from '@inertiajs/react';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
+import {
+    getInternalPaymentMethodColor,
+    getInternalPaymentMethodLabel,
+    InternalPaymentMethod,
+} from '@/types/payment';
+import { router } from '@inertiajs/react';
 import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 interface Payment {
     id: number;
@@ -29,40 +37,23 @@ export default function PaymentHistory({
     payments,
     canDelete,
 }: PaymentHistoryProps) {
-    const formatCurrency = (value: number) => {
-        return `�${value.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    };
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
+    const [deletingId, setDeletingId] = useState<number | null>(null);
 
-    const formatPaymentMethod = (method: string) => {
-        const methods: Record<string, string> = {
-            cash: 'Cash',
-            card: 'Card',
-            bank_transfer: 'Bank Transfer',
-            mobile_money: 'Mobile Money',
-            customer_credit: 'Customer Credit',
-        };
-        return methods[method] || method;
-    };
+    const handleDelete = async (paymentId: number) => {
+        const confirmed = await confirm({
+            title: 'Delete Payment',
+            message: 'Are you sure you want to delete this payment record? This action cannot be undone.',
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
 
-    const getPaymentMethodColor = (method: string) => {
-        const colors: Record<
-            string,
-            'success' | 'info' | 'warning' | 'primary'
-        > = {
-            cash: 'success',
-            card: 'info',
-            bank_transfer: 'primary',
-            mobile_money: 'warning',
-            customer_credit: 'info',
-        };
-        return colors[method] || 'primary';
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-NG', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
+        setDeletingId(paymentId);
+        router.delete(OrderPaymentController.destroy.url({ orderPayment: paymentId }), {
+            preserveScroll: true,
+            onFinish: () => setDeletingId(null),
         });
     };
 
@@ -99,13 +90,13 @@ export default function PaymentHistory({
                                         {formatCurrency(payment.amount)}
                                     </span>
                                     <Badge
-                                        color={getPaymentMethodColor(
-                                            payment.payment_method,
+                                        color={getInternalPaymentMethodColor(
+                                            payment.payment_method as InternalPaymentMethod,
                                         )}
                                         variant="light"
                                     >
-                                        {formatPaymentMethod(
-                                            payment.payment_method,
+                                        {getInternalPaymentMethodLabel(
+                                            payment.payment_method as InternalPaymentMethod,
                                         )}
                                     </Badge>
                                 </div>
@@ -115,7 +106,7 @@ export default function PaymentHistory({
                                         <span className="font-medium">
                                             Date:
                                         </span>{' '}
-                                        {formatDate(payment.payment_date)}
+                                        {formatDateShort(payment.payment_date)}
                                     </div>
                                     {payment.reference_number && (
                                         <div>
@@ -144,34 +135,24 @@ export default function PaymentHistory({
                             </div>
 
                             {canDelete && (
-                                <Form
-                                    action={OrderPaymentController.destroy.url({
-                                        orderPayment: payment.id,
-                                    })}
-                                    method="delete"
-                                    onBefore={() =>
-                                        confirm(
-                                            'Are you sure you want to delete this payment record? This action cannot be undone.',
-                                        )
-                                    }
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    disabled={deletingId === payment.id}
+                                    loading={deletingId === payment.id}
+                                    startIcon={<Trash2 size={16} />}
+                                    onClick={() => handleDelete(payment.id)}
                                 >
-                                    {({ processing }) => (
-                                        <Button
-                                            type="submit"
-                                            variant="destructive"
-                                            size="sm"
-                                            disabled={processing}
-                                            startIcon={<Trash2 size={16} />}
-                                        >
-                                            Delete
-                                        </Button>
-                                    )}
-                                </Form>
+                                    Delete
+                                </Button>
                             )}
                         </div>
                     </div>
                 ))}
             </div>
+
+            <ConfirmDialogComponent />
         </Card>
     );
 }

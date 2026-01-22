@@ -1,5 +1,6 @@
 import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 import Badge from '@/components/ui/badge/Badge';
+import useCurrency from '@/hooks/useCurrency';
 import { Service } from '@/types/service';
 import { Shop } from '@/types/shop';
 import { Link } from '@inertiajs/react';
@@ -16,6 +17,7 @@ interface ServiceCardProps {
  * Features duration badge, price display, and hover effects.
  */
 const ServiceCard: React.FC<ServiceCardProps> = ({ service, shop }) => {
+    const { formatCurrency } = useCurrency(shop);
     const mainVariant = service.variants?.[0];
     const basePrice = mainVariant?.base_price || 0;
     const duration = mainVariant?.estimated_duration_minutes;
@@ -92,8 +94,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, shop }) => {
                     <div className="mt-3 flex items-end justify-between gap-2">
                         <div>
                             <p className="text-base font-bold text-gray-900 sm:text-lg dark:text-white">
-                                {shop.currency_symbol}
-                                {Number(basePrice).toFixed(2)}
+                                {formatCurrency(basePrice)}
                             </p>
                             {service.has_material_options && (
                                 <p className="text-[10px] text-gray-500 sm:text-xs dark:text-gray-400">

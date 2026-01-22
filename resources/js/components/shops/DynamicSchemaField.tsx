@@ -48,6 +48,27 @@ export default function DynamicSchemaField({
     const displayName = schema.title || fieldName.replace(/_/g, ' ');
     const fieldId = `config_${fieldName}`;
 
+    const asBooleanValue = (val: SchemaPropertyValue): boolean => {
+        if (typeof val === 'boolean') return val;
+        return false;
+    };
+
+    const asStringOrNumberValue = (val: SchemaPropertyValue): string | number => {
+        if (typeof val === 'string' || typeof val === 'number') return val;
+        return '';
+    };
+
+    const asStringArrayValue = (val: SchemaPropertyValue): string[] => {
+        if (Array.isArray(val)) return val.map(String);
+        return [];
+    };
+
+    const asStringValue = (val: SchemaPropertyValue): string => {
+        if (typeof val === 'string') return val;
+        if (typeof val === 'number') return String(val);
+        return '';
+    };
+
     const renderField = () => {
         switch (schema.type) {
             case 'boolean':
@@ -56,7 +77,7 @@ export default function DynamicSchemaField({
                         <Checkbox
                             id={fieldId}
                             name={fieldName}
-                            checked={value ?? schema.default ?? false}
+                            checked={asBooleanValue(value ?? schema.default ?? false)}
                             onChange={(checked) => onChange(checked)}
                         />
                         <Label
@@ -85,7 +106,7 @@ export default function DynamicSchemaField({
                             type="number"
                             id={fieldId}
                             name={fieldName}
-                            value={value ?? schema.default ?? ''}
+                            value={asStringOrNumberValue(value ?? schema.default ?? '')}
                             onChange={(e) => {
                                 const val =
                                     schema.type === 'integer'
@@ -119,6 +140,8 @@ export default function DynamicSchemaField({
 
             case 'array':
                 if (schema.items?.enum) {
+                    const enumOptions = schema.items.enum.map(String);
+                    const currentArrayValues = asStringArrayValue(value ?? schema.default ?? []);
                     return (
                         <div>
                             <Label htmlFor={fieldId}>
@@ -128,7 +151,7 @@ export default function DynamicSchemaField({
                                 )}
                             </Label>
                             <div className="space-y-2">
-                                {schema.items.enum.map((option: string) => (
+                                {enumOptions.map((option) => (
                                     <div
                                         key={option}
                                         className="flex items-center gap-3"
@@ -136,26 +159,17 @@ export default function DynamicSchemaField({
                                         <Checkbox
                                             id={`${fieldId}_${option}`}
                                             name={`${fieldName}[]`}
-                                            checked={(
-                                                value ??
-                                                schema.default ??
-                                                []
-                                            ).includes(option)}
+                                            checked={currentArrayValues.includes(option)}
                                             onChange={(checked) => {
-                                                const currentValues =
-                                                    value ??
-                                                    schema.default ??
-                                                    [];
                                                 if (checked) {
                                                     onChange([
-                                                        ...currentValues,
+                                                        ...currentArrayValues,
                                                         option,
                                                     ]);
                                                 } else {
                                                     onChange(
-                                                        currentValues.filter(
-                                                            (v: string) =>
-                                                                v !== option,
+                                                        currentArrayValues.filter(
+                                                            (v) => v !== option,
                                                         ),
                                                     );
                                                 }
@@ -187,7 +201,7 @@ export default function DynamicSchemaField({
                             value={
                                 Array.isArray(value)
                                     ? value.join(', ')
-                                    : value || ''
+                                    : asStringValue(value)
                             }
                             onChange={(val) => {
                                 const items = val
@@ -206,6 +220,15 @@ export default function DynamicSchemaField({
             case 'string':
             default:
                 if (schema.enum) {
+                    const selectOptions = schema.enum.map((opt) => {
+                        const optStr = String(opt);
+                        return {
+                            value: optStr,
+                            label:
+                                optStr.charAt(0).toUpperCase() +
+                                optStr.slice(1).replace(/_/g, ' '),
+                        };
+                    });
                     return (
                         <div>
                             <Label htmlFor={fieldId}>
@@ -215,15 +238,10 @@ export default function DynamicSchemaField({
                                 )}
                             </Label>
                             <Select
-                                options={schema.enum.map((opt: string) => ({
-                                    value: opt,
-                                    label:
-                                        opt.charAt(0).toUpperCase() +
-                                        opt.slice(1).replace(/_/g, ' '),
-                                }))}
+                                options={selectOptions}
                                 placeholder={`Select ${displayName.toLowerCase()}`}
                                 onChange={(val) => onChange(val)}
-                                defaultValue={value ?? schema.default ?? ''}
+                                defaultValue={asStringValue(value ?? schema.default ?? '')}
                             />
                             {error && <InputError message={error} />}
                         </div>
@@ -243,7 +261,7 @@ export default function DynamicSchemaField({
                             </Label>
                             <TextArea
                                 placeholder={`Enter ${displayName.toLowerCase()}`}
-                                value={value ?? schema.default ?? ''}
+                                value={asStringValue(value ?? schema.default ?? '')}
                                 onChange={(val) => onChange(val)}
                                 error={!!error}
                                 rows={3}
@@ -270,7 +288,7 @@ export default function DynamicSchemaField({
                             type="text"
                             id={fieldId}
                             name={fieldName}
-                            value={value ?? schema.default ?? ''}
+                            value={asStringOrNumberValue(value ?? schema.default ?? '')}
                             onChange={(e) => onChange(e.target.value)}
                             placeholder={`Enter ${displayName.toLowerCase()}`}
                             error={!!error}

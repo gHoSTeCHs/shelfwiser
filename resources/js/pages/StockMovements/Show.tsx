@@ -4,6 +4,7 @@ import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/utils.ts';
+import { getStockMovementTypeColor } from '@/lib/status-configs';
 import { StockMovement } from '@/types/stockMovement';
 import { getMovementIcon, getMovementLabel } from '@/utils/stock-movement';
 import { Head, Link } from '@inertiajs/react';
@@ -22,16 +23,6 @@ interface Props {
 }
 
 export default function Show({ movement }: Props) {
-    const getMovementBadgeColor = (type: string): string => {
-        const isIncrease = [
-            'purchase',
-            'adjustment_in',
-            'transfer_in',
-            'return',
-        ].includes(type);
-        return isIncrease ? 'success' : 'warning';
-    };
-
     const isTransfer = movement.type.includes('transfer');
 
     return (
@@ -58,7 +49,7 @@ export default function Show({ movement }: Props) {
                             Stock Movement Details
                         </h1>
                         <div className="mt-1 flex items-center gap-3">
-                            <Badge color={getMovementBadgeColor(movement.type)}>
+                            <Badge color={getStockMovementTypeColor(movement.type)}>
                                 {getMovementLabel(movement.type)}
                             </Badge>
                             {movement.reference_number && (

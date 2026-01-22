@@ -341,13 +341,14 @@ export default function Index({ settings, stats }: Props) {
                             >
                                 <Database className="mr-2 h-4 w-4" />
                                 Optimize Database
-                                <Badge
-                                    variant="light"
-                                    color="info"
-                                    className="ml-2"
-                                >
-                                    Coming Soon
-                                </Badge>
+                                <span className="ml-2">
+                                    <Badge
+                                        variant="light"
+                                        color="info"
+                                    >
+                                        Coming Soon
+                                    </Badge>
+                                </span>
                             </Button>
                         </div>
                     </div>

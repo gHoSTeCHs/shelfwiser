@@ -13,12 +13,12 @@ import AppLayout from '@/layouts/AppLayout';
 import { flattenCategories } from '@/lib/utils.ts';
 import { SchemaProperty } from '@/types';
 import {
+    PackagingTypeFormData,
     ProductCategory,
     ProductType,
-    ProductVariant,
+    ProductVariantFormData,
 } from '@/types/product.ts';
 import { Shop } from '@/types/shop.ts';
-import { ProductPackagingType } from '@/types/stockMovement';
 import { Form, Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -117,7 +117,7 @@ export default function Create({
             template.template_structure.variants &&
             template.template_structure.variants.length > 0
         ) {
-            const newVariants: ProductVariant[] =
+            const newVariants: ProductVariantFormData[] =
                 template.template_structure.variants.map((v, index) => ({
                     id: crypto.randomUUID(),
                     sku: '', // User must fill this
@@ -128,18 +128,18 @@ export default function Create({
                     base_unit_name: 'Unit',
                     attributes: v.attributes,
                     packaging_types:
-                        v.packaging_types?.map((pt) => ({
-                            id: crypto.randomUUID() as unknown as number,
+                        v.packaging_types?.map((pt, ptIndex) => ({
+                            id: crypto.randomUUID(),
                             name: pt.name,
-                            display_name: pt.display_name,
+                            display_name: pt.display_name || '',
                             units_per_package: pt.units_per_package,
                             is_sealed_package: false,
-                            price: 0, // User must fill this
+                            price: 0,
                             cost_price: null,
-                            is_base_unit: pt.is_base_unit,
-                            can_break_down: pt.can_break_down,
+                            is_base_unit: pt.is_base_unit || false,
+                            can_break_down: pt.can_break_down || false,
                             min_order_quantity: 1,
-                            display_order: index,
+                            display_order: ptIndex,
                             is_active: true,
                         })) || [],
                 }));
@@ -153,10 +153,10 @@ export default function Create({
     const [simpleBarcode, setSimpleBarcode] = useState<string>('');
     const [simpleBaseUnit, setSimpleBaseUnit] = useState<string>('Unit');
     const [simplePackagingTypes, setSimplePackagingTypes] = useState<
-        Partial<ProductPackagingType>[]
+        PackagingTypeFormData[]
     >([]);
 
-    const [variants, setVariants] = useState<ProductVariant[]>([
+    const [variants, setVariants] = useState<ProductVariantFormData[]>([
         {
             id: crypto.randomUUID(),
             sku: '',
@@ -223,7 +223,7 @@ export default function Create({
         setSimplePackagingTypes([
             ...simplePackagingTypes,
             {
-                id: crypto.randomUUID() as unknown as number,
+                id: crypto.randomUUID(),
                 name: '',
                 display_name: '',
                 units_per_package: 1,
@@ -247,7 +247,7 @@ export default function Create({
 
     const updateSimplePackagingType = (
         id: string | number,
-        field: keyof ProductPackagingType,
+        field: keyof PackagingTypeFormData,
         value: unknown,
     ) => {
         setSimplePackagingTypes(
@@ -266,7 +266,7 @@ export default function Create({
                           packaging_types: [
                               ...(v.packaging_types || []),
                               {
-                                  id: crypto.randomUUID() as unknown as number,
+                                  id: crypto.randomUUID(),
                                   name: '',
                                   display_name: '',
                                   units_per_package: 1,
@@ -308,7 +308,7 @@ export default function Create({
     const updateVariantPackagingType = (
         variantId: string,
         packagingTypeId: string | number,
-        field: keyof ProductPackagingType,
+        field: keyof PackagingTypeFormData,
         value: unknown,
     ) => {
         setVariants(
@@ -336,7 +336,7 @@ export default function Create({
 
     const updateVariant = (
         id: string,
-        field: keyof ProductVariant,
+        field: keyof ProductVariantFormData,
         value: unknown,
     ) => {
         setVariants(
@@ -372,7 +372,10 @@ export default function Create({
                     method="post"
                     className="space-y-6"
                     transform={(data) => {
-                        const transformedAttributes: Record<string, unknown> = {};
+                        const transformedAttributes: Record<
+                            string,
+                            string | number | boolean
+                        > = {};
                         const configProperties =
                             selectedType?.config_schema?.properties;
 
@@ -563,7 +566,10 @@ export default function Create({
                                                 },
                                                 ...flattenCategories(
                                                     categories,
-                                                ),
+                                                ).map((cat) => ({
+                                                    value: cat.value.toString(),
+                                                    label: cat.label,
+                                                })),
                                             ]}
                                             placeholder="Select category (optional)"
                                             onChange={(value) =>
@@ -667,7 +673,13 @@ export default function Create({
                                                         value={
                                                             customAttributes[
                                                                 fieldName
-                                                            ]
+                                                            ] as
+                                                                | string
+                                                                | number
+                                                                | boolean
+                                                                | null
+                                                                | string[]
+                                                                | number[]
                                                         }
                                                         onChange={(value) =>
                                                             handleCustomAttributeChange(
@@ -681,9 +693,11 @@ export default function Create({
                                                         type="hidden"
                                                         name={`custom_attributes[${fieldName}]`}
                                                         value={
-                                                            customAttributes[
-                                                                fieldName
-                                                            ] ?? ''
+                                                            String(
+                                                                customAttributes[
+                                                                    fieldName
+                                                                ] ?? '',
+                                                            )
                                                         }
                                                     />
                                                 </div>

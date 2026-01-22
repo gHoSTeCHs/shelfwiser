@@ -3,6 +3,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -77,22 +78,6 @@ const WageAdvancesApprove = ({ wageAdvances, filters, shops }: Props) => {
             {},
             { preserveState: true, preserveScroll: true },
         );
-    };
-
-    const formatDate = (datetime: string | null) => {
-        if (!datetime) return '-';
-        return new Date(datetime).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-    };
-
-    const formatAmount = (amount: string | number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(Number(amount));
     };
 
     return (
@@ -180,7 +165,7 @@ const WageAdvancesApprove = ({ wageAdvances, filters, shops }: Props) => {
                                                 Pending Approval
                                             </Badge>
                                             <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                {formatDate(
+                                                {formatDateShort(
                                                     advance.requested_at,
                                                 )}
                                             </span>
@@ -217,7 +202,7 @@ const WageAdvancesApprove = ({ wageAdvances, filters, shops }: Props) => {
                                                 <DollarSign className="h-4 w-4 text-gray-400" />
                                                 <div>
                                                     <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                                        {formatAmount(
+                                                        {formatCurrency(
                                                             advance.amount_requested,
                                                         )}
                                                     </p>

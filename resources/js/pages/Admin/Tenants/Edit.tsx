@@ -347,8 +347,8 @@ export default function Edit({ tenant, subscriptionPlans }: Props) {
                                     <Checkbox
                                         id="is_active"
                                         checked={isActive}
-                                        onChange={(e) =>
-                                            setIsActive(e.target.checked)
+                                        onChange={(checked) =>
+                                            setIsActive(checked)
                                         }
                                     />
                                     <input

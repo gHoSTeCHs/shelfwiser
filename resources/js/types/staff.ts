@@ -361,16 +361,7 @@ export function applyTemplateToForm(
     };
 }
 
-export function formatCurrency(amount: number | string): string {
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    if (isNaN(num)) return '₦0';
-    return new Intl.NumberFormat('en-NG', {
-        style: 'currency',
-        currency: 'NGN',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(num);
-}
+export { formatCurrency } from '@/lib/formatters';
 
 export function requiresEndDate(employmentType: EmploymentType): boolean {
     return ['contract', 'seasonal', 'intern'].includes(employmentType);

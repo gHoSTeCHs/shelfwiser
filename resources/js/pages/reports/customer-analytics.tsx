@@ -2,6 +2,7 @@ import MetricCard from '@/components/dashboard/MetricCard';
 import DataTable from '@/components/reports/DataTable';
 import FilterBar from '@/components/reports/FilterBar';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort, formatNumber } from '@/lib/formatters';
 import { CustomerAnalyticsProps } from '@/types/reports';
 import { Head } from '@inertiajs/react';
 import {
@@ -19,21 +20,6 @@ export default function CustomerAnalytics({
     shops,
     filters,
 }: CustomerAnalyticsProps) {
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(value);
-
-    const formatDate = (dateString: string | null) =>
-        dateString
-            ? new Date(dateString).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-              })
-            : '-';
-
     const filterConfig = [
         {
             name: 'from',
@@ -90,53 +76,56 @@ export default function CustomerAnalytics({
             key: 'order_count',
             label: 'Orders',
             className: 'text-right',
-            render: (value: number) => value.toLocaleString(),
+            render: (value: unknown) => formatNumber(value as number, 0),
         },
         {
             key: 'total_revenue',
             label: 'Total Revenue',
             className: 'text-right',
-            render: (value: number) => formatCurrency(value),
+            render: (value: unknown) => formatCurrency(value as number),
         },
         {
             key: 'avg_order_value',
             label: 'Avg Order Value',
             className: 'text-right',
-            render: (value: number) => formatCurrency(value),
+            render: (value: unknown) => formatCurrency(value as number),
         },
         {
             key: 'lifetime_value',
             label: 'Lifetime Value',
             className: 'text-right',
-            render: (value: number) => formatCurrency(value),
+            render: (value: unknown) => formatCurrency(value as number),
         },
         {
             key: 'last_order_date',
             label: 'Last Order',
-            render: (value: string) => formatDate(value),
+            render: (value: unknown) => formatDateShort(value as string) ?? '-',
         },
         {
             key: 'days_since_last_order',
             label: 'Days Since Order',
             className: 'text-right',
-            render: (value: number) => `${value} days`,
+            render: (value: unknown) => `${value} days`,
         },
         {
             key: 'customer_status',
             label: 'Status',
-            render: (value: string) => (
-                <span
-                    className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                        value === 'Active'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : value === 'At Risk'
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                              : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                    }`}
-                >
-                    {value}
-                </span>
-            ),
+            render: (value: unknown) => {
+                const status = value as string;
+                return (
+                    <span
+                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                            status === 'Active'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                : status === 'At Risk'
+                                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                        }`}
+                    >
+                        {status}
+                    </span>
+                );
+            },
         },
     ];
 
@@ -160,14 +149,14 @@ export default function CustomerAnalytics({
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     <MetricCard
                         title="Total Customers"
-                        value={summary.total_customers.toLocaleString()}
+                        value={formatNumber(summary.total_customers, 0)}
                         icon={Users}
                         iconColor="text-brand-600 dark:text-brand-400"
                         iconBgColor="bg-brand-100 dark:bg-brand-900/20"
                     />
                     <MetricCard
                         title="Total Orders"
-                        value={summary.total_orders.toLocaleString()}
+                        value={formatNumber(summary.total_orders, 0)}
                         icon={ShoppingCart}
                         iconColor="text-blue-600 dark:text-blue-400"
                         iconBgColor="bg-blue-100 dark:bg-blue-900/20"
@@ -188,7 +177,7 @@ export default function CustomerAnalytics({
                     />
                     <MetricCard
                         title="High Value"
-                        value={summary.high_value_customers.toLocaleString()}
+                        value={formatNumber(summary.high_value_customers, 0)}
                         subtitle="Customers >₦10k"
                         icon={TrendingUp}
                         iconColor="text-green-600 dark:text-green-400"
@@ -196,7 +185,7 @@ export default function CustomerAnalytics({
                     />
                     <MetricCard
                         title="At Risk"
-                        value={summary.at_risk_customers.toLocaleString()}
+                        value={formatNumber(summary.at_risk_customers, 0)}
                         subtitle="30-90 days inactive"
                         icon={AlertTriangle}
                         iconColor="text-yellow-600 dark:text-yellow-400"
@@ -204,7 +193,7 @@ export default function CustomerAnalytics({
                     />
                     <MetricCard
                         title="Inactive"
-                        value={summary.inactive_customers.toLocaleString()}
+                        value={formatNumber(summary.inactive_customers, 0)}
                         subtitle=">90 days inactive"
                         icon={TrendingDown}
                         iconColor="text-error-600 dark:text-error-400"

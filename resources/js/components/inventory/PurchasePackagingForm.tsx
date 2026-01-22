@@ -1,6 +1,7 @@
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
 import Input from '@/components/form/input/InputField';
+import { formatCurrency } from '@/lib/formatters';
 import { ProductVariant } from '@/types/stockMovement';
 import { useMemo } from 'react';
 
@@ -55,15 +56,6 @@ export default function PurchasePackagingForm({
     const totalCost = useMemo(() => {
         return packageQuantity * costPerPackage;
     }, [packageQuantity, costPerPackage]);
-
-    const formatCurrency = (amount: number): string => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2,
-        }).format(amount);
-    };
 
     if (!variant || packagingTypes.length === 0) {
         return (

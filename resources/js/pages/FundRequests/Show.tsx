@@ -4,9 +4,11 @@ import Label from '@/components/form/Label';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
-import { useModal } from '@/hooks/useModal';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import { useToast } from '@/hooks/useToast';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort, formatDateTime } from '@/lib/formatters';
+import { getFundRequestStatusColor } from '@/lib/status-configs';
 import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -76,19 +78,9 @@ export default function Show({
     canDelete,
 }: Props) {
     const toast = useToast();
-    const { openModal, closeModal } = useModal();
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
+    const [showRejectForm, setShowRejectForm] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('');
-
-    const getStatusColor = (status: string) => {
-        const colors: Record<string, string> = {
-            pending: 'warning',
-            approved: 'success',
-            rejected: 'error',
-            disbursed: 'info',
-            cancelled: 'dark',
-        };
-        return colors[status.toLowerCase()] || 'light';
-    };
 
     const getTypeLabel = (type: string) => {
         const labels: Record<string, string> = {
@@ -102,118 +94,136 @@ export default function Show({
     };
 
     const handleReject = () => {
-        openModal({
-            title: 'Reject Fund Request',
-            content: (
-                <div>
-                    <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                        Please provide a reason for rejecting this fund request.
-                    </p>
-                    <Label htmlFor="rejection_reason">
-                        Rejection Reason{' '}
-                        <span className="text-error-500">*</span>
-                    </Label>
-                    <TextArea
-                        value={rejectionReason}
-                        onChange={setRejectionReason}
-                        rows={4}
-                        placeholder="Enter reason for rejection..."
-                    />
-                </div>
-            ),
-            onConfirm: () => {
-                if (!rejectionReason.trim()) {
-                    toast.error('Please provide a rejection reason');
-                    return;
-                }
-
-                router.post(
-                    FundRequestController.reject.url({
-                        fundRequest: fundRequest.id,
-                    }),
-                    { rejection_reason: rejectionReason },
-                    {
-                        onSuccess: () => {
-                            toast.success('Fund request rejected');
-                            closeModal();
-                            setRejectionReason('');
-                        },
-                        onError: () => {
-                            toast.error('Failed to reject fund request');
-                        },
-                    },
-                );
-            },
-            confirmText: 'Reject Request',
-            confirmVariant: 'destructive',
-        });
+        setShowRejectForm(true);
     };
 
-    const handleCancel = () => {
-        openModal({
+    const handleSubmitRejection = () => {
+        if (!rejectionReason.trim()) {
+            toast.error('Please provide a rejection reason');
+            return;
+        }
+
+        router.post(
+            FundRequestController.reject.url({
+                fundRequest: fundRequest.id,
+            }),
+            { rejection_reason: rejectionReason },
+            {
+                onSuccess: () => {
+                    toast.success('Fund request rejected');
+                    setShowRejectForm(false);
+                    setRejectionReason('');
+                },
+                onError: () => {
+                    toast.error('Failed to reject fund request');
+                },
+            },
+        );
+    };
+
+    const handleCancel = async () => {
+        const confirmed = await confirm({
             title: 'Cancel Fund Request',
-            content: (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Are you sure you want to cancel this fund request? This
-                    action cannot be undone.
-                </p>
-            ),
-            onConfirm: () => {
-                router.post(
-                    FundRequestController.cancel.url({
-                        fundRequest: fundRequest.id,
-                    }),
-                    {},
-                    {
-                        onSuccess: () => {
-                            toast.success('Fund request cancelled');
-                            closeModal();
-                        },
-                        onError: () => {
-                            toast.error('Failed to cancel fund request');
-                        },
-                    },
-                );
-            },
-            confirmText: 'Cancel Request',
-            confirmVariant: 'destructive',
+            message:
+                'Are you sure you want to cancel this fund request? This action cannot be undone.',
+            confirmLabel: 'Cancel Request',
+            variant: 'danger',
         });
+
+        if (confirmed) {
+            router.post(
+                FundRequestController.cancel.url({
+                    fundRequest: fundRequest.id,
+                }),
+                {},
+                {
+                    onSuccess: () => {
+                        toast.success('Fund request cancelled');
+                    },
+                    onError: () => {
+                        toast.error('Failed to cancel fund request');
+                    },
+                },
+            );
+        }
     };
 
-    const handleDelete = () => {
-        openModal({
+    const handleDelete = async () => {
+        const confirmed = await confirm({
             title: 'Delete Fund Request',
-            content: (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Are you sure you want to delete this fund request? This
-                    action cannot be undone.
-                </p>
-            ),
-            onConfirm: () => {
-                router.delete(
-                    FundRequestController.destroy.url({
-                        fundRequest: fundRequest.id,
-                    }),
-                    {
-                        onSuccess: () => {
-                            toast.success('Fund request deleted');
-                            router.visit(FundRequestController.index.url());
-                            closeModal();
-                        },
-                        onError: () => {
-                            toast.error('Failed to delete fund request');
-                        },
-                    },
-                );
-            },
-            confirmText: 'Delete',
-            confirmVariant: 'destructive',
+            message:
+                'Are you sure you want to delete this fund request? This action cannot be undone.',
+            confirmLabel: 'Delete',
+            variant: 'danger',
         });
+
+        if (confirmed) {
+            router.delete(
+                FundRequestController.destroy.url({
+                    fundRequest: fundRequest.id,
+                }),
+                {
+                    onSuccess: () => {
+                        toast.success('Fund request deleted');
+                        router.visit(FundRequestController.index.url());
+                    },
+                    onError: () => {
+                        toast.error('Failed to delete fund request');
+                    },
+                },
+            );
+        }
     };
 
     return (
         <AppLayout>
             <Head title={`Fund Request #${fundRequest.id}`} />
+            <ConfirmDialogComponent />
+
+            {showRejectForm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <Card className="w-full max-w-md">
+                        <div className="space-y-4 p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                Reject Fund Request
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Please provide a reason for rejecting this fund
+                                request.
+                            </p>
+                            <div>
+                                <Label htmlFor="rejection_reason">
+                                    Rejection Reason{' '}
+                                    <span className="text-error-500">*</span>
+                                </Label>
+                                <TextArea
+                                    value={rejectionReason}
+                                    onChange={setRejectionReason}
+                                    rows={4}
+                                    placeholder="Enter reason for rejection..."
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setShowRejectForm(false);
+                                        setRejectionReason('');
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleSubmitRejection}
+                                >
+                                    Reject Request
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            )}
 
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
                 <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -230,9 +240,7 @@ export default function Show({
                             </h1>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                                 Requested on{' '}
-                                {new Date(
-                                    fundRequest.requested_at,
-                                ).toLocaleDateString()}
+                                {formatDateShort(fundRequest.requested_at)}
                             </p>
                         </div>
                     </div>
@@ -341,10 +349,7 @@ export default function Show({
                                                 Amount
                                             </p>
                                             <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                                                $
-                                                {parseFloat(
-                                                    fundRequest.amount,
-                                                ).toFixed(2)}
+                                                {formatCurrency(fundRequest.amount, 'USD')}
                                             </p>
                                         </div>
                                     </div>
@@ -423,7 +428,7 @@ export default function Show({
                                         Current Status
                                     </span>
                                     <Badge
-                                        color={getStatusColor(
+                                        color={getFundRequestStatusColor(
                                             fundRequest.status,
                                         )}
                                     >
@@ -442,9 +447,7 @@ export default function Show({
                                                 Requested
                                             </p>
                                             <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                {new Date(
-                                                    fundRequest.requested_at,
-                                                ).toLocaleString()}
+                                                {formatDateTime(fundRequest.requested_at)}
                                             </p>
                                         </div>
                                     </div>
@@ -459,9 +462,7 @@ export default function Show({
                                                         ?.name || 'N/A'}
                                                 </p>
                                                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {new Date(
-                                                        fundRequest.approved_at,
-                                                    ).toLocaleString()}
+                                                    {formatDateTime(fundRequest.approved_at)}
                                                 </p>
                                             </div>
                                         </div>
@@ -477,9 +478,7 @@ export default function Show({
                                                         ?.name || 'N/A'}
                                                 </p>
                                                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {new Date(
-                                                        fundRequest.disbursed_at,
-                                                    ).toLocaleString()}
+                                                    {formatDateTime(fundRequest.disbursed_at)}
                                                 </p>
                                             </div>
                                         </div>

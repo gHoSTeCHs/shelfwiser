@@ -1,6 +1,7 @@
 import FilterBar from '@/components/reports/FilterBar';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatPercentage } from '@/lib/formatters';
 import { FinancialReportProps } from '@/types/reports';
 import { Head } from '@inertiajs/react';
 import { Activity, DollarSign, TrendingDown, TrendingUp } from 'lucide-react';
@@ -10,14 +11,6 @@ export default function FinancialReport({
     shops,
     filters,
 }: FinancialReportProps) {
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(value);
-
-    const formatPercent = (value: number) => `${value.toFixed(2)}%`;
-
     const filterConfig = [
         {
             name: 'from',
@@ -119,7 +112,7 @@ export default function FinancialReport({
                                     <span>Gross Profit</span>
                                     <span className="text-xs text-gray-500">
                                         (
-                                        {formatPercent(
+                                        {formatPercentage(
                                             profit_loss.gross_margin,
                                         )}{' '}
                                         margin)
@@ -159,7 +152,7 @@ export default function FinancialReport({
                                 <div className="flex items-center gap-2">
                                     <span>Net Profit</span>
                                     <span className="text-sm font-normal text-gray-500">
-                                        ({formatPercent(profit_loss.net_margin)}{' '}
+                                        ({formatPercentage(profit_loss.net_margin)}{' '}
                                         margin)
                                     </span>
                                 </div>

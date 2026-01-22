@@ -92,8 +92,8 @@ const Login: React.FC<AuthLoginProps> = ({ shop }) => {
                                         <Checkbox
                                             id="remember"
                                             checked={rememberMe}
-                                            onChange={(e) =>
-                                                setRememberMe(e.target.checked)
+                                            onChange={(checked) =>
+                                                setRememberMe(checked)
                                             }
                                         />
                                         <input

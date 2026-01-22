@@ -112,13 +112,10 @@ export default function FilterBar({
         if (onExport) {
             onExport();
         } else if (exportUrl) {
-            const params = new URLSearchParams(
-                Object.fromEntries(
-                    Object.entries(currentFilters).filter(
-                        ([_, value]) => value !== null && value !== '',
-                    ),
-                ),
-            );
+            const filteredEntries = Object.entries(currentFilters)
+                .filter(([_, value]) => value !== null && value !== '')
+                .map(([key, value]) => [key, String(value)]);
+            const params = new URLSearchParams(filteredEntries);
             params.append('format', format);
             window.location.href = `${exportUrl}?${params.toString()}`;
         }
@@ -210,7 +207,9 @@ export default function FilterBar({
                                         <Select
                                             label={filter.label}
                                             value={
-                                                localFilters[filter.name] || ''
+                                                localFilters[filter.name] !== null
+                                                    ? String(localFilters[filter.name])
+                                                    : ''
                                             }
                                             onChange={(value) =>
                                                 handleFilterChange(
@@ -218,34 +217,32 @@ export default function FilterBar({
                                                     value,
                                                 )
                                             }
-                                        >
-                                            <option value="">
-                                                {filter.placeholder ||
-                                                    `All ${filter.label}`}
-                                            </option>
-                                            {filter.options?.map((option) => (
-                                                <option
-                                                    key={option.value}
-                                                    value={option.value}
-                                                >
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </Select>
+                                            placeholder={filter.placeholder || `All ${filter.label}`}
+                                            options={[
+                                                { value: '', label: filter.placeholder || `All ${filter.label}` },
+                                                ...(filter.options?.map((option) => ({
+                                                    value: String(option.value),
+                                                    label: option.label,
+                                                })) || []),
+                                            ]}
+                                        />
                                     )}
 
                                     {filter.type === 'date' && (
                                         <DatePicker
+                                            id={`filter-${filter.name}`}
                                             label={filter.label}
-                                            value={
-                                                localFilters[filter.name] || ''
+                                            defaultDate={
+                                                localFilters[filter.name]
+                                                    ? String(localFilters[filter.name])
+                                                    : undefined
                                             }
-                                            onChange={(value) =>
-                                                handleFilterChange(
-                                                    filter.name,
-                                                    value,
-                                                )
-                                            }
+                                            onChange={(selectedDates) => {
+                                                const dateValue = selectedDates[0]
+                                                    ? selectedDates[0].toISOString().split('T')[0]
+                                                    : null;
+                                                handleFilterChange(filter.name, dateValue);
+                                            }}
                                         />
                                     )}
 

@@ -3,7 +3,10 @@ import StorefrontController from '@/actions/App/Http/Controllers/Storefront/Stor
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import useCurrency from '@/hooks/useCurrency';
+import { formatDateTime } from '@/lib/formatters';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
+import { getOrderStatusColor, getOrderStatusLabel, getPaymentStatusColor, getPaymentStatusLabel } from '@/lib/status-configs';
 import { AccountOrdersProps } from '@/types/storefront';
 import { Link, router } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, Package } from 'lucide-react';
@@ -14,6 +17,7 @@ import React from 'react';
  * Displays all orders placed by the customer.
  */
 const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
+    const { formatCurrency } = useCurrency(shop);
     const handlePageChange = (page: number) => {
         router.get(
             CustomerPortalController.orders.url({ shop: shop.slug }),
@@ -70,50 +74,20 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
                                             </Link>
                                             <p className="mt-1 text-sm text-gray-600">
                                                 Placed on{' '}
-                                                {new Date(
-                                                    order.created_at,
-                                                ).toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                })}
+                                                {formatDateTime(order.created_at)}
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <Badge
-                                                color={
-                                                    order.status === 'delivered'
-                                                        ? 'success'
-                                                        : order.status ===
-                                                            'cancelled'
-                                                          ? 'error'
-                                                          : order.status ===
-                                                              'shipped'
-                                                            ? 'info'
-                                                            : order.status ===
-                                                                'processing'
-                                                              ? 'warning'
-                                                              : 'light'
-                                                }
-                                            >
-                                                {order.status
-                                                    .replace('_', ' ')
-                                                    .toUpperCase()}
+                                            <Badge color={getOrderStatusColor(order.status)}>
+                                                {getOrderStatusLabel(order.status)}
                                             </Badge>
                                             <p className="mt-2 text-sm text-gray-600">
                                                 Payment:{' '}
                                                 <Badge
-                                                    color={
-                                                        order.payment_status ===
-                                                        'paid'
-                                                            ? 'success'
-                                                            : 'warning'
-                                                    }
+                                                    color={getPaymentStatusColor(order.payment_status)}
                                                     size="sm"
                                                 >
-                                                    {order.payment_status.toUpperCase()}
+                                                    {getPaymentStatusLabel(order.payment_status)}
                                                 </Badge>
                                             </p>
                                         </div>
@@ -141,21 +115,11 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
                                                                 Qty:{' '}
                                                                 {item.quantity}{' '}
                                                                 ×{' '}
-                                                                {
-                                                                    shop.currency_symbol
-                                                                }
-                                                                {item.unit_price.toFixed(
-                                                                    2,
-                                                                )}
+                                                                {formatCurrency(item.unit_price)}
                                                             </p>
                                                         </div>
                                                         <p className="font-medium">
-                                                            {
-                                                                shop.currency_symbol
-                                                            }
-                                                            {item.total_amount.toFixed(
-                                                                2,
-                                                            )}
+                                                            {formatCurrency(item.total_amount)}
                                                         </p>
                                                     </div>
                                                 ))}
@@ -171,8 +135,7 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
 
                                         <div className="flex items-center justify-between border-t pt-4">
                                             <div className="text-lg font-bold">
-                                                Total: {shop.currency_symbol}
-                                                {order.total_amount.toFixed(2)}
+                                                Total: {formatCurrency(order.total_amount)}
                                             </div>
                                             <Link
                                                 href={CustomerPortalController.orderDetail.url(

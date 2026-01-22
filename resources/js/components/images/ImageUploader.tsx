@@ -1,4 +1,5 @@
 import Button from '@/components/ui/button/Button';
+import { formatNumber } from '@/lib/formatters';
 import { Image } from '@/types/image';
 import { router } from '@inertiajs/react';
 import { Upload, X } from 'lucide-react';
@@ -175,7 +176,7 @@ export default function ImageUploader({
                                             {file.name}
                                         </p>
                                         <p className="text-xs text-gray-500">
-                                            {(file.size / 1024).toFixed(2)} KB
+                                            {formatNumber(file.size / 1024, 2)} KB
                                         </p>
                                     </div>
                                 </div>

@@ -9,6 +9,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { getEarningCategoryColor } from '@/lib/status-configs';
 import type { EarningTypeModel, EnumOption } from '@/types/payroll';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, Lock, Pencil, Plus, Trash2, X } from 'lucide-react';
@@ -98,9 +99,7 @@ export default function EarningTypes({
     const handleDelete = (id: number) => {
         setErrorMessage(null);
         router.delete(
-            PayrollSettingsController.destroyEarningType.url({
-                earningType: id,
-            }),
+            `/payroll/settings/earning-types/${id}`,
             {
                 onSuccess: () => setDeleteConfirm(null),
                 onError: (errors) => {
@@ -112,23 +111,6 @@ export default function EarningTypes({
                 },
             },
         );
-    };
-
-    const getCategoryColor = (category: string) => {
-        switch (category) {
-            case 'base':
-                return 'primary';
-            case 'allowance':
-                return 'info';
-            case 'bonus':
-                return 'success';
-            case 'commission':
-                return 'warning';
-            case 'overtime':
-                return 'error';
-            default:
-                return 'light';
-        }
     };
 
     return (
@@ -244,7 +226,7 @@ export default function EarningTypes({
                                     </td>
                                     <td className="px-4 py-3">
                                         <Badge
-                                            color={getCategoryColor(
+                                            color={getEarningCategoryColor(
                                                 type.category,
                                             )}
                                             size="sm"
@@ -525,11 +507,8 @@ export default function EarningTypes({
                                     <Checkbox
                                         id="is_taxable"
                                         checked={form.data.is_taxable}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'is_taxable',
-                                                e.target.checked,
-                                            )
+                                        onChange={(checked) =>
+                                            form.setData('is_taxable', checked)
                                         }
                                     />
                                     <Label
@@ -544,11 +523,8 @@ export default function EarningTypes({
                                     <Checkbox
                                         id="is_pensionable"
                                         checked={form.data.is_pensionable}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'is_pensionable',
-                                                e.target.checked,
-                                            )
+                                        onChange={(checked) =>
+                                            form.setData('is_pensionable', checked)
                                         }
                                     />
                                     <Label
@@ -564,11 +540,8 @@ export default function EarningTypes({
                                     <Checkbox
                                         id="is_recurring"
                                         checked={form.data.is_recurring}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'is_recurring',
-                                                e.target.checked,
-                                            )
+                                        onChange={(checked) =>
+                                            form.setData('is_recurring', checked)
                                         }
                                     />
                                     <Label
@@ -584,11 +557,8 @@ export default function EarningTypes({
                                     <Checkbox
                                         id="is_active"
                                         checked={form.data.is_active}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'is_active',
-                                                e.target.checked,
-                                            )
+                                        onChange={(checked) =>
+                                            form.setData('is_active', checked)
                                         }
                                     />
                                     <Label htmlFor="is_active" className="mb-0">

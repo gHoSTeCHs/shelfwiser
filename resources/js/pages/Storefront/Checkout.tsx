@@ -9,15 +9,17 @@ import { PaymentGatewaySelector, PaystackButton } from '@/components/payment';
 import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
+import useCurrency from '@/hooks/useCurrency';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
 import { PaymentGateway, PaystackCallbackResponse } from '@/types/payment';
+import { Service, ServiceVariant } from '@/types/service';
 import {
     CartItem,
     CheckoutProps,
     PaymentGatewayInfo,
 } from '@/types/storefront';
-import { Form } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { CreditCard, MapPin, Package, StickyNote } from 'lucide-react';
 import React from 'react';
 
@@ -25,6 +27,18 @@ import React from 'react';
  * Checkout page component for processing orders.
  * Single-page checkout with shipping/billing address and order summary.
  */
+interface ShippingAddress {
+    first_name: string;
+    last_name: string;
+    phone: string;
+    address_line_1: string;
+    address_line_2: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+}
+
 const Checkout: React.FC<CheckoutProps> = ({
     shop,
     cart,
@@ -34,6 +48,7 @@ const Checkout: React.FC<CheckoutProps> = ({
     availableGateways = [],
     paymentReference,
 }) => {
+    const { formatCurrency } = useCurrency(shop);
     const [billingSameAsShipping, setBillingSameAsShipping] =
         React.useState(true);
     const [saveAddresses, setSaveAddresses] = React.useState(true);
@@ -44,6 +59,37 @@ const Checkout: React.FC<CheckoutProps> = ({
     const defaultAddress = addresses.find(
         (addr) => addr.is_default && addr.type === 'shipping',
     );
+
+    const { data, setData, post, processing, errors } = useForm<{
+        shipping_address: ShippingAddress;
+        billing_same_as_shipping: boolean;
+        payment_method: string;
+        payment_reference: string;
+        customer_notes: string;
+        save_addresses: boolean;
+    }>({
+        shipping_address: {
+            first_name: defaultAddress?.first_name || customer.first_name || '',
+            last_name: defaultAddress?.last_name || customer.last_name || '',
+            phone: defaultAddress?.phone || customer.phone || '',
+            address_line_1: defaultAddress?.address_line_1 || '',
+            address_line_2: defaultAddress?.address_line_2 || '',
+            city: defaultAddress?.city || '',
+            state: defaultAddress?.state || '',
+            postal_code: defaultAddress?.postal_code || '',
+            country: defaultAddress?.country || '',
+        },
+        billing_same_as_shipping: true,
+        payment_method: 'cash_on_delivery',
+        payment_reference: paymentReference,
+        customer_notes: '',
+        save_addresses: true,
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(CheckoutController.process.url({ shop: shop.slug }));
+    };
 
     const { errors: clientErrors, validateField } = useFormValidation({
         shipping_first_name: { required: true, minLength: 2, maxLength: 255 },
@@ -117,7 +163,8 @@ const Checkout: React.FC<CheckoutProps> = ({
         if (isProduct(item)) {
             return item.productVariant?.product?.name || 'Product';
         } else if (isService(item)) {
-            return item.sellable?.service?.name || 'Service';
+            const serviceVariant = item.sellable as (ServiceVariant & { service?: Service }) | undefined;
+            return serviceVariant?.service?.name || 'Service';
         }
         return 'Item';
     };
@@ -156,12 +203,8 @@ const Checkout: React.FC<CheckoutProps> = ({
                 <h1 className="mt-6 mb-8 text-2xl font-bold text-gray-900 sm:text-3xl dark:text-white">
                     Checkout
                 </h1>
-                <Form
-                    action={CheckoutController.process.url({ shop: shop.slug })}
-                    method="post"
-                >
-                    {({ errors, processing, data, setData }) => (
-                        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                <form onSubmit={handleSubmit}>
+                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                             <div className="space-y-6 lg:col-span-2">
                                 <div className="rounded-xl border border-gray-200 bg-white p-4 sm:rounded-2xl sm:p-6 dark:border-navy-700 dark:bg-navy-800">
                                     <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 sm:text-xl dark:text-white">
@@ -218,7 +261,8 @@ const Checkout: React.FC<CheckoutProps> = ({
                                                         errors[
                                                             'shipping_address.first_name'
                                                         ] ||
-                                                        clientErrors.shipping_first_name
+                                                        clientErrors.shipping_first_name ||
+                                                        undefined
                                                     }
                                                 />
                                             </div>
@@ -551,13 +595,11 @@ const Checkout: React.FC<CheckoutProps> = ({
                                         <Checkbox
                                             id="billing_same_as_shipping"
                                             checked={billingSameAsShipping}
-                                            onChange={(e) => {
-                                                setBillingSameAsShipping(
-                                                    e.target.checked,
-                                                );
+                                            onChange={(checked: boolean) => {
+                                                setBillingSameAsShipping(checked);
                                                 setData(
                                                     'billing_same_as_shipping',
-                                                    e.target.checked,
+                                                    checked,
                                                 );
                                             }}
                                         />
@@ -640,11 +682,11 @@ const Checkout: React.FC<CheckoutProps> = ({
                                     <Checkbox
                                         id="save_addresses"
                                         checked={saveAddresses}
-                                        onChange={(e) => {
-                                            setSaveAddresses(e.target.checked);
+                                        onChange={(checked: boolean) => {
+                                            setSaveAddresses(checked);
                                             setData(
                                                 'save_addresses',
-                                                e.target.checked,
+                                                checked,
                                             );
                                         }}
                                     />
@@ -700,8 +742,7 @@ const Checkout: React.FC<CheckoutProps> = ({
                                                     </p>
                                                 </div>
                                                 <p className="font-medium text-gray-900 dark:text-white">
-                                                    {shop.currency_symbol}
-                                                    {item.subtotal?.toFixed(2)}
+                                                    {formatCurrency(item.subtotal)}
                                                 </p>
                                             </div>
                                         ))}
@@ -712,10 +753,7 @@ const Checkout: React.FC<CheckoutProps> = ({
                                                     Subtotal
                                                 </p>
                                                 <p className="text-gray-900 dark:text-white">
-                                                    {shop.currency_symbol}
-                                                    {cartSummary.subtotal.toFixed(
-                                                        2,
-                                                    )}
+                                                    {formatCurrency(cartSummary.subtotal)}
                                                 </p>
                                             </div>
 
@@ -725,10 +763,7 @@ const Checkout: React.FC<CheckoutProps> = ({
                                                         Tax
                                                     </p>
                                                     <p className="text-gray-900 dark:text-white">
-                                                        {shop.currency_symbol}
-                                                        {cartSummary.tax.toFixed(
-                                                            2,
-                                                        )}
+                                                        {formatCurrency(cartSummary.tax)}
                                                     </p>
                                                 </div>
                                             )}
@@ -739,10 +774,7 @@ const Checkout: React.FC<CheckoutProps> = ({
                                                         Shipping
                                                     </p>
                                                     <p className="text-gray-900 dark:text-white">
-                                                        {shop.currency_symbol}
-                                                        {cartSummary.shipping_fee.toFixed(
-                                                            2,
-                                                        )}
+                                                        {formatCurrency(cartSummary.shipping_fee)}
                                                     </p>
                                                 </div>
                                             )}
@@ -752,10 +784,7 @@ const Checkout: React.FC<CheckoutProps> = ({
                                                     Total
                                                 </p>
                                                 <p className="text-gray-900 dark:text-white">
-                                                    {shop.currency_symbol}
-                                                    {cartSummary.total.toFixed(
-                                                        2,
-                                                    )}
+                                                    {formatCurrency(cartSummary.total)}
                                                 </p>
                                             </div>
                                         </div>
@@ -806,15 +835,14 @@ const Checkout: React.FC<CheckoutProps> = ({
                                                 {selectedPaymentMethod ===
                                                 'cash_on_delivery'
                                                     ? 'Place Order'
-                                                    : `Pay ${shop.currency_symbol}${cartSummary.total.toFixed(2)}`}
+                                                    : `Pay ${formatCurrency(cartSummary.total)}`}
                                             </Button>
                                         )}
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    )}
-                </Form>
+                </form>
             </div>
         </StorefrontLayout>
     );

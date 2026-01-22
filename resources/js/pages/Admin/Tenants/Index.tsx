@@ -5,6 +5,7 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
+import { getSubscriptionPlanColor } from '@/lib/status-configs';
 import { Head, Link, router } from '@inertiajs/react';
 import { Building2, Edit, Eye, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
@@ -57,21 +58,6 @@ export default function Index({ tenants, filters }: Props) {
         const newFilters = { ...filters, [key]: value };
         if (!value) delete newFilters[key as keyof typeof newFilters];
         router.get('/admin/tenants', newFilters, { preserveState: true });
-    };
-
-    const getPlanColor = (plan: string) => {
-        switch (plan) {
-            case 'trial':
-                return 'warning';
-            case 'basic':
-                return 'info';
-            case 'professional':
-                return 'primary';
-            case 'enterprise':
-                return 'success';
-            default:
-                return 'light';
-        }
     };
 
     return (
@@ -224,7 +210,7 @@ export default function Index({ tenants, filters }: Props) {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <Badge
-                                                    color={getPlanColor(
+                                                    color={getSubscriptionPlanColor(
                                                         tenant.subscription_plan,
                                                     )}
                                                 >

@@ -1,6 +1,7 @@
 import ReusableBarChart from '@/components/charts/ReusableBarChart';
 import ReusablePieChart from '@/components/charts/ReusablePieChart';
 import { Card } from '@/components/ui/card';
+import { formatCurrency, formatPercentage } from '@/lib/formatters';
 import { FinancialData } from '@/types/dashboard';
 import { ApexOptions } from 'apexcharts';
 import { DollarSign, TrendingDown, TrendingUp } from 'lucide-react';
@@ -12,16 +13,6 @@ interface FinancialsTabProps {
 }
 
 export default function FinancialsTab({ data }: FinancialsTabProps) {
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(value);
-
-    const formatNumber = (value: number) =>
-        new Intl.NumberFormat('en-NG').format(value);
-
-    // Cash Flow Multi-Line Chart Options
     const cashFlowOptions: ApexOptions = {
         chart: {
             type: 'line',
@@ -68,9 +59,8 @@ export default function FinancialsTab({ data }: FinancialsTabProps) {
             fontSize: '13px',
             fontWeight: 500,
             markers: {
-                width: 10,
-                height: 10,
-                radius: 10,
+                size: 5,
+                strokeWidth: 0,
             },
         },
     };
@@ -105,7 +95,7 @@ export default function FinancialsTab({ data }: FinancialsTabProps) {
                 <MetricCard
                     title="Gross Profit"
                     value={formatCurrency(data.summary.gross_profit)}
-                    subtitle={`Margin: ${data.summary.profit_margin.toFixed(1)}%`}
+                    subtitle={`Margin: ${formatPercentage(data.summary.profit_margin)}`}
                     icon={TrendingUp}
                     iconColor="text-success-600 dark:text-success-400"
                     iconBgColor="bg-success-100 dark:bg-success-900/20"

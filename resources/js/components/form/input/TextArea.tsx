@@ -13,6 +13,7 @@ interface TextareaProps {
     hint?: string;
     ariaLabel?: string;
     label?: string;
+    required?: boolean;
 }
 
 const TextArea: React.FC<TextareaProps> = ({
@@ -28,6 +29,7 @@ const TextArea: React.FC<TextareaProps> = ({
     hint = '',
     ariaLabel,
     label,
+    required = false,
 }) => {
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (onChange) {
@@ -58,6 +60,7 @@ const TextArea: React.FC<TextareaProps> = ({
                 value={value}
                 onChange={handleChange}
                 disabled={disabled}
+                required={required}
                 className={textareaClasses}
                 aria-label={ariaLabel || label}
                 aria-invalid={error ? true : undefined}

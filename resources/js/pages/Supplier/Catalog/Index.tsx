@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency } from '@/lib/formatters';
+import { getCatalogVisibilityColor, getCatalogVisibilityLabel } from '@/lib/status-configs';
 import {
     CatalogVisibility,
     SupplierCatalogListResponse,
@@ -24,15 +26,6 @@ import { useState } from 'react';
 interface Props {
     catalogItems: SupplierCatalogListResponse;
 }
-
-const visibilityConfig: Record<
-    CatalogVisibility,
-    { label: string; variant: 'primary' | 'success' | 'warning' }
-> = {
-    public: { label: 'Public', variant: 'success' },
-    private: { label: 'Private', variant: 'primary' },
-    connections_only: { label: 'Connections Only', variant: 'warning' },
-};
 
 export default function Index({ catalogItems }: Props) {
     const [deleteConfirm, setDeleteConfirm] = useState<{
@@ -127,10 +120,7 @@ export default function Index({ catalogItems }: Props) {
                                                 Base Price:
                                             </span>
                                             <span className="font-medium text-gray-900 dark:text-white">
-                                                $
-                                                {Number(
-                                                    item.base_wholesale_price,
-                                                ).toFixed(2)}
+                                                {formatCurrency(item.base_wholesale_price, 'USD')}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
@@ -159,18 +149,10 @@ export default function Index({ catalogItems }: Props) {
                                     <div className="mt-4">
                                         <Badge
                                             variant={'light'}
-                                            color={
-                                                visibilityConfig[
-                                                    item.visibility
-                                                ].variant
-                                            }
+                                            color={getCatalogVisibilityColor(item.visibility)}
                                             size="sm"
                                         >
-                                            {
-                                                visibilityConfig[
-                                                    item.visibility
-                                                ].label
-                                            }
+                                            {getCatalogVisibilityLabel(item.visibility)}
                                         </Badge>
                                     </div>
 

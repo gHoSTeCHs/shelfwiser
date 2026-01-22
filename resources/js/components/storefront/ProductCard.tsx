@@ -18,9 +18,9 @@ interface ProductCardProps {
  */
 const ProductCard: React.FC<ProductCardProps> = ({ product, shop }) => {
     const mainVariant = product.variants?.[0];
-    const hasStock = mainVariant && mainVariant.available_stock > 0;
-    const isLowStock =
-        hasStock && mainVariant && mainVariant.available_stock <= 10;
+    const availableStock = mainVariant?.available_stock ?? 0;
+    const hasStock = mainVariant && availableStock > 0;
+    const isLowStock = hasStock && availableStock <= 10;
 
     return (
         <Link
@@ -33,9 +33,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, shop }) => {
             <article className="relative h-full overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-300 hover:border-brand-300 hover:shadow-lg hover:shadow-brand-100/50 sm:rounded-2xl dark:border-navy-700 dark:bg-navy-800 dark:hover:border-brand-500 dark:hover:shadow-brand-500/10">
                 {/* Image container */}
                 <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-navy-700">
-                    {product.image ? (
+                    {product.images?.[0]?.url ? (
                         <img
-                            src={product.image}
+                            src={product.images[0].url}
                             alt={product.name}
                             className="h-full w-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-105"
                             loading="lazy"
@@ -92,7 +92,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, shop }) => {
                         {mainVariant && (
                             <PriceDisplay
                                 price={mainVariant.price}
-                                retailPrice={mainVariant.retail_price}
+                                retailPrice={(mainVariant as { retail_price?: number }).retail_price}
                                 shop={shop}
                                 size="md"
                             />

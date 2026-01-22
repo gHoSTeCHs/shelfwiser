@@ -9,7 +9,9 @@ import Label from '@/components/form/Label';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
 import type {
     AppliedRelief,
     EmployeeTaxSettings,
@@ -54,6 +56,7 @@ export default function TaxSettings({
     taxLawVersion,
     taxLawLabel,
 }: Props) {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
     const [isHomeowner, setIsHomeowner] = useState(
         taxSettings.is_homeowner ?? false,
     );
@@ -64,24 +67,6 @@ export default function TaxSettings({
         taxSettings.active_reliefs ?? [],
     );
     const [uploading, setUploading] = useState(false);
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(amount);
-    };
-
-    const formatDate = (dateString: string | null) => {
-        if (!dateString) return 'Not set';
-        return new Date(dateString).toLocaleDateString('en-NG', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
-    };
 
     const handleReliefToggle = (code: string) => {
         setSelectedReliefs((prev) =>
@@ -105,12 +90,17 @@ export default function TaxSettings({
         });
     };
 
-    const handleDeleteRentProof = () => {
-        if (
-            confirm('Are you sure you want to remove the rent proof document?')
-        ) {
-            router.delete(deleteRentProof.url({ user: employee.id }));
-        }
+    const handleDeleteRentProof = async () => {
+        const confirmed = await confirm({
+            title: 'Remove Rent Proof',
+            message: 'Are you sure you want to remove the rent proof document?',
+            variant: 'danger',
+            confirmLabel: 'Remove',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
+
+        router.delete(deleteRentProof.url({ user: employee.id }));
     };
 
     const isNTA2025 = taxLawVersion === 'nta_2025';
@@ -473,9 +463,9 @@ export default function TaxSettings({
                                                                         </p>
                                                                         <p className="text-xs text-gray-500 dark:text-gray-400">
                                                                             Expires:{' '}
-                                                                            {formatDate(
+                                                                            {formatDateShort(
                                                                                 taxSettings.rent_proof_expiry,
-                                                                            )}
+                                                                            ) || 'Not set'}
                                                                         </p>
                                                                     </div>
                                                                 </div>
@@ -796,6 +786,8 @@ export default function TaxSettings({
                     )}
                 </div>
             </div>
+
+            <ConfirmDialogComponent />
         </>
     );
 }

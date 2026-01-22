@@ -1,4 +1,9 @@
 import {
+    calculateSubtotal,
+    calculateTax,
+    calculateTotal,
+} from '@/lib/calculations';
+import {
     deleteItem,
     getItem,
     getPendingActions,
@@ -443,15 +448,11 @@ export function useOfflinePOS(
                 };
             }
 
-            // Calculate totals
-            const subtotal = cart.reduce(
-                (sum, item) => sum + item.unit_price * item.quantity,
-                0,
-            );
+            const subtotal = calculateSubtotal(cart);
             const taxAmount = saleOptions.taxEnabled
-                ? subtotal * (saleOptions.taxRate / 100)
+                ? calculateTax(cart, saleOptions.taxRate, true)
                 : 0;
-            const totalAmount = subtotal + taxAmount - saleOptions.discount;
+            const totalAmount = calculateTotal(subtotal, { tax: taxAmount }, { discount: saleOptions.discount });
 
             const generateOfflineId = () => {
                 return `offline_${crypto.randomUUID()}`;

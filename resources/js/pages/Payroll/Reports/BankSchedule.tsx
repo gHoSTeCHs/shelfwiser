@@ -5,6 +5,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency } from '@/lib/formatters';
 import type { BankScheduleValidation, PayRun } from '@/types/payroll';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -30,13 +31,6 @@ export default function BankSchedule({
     selectedPayRunId,
 }: Props) {
     const [payRunId, setPayRunId] = useState(selectedPayRunId || '');
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(amount);
-    };
 
     const handleFilter = () => {
         if (!payRunId) return;

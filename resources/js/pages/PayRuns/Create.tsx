@@ -7,6 +7,7 @@ import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDateShort } from '@/lib/formatters';
 import type { PayCalendar, PayrollPeriod } from '@/types/payroll';
 import { Form, Head, router } from '@inertiajs/react';
 import { ArrowLeft, Calendar, Users } from 'lucide-react';
@@ -31,14 +32,6 @@ export default function Create({
     const selectedPeriod = periods.find(
         (p) => p.id.toString() === selectedPeriodId,
     );
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-NG', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
 
     return (
         <>
@@ -88,7 +81,7 @@ export default function Create({
                                                 },
                                                 ...periods.map((period) => ({
                                                     value: period.id.toString(),
-                                                    label: `${period.period_name} (${formatDate(period.start_date)} - ${formatDate(period.end_date)})`,
+                                                    label: `${period.period_name} (${formatDateShort(period.start_date)} - ${formatDateShort(period.end_date)})`,
                                                 })),
                                             ]}
                                             defaultValue={selectedPeriodId}
@@ -260,7 +253,7 @@ export default function Create({
                                             Start Date
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatDate(
+                                            {formatDateShort(
                                                 selectedPeriod.start_date,
                                             )}
                                         </span>
@@ -270,7 +263,7 @@ export default function Create({
                                             End Date
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatDate(
+                                            {formatDateShort(
                                                 selectedPeriod.end_date,
                                             )}
                                         </span>
@@ -280,7 +273,7 @@ export default function Create({
                                             Payment Date
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatDate(
+                                            {formatDateShort(
                                                 selectedPeriod.payment_date,
                                             )}
                                         </span>

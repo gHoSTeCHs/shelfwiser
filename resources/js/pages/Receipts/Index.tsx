@@ -5,6 +5,8 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort, formatTime } from '@/lib/formatters';
+import { getReceiptTypeColor, getReceiptTypeLabel } from '@/lib/status-configs';
 import { ReceiptsIndexProps } from '@/types/receipt';
 import { Head, Link, router } from '@inertiajs/react';
 import { Download, FileText, Mail, Receipt, Search } from 'lucide-react';
@@ -14,7 +16,7 @@ import React from 'react';
  * Receipt list page showing all generated receipts.
  * Supports search, filtering by type, and pagination.
  */
-const Index: React.FC<ReceiptsIndexProps> = ({ receipts, filters, stats }) => {
+function Index({ receipts, filters, stats }: ReceiptsIndexProps) {
     const [search, setSearch] = React.useState(filters.search || '');
     const [type, setType] = React.useState(filters.type || '');
 
@@ -23,18 +25,6 @@ const Index: React.FC<ReceiptsIndexProps> = ({ receipts, filters, stats }) => {
             ReceiptController.index.url(),
             { search, type },
             { preserveState: true },
-        );
-    };
-
-    const getReceiptTypeBadge = (receiptType: string) => {
-        return receiptType === 'order' ? (
-            <Badge color="primary" size="sm">
-                Order
-            </Badge>
-        ) : (
-            <Badge color="success" size="sm">
-                Payment
-            </Badge>
         );
     };
 
@@ -180,7 +170,9 @@ const Index: React.FC<ReceiptsIndexProps> = ({ receipts, filters, stats }) => {
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            {getReceiptTypeBadge(receipt.type)}
+                                            <Badge color={getReceiptTypeColor(receipt.type)} size="sm">
+                                                {getReceiptTypeLabel(receipt.type)}
+                                            </Badge>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm text-gray-900">
@@ -202,29 +194,15 @@ const Index: React.FC<ReceiptsIndexProps> = ({ receipts, filters, stats }) => {
                                         </td>
                                         <td className="px-6 py-4 text-right whitespace-nowrap">
                                             <div className="text-sm font-medium text-gray-900">
-                                                {receipt.shop?.currency_symbol}
-                                                {parseFloat(
-                                                    receipt.amount.toString(),
-                                                ).toFixed(2)}
+                                                {formatCurrency(receipt.amount, receipt.shop?.currency || 'USD')}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm text-gray-900">
-                                                {new Date(
-                                                    receipt.generated_at,
-                                                ).toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                })}
+                                                {formatDateShort(receipt.generated_at)}
                                             </div>
                                             <div className="text-xs text-gray-500">
-                                                {new Date(
-                                                    receipt.generated_at,
-                                                ).toLocaleTimeString('en-US', {
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                })}
+                                                {formatTime(receipt.generated_at)}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right whitespace-nowrap">
@@ -244,7 +222,7 @@ const Index: React.FC<ReceiptsIndexProps> = ({ receipts, filters, stats }) => {
                                                 {receipt.type === 'order' &&
                                                     receipt.order_id && (
                                                         <a
-                                                            href={ReceiptController.orders.download.url(
+                                                            href={ReceiptController.downloadOrderReceipt.url(
                                                                 {
                                                                     order: receipt.order_id,
                                                                 },
@@ -266,7 +244,7 @@ const Index: React.FC<ReceiptsIndexProps> = ({ receipts, filters, stats }) => {
                                                 {receipt.type === 'payment' &&
                                                     receipt.order_payment_id && (
                                                         <a
-                                                            href={ReceiptController.payments.download.url(
+                                                            href={ReceiptController.downloadPaymentReceipt.url(
                                                                 {
                                                                     payment:
                                                                         receipt.order_payment_id,

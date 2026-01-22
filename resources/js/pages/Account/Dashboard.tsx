@@ -1,7 +1,10 @@
 import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
+import useCurrency from '@/hooks/useCurrency';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
+import { formatDateShort } from '@/lib/formatters';
+import { getOrderStatusColor, getPaymentStatusColor } from '@/lib/status-configs';
 import { AccountDashboardProps } from '@/types/storefront';
 import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
@@ -24,46 +27,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
     stats,
     recentOrders,
 }) => {
-    const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
-            case 'completed':
-            case 'delivered':
-                return 'success';
-            case 'pending':
-                return 'warning';
-            case 'cancelled':
-            case 'failed':
-                return 'error';
-            case 'processing':
-            case 'confirmed':
-                return 'info';
-            default:
-                return 'light';
-        }
-    };
-
-    const getPaymentStatusColor = (paymentStatus: string) => {
-        switch (paymentStatus.toLowerCase()) {
-            case 'paid':
-                return 'success';
-            case 'pending':
-                return 'warning';
-            case 'failed':
-            case 'refunded':
-                return 'error';
-            default:
-                return 'light';
-        }
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
-
+    const { formatCurrency } = useCurrency(shop);
     return (
         <StorefrontLayout shop={shop} customer={customer}>
             <Head title={`My Account - ${shop.name}`} />
@@ -138,14 +102,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                                     Total Spent
                                 </p>
                                 <p className="mt-1 text-2xl font-bold text-gray-900 sm:mt-2 sm:text-3xl dark:text-white">
-                                    {shop.currency_symbol}
-                                    {stats.total_spent.toLocaleString(
-                                        undefined,
-                                        {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        },
-                                    )}
+                                    {formatCurrency(stats.total_spent)}
                                 </p>
                             </div>
                             <div className="rounded-xl bg-success-100 p-2.5 sm:p-3 dark:bg-success-500/20">
@@ -192,7 +149,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                                                     #{order.order_number}
                                                 </span>
                                                 <Badge
-                                                    color={getStatusColor(
+                                                    color={getOrderStatusColor(
                                                         order.status,
                                                     )}
                                                     size="sm"
@@ -209,21 +166,14 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                                                 </Badge>
                                             </div>
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                {formatDate(order.created_at)}
+                                                {formatDateShort(order.created_at)}
                                             </p>
                                         </div>
 
                                         <div className="flex items-center gap-3">
                                             <div className="text-right">
                                                 <p className="text-base font-bold text-gray-900 sm:text-lg dark:text-white">
-                                                    {shop.currency_symbol}
-                                                    {order.total_amount.toLocaleString(
-                                                        undefined,
-                                                        {
-                                                            minimumFractionDigits: 2,
-                                                            maximumFractionDigits: 2,
-                                                        },
-                                                    )}
+                                                    {formatCurrency(order.total_amount)}
                                                 </p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                                     {order.items?.length || 0}{' '}

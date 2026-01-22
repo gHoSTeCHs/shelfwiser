@@ -3,6 +3,8 @@ import ReusableLineChart from '@/components/charts/ReusableLineChart';
 import ReusablePieChart from '@/components/charts/ReusablePieChart';
 import Badge from '@/components/ui/badge/Badge';
 import { Card } from '@/components/ui/card';
+import { formatCurrency, formatDateShort, formatNumber, formatPercentage } from '@/lib/formatters';
+import { getOrderStatusColor, getOrderStatusLabel, getPaymentStatusColor, getPaymentStatusLabel } from '@/lib/status-configs';
 import { DashboardMetrics } from '@/types/dashboard';
 import {
     AlertTriangle,
@@ -22,16 +24,6 @@ export default function OverviewTab({
     data,
     canViewFinancials,
 }: OverviewTabProps) {
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(value);
-
-    const formatNumber = (value: number) =>
-        new Intl.NumberFormat('en-NG').format(value);
-
-    // Prepare chart data for order status
     const orderStatusData = [
         data.orders.pending_count,
         data.orders.confirmed_count,
@@ -47,7 +39,6 @@ export default function OverviewTab({
     ];
     const orderStatusColors = ['#fbbf24', '#60a5fa', '#a78bfa', '#34d399'];
 
-    // Prepare payment status data
     const paymentStatusData = [
         data.orders.paid_count,
         data.orders.unpaid_count,
@@ -56,7 +47,6 @@ export default function OverviewTab({
     const paymentStatusLabels = ['Paid', 'Unpaid'];
     const paymentStatusColors = ['#34d399', '#f87171'];
 
-    // Prepare top products chart data
     const topProductsData = data.top_products.map((p) => p.total_revenue);
     const topProductsLabels = data.top_products.map((p) =>
         p.variant_name ? `${p.name} (${p.variant_name})` : p.name,
@@ -87,7 +77,7 @@ export default function OverviewTab({
                                     ) : (
                                         <TrendingDown className="h-3 w-3" />
                                     )}
-                                    {Math.abs(data.sales.trend).toFixed(1)}%
+                                    {formatPercentage(Math.abs(data.sales.trend))}
                                 </p>
                             )}
                         </div>
@@ -104,7 +94,7 @@ export default function OverviewTab({
                                 Total Orders
                             </p>
                             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                {formatNumber(data.orders.total_count)}
+                                {formatNumber(data.orders.total_count, 0, 'en-NG')}
                             </p>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                                 {data.orders.delivered_count} delivered
@@ -170,7 +160,7 @@ export default function OverviewTab({
                         <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                             Margin:{' '}
                             <span className="font-semibold">
-                                {data.profit.margin.toFixed(2)}%
+                                {formatPercentage(data.profit.margin, 2)}
                             </span>
                         </p>
                     </Card>
@@ -427,31 +417,16 @@ export default function OverviewTab({
                                         </p>
                                         <div className="mt-1 flex items-center gap-2">
                                             <Badge
-                                                color={
-                                                    order.status === 'delivered'
-                                                        ? 'success'
-                                                        : order.status ===
-                                                            'pending'
-                                                          ? 'warning'
-                                                          : order.status ===
-                                                              'cancelled'
-                                                            ? 'error'
-                                                            : 'info'
-                                                }
+                                                color={getOrderStatusColor(order.status)}
                                                 size="sm"
                                             >
-                                                {order.status}
+                                                {getOrderStatusLabel(order.status)}
                                             </Badge>
                                             <Badge
-                                                color={
-                                                    order.payment_status ===
-                                                    'paid'
-                                                        ? 'success'
-                                                        : 'error'
-                                                }
+                                                color={getPaymentStatusColor(order.payment_status)}
                                                 size="sm"
                                             >
-                                                {order.payment_status}
+                                                {getPaymentStatusLabel(order.payment_status)}
                                             </Badge>
                                         </div>
                                     </div>
@@ -460,12 +435,7 @@ export default function OverviewTab({
                                             {formatCurrency(order.total_amount)}
                                         </p>
                                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                                            {new Date(
-                                                order.created_at,
-                                            ).toLocaleDateString('en-NG', {
-                                                month: 'short',
-                                                day: 'numeric',
-                                            })}
+                                            {formatDateShort(order.created_at)}
                                         </p>
                                     </div>
                                 </div>

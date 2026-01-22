@@ -4,6 +4,7 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import { Tab, TabContent, TabList, TabTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateLong, formatPercentage } from '@/lib/formatters';
 import type {
     TaxLawVersion,
     TaxLawVersionOption,
@@ -39,19 +40,6 @@ export default function TaxSettings({
     const [activeTab, setActiveTab] = useState<TaxLawVersion | 'comparison'>(
         'pita_2011',
     );
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(amount);
-    };
-
-    const formatPercent = (value: number) => {
-        return `${value}%`;
-    };
 
     const pita2011Table = taxTables.find(
         (t) =>
@@ -291,7 +279,7 @@ export default function TaxSettings({
                                                                     }
                                                                     size="sm"
                                                                 >
-                                                                    {formatPercent(
+                                                                    {formatPercentage(
                                                                         pita2011Bands[
                                                                             idx
                                                                         ].rate,
@@ -345,7 +333,7 @@ export default function TaxSettings({
                                                                         idx
                                                                     ].rate === 0
                                                                         ? 'EXEMPT'
-                                                                        : formatPercent(
+                                                                        : formatPercentage(
                                                                               nta2025Bands[
                                                                                   idx
                                                                               ]
@@ -564,15 +552,8 @@ export default function TaxSettings({
                                                         </p>
                                                         <p className="font-medium text-gray-900 dark:text-white">
                                                             {currentTable.effective_from
-                                                                ? new Date(
+                                                                ? formatDateLong(
                                                                       currentTable.effective_from,
-                                                                  ).toLocaleDateString(
-                                                                      'en-NG',
-                                                                      {
-                                                                          year: 'numeric',
-                                                                          month: 'long',
-                                                                          day: 'numeric',
-                                                                      },
                                                                   )
                                                                 : 'Not set'}
                                                         </p>
@@ -696,7 +677,7 @@ export default function TaxSettings({
                                                                                 {band.rate ===
                                                                                 0
                                                                                     ? 'EXEMPT'
-                                                                                    : formatPercent(
+                                                                                    : formatPercentage(
                                                                                           band.rate,
                                                                                       )}
                                                                             </Badge>
@@ -788,7 +769,7 @@ export default function TaxSettings({
                                                                                 </td>
                                                                                 <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">
                                                                                     {relief.rate
-                                                                                        ? formatPercent(
+                                                                                        ? formatPercentage(
                                                                                               relief.rate,
                                                                                           )
                                                                                         : relief.amount

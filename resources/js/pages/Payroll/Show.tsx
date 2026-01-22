@@ -3,7 +3,10 @@ import TextArea from '@/components/form/input/TextArea';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateLong, formatDateTime, formatNumber } from '@/lib/formatters';
+import { getPayrollStatusColor } from '@/lib/status-configs';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -88,6 +91,7 @@ export default function Show({
     canCancel,
     canDelete,
 }: Props) {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -97,101 +101,70 @@ export default function Show({
     const [cancelling, setCancelling] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'draft':
-                return 'light';
-            case 'processing':
-                return 'warning';
-            case 'processed':
-                return 'info';
-            case 'approved':
-                return 'success';
-            case 'paid':
-                return 'success';
-            case 'cancelled':
-                return 'error';
-            default:
-                return 'light';
-        }
-    };
-
-    const formatCurrency = (amount: string | number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(parseFloat(amount.toString()));
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-NG', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
+    const handleProcess = async () => {
+        const confirmed = await confirm({
+            title: 'Process Payroll',
+            message: 'Are you sure you want to process this payroll? This will generate payslips for all eligible employees.',
+            variant: 'warning',
+            confirmLabel: 'Process',
+            cancelLabel: 'Cancel',
         });
+        if (!confirmed) return;
+
+        setProcessing(true);
+        router.post(
+            PayrollController.process.url({
+                payrollPeriod: payrollPeriod.id,
+            }),
+            {},
+            {
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
-    const formatDateTime = (dateString: string) => {
-        return new Date(dateString).toLocaleString('en-NG', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
+    const handleApprove = async () => {
+        const confirmed = await confirm({
+            title: 'Approve Payroll',
+            message: 'Are you sure you want to approve this payroll?',
+            variant: 'success',
+            confirmLabel: 'Approve',
+            cancelLabel: 'Cancel',
         });
+        if (!confirmed) return;
+
+        setApproving(true);
+        router.post(
+            PayrollController.approve.url({
+                payrollPeriod: payrollPeriod.id,
+            }),
+            {},
+            {
+                onFinish: () => setApproving(false),
+            },
+        );
     };
 
-    const handleProcess = () => {
-        if (
-            confirm(
-                'Are you sure you want to process this payroll? This will generate payslips for all eligible employees.',
-            )
-        ) {
-            setProcessing(true);
-            router.post(
-                PayrollController.process.url({
-                    payrollPeriod: payrollPeriod.id,
-                }),
-                {},
-                {
-                    onFinish: () => setProcessing(false),
-                },
-            );
-        }
-    };
+    const handleMarkAsPaid = async () => {
+        const confirmed = await confirm({
+            title: 'Mark as Paid',
+            message: 'Are you sure you want to mark this payroll as paid? This will trigger wage advance repayments.',
+            variant: 'warning',
+            confirmLabel: 'Mark as Paid',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
 
-    const handleApprove = () => {
-        if (confirm('Are you sure you want to approve this payroll?')) {
-            setApproving(true);
-            router.post(
-                PayrollController.approve.url({
-                    payrollPeriod: payrollPeriod.id,
-                }),
-                {},
-                {
-                    onFinish: () => setApproving(false),
-                },
-            );
-        }
-    };
-
-    const handleMarkAsPaid = () => {
-        if (
-            confirm(
-                'Are you sure you want to mark this payroll as paid? This will trigger wage advance repayments.',
-            )
-        ) {
-            setMarkingPaid(true);
-            router.post(
-                PayrollController.markAsPaid.url({
-                    payrollPeriod: payrollPeriod.id,
-                }),
-                {},
-                {
-                    onFinish: () => setMarkingPaid(false),
-                },
-            );
-        }
+        setMarkingPaid(true);
+        router.post(
+            PayrollController.markAsPaid.url({
+                payrollPeriod: payrollPeriod.id,
+            }),
+            {},
+            {
+                onFinish: () => setMarkingPaid(false),
+            },
+        );
     };
 
     const handleCancel = () => {
@@ -248,7 +221,7 @@ export default function Show({
                             <h1 className="text-dark-900 text-2xl font-bold">
                                 {payrollPeriod.period_name}
                             </h1>
-                            <Badge color={getStatusColor(payrollPeriod.status)}>
+                            <Badge color={getPayrollStatusColor(payrollPeriod.status)}>
                                 {payrollPeriod.status}
                             </Badge>
                             {payrollPeriod.requires_owner_approval && (
@@ -368,8 +341,8 @@ export default function Show({
                                 Period
                             </p>
                             <p className="text-dark-900 mt-1 text-sm">
-                                {formatDate(payrollPeriod.start_date)} -{' '}
-                                {formatDate(payrollPeriod.end_date)}
+                                {formatDateLong(payrollPeriod.start_date)} -{' '}
+                                {formatDateLong(payrollPeriod.end_date)}
                             </p>
                         </div>
                         <Calendar className="text-dark-400 h-5 w-5" />
@@ -383,7 +356,7 @@ export default function Show({
                                 Payment Date
                             </p>
                             <p className="text-dark-900 mt-1 text-sm">
-                                {formatDate(payrollPeriod.payment_date)}
+                                {formatDateLong(payrollPeriod.payment_date)}
                             </p>
                         </div>
                         <Calendar className="text-dark-400 h-5 w-5" />
@@ -547,10 +520,7 @@ export default function Show({
                                         <td className="text-dark-900 hidden px-4 py-3 text-right text-sm md:table-cell">
                                             <div className="flex flex-col">
                                                 <span>
-                                                    {parseFloat(
-                                                        payslip.regular_hours,
-                                                    ).toFixed(2)}
-                                                    h
+                                                    {formatNumber(payslip.regular_hours, 2)}h
                                                 </span>
                                                 <span className="text-dark-500 text-xs">
                                                     {formatCurrency(
@@ -562,10 +532,7 @@ export default function Show({
                                         <td className="text-dark-900 hidden px-4 py-3 text-right text-sm md:table-cell">
                                             <div className="flex flex-col">
                                                 <span>
-                                                    {parseFloat(
-                                                        payslip.overtime_hours,
-                                                    ).toFixed(2)}
-                                                    h
+                                                    {formatNumber(payslip.overtime_hours, 2)}h
                                                 </span>
                                                 <span className="text-dark-500 text-xs">
                                                     {formatCurrency(
@@ -678,6 +645,8 @@ export default function Show({
                     </Card>
                 </div>
             )}
+
+            <ConfirmDialogComponent />
         </>
     );
 }

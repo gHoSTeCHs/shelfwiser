@@ -3,8 +3,11 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
-import { EmployeeCustomDeduction, User } from '@/types/payroll';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
+import { User } from '@/types';
+import { EmployeeCustomDeduction } from '@/types/payroll';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -29,40 +32,33 @@ interface Props {
 }
 
 export default function Index({ employee, deductions, deductionTypes }: Props) {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
     const [deletingId, setDeletingId] = useState<number | null>(null);
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(amount);
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-NG', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
 
     const getDeductionTypeLabel = (type: string) => {
         return deductionTypes.find((dt) => dt.value === type)?.label || type;
     };
 
-    const handleDelete = (deductionId: number) => {
-        if (confirm('Are you sure you want to delete this deduction?')) {
-            setDeletingId(deductionId);
-            router.delete(
-                EmployeeCustomDeductionController.destroy.url({
-                    employee: employee.id,
-                    deduction: deductionId,
-                }),
-                {
-                    onFinish: () => setDeletingId(null),
-                },
-            );
-        }
+    const handleDelete = async (deductionId: number) => {
+        const confirmed = await confirm({
+            title: 'Delete Deduction',
+            message: 'Are you sure you want to delete this deduction?',
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
+
+        setDeletingId(deductionId);
+        router.delete(
+            EmployeeCustomDeductionController.destroy.url({
+                employee: employee.id,
+                deduction: deductionId,
+            }),
+            {
+                onFinish: () => setDeletingId(null),
+            },
+        );
     };
 
     const handleToggleStatus = (deductionId: number) => {
@@ -225,14 +221,14 @@ export default function Index({ employee, deductions, deductionTypes }: Props) {
                                             <div className="text-dark-900 flex flex-col text-sm">
                                                 <span>
                                                     From:{' '}
-                                                    {formatDate(
+                                                    {formatDateShort(
                                                         deduction.effective_from,
                                                     )}
                                                 </span>
                                                 {deduction.effective_to && (
                                                     <span>
                                                         To:{' '}
-                                                        {formatDate(
+                                                        {formatDateShort(
                                                             deduction.effective_to,
                                                         )}
                                                     </span>
@@ -330,6 +326,8 @@ export default function Index({ employee, deductions, deductionTypes }: Props) {
                     </div>
                 </Card>
             )}
+
+            <ConfirmDialogComponent />
         </>
     );
 }

@@ -7,7 +7,7 @@ import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
-import { User } from '@/types/payroll';
+import { User } from '@/types';
 import { Form, Head, router } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
@@ -232,8 +232,8 @@ export default function Create({ employee, deductionTypes }: Props) {
                                     id="is_active"
                                     name="is_active"
                                     checked={isActive}
-                                    onChange={(e) =>
-                                        setIsActive(e.target.checked)
+                                    onChange={(checked) =>
+                                        setIsActive(checked)
                                     }
                                 />
                                 <Label

@@ -3,13 +3,13 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
-import { useModal } from '@/hooks/useModal';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import { useToast } from '@/hooks/useToast';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDateShort } from '@/lib/formatters';
 import { SupplierConnection } from '@/types/supplier';
 import { Head, router } from '@inertiajs/react';
 import {
-    AlertCircle,
     Building2,
     CheckCircle,
     Clock,
@@ -21,107 +21,69 @@ interface Props {
 }
 
 export default function Pending({ connections }: Props) {
-    const { toast } = useToast();
-    const { openModal, closeModal } = useModal();
+    const toast = useToast();
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
 
-    const handleApprove = (connection: SupplierConnection) => {
-        openModal({
+    const handleApprove = async (connection: SupplierConnection) => {
+        const buyerNotes = connection.buyer_notes
+            ? `\n\nBuyer's message: "${connection.buyer_notes}"`
+            : '';
+
+        const confirmed = await confirm({
             title: 'Approve Connection Request',
-            content: (
-                <div className="space-y-4">
-                    <div className="bg-info-50 dark:bg-info-950/50 flex items-start gap-3 rounded-lg p-4">
-                        <AlertCircle className="text-info-600 dark:text-info-400 mt-0.5 h-5 w-5 flex-shrink-0" />
-                        <div className="text-info-700 dark:text-info-300 text-sm">
-                            <p className="font-medium">
-                                Are you sure you want to approve this connection
-                                request?
-                            </p>
-                            <p className="mt-1">
-                                {connection.buyer_tenant?.name} will be able to
-                                view your catalog and place orders.
-                            </p>
-                        </div>
-                    </div>
-
-                    {connection.buyer_notes && (
-                        <div>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Buyer's Message:
-                            </p>
-                            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                {connection.buyer_notes}
-                            </p>
-                        </div>
-                    )}
-                </div>
-            ),
-            onConfirm: () => {
-                router.post(
-                    SupplierConnectionController.approve.url({
-                        connection: connection.id,
-                    }),
-                    {},
-                    {
-                        onSuccess: () => {
-                            toast.success('Connection approved successfully');
-                            closeModal();
-                        },
-                        onError: () => {
-                            toast.error('Failed to approve connection');
-                        },
-                    },
-                );
-            },
-            confirmText: 'Approve Connection',
-            confirmVariant: 'primary',
+            message: `Are you sure you want to approve this connection request? ${connection.buyer_tenant?.name} will be able to view your catalog and place orders.${buyerNotes}`,
+            confirmLabel: 'Approve Connection',
+            variant: 'info',
         });
+
+        if (confirmed) {
+            router.post(
+                SupplierConnectionController.approve.url({
+                    connection: connection.id,
+                }),
+                {},
+                {
+                    onSuccess: () => {
+                        toast.success('Connection approved successfully');
+                    },
+                    onError: () => {
+                        toast.error('Failed to approve connection');
+                    },
+                },
+            );
+        }
     };
 
-    const handleReject = (connection: SupplierConnection) => {
-        openModal({
+    const handleReject = async (connection: SupplierConnection) => {
+        const confirmed = await confirm({
             title: 'Reject Connection Request',
-            content: (
-                <div className="space-y-4">
-                    <div className="flex items-start gap-3 rounded-lg bg-warning-50 p-4 dark:bg-warning-950/50">
-                        <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-warning-600 dark:text-warning-400" />
-                        <div className="text-sm text-warning-700 dark:text-warning-300">
-                            <p className="font-medium">
-                                Are you sure you want to reject this connection
-                                request?
-                            </p>
-                            <p className="mt-1">
-                                {connection.buyer_tenant?.name} will not be able
-                                to access your catalog or place orders.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            ),
-            onConfirm: () => {
-                router.post(
-                    SupplierConnectionController.reject.url({
-                        connection: connection.id,
-                    }),
-                    {},
-                    {
-                        onSuccess: () => {
-                            toast.success('Connection rejected');
-                            closeModal();
-                        },
-                        onError: () => {
-                            toast.error('Failed to reject connection');
-                        },
-                    },
-                );
-            },
-            confirmText: 'Reject Request',
-            confirmVariant: 'destructive',
+            message: `Are you sure you want to reject this connection request? ${connection.buyer_tenant?.name} will not be able to access your catalog or place orders.`,
+            confirmLabel: 'Reject Request',
+            variant: 'warning',
         });
+
+        if (confirmed) {
+            router.post(
+                SupplierConnectionController.reject.url({
+                    connection: connection.id,
+                }),
+                {},
+                {
+                    onSuccess: () => {
+                        toast.success('Connection rejected');
+                    },
+                    onError: () => {
+                        toast.error('Failed to reject connection');
+                    },
+                },
+            );
+        }
     };
 
     return (
         <AppLayout>
             <Head title="Pending Connection Requests" />
+            <ConfirmDialogComponent />
 
             <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
                 <div className="mb-6">
@@ -171,9 +133,7 @@ export default function Pending({ connections }: Props) {
                                                         <span className="text-xs text-gray-500 dark:text-gray-400">
                                                             <Clock className="mr-1 inline h-3 w-3" />
                                                             Requested{' '}
-                                                            {new Date(
-                                                                connection.requested_at,
-                                                            ).toLocaleDateString()}
+                                                            {formatDateShort(connection.requested_at)}
                                                         </span>
                                                     </div>
                                                 </div>

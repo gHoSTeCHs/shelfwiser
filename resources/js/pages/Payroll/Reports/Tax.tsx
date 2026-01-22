@@ -6,6 +6,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatPercentage } from '@/lib/formatters';
 import type {
     PayrollPeriod,
     TaxLawVersion,
@@ -78,17 +79,6 @@ export default function Tax({
     const [taxLawVersion, setTaxLawVersion] = useState<string>(
         filters.tax_law_version || '',
     );
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(amount);
-    };
-
-    const formatPercent = (value: number) => {
-        return `${value.toFixed(2)}%`;
-    };
 
     const handleFilter = () => {
         const params: Record<string, string> = {};
@@ -372,9 +362,10 @@ export default function Tax({
                                         Avg Effective Rate
                                     </p>
                                     <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                                        {formatPercent(
+                                        {formatPercentage(
                                             reportData.summary
                                                 .average_effective_rate,
+                                            2,
                                         )}
                                     </p>
                                 </div>
@@ -550,8 +541,9 @@ export default function Tax({
                                                 )}
                                             </td>
                                             <td className="hidden px-4 py-3 text-right text-sm text-gray-600 sm:table-cell dark:text-gray-300">
-                                                {formatPercent(
+                                                {formatPercentage(
                                                     employee.effective_rate,
+                                                    2,
                                                 )}
                                             </td>
                                         </tr>

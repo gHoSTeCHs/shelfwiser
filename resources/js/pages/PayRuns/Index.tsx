@@ -6,7 +6,9 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
-import type { PaginatedData } from '@/types';
+import { formatCurrency } from '@/lib/formatters';
+import { getPayRunStatusColor, getPayRunStatusLabel } from '@/lib/status-configs';
+import type { PaginatedResponse } from '@/types/index.d';
 import type { PayCalendar, PayRun } from '@/types/payroll';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -20,7 +22,7 @@ import {
 import { useState } from 'react';
 
 interface Props {
-    payRuns: PaginatedData<PayRun>;
+    payRuns: PaginatedResponse<PayRun>;
     summary: {
         total: number;
         pending_approval: number;
@@ -77,56 +79,6 @@ export default function Index({
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         handleFilterChange(undefined, undefined, search);
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'draft':
-                return 'light';
-            case 'calculating':
-            case 'processing':
-                return 'info';
-            case 'pending_review':
-            case 'pending_approval':
-                return 'warning';
-            case 'approved':
-            case 'completed':
-                return 'success';
-            case 'cancelled':
-                return 'error';
-            default:
-                return 'light';
-        }
-    };
-
-    const getStatusLabel = (status: string) => {
-        const labels: Record<string, string> = {
-            draft: 'Draft',
-            calculating: 'Calculating',
-            pending_review: 'Pending Review',
-            pending_approval: 'Pending Approval',
-            approved: 'Approved',
-            processing: 'Processing',
-            completed: 'Completed',
-            cancelled: 'Cancelled',
-        };
-        return labels[status] || status;
-    };
-
-    const formatCurrency = (amount: string | number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(parseFloat(amount.toString()));
-    };
-
-    const formatDate = (dateString: string | null) => {
-        if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('en-NG', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
     };
 
     const statusOptions = [
@@ -370,12 +322,12 @@ export default function Index({
                                         </td>
                                         <td className="px-4 py-3">
                                             <Badge
-                                                color={getStatusColor(
+                                                color={getPayRunStatusColor(
                                                     payRun.status,
                                                 )}
                                                 size="sm"
                                             >
-                                                {getStatusLabel(payRun.status)}
+                                                {getPayRunStatusLabel(payRun.status)}
                                             </Badge>
                                         </td>
                                         <td className="px-4 py-3 text-right">

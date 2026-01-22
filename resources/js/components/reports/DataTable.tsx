@@ -88,14 +88,22 @@ export default function DataTable<T extends Record<string, unknown> = Record<str
         }
     };
 
-    const renderCellContent = (column: Column<T>, row: T) => {
+    const renderCellContent = (column: Column<T>, row: T): React.ReactNode => {
         const value = row[column.key];
 
         if (column.render) {
             return column.render(value, row);
         }
 
-        return value;
+        if (value === null || value === undefined) {
+            return null;
+        }
+
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+            return String(value);
+        }
+
+        return null;
     };
 
     return (
@@ -155,7 +163,7 @@ export default function DataTable<T extends Record<string, unknown> = Record<str
                         ) : (
                             data.map((row, index) => (
                                 <tr
-                                    key={row.id || index}
+                                    key={(row as { id?: string | number }).id ?? index}
                                     className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
                                 >
                                     {columns.map((column) => (

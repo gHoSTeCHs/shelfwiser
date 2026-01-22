@@ -57,7 +57,7 @@ export default function Edit({ category, parentCategories }: Props) {
 
                 <Form
                     action={ServiceCategoryController.update.url({
-                        category: category.id,
+                        service_category: category.id,
                     })}
                     method="put"
                     transform={(data) => ({
@@ -189,7 +189,6 @@ export default function Edit({ category, parentCategories }: Props) {
                                                 setIcon(e.target.value)
                                             }
                                             error={!!errors.icon}
-                                            maxLength={10}
                                         />
                                         <InputError message={errors.icon} />
                                     </div>
@@ -221,8 +220,8 @@ export default function Edit({ category, parentCategories }: Props) {
                                         <Checkbox
                                             id="is_active"
                                             checked={isActive}
-                                            onChange={(e) =>
-                                                setIsActive(e.target.checked)
+                                            onChange={(checked) =>
+                                                setIsActive(checked)
                                             }
                                         />
                                         <Label

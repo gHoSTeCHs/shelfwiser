@@ -1,5 +1,7 @@
 import Badge from '@/components/ui/badge/Badge';
 import { Card } from '@/components/ui/card';
+import { formatDateTime } from '@/lib/formatters';
+import { getStockMovementTypeColor, getStockMovementTypeLabel } from '@/lib/status-configs';
 import { StockMovement } from '@/types/stockMovement';
 import {
     ArrowDownCircle,
@@ -49,49 +51,6 @@ export default function StockMovementHistory({
             default:
                 return <Package className="h-5 w-5 text-gray-500" />;
         }
-    };
-
-    const getMovementLabel = (type: string): string => {
-        const labels: Record<string, string> = {
-            purchase: 'Purchase',
-            sale: 'Sale',
-            adjustment_in: 'Adjustment In',
-            adjustment_out: 'Adjustment Out',
-            transfer_in: 'Transfer In',
-            transfer_out: 'Transfer Out',
-            return: 'Return',
-            damage: 'Damage',
-            loss: 'Loss',
-            stock_take: 'Stock Take',
-        };
-        return labels[type] || type;
-    };
-
-    const getMovementBadgeColor = (
-        type: string,
-    ): 'success' | 'warning' | 'error' | 'info' | 'primary' => {
-        const isIncrease = [
-            'purchase',
-            'adjustment_in',
-            'transfer_in',
-            'return',
-        ].includes(type);
-
-        if (type === 'loss' || type === 'damage') return 'error';
-        if (type === 'stock_take') return 'info';
-
-        return isIncrease ? 'success' : 'warning';
-    };
-
-    const formatDate = (dateString: string): string => {
-        const date = new Date(dateString);
-        return date.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
     };
 
     return (
@@ -152,7 +111,7 @@ export default function StockMovementHistory({
                                     className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
                                 >
                                     <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900 dark:text-white">
-                                        {formatDate(movement.created_at)}
+                                        {formatDateTime(movement.created_at)}
                                         {movement.created_by_user && (
                                             <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                                 by{' '}
@@ -166,11 +125,11 @@ export default function StockMovementHistory({
                                             <Badge
                                                 variant="light"
                                                 size="sm"
-                                                color={getMovementBadgeColor(
+                                                color={getStockMovementTypeColor(
                                                     movement.type,
                                                 )}
                                             >
-                                                {getMovementLabel(
+                                                {getStockMovementTypeLabel(
                                                     movement.type,
                                                 )}
                                             </Badge>

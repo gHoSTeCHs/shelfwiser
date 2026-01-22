@@ -7,8 +7,11 @@ import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import useCurrency from '@/hooks/useCurrency';
 import { useToast } from '@/hooks/useToast';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDateTime } from '@/lib/formatters';
+import { getCreditTransactionTypeColor, getCreditTransactionTypeLabel } from '@/lib/status-configs';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, CreditCard, DollarSign, Receipt } from 'lucide-react';
 import { useState } from 'react';
@@ -46,7 +49,7 @@ interface Props {
 
 export default function RecordPayment({ shop, customer }: Props) {
     const toast = useToast();
-    const currencySymbol = shop.currency_symbol || '$';
+    const { formatCurrency } = useCurrency(shop);
 
     const [amount, setAmount] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('');
@@ -141,7 +144,7 @@ export default function RecordPayment({ shop, customer }: Props) {
                                                     placeholder="0.00"
                                                     className="pl-10"
                                                     error={!!errors.amount}
-                                                    hint={`Maximum: ${currencySymbol}${customer.account_balance.toFixed(2)}`}
+                                                    hint={`Maximum: ${formatCurrency(customer.account_balance)}`}
                                                 />
                                             </div>
                                             <InputError
@@ -250,8 +253,7 @@ export default function RecordPayment({ shop, customer }: Props) {
                                         Credit Limit
                                     </p>
                                     <p className="font-semibold text-gray-900 dark:text-white">
-                                        {currencySymbol}
-                                        {customer.credit_limit.toFixed(2)}
+                                        {formatCurrency(customer.credit_limit)}
                                     </p>
                                 </div>
                                 <div className="flex items-center justify-between">
@@ -259,8 +261,7 @@ export default function RecordPayment({ shop, customer }: Props) {
                                         Current Balance
                                     </p>
                                     <p className="font-semibold text-error-600 dark:text-error-400">
-                                        {currencySymbol}
-                                        {customer.account_balance.toFixed(2)}
+                                        {formatCurrency(customer.account_balance)}
                                     </p>
                                 </div>
                                 <div className="flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-700">
@@ -268,8 +269,7 @@ export default function RecordPayment({ shop, customer }: Props) {
                                         Available Credit
                                     </p>
                                     <p className="font-semibold text-success-600 dark:text-success-400">
-                                        {currencySymbol}
-                                        {availableCredit.toFixed(2)}
+                                        {formatCurrency(availableCredit)}
                                     </p>
                                 </div>
                             </div>
@@ -287,18 +287,10 @@ export default function RecordPayment({ shop, customer }: Props) {
                                                 >
                                                     <div className="mb-1 flex items-center justify-between">
                                                         <Badge
-                                                            color={
-                                                                transaction.type ===
-                                                                'charge'
-                                                                    ? 'error'
-                                                                    : 'success'
-                                                            }
+                                                            color={getCreditTransactionTypeColor(transaction.type)}
                                                             size="sm"
                                                         >
-                                                            {transaction.type ===
-                                                            'charge'
-                                                                ? 'Charge'
-                                                                : 'Payment'}
+                                                            {getCreditTransactionTypeLabel(transaction.type)}
                                                         </Badge>
                                                         <p
                                                             className={`font-semibold ${
@@ -308,20 +300,12 @@ export default function RecordPayment({ shop, customer }: Props) {
                                                                     : 'text-success-600 dark:text-success-400'
                                                             }`}
                                                         >
-                                                            {transaction.type ===
-                                                            'charge'
-                                                                ? '+'
-                                                                : '-'}
-                                                            {currencySymbol}
-                                                            {transaction.amount.toFixed(
-                                                                2,
-                                                            )}
+                                                            {transaction.type === 'charge' ? '+' : '-'}
+                                                            {formatCurrency(transaction.amount)}
                                                         </p>
                                                     </div>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-500">
-                                                        {new Date(
-                                                            transaction.created_at,
-                                                        ).toLocaleString()}
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                        {formatDateTime(transaction.created_at)}
                                                     </p>
                                                     {transaction.payment_method && (
                                                         <p className="text-xs text-gray-600 dark:text-gray-400">

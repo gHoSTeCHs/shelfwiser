@@ -8,6 +8,8 @@ import PackagingSelector from '@/components/inventory/PackagingSelector';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { calculateSubtotal as calcSubtotal, calculateTotal as calcTotal } from '@/lib/calculations';
+import { formatCurrency } from '@/lib/formatters';
 import { Shop } from '@/types/shop';
 import { ProductVariant } from '@/types/stockMovement';
 import { Form, Head, Link } from '@inertiajs/react';
@@ -75,7 +77,7 @@ export default function Create({ shops, products }: Props) {
 
                     if (field === 'product_variant_id' && value) {
                         const variant = products.find(
-                            (p) => p.id === parseInt(value),
+                            (p) => p.id === parseInt(String(value)),
                         );
                         if (variant) {
                             // Reset packaging selection when product changes
@@ -123,7 +125,7 @@ export default function Create({ shops, products }: Props) {
                                 (pt) =>
                                     pt.id === item.product_packaging_type_id,
                             );
-                            if (packagingType) {
+                            if (packagingType && typeof value === 'number') {
                                 updated.quantity =
                                     value * packagingType.units_per_package;
                             }
@@ -145,22 +147,8 @@ export default function Create({ shops, products }: Props) {
         return products.filter((p) => !selectedIds.includes(p.id));
     };
 
-    const calculateSubtotal = () => {
-        return items.reduce((sum, item) => {
-            return sum + item.quantity * item.unit_price;
-        }, 0);
-    };
-
-    const calculateTotal = () => {
-        return calculateSubtotal() + shippingCost;
-    };
-
-    const formatCurrency = (amount: number): string => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(amount);
-    };
+    const subtotal = calcSubtotal(items);
+    const total = calcTotal(subtotal, { shipping: shippingCost });
 
     const getProductLabel = (product: ProductVariant): string => {
         const productName = product.product?.name || 'Unknown';
@@ -544,7 +532,7 @@ export default function Create({ shops, products }: Props) {
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
                                             {formatCurrency(
-                                                calculateSubtotal(),
+                                                subtotal,
                                             )}
                                         </span>
                                     </div>
@@ -577,7 +565,7 @@ export default function Create({ shops, products }: Props) {
                                             </span>
                                             <span className="text-xl font-bold text-gray-900 dark:text-white">
                                                 {formatCurrency(
-                                                    calculateTotal(),
+                                                    total,
                                                 )}
                                             </span>
                                         </div>

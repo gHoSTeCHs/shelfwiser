@@ -1,3 +1,4 @@
+import useCurrency from '@/hooks/useCurrency';
 import { Shop } from '@/types/shop';
 import React from 'react';
 
@@ -22,6 +23,8 @@ const PriceDisplay: React.FC<PriceDisplayProps> = ({
     showTaxLabel = false,
     className = '',
 }) => {
+    const { formatCurrency } = useCurrency(shop);
+
     const sizeClasses = {
         sm: 'text-sm',
         md: 'text-lg',
@@ -31,22 +34,18 @@ const PriceDisplay: React.FC<PriceDisplayProps> = ({
     const displayPrice = retailPrice || price;
     const hasRetailPrice = retailPrice && retailPrice !== price;
 
-    const formatPrice = (amount: number) => {
-        return `${shop.currency_symbol}${Number(amount).toFixed(shop.currency_decimals || 2)}`;
-    };
-
     return (
         <div className={className}>
             <div className="flex items-baseline gap-2">
                 <span
                     className={`font-bold text-gray-900 dark:text-white ${sizeClasses[size]}`}
                 >
-                    {formatPrice(displayPrice)}
+                    {formatCurrency(displayPrice)}
                 </span>
 
                 {hasRetailPrice && (
                     <span className="text-sm text-gray-500 line-through dark:text-gray-400">
-                        {formatPrice(price)}
+                        {formatCurrency(price)}
                     </span>
                 )}
             </div>

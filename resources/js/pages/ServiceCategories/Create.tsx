@@ -191,7 +191,6 @@ export default function Create({ parentCategories }: Props) {
                                                 setIcon(e.target.value)
                                             }
                                             error={!!errors.icon}
-                                            maxLength={10}
                                         />
                                         <InputError message={errors.icon} />
                                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -227,8 +226,8 @@ export default function Create({ parentCategories }: Props) {
                                         <Checkbox
                                             id="is_active"
                                             checked={isActive}
-                                            onChange={(e) =>
-                                                setIsActive(e.target.checked)
+                                            onChange={(checked) =>
+                                                setIsActive(checked)
                                             }
                                         />
                                         <Label

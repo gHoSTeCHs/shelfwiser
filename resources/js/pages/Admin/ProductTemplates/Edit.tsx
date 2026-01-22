@@ -639,15 +639,13 @@ export default function Edit({ template, productTypes, categories }: Props) {
                                                                                                 pkg.is_base_unit
                                                                                             }
                                                                                             onChange={(
-                                                                                                e,
+                                                                                                checked,
                                                                                             ) =>
                                                                                                 updatePackagingType(
                                                                                                     variantIndex,
                                                                                                     pkgIndex,
                                                                                                     'is_base_unit',
-                                                                                                    e
-                                                                                                        .target
-                                                                                                        .checked,
+                                                                                                    checked,
                                                                                                 )
                                                                                             }
                                                                                         />
@@ -714,9 +712,9 @@ export default function Edit({ template, productTypes, categories }: Props) {
                                         <label className="flex items-center gap-3">
                                             <Checkbox
                                                 checked={hasVariants}
-                                                onChange={(e) =>
+                                                onChange={(checked) =>
                                                     setHasVariants(
-                                                        e.target.checked,
+                                                        checked,
                                                     )
                                                 }
                                             />
@@ -732,9 +730,9 @@ export default function Edit({ template, productTypes, categories }: Props) {
                                         <label className="flex items-center gap-3">
                                             <Checkbox
                                                 checked={isActive}
-                                                onChange={(e) =>
+                                                onChange={(checked) =>
                                                     setIsActive(
-                                                        e.target.checked,
+                                                        checked,
                                                     )
                                                 }
                                             />

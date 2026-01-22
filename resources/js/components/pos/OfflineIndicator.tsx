@@ -1,4 +1,5 @@
 import Button from '@/components/ui/button/Button';
+import { formatDateShort, formatNumber } from '@/lib/formatters';
 import { Cloud, CloudOff, Loader2, RefreshCw } from 'lucide-react';
 import React from 'react';
 
@@ -35,7 +36,7 @@ export const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({
         if (minutes < 1) return 'Just now';
         if (minutes < 60) return `${minutes}m ago`;
         if (hours < 24) return `${hours}h ago`;
-        return new Date(timestamp).toLocaleDateString();
+        return formatDateShort(new Date(timestamp).toISOString());
     };
 
     return (
@@ -70,7 +71,7 @@ export const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({
 
             {/* Product count */}
             <div className="hidden items-center gap-1.5 text-xs text-gray-500 sm:flex dark:text-gray-400">
-                <span>{productCount.toLocaleString()} products</span>
+                <span>{formatNumber(productCount, 0)} products</span>
                 {lastSyncTime && (
                     <>
                         <span className="h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>

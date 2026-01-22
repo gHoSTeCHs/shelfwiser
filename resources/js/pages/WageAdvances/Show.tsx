@@ -7,8 +7,11 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateTime, formatDateShort, formatPercentage } from '@/lib/formatters';
+import { getWageAdvanceStatusColor } from '@/lib/status-configs';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -24,15 +27,6 @@ import {
     XCircle,
 } from 'lucide-react';
 import { FormEvent } from 'react';
-
-type BadgeColor =
-    | 'primary'
-    | 'success'
-    | 'error'
-    | 'warning'
-    | 'info'
-    | 'light'
-    | 'dark';
 
 interface Shop {
     id: number;
@@ -95,6 +89,7 @@ export default function Show({
     canCancel,
     canDelete,
 }: Props) {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
     const approveModal = useModal();
     const rejectModal = useModal();
     const disburseModal = useModal();
@@ -102,56 +97,30 @@ export default function Show({
     const cancelModal = useModal();
     const deleteModal = useModal();
 
-    // Approve form
     const approveForm = useForm({
         amount_approved: wageAdvance.amount_requested,
         approval_notes: '',
     });
 
-    // Reject form
     const rejectForm = useForm({
         rejection_reason: '',
     });
 
-    // Disburse form
     const disburseForm = useForm({
         disbursement_method: 'bank_transfer',
         disbursement_reference: '',
         disbursement_notes: '',
     });
 
-    // Repayment form
     const repaymentForm = useForm({
         amount: '',
         payment_date: new Date().toISOString().split('T')[0],
         notes: '',
     });
 
-    // Cancel form
     const cancelForm = useForm({
         cancellation_reason: '',
     });
-
-    const getStatusColor = (status: string): BadgeColor => {
-        switch (status) {
-            case 'pending':
-                return 'warning';
-            case 'approved':
-                return 'success';
-            case 'rejected':
-                return 'error';
-            case 'disbursed':
-                return 'info';
-            case 'repaying':
-                return 'primary';
-            case 'completed':
-                return 'success';
-            case 'cancelled':
-                return 'light';
-            default:
-                return 'light';
-        }
-    };
 
     const handleApprove = (e: FormEvent) => {
         e.preventDefault();
@@ -223,37 +192,17 @@ export default function Show({
         );
     };
 
-    const handleDelete = () => {
-        if (confirm('Are you sure you want to delete this wage advance?')) {
-            deleteModal.closeModal();
-        }
-    };
-
-    const formatDate = (dateString: string | null): string => {
-        if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
+    const handleDelete = async () => {
+        const confirmed = await confirm({
+            title: 'Delete Wage Advance',
+            message: 'Are you sure you want to delete this wage advance?',
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
         });
-    };
+        if (!confirmed) return;
 
-    const formatShortDate = (dateString: string | null): string => {
-        if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
-
-    const formatCurrency = (amount: string | number): string => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(parseFloat(amount.toString()));
+        deleteModal.closeModal();
     };
 
     const approvedAmount =
@@ -267,7 +216,6 @@ export default function Show({
             <Head title={`Wage Advance #${wageAdvance.id}`} />
 
             <div className="space-y-6">
-                {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
                         <Link
@@ -283,14 +231,13 @@ export default function Show({
                             </h1>
                             <Badge
                                 variant="light"
-                                color={getStatusColor(wageAdvance.status)}
+                                color={getWageAdvanceStatusColor(wageAdvance.status)}
                             >
                                 {wageAdvance.status.toUpperCase()}
                             </Badge>
                         </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex gap-2">
                         {canApprove && wageAdvance.status === 'pending' && (
                             <Button
@@ -361,7 +308,6 @@ export default function Show({
                     </div>
                 </div>
 
-                {/* Overview Cards */}
                 <div className="grid gap-4 sm:grid-cols-3">
                     <Card className="p-6">
                         <div className="flex items-center justify-between">
@@ -408,7 +354,7 @@ export default function Show({
                                         />
                                     </div>
                                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                        {repaymentProgress.toFixed(1)}% repaid
+                                        {formatPercentage(repaymentProgress)} repaid
                                     </p>
                                 </div>
                             </div>
@@ -435,9 +381,7 @@ export default function Show({
                     </Card>
                 </div>
 
-                {/* Details Grid */}
                 <div className="grid gap-6 lg:grid-cols-2">
-                    {/* Employee & Shop Information */}
                     <Card className="p-6">
                         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
                             Employee Information
@@ -486,7 +430,6 @@ export default function Show({
                         </div>
                     </Card>
 
-                    {/* Repayment Information */}
                     <Card className="p-6">
                         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
                             Repayment Information
@@ -515,7 +458,7 @@ export default function Show({
                                     Repayment Start
                                 </p>
                                 <p className="font-medium text-gray-900 dark:text-white">
-                                    {formatShortDate(
+                                    {formatDateShort(
                                         wageAdvance.repayment_start_date,
                                     )}
                                 </p>
@@ -526,7 +469,7 @@ export default function Show({
                                     Repayment End
                                 </p>
                                 <p className="font-medium text-gray-900 dark:text-white">
-                                    {formatShortDate(
+                                    {formatDateShort(
                                         wageAdvance.repayment_end_date,
                                     )}
                                 </p>
@@ -534,7 +477,6 @@ export default function Show({
                         </div>
                     </Card>
 
-                    {/* Status Timeline */}
                     <Card className="p-6 lg:col-span-2">
                         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
                             Status Timeline
@@ -547,7 +489,7 @@ export default function Show({
                                         Requested
                                     </p>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        {formatDate(wageAdvance.requested_at)}
+                                        {formatDateTime(wageAdvance.requested_at)}
                                     </p>
                                 </div>
                             </div>
@@ -560,7 +502,7 @@ export default function Show({
                                             Approved
                                         </p>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {formatDate(
+                                            {formatDateTime(
                                                 wageAdvance.approved_at,
                                             )}
                                         </p>
@@ -587,7 +529,7 @@ export default function Show({
                                             Rejected
                                         </p>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {formatDate(
+                                            {formatDateTime(
                                                 wageAdvance.rejected_at,
                                             )}
                                         </p>
@@ -608,7 +550,7 @@ export default function Show({
                                             Disbursed
                                         </p>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {formatDate(
+                                            {formatDateTime(
                                                 wageAdvance.disbursed_at,
                                             )}
                                         </p>
@@ -630,7 +572,7 @@ export default function Show({
                                             Cancelled
                                         </p>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {formatDate(
+                                            {formatDateTime(
                                                 wageAdvance.cancelled_at,
                                             )}
                                         </p>
@@ -642,7 +584,6 @@ export default function Show({
                 </div>
             </div>
 
-            {/* Approve Modal */}
             <Modal
                 isOpen={approveModal.isOpen}
                 onClose={approveModal.closeModal}
@@ -714,7 +655,6 @@ export default function Show({
                 </form>
             </Modal>
 
-            {/* Reject Modal */}
             <Modal
                 isOpen={rejectModal.isOpen}
                 onClose={rejectModal.closeModal}
@@ -763,7 +703,6 @@ export default function Show({
                 </form>
             </Modal>
 
-            {/* Disburse Modal */}
             <Modal
                 isOpen={disburseModal.isOpen}
                 onClose={disburseModal.closeModal}
@@ -859,7 +798,6 @@ export default function Show({
                 </form>
             </Modal>
 
-            {/* Repayment Modal */}
             <Modal
                 isOpen={repaymentModal.isOpen}
                 onClose={repaymentModal.closeModal}
@@ -949,7 +887,6 @@ export default function Show({
                 </form>
             </Modal>
 
-            {/* Cancel Modal */}
             <Modal
                 isOpen={cancelModal.isOpen}
                 onClose={cancelModal.closeModal}
@@ -997,6 +934,8 @@ export default function Show({
                     </div>
                 </form>
             </Modal>
+
+            <ConfirmDialogComponent />
         </>
     );
 }

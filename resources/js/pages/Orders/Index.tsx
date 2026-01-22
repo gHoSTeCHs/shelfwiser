@@ -1,10 +1,12 @@
 import Select from '@/components/form/Select';
 import Input from '@/components/form/input/InputField';
 import EmptyState from '@/components/ui/EmptyState';
-import Badge, { BadgeColor } from '@/components/ui/badge/Badge';
+import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
+import { getOrderStatusColor, getPaymentStatusColor } from '@/lib/status-configs';
 import { OrderListResponse, OrderStats } from '@/types/order';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -41,7 +43,7 @@ export default function Index({
             order.order_number
                 .toLowerCase()
                 .includes(searchTerm.toLowerCase()) ||
-            order.customer?.name
+            order.customer?.full_name
                 ?.toLowerCase()
                 .includes(searchTerm.toLowerCase()) ||
             order.shop?.name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -53,46 +55,6 @@ export default function Index({
 
         return matchesSearch && matchesStatus && matchesPaymentStatus;
     });
-
-    const getStatusColor = (status: string): BadgeColor => {
-        const colors: Record<string, BadgeColor> = {
-            pending: 'warning',
-            confirmed: 'info',
-            processing: 'brand',
-            packed: 'blue',
-            shipped: 'purple',
-            delivered: 'success',
-            cancelled: 'error',
-            refunded: 'gray',
-        };
-        return colors[status] || 'gray';
-    };
-
-    const getPaymentStatusColor = (status: string): BadgeColor => {
-        const colors: Record<string, BadgeColor> = {
-            unpaid: 'error',
-            partial: 'warning',
-            paid: 'success',
-            refunded: 'gray',
-            failed: 'error',
-        };
-        return colors[status] || 'gray';
-    };
-
-    const formatDate = (dateString: string): string => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
-
-    const formatCurrency = (amount: number): string => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(amount);
-    };
 
     return (
         <>
@@ -265,7 +227,7 @@ export default function Index({
                                             </h3>
                                             <Badge
                                                 variant="light"
-                                                color={getStatusColor(
+                                                color={getOrderStatusColor(
                                                     order.status,
                                                 )}
                                             >
@@ -292,7 +254,7 @@ export default function Index({
                                                         Customer:
                                                     </span>
                                                     <span>
-                                                        {order.customer.name}
+                                                        {order.customer.full_name}
                                                     </span>
                                                 </div>
                                             )}
@@ -313,7 +275,7 @@ export default function Index({
                                                     Date:
                                                 </span>
                                                 <span>
-                                                    {formatDate(
+                                                    {formatDateShort(
                                                         order.created_at,
                                                     )}
                                                 </span>

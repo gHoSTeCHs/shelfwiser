@@ -1,0 +1,550 @@
+
+> shelf-wise-beta@1.0.1 types
+> tsc --noEmit
+
+resources/js/components/dashboard/tabs/FinancialsTab.tsx(62,17): error TS2353: Object literal may only specify known properties, and 'width' does not exist in type '{ size?: number | undefined; strokeWidth?: number | undefined; fillColors?: string[] | undefined; shape?: ApexMarkerShape | undefined; offsetX?: number | undefined; offsetY?: number | undefined; customHTML?(): any; onClick?(): void; }'.
+resources/js/components/images/ImageGallery.tsx(213,45): error TS2322: Type '{ children: Element; type: "button"; variant: "secondary"; size: "sm"; onClick: () => Promise<void>; title: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps'.
+  Property 'title' does not exist on type 'IntrinsicAttributes & ButtonProps'.
+resources/js/components/images/ImageGallery.tsx(229,49): error TS2322: Type '{ children: Element; type: "button"; variant: "secondary"; size: "sm"; onClick: () => Promise<void>; title: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps'.
+  Property 'title' does not exist on type 'IntrinsicAttributes & ButtonProps'.
+resources/js/components/images/ImageGallery.tsx(246,49): error TS2322: Type '{ children: Element; type: "button"; variant: "secondary"; size: "sm"; onClick: () => Promise<void>; title: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps'.
+  Property 'title' does not exist on type 'IntrinsicAttributes & ButtonProps'.
+resources/js/components/images/ImageGallery.tsx(261,45): error TS2322: Type '{ children: Element; type: "button"; variant: "destructive"; size: "sm"; onClick: () => Promise<void>; disabled: boolean; loading: boolean; title: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps'.
+  Property 'title' does not exist on type 'IntrinsicAttributes & ButtonProps'.
+resources/js/components/payment/PaystackButton.tsx(64,13): error TS2353: Object literal may only specify known properties, and 'metadata' does not exist in type 'PaystackInlineData'.
+resources/js/components/reports/DataTable.tsx(158,37): error TS2322: Type '{}' is not assignable to type 'Key | null | undefined'.
+resources/js/components/reports/DataTable.tsx(166,45): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+resources/js/components/reports/FilterBar.tsx(116,17): error TS2345: Argument of type '{ [k: string]: string | number | null; }' is not assignable to parameter of type 'string | string[][] | Record<string, string> | URLSearchParams | undefined'.
+  Type '{ [k: string]: string | number | null; }' is missing the following properties from type 'string[][]': length, pop, push, concat, and 35 more.
+resources/js/components/reports/FilterBar.tsx(212,45): error TS2322: Type 'string | number' is not assignable to type 'string | undefined'.
+  Type 'number' is not assignable to type 'string'.
+resources/js/components/reports/FilterBar.tsx(240,45): error TS2322: Type '{ label: string; value: string | number; onChange: (value: Date[]) => void; }' is not assignable to type 'IntrinsicAttributes & PropsType'.
+  Property 'value' does not exist on type 'IntrinsicAttributes & PropsType'.
+resources/js/components/reports/FilterBar.tsx(246,53): error TS2345: Argument of type 'Date[]' is not assignable to parameter of type 'string | number | null'.
+resources/js/components/services/AddonFormModal.tsx(140,66): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/components/services/AddonFormModal.tsx(196,60): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/components/services/VariantFormModal.tsx(239,60): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/components/shops/DynamicSchemaField.tsx(59,29): error TS2322: Type 'string | number | boolean | string[] | number[]' is not assignable to type 'boolean'.
+  Type 'string' is not assignable to type 'boolean'.
+resources/js/components/shops/DynamicSchemaField.tsx(88,29): error TS2322: Type 'string | number | boolean | string[] | number[]' is not assignable to type 'string | number | undefined'.
+  Type 'false' is not assignable to type 'string | number | undefined'.
+resources/js/components/shops/DynamicSchemaField.tsx(131,56): error TS2345: Argument of type '(option: string) => JSX.Element' is not assignable to parameter of type '(value: SchemaPropertyValue, index: number, array: SchemaPropertyValue[]) => Element'.
+  Types of parameters 'option' and 'value' are incompatible.
+    Type 'SchemaPropertyValue' is not assignable to type 'string'.
+      Type 'null' is not assignable to type 'string'.
+resources/js/components/shops/DynamicSchemaField.tsx(143,47): error TS2339: Property 'includes' does not exist on type 'string | number | boolean | string[] | number[]'.
+  Property 'includes' does not exist on type 'number'.
+resources/js/components/shops/DynamicSchemaField.tsx(151,60): error TS2488: Type 'string | number | boolean | string[] | number[]' must have a '[Symbol.iterator]()' method that returns an iterator.
+resources/js/components/shops/DynamicSchemaField.tsx(156,71): error TS2339: Property 'filter' does not exist on type 'string | number | boolean | string[] | number[]'.
+  Property 'filter' does not exist on type 'string'.
+resources/js/components/shops/DynamicSchemaField.tsx(187,29): error TS2322: Type 'string | number | true' is not assignable to type 'string | undefined'.
+  Type 'number' is not assignable to type 'string'.
+resources/js/components/shops/DynamicSchemaField.tsx(218,58): error TS2345: Argument of type '(opt: string) => { value: string; label: string; }' is not assignable to parameter of type '(value: SchemaPropertyValue, index: number, array: SchemaPropertyValue[]) => { value: string; label: string; }'.
+  Types of parameters 'opt' and 'value' are incompatible.
+    Type 'SchemaPropertyValue' is not assignable to type 'string'.
+      Type 'null' is not assignable to type 'string'.
+resources/js/components/shops/DynamicSchemaField.tsx(226,33): error TS2322: Type 'string | number | boolean | string[] | number[]' is not assignable to type 'string | undefined'.
+  Type 'number' is not assignable to type 'string'.
+resources/js/components/shops/DynamicSchemaField.tsx(246,33): error TS2322: Type 'string | number | boolean | string[] | number[]' is not assignable to type 'string | undefined'.
+  Type 'number' is not assignable to type 'string'.
+resources/js/components/shops/DynamicSchemaField.tsx(273,29): error TS2322: Type 'string | number | boolean | string[] | number[]' is not assignable to type 'string | number | undefined'.
+  Type 'false' is not assignable to type 'string | number | undefined'.
+resources/js/components/storefront/ProductCard.tsx(21,37): error TS18048: 'mainVariant.available_stock' is possibly 'undefined'.
+resources/js/components/storefront/ProductCard.tsx(23,36): error TS18048: 'mainVariant.available_stock' is possibly 'undefined'.
+resources/js/components/storefront/ProductCard.tsx(36,30): error TS2551: Property 'image' does not exist on type 'Product'. Did you mean 'images'?
+resources/js/components/storefront/ProductCard.tsx(38,42): error TS2551: Property 'image' does not exist on type 'Product'. Did you mean 'images'?
+resources/js/components/storefront/ProductCard.tsx(95,58): error TS2339: Property 'retail_price' does not exist on type 'ProductVariant'.
+resources/js/components/ui/tooltip/Tooltip.tsx(22,22): error TS2554: Expected 1 arguments, but got 0.
+resources/js/hooks/useBarcodeScanner.ts(200,13): error TS2322: Type 'Html5Qrcode' is not assignable to type '{ start: (cameraIdOrConfig: unknown, configuration: unknown, qrCodeSuccessCallback: (decodedText: string) => void, qrCodeErrorCallback?: (() => void) | undefined) => Promise<void>; stop: () => Promise<...>; }'.
+  Types of property 'start' are incompatible.
+    Type '(cameraIdOrConfig: string | MediaTrackConstraints, configuration: Html5QrcodeCameraScanConfig | undefined, qrCodeSuccessCallback: QrcodeSuccessCallback | undefined, qrCodeErrorCallback: QrcodeErrorCallback | undefined) => Promise<...>' is not assignable to type '(cameraIdOrConfig: unknown, configuration: unknown, qrCodeSuccessCallback: (decodedText: string) => void, qrCodeErrorCallback?: (() => void) | undefined) => Promise<void>'.
+      Types of parameters 'cameraIdOrConfig' and 'cameraIdOrConfig' are incompatible.
+        Type 'unknown' is not assignable to type 'string | MediaTrackConstraints'.
+resources/js/hooks/useOfflineProducts.ts(200,56): error TS2339: Property 'id' does not exist on type '{}'.
+resources/js/hooks/useOfflineProducts.ts(203,58): error TS2339: Property 'name' does not exist on type '{}'.
+resources/js/hooks/useOfflineProducts.ts(206,51): error TS2339: Property 'name' does not exist on type '{}'.
+resources/js/hooks/useOfflineProducts.ts(209,51): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+resources/js/hooks/useOfflineProducts.ts(210,56): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+resources/js/hooks/useOfflineProducts.ts(216,56): error TS2339: Property 'is_taxable' does not exist on type '{}'.
+resources/js/icons/index.ts(1,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(2,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(3,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(4,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(5,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(6,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(7,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(8,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(9,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(10,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(11,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(12,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(13,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(14,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(15,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(16,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(17,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(18,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(19,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(20,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(21,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(22,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(23,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(24,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(25,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(26,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(27,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(28,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(29,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(30,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(31,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(32,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(33,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(34,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(35,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(36,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(37,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(38,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(39,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(40,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(41,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(42,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(43,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(44,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(45,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(46,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(47,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(48,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(49,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(50,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(51,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(52,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(53,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(54,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(55,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/icons/index.ts(56,10): error TS2614: Module '"*.svg?react"' has no exported member 'ReactComponent'. Did you mean to use 'import ReactComponent from "*.svg?react"' instead?
+resources/js/layouts/StorefrontLayout.tsx(8,10): error TS2459: Module '"@/types/storefront"' declares 'Shop' locally, but it is not exported.
+resources/js/lib/indexeddb.ts(372,5): error TS2322: Type '{} | null' is not assignable to type 'number | null'.
+  Type '{}' is not assignable to type 'number'.
+resources/js/pages/Account/Profile.tsx(279,57): error TS2322: Type '{ children: string; color: "success"; size: "sm"; className: string; }' is not assignable to type 'IntrinsicAttributes & BadgeProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & BadgeProps'.
+resources/js/pages/Admin/ProductTemplates/Create.tsx(635,106): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Admin/ProductTemplates/Create.tsx(705,59): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Admin/ProductTemplates/Create.tsx(723,59): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Admin/ProductTemplates/Edit.tsx(649,106): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Admin/ProductTemplates/Edit.tsx(719,59): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Admin/ProductTemplates/Edit.tsx(737,59): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Admin/Settings/Index.tsx(347,37): error TS2322: Type '{ children: string; variant: "light"; color: "info"; className: string; }' is not assignable to type 'IntrinsicAttributes & BadgeProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & BadgeProps'.
+resources/js/pages/Admin/Subscriptions/Index.tsx(145,26): error TS2741: Property 'onChange' is missing in type '{ options: { value: string; label: string; }[]; defaultValue: string; }' but required in type 'SelectProps'.
+resources/js/pages/Admin/Subscriptions/Index.tsx(158,26): error TS2741: Property 'onChange' is missing in type '{ options: { value: string; label: string; }[]; defaultValue: string; }' but required in type 'SelectProps'.
+resources/js/pages/Admin/Tenants/Create.tsx(286,59): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Admin/Tenants/Edit.tsx(351,59): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Calendar.tsx(308,55): error TS2339: Property 'timeText' does not exist on type '{ event: { extendedProps: { calendar: string; }; }; }'.
+resources/js/pages/Calendar.tsx(309,62): error TS2339: Property 'title' does not exist on type '{ extendedProps: { calendar: string; }; }'.
+resources/js/pages/Customers/Edit.tsx(19,44): error TS2559: Type '{ id: number; name: string; slug: string; }' has no properties in common with type 'Partial<CurrencyConfig>'.
+resources/js/pages/Customers/Edit.tsx(78,21): error TS2322: Type '{ children: ({ data, setData, errors, processing }: FormComponentSlotProps) => Element; action: string; method: "put"; defaults: { first_name: string; last_name: string; email: string; phone: string; ... 7 more ...; credit_limit: string; }; }' is not assignable to type 'IntrinsicAttributes & Partial<Pick<Visit<RequestPayload>, "headers" | "queryStringArrayFormat" | "errorBag" | "showProgress" | "invalidateCacheTags"> & Omit<...>> & ... 4 more ... & RefAttributes<...>'.
+  Property 'defaults' does not exist on type 'IntrinsicAttributes & Partial<Pick<Visit<RequestPayload>, "headers" | "queryStringArrayFormat" | "errorBag" | "showProgress" | "invalidateCacheTags"> & Omit<...>> & ... 4 more ... & RefAttributes<...>'. Did you mean 'default'?
+resources/js/pages/Customers/Edit.tsx(93,25): error TS2339: Property 'data' does not exist on type 'FormComponentSlotProps'.
+resources/js/pages/Customers/Edit.tsx(93,31): error TS2339: Property 'setData' does not exist on type 'FormComponentSlotProps'.
+resources/js/pages/Customers/Index.tsx(466,41): error TS2322: Type '{ key: number; variant: "primary" | "outline"; size: "sm"; disabled: boolean; onClick: () => void | "" | null; dangerouslySetInnerHTML: { __html: string; }; }' is not assignable to type 'IntrinsicAttributes & ButtonProps'.
+  Property 'dangerouslySetInnerHTML' does not exist on type 'IntrinsicAttributes & ButtonProps'.
+resources/js/pages/Orders/Create.tsx(80,54): error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+resources/js/pages/Orders/Create.tsx(130,37): error TS2362: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+resources/js/pages/Orders/Create.tsx(130,37): error TS18047: 'value' is possibly 'null'.
+resources/js/pages/Orders/Edit.tsx(52,9): error TS2345: Argument of type '{ id: number; product_variant_id: number | null; product_packaging_type_id: number | null; package_quantity: number; quantity: number; unit_price: number; }[]' is not assignable to parameter of type 'OrderItemForm[] | (() => OrderItemForm[])'.
+  Type '{ id: number; product_variant_id: number | null; product_packaging_type_id: number | null; package_quantity: number; quantity: number; unit_price: number; }[]' is not assignable to type 'OrderItemForm[]'.
+    Type '{ id: number; product_variant_id: number | null; product_packaging_type_id: number | null; package_quantity: number; quantity: number; unit_price: number; }' is not assignable to type 'OrderItemForm'.
+      Types of property 'product_variant_id' are incompatible.
+        Type 'number | null' is not assignable to type 'number | ""'.
+          Type 'null' is not assignable to type 'number | ""'.
+resources/js/pages/Orders/Edit.tsx(96,54): error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+resources/js/pages/Orders/Edit.tsx(311,73): error TS2322: Type '{ packagingTypes: ProductPackagingType[]; selectedPackagingTypeId: number | null; packageQuantity: number; onPackagingChange: (id: any) => void; onQuantityChange: (qty: any) => void; disabled: boolean; }' is not assignable to type 'IntrinsicAttributes & PackagingSelectorProps'.
+  Property 'packagingTypes' does not exist on type 'IntrinsicAttributes & PackagingSelectorProps'.
+resources/js/pages/Orders/Edit.tsx(321,77): error TS7006: Parameter 'id' implicitly has an 'any' type.
+resources/js/pages/Orders/Edit.tsx(330,77): error TS7006: Parameter 'qty' implicitly has an 'any' type.
+resources/js/pages/Orders/Index.tsx(46,29): error TS2339: Property 'name' does not exist on type 'Customer'.
+resources/js/pages/Orders/Index.tsx(257,73): error TS2339: Property 'name' does not exist on type 'Customer'.
+resources/js/pages/Orders/Show.tsx(159,37): error TS2367: This comparison appears to be unintentional because the types '"pending" | "confirmed" | "processing" | "packed" | "shipped" | "cancelled" | "refunded"' and '"completed"' have no overlap.
+resources/js/pages/Orders/Show.tsx(160,37): error TS2367: This comparison appears to be unintentional because the types '"delivered"' and '"refunded"' have no overlap.
+resources/js/pages/Orders/Show.tsx(431,65): error TS2339: Property 'name' does not exist on type 'Customer'.
+resources/js/pages/Payroll/Settings/DeductionTypes.tsx(110,39): error TS2551: Property 'destroyDeductionType' does not exist on type '{ earningTypes: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDe...'. Did you mean 'storeDeductionType'?
+resources/js/pages/Payroll/Settings/DeductionTypes.tsx(615,51): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Payroll/Settings/DeductionTypes.tsx(635,51): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Payroll/Settings/DeductionTypes.tsx(655,51): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Payroll/Settings/EarningTypes.tsx(102,39): error TS2551: Property 'destroyEarningType' does not exist on type '{ earningTypes: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDe...'. Did you mean 'storeEarningType'?
+resources/js/pages/Payroll/Settings/EarningTypes.tsx(515,51): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Payroll/Settings/EarningTypes.tsx(534,51): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Payroll/Settings/EarningTypes.tsx(554,51): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Payroll/Settings/EarningTypes.tsx(574,51): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Payroll/Settings/PayCalendars.tsx(101,39): error TS2551: Property 'destroyPayCalendar' does not exist on type '{ earningTypes: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDe...'. Did you mean 'storePayCalendar'?
+resources/js/pages/Payroll/Settings/PayCalendars.tsx(465,51): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Payroll/Settings/PayCalendars.tsx(485,51): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/PayRuns/Index.tsx(11,15): error TS2305: Module '"@/types"' has no exported member 'PaginatedData'.
+resources/js/pages/PayRuns/Index.tsx(278,52): error TS7006: Parameter 'payRun' implicitly has an 'any' type.
+resources/js/pages/PayRuns/Show.tsx(236,54): error TS2339: Property 'downloadPayslips' does not exist on type '{ index: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDefinitio...'.
+resources/js/pages/PayRuns/Show.tsx(569,82): error TS2339: Property 'include' does not exist on type '{ index: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDefinitio...'.
+resources/js/pages/PayRuns/Show.tsx(971,33): error TS2322: Type 'number | null' is not assignable to type 'number | { id: number; }'.
+  Type 'null' is not assignable to type 'number | { id: number; }'.
+resources/js/pages/POS/Index.tsx(988,7): error TS2339: Property 'layout' does not exist on type 'FC<POSProps>'.
+resources/js/pages/Products/Create.tsx(120,19): error TS2322: Type '{ id: `${string}-${string}-${string}-${string}-${string}`; sku: string; name: string; price: string; cost_price: string; barcode: string; base_unit_name: string; attributes: Record<string, string>; packaging_types: { ...; }[]; }[]' is not assignable to type 'ProductVariant[]'.
+  Type '{ id: `${string}-${string}-${string}-${string}-${string}`; sku: string; name: string; price: string; cost_price: string; barcode: string; base_unit_name: string; attributes: Record<string, string>; packaging_types: { ...; }[]; }' is missing the following properties from type 'ProductVariant': product_id, reorder_level, image_url, is_active, and 2 more.
+resources/js/pages/Products/Create.tsx(161,13): error TS2322: Type '`${string}-${string}-${string}-${string}-${string}`' is not assignable to type 'number'.
+resources/js/pages/Products/Create.tsx(164,13): error TS2322: Type 'string' is not assignable to type 'number'.
+resources/js/pages/Products/Create.tsx(165,13): error TS2322: Type 'string' is not assignable to type 'number'.
+resources/js/pages/Products/Create.tsx(207,13): error TS2322: Type 'ProductVariant | { id: `${string}-${string}-${string}-${string}-${string}`; sku: string; name: string; price: string; cost_price: string; barcode: string; base_unit_name: string; attributes: {}; packaging_types: never[]; }' is not assignable to type 'ProductVariant'.
+  Type '{ id: `${string}-${string}-${string}-${string}-${string}`; sku: string; name: string; price: string; cost_price: string; barcode: string; base_unit_name: string; attributes: {}; packaging_types: never[]; }' is missing the following properties from type 'ProductVariant': product_id, reorder_level, image_url, is_active, and 2 more.
+resources/js/pages/Products/Create.tsx(209,17): error TS2322: Type '`${string}-${string}-${string}-${string}-${string}`' is not assignable to type 'number'.
+resources/js/pages/Products/Create.tsx(212,17): error TS2322: Type 'string' is not assignable to type 'number'.
+resources/js/pages/Products/Create.tsx(213,17): error TS2322: Type 'string' is not assignable to type 'number'.
+resources/js/pages/Products/Create.tsx(262,13): error TS2345: Argument of type '(ProductVariant | { packaging_types: (ProductPackagingType | { id: number; name: string; display_name: string; units_per_package: number; is_sealed_package: false; ... 6 more ...; is_active: true; })[]; ... 23 more ...; inventory_locations?: InventoryLocation[] | undefined; })[]' is not assignable to parameter of type 'SetStateAction<ProductVariant[]>'.
+  Type '(ProductVariant | { packaging_types: (ProductPackagingType | { id: number; name: string; display_name: string; units_per_package: number; is_sealed_package: false; ... 6 more ...; is_active: true; })[]; ... 23 more ...; inventory_locations?: InventoryLocation[] | undefined; })[]' is not assignable to type 'ProductVariant[]'.
+    Type 'ProductVariant | { packaging_types: (ProductPackagingType | { id: number; name: string; display_name: string; units_per_package: number; is_sealed_package: false; ... 6 more ...; is_active: true; })[]; ... 23 more ...; inventory_locations?: InventoryLocation[] | undefined; }' is not assignable to type 'ProductVariant'.
+      Type '{ packaging_types: (ProductPackagingType | { id: number; name: string; display_name: string; units_per_package: number; is_sealed_package: false; price: number; ... 5 more ...; is_active: true; })[]; ... 23 more ...; inventory_locations?: InventoryLocation[]; }' is not assignable to type 'ProductVariant'.
+        Types of property 'packaging_types' are incompatible.
+          Type '(ProductPackagingType | { id: number; name: string; display_name: string; units_per_package: number; is_sealed_package: false; price: number; cost_price: null; is_base_unit: false; can_break_down: false; min_order_quantity: number; display_order: number; is_active: true; })[]' is not assignable to type 'ProductPackagingType[]'.
+            Type 'ProductPackagingType | { id: number; name: string; display_name: string; units_per_package: number; is_sealed_package: false; price: number; cost_price: null; is_base_unit: false; can_break_down: false; min_order_quantity: number; display_order: number; is_active: true; }' is not assignable to type 'ProductPackagingType'.
+              Type '{ id: number; name: string; display_name: string; units_per_package: number; is_sealed_package: false; price: number; cost_price: null; is_base_unit: false; can_break_down: false; min_order_quantity: number; display_order: number; is_active: true; }' is missing the following properties from type 'ProductPackagingType': product_variant_id, breaks_into_packaging_type_id, created_at, updated_at
+resources/js/pages/Products/Create.tsx(263,17): error TS2367: This comparison appears to be unintentional because the types 'number' and 'string' have no overlap.
+resources/js/pages/Products/Create.tsx(296,17): error TS2367: This comparison appears to be unintentional because the types 'number' and 'string' have no overlap.
+resources/js/pages/Products/Create.tsx(316,17): error TS2367: This comparison appears to be unintentional because the types 'number' and 'string' have no overlap.
+resources/js/pages/Products/Create.tsx(333,48): error TS2367: This comparison appears to be unintentional because the types 'number' and 'string' have no overlap.
+resources/js/pages/Products/Create.tsx(343,34): error TS2367: This comparison appears to be unintentional because the types 'number' and 'string' have no overlap.
+resources/js/pages/Products/Create.tsx(374,21): error TS2322: Type '(data: Record<string, FormDataConvertible>) => { custom_attributes: Record<string, unknown>; has_variants: string; }' is not assignable to type '(data: Record<string, FormDataConvertible>) => Record<string, FormDataConvertible>'.
+  Type '{ custom_attributes: Record<string, unknown>; has_variants: string; }' is not assignable to type 'Record<string, FormDataConvertible>'.
+    Property 'custom_attributes' is incompatible with index signature.
+      Type 'Record<string, unknown>' is not assignable to type 'FormDataConvertible'.
+        Type 'Record<string, unknown>' is missing the following properties from type 'Date': toDateString, toTimeString, toLocaleDateString, toLocaleTimeString, and 38 more.
+resources/js/pages/Products/Create.tsx(564,49): error TS2322: Type '{ value: number; label: string; }' is not assignable to type 'Option'.
+  Types of property 'value' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+resources/js/pages/Products/Create.tsx(667,57): error TS2322: Type 'unknown' is not assignable to type 'SchemaPropertyValue'.
+resources/js/pages/Products/Create.tsx(683,57): error TS2322: Type '{}' is not assignable to type 'string | number | readonly string[] | undefined'.
+resources/js/pages/Products/Create.tsx(887,81): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'string | number'.
+  Type 'undefined' is not assignable to type 'string | number'.
+resources/js/pages/Products/Create.tsx(915,85): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'string | number'.
+  Type 'undefined' is not assignable to type 'string | number'.
+resources/js/pages/Products/Create.tsx(955,85): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'string | number'.
+  Type 'undefined' is not assignable to type 'string | number'.
+resources/js/pages/Products/Create.tsx(997,85): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'string | number'.
+  Type 'undefined' is not assignable to type 'string | number'.
+resources/js/pages/Products/Create.tsx(1031,89): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'string | number'.
+  Type 'undefined' is not assignable to type 'string | number'.
+resources/js/pages/Products/Create.tsx(1135,73): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+resources/js/pages/Products/Create.tsx(1161,77): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+resources/js/pages/Products/Create.tsx(1188,69): error TS2322: Type 'string | null' is not assignable to type 'string | number | undefined'.
+  Type 'null' is not assignable to type 'string | number | undefined'.
+resources/js/pages/Products/Create.tsx(1195,77): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+resources/js/pages/Products/Create.tsx(1207,69): error TS2322: Type 'string | null' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+resources/js/pages/Products/Create.tsx(1230,77): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+resources/js/pages/Products/Create.tsx(1260,69): error TS2322: Type 'number | null' is not assignable to type 'string | number | undefined'.
+  Type 'null' is not assignable to type 'string | number | undefined'.
+resources/js/pages/Products/Create.tsx(1267,77): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+resources/js/pages/Products/Create.tsx(1281,69): error TS2322: Type 'number | null' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+resources/js/pages/Products/Create.tsx(1297,69): error TS2322: Type 'string | null' is not assignable to type 'string | number | undefined'.
+  Type 'null' is not assignable to type 'string | number | undefined'.
+resources/js/pages/Products/Create.tsx(1304,77): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+resources/js/pages/Products/Create.tsx(1316,69): error TS2322: Type 'string | null' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+resources/js/pages/Products/Create.tsx(1337,77): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+resources/js/pages/Products/Create.tsx(1387,81): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+resources/js/pages/Products/Create.tsx(1437,93): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+resources/js/pages/Products/Create.tsx(1457,97): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+resources/js/pages/Products/Create.tsx(1488,97): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+resources/js/pages/Products/Create.tsx(1523,97): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+resources/js/pages/Products/Create.tsx(1559,101): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+resources/js/pages/Products/Edit.tsx(88,21): error TS2322: Type '(data: Record<string, FormDataConvertible>) => { custom_attributes: Record<string, unknown>; }' is not assignable to type '(data: Record<string, FormDataConvertible>) => Record<string, FormDataConvertible>'.
+  Type '{ custom_attributes: Record<string, unknown>; }' is not assignable to type 'Record<string, FormDataConvertible>'.
+    Property 'custom_attributes' is incompatible with index signature.
+      Type 'Record<string, unknown>' is not assignable to type 'FormDataConvertible'.
+        Type 'Record<string, unknown>' is missing the following properties from type 'Date': toDateString, toTimeString, toLocaleDateString, toLocaleTimeString, and 38 more.
+resources/js/pages/Products/Edit.tsx(193,49): error TS2322: Type '{ value: number; label: string; }' is not assignable to type 'Option'.
+  Types of property 'value' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+resources/js/pages/Products/Edit.tsx(332,57): error TS2322: Type 'unknown' is not assignable to type 'SchemaPropertyValue'.
+resources/js/pages/Products/Edit.tsx(348,57): error TS2322: Type '{}' is not assignable to type 'string | number | readonly string[] | undefined'.
+resources/js/pages/Products/Show.tsx(235,53): error TS2322: Type '{} | undefined' is not assignable to type 'ReactNode'.
+  Type '{}' is not assignable to type 'ReactNode'.
+resources/js/pages/Products/Show.tsx(468,93): error TS2322: Type '{ children: string; variant: "light"; color: "brand"; className: string; }' is not assignable to type 'IntrinsicAttributes & BadgeProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & BadgeProps'.
+resources/js/pages/Purchases/Create.tsx(81,53): error TS2339: Property 'recordPurchase' does not exist on type '{ index: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDefinitio...'.
+resources/js/pages/Receipts/Index.tsx(225,85): error TS2339: Property 'orders' does not exist on type '{ index: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDefinitio...'.
+resources/js/pages/Receipts/Index.tsx(247,85): error TS2339: Property 'payments' does not exist on type '{ index: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDefinitio...'.
+resources/js/pages/Receipts/Index.tsx(317,7): error TS2339: Property 'layout' does not exist on type 'FC<ReceiptsIndexProps>'.
+resources/js/pages/Receipts/Show.tsx(24,33): error TS2339: Property 'orders' does not exist on type '{ index: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDefinitio...'.
+resources/js/pages/Receipts/Show.tsx(26,35): error TS2339: Property 'payments' does not exist on type '{ index: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDefinitio...'.
+resources/js/pages/Receipts/Show.tsx(33,33): error TS2339: Property 'orders' does not exist on type '{ index: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDefinitio...'.
+resources/js/pages/Receipts/Show.tsx(35,35): error TS2339: Property 'payments' does not exist on type '{ index: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDefinitio...'.
+resources/js/pages/Receipts/Show.tsx(108,83): error TS2339: Property 'currency_code' does not exist on type 'Shop'.
+resources/js/pages/Receipts/Show.tsx(208,55): error TS2339: Property 'email' does not exist on type '{ index: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDefinitio...'.
+resources/js/pages/Receipts/Show.tsx(311,71): error TS2339: Property 'currency_code' does not exist on type 'Shop'.
+resources/js/pages/Receipts/Show.tsx(317,71): error TS2339: Property 'currency_code' does not exist on type 'Shop'.
+resources/js/pages/Receipts/Show.tsx(334,67): error TS2339: Property 'currency_code' does not exist on type 'Shop'.
+resources/js/pages/Receipts/Show.tsx(348,6): error TS2339: Property 'layout' does not exist on type 'FC<ReceiptShowProps>'.
+resources/js/pages/reports/customer-analytics.tsx(210,21): error TS2322: Type '({ key: string; label: string; render: (_: any, row: any) => Element; className?: undefined; } | { key: string; label: string; className: string; render: (value: number) => string; } | { ...; } | { ...; })[]' is not assignable to type 'Column<any>[]'.
+  Type '{ key: string; label: string; render: (_: any, row: any) => Element; className?: undefined; } | { key: string; label: string; className: string; render: (value: number) => string; } | { ...; } | { ...; }' is not assignable to type 'Column<any>'.
+    Type '{ key: string; label: string; className: string; render: (value: number) => string; }' is not assignable to type 'Column<any>'.
+      Types of property 'render' are incompatible.
+        Type '(value: number) => string' is not assignable to type '(value: unknown, row: any) => ReactNode'.
+          Types of parameters 'value' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'number'.
+resources/js/pages/reports/inventory.tsx(189,21): error TS2322: Type '({ key: string; label: string; render: (_: any, row: any) => any; className?: undefined; } | { key: string; label: string; className: string; render: (_: any, row: any) => Element; } | { key: string; label: string; className: string; render: (value: number | null) => string; } | { ...; })[]' is not assignable to type 'Column<any>[]'.
+  Type '{ key: string; label: string; render: (_: any, row: any) => any; className?: undefined; } | { key: string; label: string; className: string; render: (_: any, row: any) => Element; } | { key: string; label: string; className: string; render: (value: number | null) => string; } | { ...; }' is not assignable to type 'Column<any>'.
+    Type '{ key: string; label: string; className: string; render: (value: number | null) => string; }' is not assignable to type 'Column<any>'.
+      Types of property 'render' are incompatible.
+        Type '(value: number | null) => string' is not assignable to type '(value: unknown, row: any) => ReactNode'.
+          Types of parameters 'value' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'number | null'.
+resources/js/pages/reports/product-profitability.tsx(218,21): error TS2322: Type '({ key: string; label: string; render: (_: any, row: any) => Element; className?: undefined; } | { key: string; label: string; className: string; render: (value: number) => string; } | { ...; })[]' is not assignable to type 'Column<any>[]'.
+  Type '{ key: string; label: string; render: (_: any, row: any) => Element; className?: undefined; } | { key: string; label: string; className: string; render: (value: number) => string; } | { ...; }' is not assignable to type 'Column<any>'.
+    Type '{ key: string; label: string; className: string; render: (value: number) => string; }' is not assignable to type 'Column<any>'.
+      Types of property 'render' are incompatible.
+        Type '(value: number) => string' is not assignable to type '(value: unknown, row: any) => ReactNode'.
+          Types of parameters 'value' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'number'.
+resources/js/pages/reports/sales.tsx(378,21): error TS2322: Type '({ key: string; label: string; render?: undefined; className?: undefined; } | { key: string; label: string; render: (_: any, row: any) => any; className?: undefined; } | { key: string; label: string; className: string; render: (value: number) => string; } | { ...; } | { ...; })[]' is not assignable to type 'Column<any>[]'.
+  Type '{ key: string; label: string; render?: undefined; className?: undefined; } | { key: string; label: string; render: (_: any, row: any) => any; className?: undefined; } | { key: string; label: string; className: string; render: (value: number) => string; } | { ...; } | { ...; }' is not assignable to type 'Column<any>'.
+    Type '{ key: string; label: string; className: string; render: (value: number) => string; }' is not assignable to type 'Column<any>'.
+      Types of property 'render' are incompatible.
+        Type '(value: number) => string' is not assignable to type '(value: unknown, row: any) => ReactNode'.
+          Types of parameters 'value' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'number'.
+resources/js/pages/reports/suppliers.tsx(219,21): error TS2322: Type '({ key: string; label: string; render?: undefined; className?: undefined; } | { key: string; label: string; render: (_: any, row: any) => any; className?: undefined; } | { key: string; label: string; className: string; render: (value: number) => string; } | { ...; } | { ...; })[]' is not assignable to type 'Column<any>[]'.
+  Type '{ key: string; label: string; render?: undefined; className?: undefined; } | { key: string; label: string; render: (_: any, row: any) => any; className?: undefined; } | { key: string; label: string; className: string; render: (value: number) => string; } | { ...; } | { ...; }' is not assignable to type 'Column<any>'.
+    Type '{ key: string; label: string; className: string; render: (value: number) => string; }' is not assignable to type 'Column<any>'.
+      Types of property 'render' are incompatible.
+        Type '(value: number) => string' is not assignable to type '(value: unknown, row: any) => ReactNode'.
+          Types of parameters 'value' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'number'.
+resources/js/pages/Returns/Create.tsx(114,21): error TS2322: Type '{ reason: string; notes: string; items: ReturnItem[]; }' is not assignable to type 'string'.
+resources/js/pages/Returns/Show.tsx(276,17): error TS2322: Type '{ children: Element; show: boolean; onClose: () => void; maxWidth: string; }' is not assignable to type 'IntrinsicAttributes & ModalProps'.
+  Property 'show' does not exist on type 'IntrinsicAttributes & ModalProps'.
+resources/js/pages/Returns/Show.tsx(302,63): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Returns/Show.tsx(320,64): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Returns/Show.tsx(353,17): error TS2322: Type '{ children: Element; show: boolean; onClose: () => void; maxWidth: string; }' is not assignable to type 'IntrinsicAttributes & ModalProps'.
+  Property 'show' does not exist on type 'IntrinsicAttributes & ModalProps'.
+resources/js/pages/ServiceCategories/Create.tsx(194,45): error TS2322: Type '{ type: string; name: string; id: string; placeholder: string; value: string; onChange: (e: ChangeEvent<HTMLInputElement>) => void; error: boolean; maxLength: number; }' is not assignable to type 'IntrinsicAttributes & InputProps'.
+  Property 'maxLength' does not exist on type 'IntrinsicAttributes & InputProps'.
+resources/js/pages/ServiceCategories/Create.tsx(231,63): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/ServiceCategories/Edit.tsx(60,25): error TS2353: Object literal may only specify known properties, and 'category' does not exist in type '{ service_category: string | number; } | [service_category: string | number]'.
+resources/js/pages/ServiceCategories/Edit.tsx(192,45): error TS2322: Type '{ type: string; name: string; id: string; placeholder: string; value: string; onChange: (e: ChangeEvent<HTMLInputElement>) => void; error: boolean; maxLength: number; }' is not assignable to type 'IntrinsicAttributes & InputProps'.
+  Property 'maxLength' does not exist on type 'IntrinsicAttributes & InputProps'.
+resources/js/pages/ServiceCategories/Edit.tsx(225,63): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Services/Create.tsx(95,46): error TS2345: Argument of type 'ServiceCategory[]' is not assignable to parameter of type 'ProductCategory[]'.
+  Type 'ServiceCategory' is not assignable to type 'ProductCategory'.
+    Types of property 'description' are incompatible.
+      Type 'string | null' is not assignable to type 'string | undefined'.
+        Type 'null' is not assignable to type 'string | undefined'.
+resources/js/pages/Services/Edit.tsx(41,46): error TS2345: Argument of type 'ServiceCategory[]' is not assignable to parameter of type 'ProductCategory[]'.
+  Type 'ServiceCategory' is not assignable to type 'ProductCategory'.
+    Types of property 'description' are incompatible.
+      Type 'string | null' is not assignable to type 'string | undefined'.
+        Type 'null' is not assignable to type 'string | undefined'.
+resources/js/pages/Services/Edit.tsx(94,68): error TS2339: Property 'id' does not exist on type '{ value: number; label: string; }'.
+resources/js/pages/Services/Edit.tsx(95,68): error TS2339: Property 'name' does not exist on type '{ value: number; label: string; }'.
+resources/js/pages/Services/Edit.tsx(190,55): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Services/Edit.tsx(209,55): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Services/Edit.tsx(226,63): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Settings/ShopSettings.tsx(141,64): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Settings/ShopSettings.tsx(358,55): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Settings/ShopSettings.tsx(379,65): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Settings/ShopSettings.tsx(399,66): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Shops/Create.tsx(527,68): error TS2339: Property 'items' does not exist on type 'ShopConfigSchemaProperty'.
+resources/js/pages/Shops/Create.tsx(537,57): error TS2322: Type 'unknown' is not assignable to type 'SchemaPropertyValue'.
+resources/js/pages/Shops/Create.tsx(590,61): error TS2322: Type '{}' is not assignable to type 'string | number | readonly string[] | undefined'.
+resources/js/pages/Shops/Edit.tsx(458,68): error TS2339: Property 'items' does not exist on type 'ShopConfigSchemaProperty'.
+resources/js/pages/Shops/Edit.tsx(468,57): error TS2322: Type 'unknown' is not assignable to type 'SchemaPropertyValue'.
+resources/js/pages/Shops/Edit.tsx(521,61): error TS2322: Type '{}' is not assignable to type 'string | number | readonly string[] | undefined'.
+resources/js/pages/Shops/StorefrontSettings.tsx(118,45): error TS2339: Property 'data' does not exist on type 'FormComponentSlotProps'.
+resources/js/pages/Shops/StorefrontSettings.tsx(118,51): error TS2339: Property 'setData' does not exist on type 'FormComponentSlotProps'.
+resources/js/pages/Shops/StorefrontSettings.tsx(132,55): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Shops/StorefrontSettings.tsx(136,55): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Shops/StorefrontSettings.tsx(167,63): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Shops/StorefrontSettings.tsx(171,63): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Shops/StorefrontSettings.tsx(299,65): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Shops/StorefrontSettings.tsx(302,55): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Shops/StorefrontSettings.tsx(365,71): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Shops/StorefrontSettings.tsx(370,71): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Shops/StorefrontSettings.tsx(773,20): error TS2339: Property 'layout' does not exist on type 'FC<StorefrontSettingsProps>'.
+resources/js/pages/Staff/Deductions/Create.tsx(10,10): error TS2459: Module '"@/types/payroll"' declares 'User' locally, but it is not exported.
+resources/js/pages/Staff/Deductions/Create.tsx(236,55): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Staff/Deductions/Edit.tsx(10,35): error TS2459: Module '"@/types/payroll"' declares 'User' locally, but it is not exported.
+resources/js/pages/Staff/Deductions/Edit.tsx(46,49): error TS2367: This comparison appears to be unintentional because the types '"other" | "fixed_amount" | "loan_repayment" | "advance_repayment" | "insurance" | "union_dues" | "savings"' and '""' have no overlap.
+resources/js/pages/Staff/Deductions/Edit.tsx(128,58): error TS2345: Argument of type 'string' is not assignable to parameter of type 'SetStateAction<"other" | "fixed_amount" | "percentage" | "loan_repayment" | "advance_repayment" | "insurance" | "union_dues" | "savings">'.
+resources/js/pages/Staff/Deductions/Edit.tsx(248,55): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Staff/Deductions/Index.tsx(9,35): error TS2459: Module '"@/types/payroll"' declares 'User' locally, but it is not exported.
+resources/js/pages/Staff/Deductions/Index.tsx(191,57): error TS2322: Type '{ children: string; color: "success"; size: "sm"; className: string; }' is not assignable to type 'IntrinsicAttributes & BadgeProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & BadgeProps'.
+resources/js/pages/Staff/Deductions/Index.tsx(267,53): error TS2322: Type '{ children: string; variant: "ghost"; size: "sm"; startIcon: Element; onClick: () => void; title: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps'.
+  Property 'title' does not exist on type 'IntrinsicAttributes & ButtonProps'.
+resources/js/pages/StaffManagement/Show.tsx(132,33): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+resources/js/pages/StaffManagement/Show.tsx(240,53): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(252,53): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(264,53): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(276,53): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(282,42): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(290,57): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(298,42): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(306,57): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(314,42): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(322,57): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(331,42): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(339,57): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(344,54): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(350,65): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(361,42): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(362,46): error TS2551: Property 'pay_calendar' does not exist on type 'EmployeePayrollDetail'. Did you mean 'pay_calendar_id'?
+resources/js/pages/StaffManagement/Show.tsx(369,57): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(371,62): error TS2551: Property 'pay_calendar' does not exist on type 'EmployeePayrollDetail'. Did you mean 'pay_calendar_id'?
+resources/js/pages/StaffManagement/Show.tsx(382,50): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(390,61): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(397,50): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(404,58): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(412,69): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(421,50): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(429,61): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(437,50): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(498,79): error TS2339: Property 'deductions' does not exist on type '{ index: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDefinitio...'.
+resources/js/pages/StaffManagement/Show.tsx(558,83): error TS2339: Property 'deductions' does not exist on type '{ index: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDefinitio...'.
+resources/js/pages/StaffManagement/Show.tsx(718,41): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(726,57): error TS18048: 'staff.employeePayrollDetail' is possibly 'undefined'.
+resources/js/pages/StaffManagement/Show.tsx(839,69): error TS2339: Property 'deductions' does not exist on type '{ index: { (options?: RouteQueryOptions | undefined): RouteDefinition<"get">; definition: { methods: ["get", "head"]; url: string; }; url(options?: RouteQueryOptions | undefined): string; get(options?: RouteQueryOptions | undefined): RouteDefinition<...>; head(options?: RouteQueryOptions | undefined): RouteDefinitio...'.
+resources/js/pages/StockMovements/Index.tsx(56,20): error TS2552: Cannot find name 'route'. Did you mean 'router'?
+resources/js/pages/StockMovements/Index.tsx(65,20): error TS2552: Cannot find name 'route'. Did you mean 'router'?
+resources/js/pages/StockMovements/Index.tsx(275,61): error TS2322: Type 'string' is not assignable to type 'BadgeColor | undefined'.
+resources/js/pages/StockTake/Index.tsx(98,25): error TS2322: Type '{ counts: { variant_id: number; location_id: number | null; physical_count: number; system_count: number; }[]; notes: string; }' is not assignable to type 'string'.
+resources/js/pages/StockTake/Index.tsx(100,35): error TS2339: Property 'success' does not exist on type '(message: string, options?: ToastOptions | undefined) => void'.
+resources/js/pages/StockTake/Index.tsx(103,35): error TS2339: Property 'error' does not exist on type '(message: string, options?: ToastOptions | undefined) => void'.
+resources/js/pages/Storefront/Auth/Login.tsx(96,65): error TS2339: Property 'target' does not exist on type 'boolean'.
+resources/js/pages/Storefront/Cart.tsx(76,35): error TS2339: Property 'service' does not exist on type 'Sellable'.
+  Property 'service' does not exist on type 'ProductVariant & { product?: Product | undefined; }'.
+resources/js/pages/Storefront/Cart.tsx(83,50): error TS2551: Property 'image' does not exist on type '{ id: number; name: string; slug: string; shop_id: number; } & Product'. Did you mean 'images'?
+resources/js/pages/Storefront/Cart.tsx(85,35): error TS2339: Property 'service' does not exist on type 'Sellable'.
+  Property 'service' does not exist on type 'ProductVariant & { product?: Product | undefined; }'.
+resources/js/pages/Storefront/Cart.tsx(250,81): error TS2322: Type '{ children: string | null; color: "warning"; size: "sm"; className: string; }' is not assignable to type 'IntrinsicAttributes & BadgeProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & BadgeProps'.
+resources/js/pages/Storefront/Cart.tsx(331,61): error TS2339: Property 'setData' does not exist on type 'FormComponentSlotProps'.
+resources/js/pages/Storefront/Cart.tsx(409,57): error TS18048: 'item.productVariant.available_stock' is possibly 'undefined'.
+resources/js/pages/Storefront/Checkout.tsx(122,35): error TS2339: Property 'service' does not exist on type 'Sellable'.
+  Property 'service' does not exist on type 'ProductVariant & { product?: Product | undefined; }'.
+resources/js/pages/Storefront/Checkout.tsx(165,45): error TS2339: Property 'data' does not exist on type 'FormComponentSlotProps'.
+resources/js/pages/Storefront/Checkout.tsx(165,51): error TS2339: Property 'setData' does not exist on type 'FormComponentSlotProps'.
+resources/js/pages/Storefront/Checkout.tsx(219,53): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+resources/js/pages/Storefront/CheckoutSuccess.tsx(38,35): error TS2339: Property 'service' does not exist on type 'Sellable'.
+  Property 'service' does not exist on type 'ProductVariant & { product?: Product | undefined; }'.
+resources/js/pages/Storefront/Home.tsx(141,37): error TS2322: Type '{ hidden: { opacity: number; y: number; }; visible: { opacity: number; y: number; transition: { duration: number; ease: number[]; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'Variant'.
+      Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: number[]; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: number[]; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: number[]; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'number[]' is not assignable to type 'Easing | Easing[] | undefined'.
+                      Type 'number[]' is not assignable to type 'EasingFunction | Easing[]'.
+                        Type 'number[]' is not assignable to type 'Easing[]'.
+                          Type 'number' is not assignable to type 'Easing'.
+resources/js/pages/Storefront/Home.tsx(154,37): error TS2322: Type '{ hidden: { opacity: number; y: number; }; visible: { opacity: number; y: number; transition: { duration: number; ease: number[]; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'Variant'.
+      Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: number[]; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: number[]; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: number[]; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'number[]' is not assignable to type 'Easing | Easing[] | undefined'.
+                      Type 'number[]' is not assignable to type 'EasingFunction | Easing[]'.
+                        Type 'number[]' is not assignable to type 'Easing[]'.
+                          Type 'number' is not assignable to type 'Easing'.
+resources/js/pages/Storefront/Home.tsx(188,25): error TS2322: Type '{ hidden: { opacity: number; y: number; }; visible: { opacity: number; y: number; transition: { duration: number; ease: number[]; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'Variant'.
+      Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: number[]; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: number[]; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: number[]; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'number[]' is not assignable to type 'Easing | Easing[] | undefined'.
+                      Type 'number[]' is not assignable to type 'EasingFunction | Easing[]'.
+                        Type 'number[]' is not assignable to type 'Easing[]'.
+                          Type 'number' is not assignable to type 'Easing'.
+resources/js/pages/Storefront/Home.tsx(219,37): error TS2322: Type '{ hidden: { opacity: number; y: number; }; visible: { opacity: number; y: number; transition: { duration: number; ease: number[]; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'Variant'.
+      Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: number[]; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: number[]; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: number[]; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'number[]' is not assignable to type 'Easing | Easing[] | undefined'.
+                      Type 'number[]' is not assignable to type 'EasingFunction | Easing[]'.
+                        Type 'number[]' is not assignable to type 'Easing[]'.
+                          Type 'number' is not assignable to type 'Easing'.
+resources/js/pages/Storefront/Home.tsx(230,37): error TS2322: Type '{ hidden: { opacity: number; y: number; }; visible: { opacity: number; y: number; transition: { duration: number; ease: number[]; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'Variant'.
+      Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: number[]; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: number[]; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: number[]; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'number[]' is not assignable to type 'Easing | Easing[] | undefined'.
+                      Type 'number[]' is not assignable to type 'EasingFunction | Easing[]'.
+                        Type 'number[]' is not assignable to type 'Easing[]'.
+                          Type 'number' is not assignable to type 'Easing'.
+resources/js/pages/Storefront/Home.tsx(249,29): error TS2322: Type '{ hidden: { opacity: number; y: number; }; visible: { opacity: number; y: number; transition: { duration: number; ease: number[]; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'Variant'.
+      Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: number[]; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: number[]; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: number[]; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'number[]' is not assignable to type 'Easing | Easing[] | undefined'.
+                      Type 'number[]' is not assignable to type 'EasingFunction | Easing[]'.
+                        Type 'number[]' is not assignable to type 'Easing[]'.
+                          Type 'number' is not assignable to type 'Easing'.
+resources/js/pages/Storefront/Home.tsx(279,37): error TS2322: Type '{ hidden: { opacity: number; y: number; }; visible: { opacity: number; y: number; transition: { duration: number; ease: number[]; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'Variant'.
+      Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: number[]; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: number[]; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: number[]; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'number[]' is not assignable to type 'Easing | Easing[] | undefined'.
+                      Type 'number[]' is not assignable to type 'EasingFunction | Easing[]'.
+                        Type 'number[]' is not assignable to type 'Easing[]'.
+                          Type 'number' is not assignable to type 'Easing'.
+resources/js/pages/Storefront/Products.tsx(178,45): error TS2322: Type '{ hidden: { opacity: number; y: number; }; visible: { opacity: number; y: number; transition: { duration: number; ease: number[]; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'Variant'.
+      Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ opacity: number; y: number; transition: { duration: number; ease: number[]; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: number[]; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: number[]; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: number[]; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'number[]' is not assignable to type 'Easing | Easing[] | undefined'.
+                      Type 'number[]' is not assignable to type 'EasingFunction | Easing[]'.
+                        Type 'number[]' is not assignable to type 'Easing[]'.
+                          Type 'number' is not assignable to type 'Easing'.

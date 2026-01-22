@@ -1,13 +1,21 @@
 import POSController from '@/actions/App/Http/Controllers/POSController';
 import InputError from '@/components/form/InputError';
+import {
+    calculateChange as calcChange,
+    calculateSubtotal as calcSubtotal,
+    calculateTax as calcTax,
+    calculateTotal as calcTotal,
+} from '@/lib/calculations';
 import Select from '@/components/form/Select';
 import BarcodeScanner from '@/components/pos/BarcodeScanner';
 import HeldSalesModal from '@/components/pos/HeldSalesModal';
 import OfflineIndicator from '@/components/pos/OfflineIndicator';
 import Button from '@/components/ui/button/Button';
+import useCurrency from '@/hooks/useCurrency';
 import useOfflinePOS from '@/hooks/useOfflinePOS';
 import useOfflineProducts from '@/hooks/useOfflineProducts';
 import useToast from '@/hooks/useToast.ts';
+import { formatTime, formatDateShort } from '@/lib/formatters';
 import AppLayout from '@/layouts/AppLayout.tsx';
 import { CustomerBasic } from '@/types/customer';
 import {
@@ -37,11 +45,11 @@ interface POSProps {
     heldSalesCount: number;
 }
 
-const Index: React.FC<POSProps> = ({
+function Index({
     shop,
     paymentMethods,
     heldSalesCount: initialHeldSalesCount,
-}) => {
+}: POSProps) {
     const {
         searchProducts,
         isSearching: isSearchingProducts,
@@ -109,6 +117,7 @@ const Index: React.FC<POSProps> = ({
     const cartEndRef = useRef<HTMLDivElement>(null);
 
     const toast = useToast();
+    const { formatCurrency } = useCurrency(shop);
 
     // Scroll to bottom of cart when items change
     useEffect(() => {
@@ -211,36 +220,10 @@ const Index: React.FC<POSProps> = ({
         setTimeout(() => searchInputRef.current?.focus(), 100);
     };
 
-    const calculateSubtotal = () => {
-        return cart.reduce(
-            (sum, item) => sum + item.unit_price * item.quantity,
-            0,
-        );
-    };
-
-    const calculateTax = () => {
-        if (!shop.vat_enabled) return 0;
-        return cart.reduce((sum, item) => {
-            if (!item.is_taxable) return sum;
-            return (
-                sum + item.unit_price * item.quantity * (shop.vat_rate / 100)
-            );
-        }, 0);
-    };
-
-    const calculateTotal = () => {
-        const subtotal = calculateSubtotal();
-        const tax = calculateTax();
-        const discountAmount = parseFloat(discount) || 0;
-        return Math.max(0, subtotal + tax - discountAmount);
-    };
-
-    const calculateChange = () => {
-        if (paymentMethod !== 'cash') return 0;
-        const tendered = amountTendered || 0;
-        const total = calculateTotal();
-        return Math.max(0, tendered - total);
-    };
+    const subtotal = calcSubtotal(cart);
+    const tax = shop.vat_enabled ? calcTax(cart, shop.vat_rate, true) : 0;
+    const total = calcTotal(subtotal, { tax }, { discount: parseFloat(discount) || 0 });
+    const change = paymentMethod === 'cash' ? calcChange(amountTendered || 0, total) : 0;
 
     const resetForm = () => {
         setSelectedCustomer(null);
@@ -489,13 +472,10 @@ const Index: React.FC<POSProps> = ({
 
                         <div className="hidden text-right md:block">
                             <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                {new Date().toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                })}
+                                {formatTime(new Date().toISOString())}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {new Date().toLocaleDateString()}
+                                {formatDateShort(new Date().toISOString())}
                             </p>
                         </div>
                     </div>
@@ -543,7 +523,7 @@ const Index: React.FC<POSProps> = ({
                                             onClick={() =>
                                                 handleAddToCart(product)
                                             }
-                                            aria-label={`Add ${product.display_name || product.product_name} to cart, ${shop.currency_symbol}${Number(product.price).toFixed(2)}`}
+                                            aria-label={`Add ${product.display_name || product.product_name} to cart, ${formatCurrency(product.price)}`}
                                             className="group flex flex-col justify-between rounded-lg border border-gray-100 bg-white p-3 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-brand-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-brand-700"
                                         >
                                             <div className="mb-2 w-full">
@@ -586,10 +566,7 @@ const Index: React.FC<POSProps> = ({
                                                     )}
                                                 </div>
                                                 <span className="text-lg font-bold text-brand-600 dark:text-brand-400">
-                                                    {shop.currency_symbol}
-                                                    {Number(
-                                                        product.price,
-                                                    ).toFixed(2)}
+                                                    {formatCurrency(product.price)}
                                                 </span>
                                             </div>
                                         </button>
@@ -762,7 +739,7 @@ const Index: React.FC<POSProps> = ({
                                         <div
                                             key={item.variant_id}
                                             role="listitem"
-                                            aria-label={`${item.name}, quantity ${item.quantity}, ${shop.currency_symbol}${(item.unit_price * item.quantity).toFixed(2)}`}
+                                            aria-label={`${item.name}, quantity ${item.quantity}, ${formatCurrency(item.unit_price * item.quantity)}`}
                                             className="group relative flex gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-all dark:border-gray-700 dark:bg-gray-800"
                                         >
                                             <div className="flex-1">
@@ -771,11 +748,7 @@ const Index: React.FC<POSProps> = ({
                                                         {item.name}
                                                     </h4>
                                                     <p className="font-bold text-gray-900 dark:text-white">
-                                                        {shop.currency_symbol}
-                                                        {(
-                                                            item.unit_price *
-                                                            item.quantity
-                                                        ).toFixed(2)}
+                                                        {formatCurrency(item.unit_price * item.quantity)}
                                                     </p>
                                                 </div>
                                                 <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
@@ -828,11 +801,7 @@ const Index: React.FC<POSProps> = ({
                                                         </button>
                                                     </div>
                                                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {shop.currency_symbol}
-                                                        {item.unit_price.toFixed(
-                                                            2,
-                                                        )}{' '}
-                                                        / unit
+                                                        {formatCurrency(item.unit_price)} / unit
                                                     </div>
                                                 </div>
                                             </div>
@@ -864,18 +833,12 @@ const Index: React.FC<POSProps> = ({
                             <div className="mb-4 space-y-2 text-sm">
                                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                                     <span>Subtotal</span>
-                                    <span>
-                                        {shop.currency_symbol}
-                                        {calculateSubtotal().toFixed(2)}
-                                    </span>
+                                    <span>{formatCurrency(subtotal)}</span>
                                 </div>
                                 {shop.vat_enabled && (
                                     <div className="flex justify-between text-gray-600 dark:text-gray-400">
                                         <span>Tax ({shop.vat_rate}%)</span>
-                                        <span>
-                                            {shop.currency_symbol}
-                                            {calculateTax().toFixed(2)}
-                                        </span>
+                                        <span>{formatCurrency(tax)}</span>
                                     </div>
                                 )}
                                 <div className="flex items-center justify-between text-gray-600 dark:text-gray-400">
@@ -903,8 +866,7 @@ const Index: React.FC<POSProps> = ({
                                     Total
                                 </span>
                                 <span className="text-2xl font-bold text-brand-600 dark:text-brand-400">
-                                    {shop.currency_symbol}
-                                    {calculateTotal().toFixed(2)}
+                                    {formatCurrency(total)}
                                 </span>
                             </div>
 
@@ -952,8 +914,7 @@ const Index: React.FC<POSProps> = ({
                                                 Change:
                                             </span>
                                             <span className="font-bold text-success-600 dark:text-success-400">
-                                                {shop.currency_symbol}
-                                                {calculateChange().toFixed(2)}
+                                                {formatCurrency(change)}
                                             </span>
                                         </div>
                                     )}
@@ -998,13 +959,12 @@ const Index: React.FC<POSProps> = ({
                                 <Button
                                     onClick={handleCompleteSale}
                                     variant="primary"
-                                    aria-label={`Complete payment of ${shop.currency_symbol}${calculateTotal().toFixed(2)}`}
+                                    aria-label={`Complete payment of ${formatCurrency(total)}`}
                                     className="col-span-2 bg-brand-600 text-base font-semibold hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600"
                                     disabled={cart.length === 0 || isProcessing}
                                     loading={isProcessing}
                                 >
-                                    PAY {shop.currency_symbol}
-                                    {calculateTotal().toFixed(2)}
+                                    PAY {formatCurrency(total)}
                                 </Button>
                             </div>
                         </div>

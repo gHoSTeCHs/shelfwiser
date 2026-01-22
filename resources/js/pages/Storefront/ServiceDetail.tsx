@@ -8,6 +8,7 @@ import ServiceCard from '@/components/storefront/ServiceCard';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import useCurrency from '@/hooks/useCurrency';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
 import { MaterialOption } from '@/types/service';
 import { StorefrontServiceDetailProps } from '@/types/storefront';
@@ -26,6 +27,7 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
     relatedServices,
     cartSummary,
 }) => {
+    const { formatCurrency } = useCurrency(shop);
     const [selectedVariantId, setSelectedVariantId] = React.useState(
         service.variants?.[0]?.id || 0,
     );
@@ -214,15 +216,12 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
                         <div className="flex items-center gap-4">
                             <div>
                                 <p className="text-3xl font-bold text-gray-900">
-                                    {shop.currency_symbol}
-                                    {Number(totalPrice).toFixed(2)}
+                                    {formatCurrency(totalPrice)}
                                 </p>
                                 {addonsTotal > 0 && (
                                     <p className="text-sm text-gray-500">
-                                        Base: {shop.currency_symbol}
-                                        {Number(basePrice).toFixed(2)} + Addons:{' '}
-                                        {shop.currency_symbol}
-                                        {Number(addonsTotal).toFixed(2)}
+                                        Base: {formatCurrency(basePrice)} + Addons:{' '}
+                                        {formatCurrency(addonsTotal)}
                                     </p>
                                 )}
                             </div>
@@ -367,13 +366,7 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="font-medium text-gray-900">
-                                                            +
-                                                            {
-                                                                shop.currency_symbol
-                                                            }
-                                                            {Number(
-                                                                addon.price,
-                                                            ).toFixed(2)}
+                                                            +{formatCurrency(addon.price)}
                                                         </p>
                                                         {addon.allows_quantity &&
                                                             (selectedAddons[
@@ -476,7 +469,7 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
                                         >
                                             {processing
                                                 ? 'Adding to Cart...'
-                                                : `Book Service - ${shop.currency_symbol}${Number(totalPrice).toFixed(2)}`}
+                                                : `Book Service - ${formatCurrency(totalPrice)}`}
                                         </Button>
                                     )}
                                 </Form>

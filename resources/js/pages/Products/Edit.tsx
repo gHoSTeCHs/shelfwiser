@@ -12,7 +12,7 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { flattenCategories } from '@/lib/utils.ts';
-import { SchemaProperty } from '@/types/index';
+import { SchemaProperty, SchemaPropertyValue } from '@/types/index';
 import { Product, ProductCategory, ProductType } from '@/types/product';
 import { Form, Head, Link } from '@inertiajs/react';
 import {
@@ -86,7 +86,7 @@ export default function Edit({ product, productTypes, categories }: Props) {
                     method="put"
                     className="space-y-6"
                     transform={(data) => {
-                        const transformedAttributes: Record<string, unknown> = {};
+                        const transformedAttributes: Record<string, string | number | boolean> = {};
                         const configProperties =
                             selectedType?.config_schema?.properties;
 
@@ -107,10 +107,10 @@ export default function Edit({ product, productTypes, categories }: Props) {
                                             transformedAttributes[key] =
                                                 value === 'true';
                                         } else {
-                                            transformedAttributes[key] = value;
+                                            transformedAttributes[key] = String(value);
                                         }
                                     } else {
-                                        transformedAttributes[key] = value;
+                                        transformedAttributes[key] = String(value);
                                     }
                                 },
                             );
@@ -192,7 +192,10 @@ export default function Edit({ product, productTypes, categories }: Props) {
                                                 },
                                                 ...flattenCategories(
                                                     categories,
-                                                ),
+                                                ).map((cat) => ({
+                                                    value: cat.value.toString(),
+                                                    label: cat.label,
+                                                })),
                                             ]}
                                             placeholder="Select category (optional)"
                                             onChange={(value) =>
@@ -332,7 +335,7 @@ export default function Edit({ product, productTypes, categories }: Props) {
                                                         value={
                                                             customAttributes[
                                                                 fieldName
-                                                            ]
+                                                            ] as SchemaPropertyValue
                                                         }
                                                         onChange={(value) =>
                                                             handleCustomAttributeChange(
@@ -346,9 +349,9 @@ export default function Edit({ product, productTypes, categories }: Props) {
                                                         type="hidden"
                                                         name={`custom_attributes[${fieldName}]`}
                                                         value={
-                                                            customAttributes[
+                                                            String(customAttributes[
                                                                 fieldName
-                                                            ] ?? ''
+                                                            ] ?? '')
                                                         }
                                                     />
                                                 </div>

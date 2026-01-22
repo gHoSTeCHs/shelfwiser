@@ -6,6 +6,8 @@ import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { calculateInstallmentAmount } from '@/lib/calculations';
+import { formatCurrency } from '@/lib/formatters';
 import { Form, Head, Link } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -42,18 +44,10 @@ const WageAdvancesCreate = ({ shop, eligibility }: Props) => {
     const [reason, setReason] = useState('');
     const [repaymentInstallments, setRepaymentInstallments] = useState('3');
 
-    const calculateInstallmentAmount = () => {
-        const amount = parseFloat(amountRequested) || 0;
-        const installments = parseInt(repaymentInstallments) || 1;
-        return (amount / installments).toFixed(2);
-    };
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(amount);
-    };
+    const installmentAmount = calculateInstallmentAmount(
+        parseFloat(amountRequested) || 0,
+        parseInt(repaymentInstallments) || 1,
+    );
 
     return (
         <>
@@ -255,9 +249,7 @@ const WageAdvancesCreate = ({ shop, eligibility }: Props) => {
                                                             Monthly deduction:{' '}
                                                             <span className="font-semibold text-gray-900 dark:text-white">
                                                                 {formatCurrency(
-                                                                    parseFloat(
-                                                                        calculateInstallmentAmount(),
-                                                                    ),
+                                                                    installmentAmount,
                                                                 )}
                                                             </span>
                                                         </p>

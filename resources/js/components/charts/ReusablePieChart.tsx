@@ -1,3 +1,4 @@
+import { formatPercentage } from '@/lib/formatters';
 import { ApexOptions } from 'apexcharts';
 import Chart from 'react-apexcharts';
 
@@ -33,7 +34,7 @@ export default function ReusablePieChart({
         dataLabels: {
             enabled: true,
             formatter: function (val: number) {
-                return val.toFixed(1) + '%';
+                return formatPercentage(val, 1);
             },
         },
         plotOptions: {

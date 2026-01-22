@@ -2,7 +2,10 @@ import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/
 import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 import Badge from '@/components/ui/badge/Badge';
 import { Card } from '@/components/ui/card';
+import useCurrency from '@/hooks/useCurrency';
+import { formatDateLong } from '@/lib/formatters';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
+import { getOrderStatusColor, getOrderStatusLabel, getPaymentStatusColor, getPaymentStatusLabel } from '@/lib/status-configs';
 import { AccountDashboardProps } from '@/types/storefront';
 import { Link } from '@inertiajs/react';
 import { DollarSign, Package, ShoppingBag } from 'lucide-react';
@@ -18,6 +21,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
     stats,
     recentOrders,
 }) => {
+    const { formatCurrency } = useCurrency(shop);
     return (
         <StorefrontLayout shop={shop} customer={customer}>
             <div className="mx-auto max-w-6xl">
@@ -65,8 +69,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                                     Total Spent
                                 </p>
                                 <p className="mt-2 text-3xl font-bold">
-                                    {shop.currency_symbol}
-                                    {stats.total_spent.toFixed(2)}
+                                    {formatCurrency(stats.total_spent)}
                                 </p>
                             </div>
                             <div className="rounded-full bg-success-100 p-3">
@@ -118,36 +121,15 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                                                 {order.order_number}
                                             </p>
                                             <p className="text-sm text-gray-600">
-                                                {new Date(
-                                                    order.created_at,
-                                                ).toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric',
-                                                })}
+                                                {formatDateLong(order.created_at)}
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <Badge
-                                                color={
-                                                    order.status === 'delivered'
-                                                        ? 'success'
-                                                        : order.status ===
-                                                            'cancelled'
-                                                          ? 'error'
-                                                          : order.status ===
-                                                              'processing'
-                                                            ? 'info'
-                                                            : 'warning'
-                                                }
-                                            >
-                                                {order.status
-                                                    .replace('_', ' ')
-                                                    .toUpperCase()}
+                                            <Badge color={getOrderStatusColor(order.status)}>
+                                                {getOrderStatusLabel(order.status)}
                                             </Badge>
                                             <p className="mt-2 text-sm font-semibold">
-                                                {shop.currency_symbol}
-                                                {order.total_amount.toFixed(2)}
+                                                {formatCurrency(order.total_amount)}
                                             </p>
                                         </div>
                                     </div>

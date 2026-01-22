@@ -2,7 +2,10 @@ import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import EmptyState from '@/components/ui/EmptyState';
+import useCurrency from '@/hooks/useCurrency';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
+import { formatDateShort } from '@/lib/formatters';
+import { getOrderStatusColor, getPaymentStatusColor } from '@/lib/status-configs';
 import { AccountOrdersProps } from '@/types/storefront';
 import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
@@ -13,45 +16,7 @@ import React from 'react';
  * Customer order history page with playful-luxury styling.
  */
 const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
-    const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
-            case 'completed':
-            case 'delivered':
-                return 'success';
-            case 'pending':
-                return 'warning';
-            case 'cancelled':
-            case 'failed':
-                return 'error';
-            case 'processing':
-            case 'confirmed':
-                return 'info';
-            default:
-                return 'light';
-        }
-    };
-
-    const getPaymentStatusColor = (paymentStatus: string) => {
-        switch (paymentStatus.toLowerCase()) {
-            case 'paid':
-                return 'success';
-            case 'pending':
-                return 'warning';
-            case 'failed':
-            case 'refunded':
-                return 'error';
-            default:
-                return 'light';
-        }
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
+    const { formatCurrency } = useCurrency(shop);
 
     const handlePageChange = (page: number) => {
         window.location.href = `${CustomerPortalController.orders.url({ shop: shop.slug })}?page=${page}`;
@@ -100,7 +65,7 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
                                                     Order #{order.order_number}
                                                 </h3>
                                                 <Badge
-                                                    color={getStatusColor(
+                                                    color={getOrderStatusColor(
                                                         order.status,
                                                     )}
                                                     size="sm"
@@ -119,7 +84,7 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
 
                                             <div className="space-y-1 text-sm text-gray-500 dark:text-gray-400">
                                                 <p>
-                                                    {formatDate(
+                                                    {formatDateShort(
                                                         order.created_at,
                                                     )}
                                                 </p>
@@ -176,14 +141,7 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
                                                     Total
                                                 </p>
                                                 <p className="text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
-                                                    {shop.currency_symbol}
-                                                    {order.total_amount.toLocaleString(
-                                                        undefined,
-                                                        {
-                                                            minimumFractionDigits: 2,
-                                                            maximumFractionDigits: 2,
-                                                        },
-                                                    )}
+                                                    {formatCurrency(order.total_amount)}
                                                 </p>
                                             </div>
 

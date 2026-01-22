@@ -4,9 +4,13 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
+import {
+    purchaseOrderPaymentStatusConfig,
+    purchaseOrderStatusConfig,
+} from '@/lib/status-configs';
 import {
     PurchaseOrderListResponse,
-    PurchaseOrderPaymentStatus,
     PurchaseOrderStatus,
 } from '@/types/supplier';
 import { Head, Link } from '@inertiajs/react';
@@ -22,31 +26,6 @@ import { useState } from 'react';
 interface Props {
     purchaseOrders: PurchaseOrderListResponse;
 }
-
-const statusConfig: Record<
-    PurchaseOrderStatus,
-    { label: string; variant: 'primary' | 'warning' | 'success' | 'error' }
-> = {
-    draft: { label: 'Draft', variant: 'primary' },
-    submitted: { label: 'Pending Approval', variant: 'warning' },
-    approved: { label: 'Approved', variant: 'success' },
-    processing: { label: 'Processing', variant: 'warning' },
-    shipped: { label: 'Shipped', variant: 'success' },
-    received: { label: 'Received', variant: 'success' },
-    completed: { label: 'Completed', variant: 'success' },
-    cancelled: { label: 'Cancelled', variant: 'error' },
-};
-
-const paymentStatusConfig: Record<
-    PurchaseOrderPaymentStatus,
-    { label: string; variant: 'primary' | 'warning' | 'success' | 'error' }
-> = {
-    pending: { label: 'Pending', variant: 'warning' },
-    partial: { label: 'Partial', variant: 'warning' },
-    paid: { label: 'Paid', variant: 'success' },
-    overdue: { label: 'Overdue', variant: 'error' },
-    cancelled: { label: 'Cancelled', variant: 'primary' },
-};
 
 export default function Supplier({ purchaseOrders }: Props) {
     const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -189,7 +168,7 @@ export default function Supplier({ purchaseOrders }: Props) {
                         title={
                             statusFilter === 'all'
                                 ? 'No purchase orders'
-                                : `No ${statusConfig[statusFilter as PurchaseOrderStatus]?.label.toLowerCase() || statusFilter} orders`
+                                : `No ${purchaseOrderStatusConfig[statusFilter as PurchaseOrderStatus]?.label.toLowerCase() || statusFilter} orders`
                         }
                         description={
                             statusFilter === 'all'
@@ -217,27 +196,27 @@ export default function Supplier({ purchaseOrders }: Props) {
                                                 </Link>
                                                 <Badge
                                                     color={
-                                                        statusConfig[po.status]
-                                                            .variant
+                                                        purchaseOrderStatusConfig[po.status]
+                                                            ?.color ?? 'gray'
                                                     }
                                                 >
                                                     {
-                                                        statusConfig[po.status]
-                                                            .label
+                                                        purchaseOrderStatusConfig[po.status]
+                                                            ?.label ?? po.status
                                                     }
                                                 </Badge>
                                                 <Badge
                                                     color={
-                                                        paymentStatusConfig[
+                                                        purchaseOrderPaymentStatusConfig[
                                                             po.payment_status
-                                                        ].variant
+                                                        ]?.color ?? 'gray'
                                                     }
                                                     size="sm"
                                                 >
                                                     {
-                                                        paymentStatusConfig[
+                                                        purchaseOrderPaymentStatusConfig[
                                                             po.payment_status
-                                                        ].label
+                                                        ]?.label ?? po.payment_status
                                                     }
                                                 </Badge>
                                             </div>
@@ -269,19 +248,14 @@ export default function Supplier({ purchaseOrders }: Props) {
                                                         <span className="font-medium">
                                                             Total:
                                                         </span>{' '}
-                                                        $
-                                                        {Number(
-                                                            po.total_amount,
-                                                        ).toFixed(2)}
+                                                        {formatCurrency(po.total_amount, 'USD')}
                                                     </span>
                                                 </div>
 
                                                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                                     <Calendar className="h-4 w-4" />
                                                     <span>
-                                                        {new Date(
-                                                            po.created_at,
-                                                        ).toLocaleDateString()}
+                                                        {formatDateShort(po.created_at)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -289,9 +263,7 @@ export default function Supplier({ purchaseOrders }: Props) {
                                             {po.expected_delivery_date && (
                                                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                                                     Expected delivery:{' '}
-                                                    {new Date(
-                                                        po.expected_delivery_date,
-                                                    ).toLocaleDateString()}
+                                                    {formatDateShort(po.expected_delivery_date)}
                                                 </p>
                                             )}
 

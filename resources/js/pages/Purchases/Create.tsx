@@ -6,6 +6,7 @@ import PurchasePackagingForm from '@/components/inventory/PurchasePackagingForm'
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency } from '@/lib/formatters';
 import { InventoryLocation, ProductVariant } from '@/types/stockMovement';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -40,15 +41,6 @@ export default function Create({ products, locations }: Props) {
 
     const getLocationLabel = (location: InventoryLocation): string => {
         return location.location?.name || `Location #${location.id}`;
-    };
-
-    const formatCurrency = (amount: number): string => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2,
-        }).format(amount);
     };
 
     const selectedPackaging = selectedVariant?.packaging_types?.find(
@@ -86,7 +78,7 @@ export default function Create({ products, locations }: Props) {
                 </div>
 
                 <Form
-                    action={StockMovementController.recordPurchase.url()}
+                    action="/stock-movements/record-purchase"
                     method="post"
                     className="space-y-6"
                     transform={(data) => ({

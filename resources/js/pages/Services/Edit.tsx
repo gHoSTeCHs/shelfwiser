@@ -38,7 +38,7 @@ export default function Edit({ service, categories }: Props) {
         service.is_available_online,
     );
 
-    const flatCategories = flattenCategories(categories);
+    const flatCategories = flattenCategories(categories as unknown as import('@/types/product').ProductCategory[]);
 
     return (
         <>
@@ -91,8 +91,8 @@ export default function Edit({ service, categories }: Props) {
                                                 },
                                                 ...flatCategories.map(
                                                     (cat) => ({
-                                                        value: cat.id.toString(),
-                                                        label: cat.name,
+                                                        value: cat.value.toString(),
+                                                        label: cat.label,
                                                     }),
                                                 ),
                                             ]}
@@ -185,10 +185,8 @@ export default function Edit({ service, categories }: Props) {
                                         <Checkbox
                                             id="has_material_options"
                                             checked={hasMaterialOptions}
-                                            onChange={(e) =>
-                                                setHasMaterialOptions(
-                                                    e.target.checked,
-                                                )
+                                            onChange={(checked) =>
+                                                setHasMaterialOptions(checked)
                                             }
                                         />
                                         <Label
@@ -204,10 +202,8 @@ export default function Edit({ service, categories }: Props) {
                                         <Checkbox
                                             id="is_available_online"
                                             checked={isAvailableOnline}
-                                            onChange={(e) =>
-                                                setIsAvailableOnline(
-                                                    e.target.checked,
-                                                )
+                                            onChange={(checked) =>
+                                                setIsAvailableOnline(checked)
                                             }
                                         />
                                         <Label
@@ -222,8 +218,8 @@ export default function Edit({ service, categories }: Props) {
                                         <Checkbox
                                             id="is_active"
                                             checked={isActive}
-                                            onChange={(e) =>
-                                                setIsActive(e.target.checked)
+                                            onChange={(checked) =>
+                                                setIsActive(checked)
                                             }
                                         />
                                         <Label

@@ -1,24 +1,34 @@
-export const getStatusColor = (status: string): string => {
-    const colors: Record<string, string> = {
-        pending: 'warning',
-        confirmed: 'info',
-        processing: 'brand',
-        packed: 'blue',
-        shipped: 'purple',
-        delivered: 'success',
-        cancelled: 'error',
-        refunded: 'gray',
-    };
-    return colors[status] || 'gray';
-};
+/**
+ * Re-exports from centralized status configs.
+ * Import directly from @/lib/status-configs for full access to all status configurations.
+ */
+export {
+    getOrderStatusColor,
+    getOrderStatusLabel,
+    getPaymentStatusColor,
+    getPaymentStatusLabel,
+    getPayrollStatusColor,
+    getPayrollStatusLabel,
+    getPayRunStatusColor,
+    getPayRunStatusLabel,
+    getReturnStatusColor,
+    getReturnStatusLabel,
+    getWageAdvanceStatusColor,
+    getWageAdvanceStatusLabel,
+    getFundRequestStatusColor,
+    getFundRequestStatusLabel,
+    getTimesheetStatusColor,
+    getTimesheetStatusLabel,
+    getStockMovementTypeColor,
+    getStockMovementTypeLabel,
+    orderStatusConfig,
+    paymentStatusConfig,
+    payrollStatusConfig,
+    payRunStatusConfig,
+    returnStatusConfig,
+    wageAdvanceStatusConfig,
+    fundRequestStatusConfig,
+    timesheetStatusConfig,
+    stockMovementTypeConfig,
+} from './status-configs';
 
-export const getPaymentStatusColor = (status: string): string => {
-    const colors: Record<string, string> = {
-        unpaid: 'error',
-        partial: 'warning',
-        paid: 'success',
-        refunded: 'gray',
-        failed: 'error',
-    };
-    return colors[status] || 'gray';
-};

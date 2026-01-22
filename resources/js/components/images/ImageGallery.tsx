@@ -1,4 +1,5 @@
 import Button from '@/components/ui/button/Button';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import { Image as ImageType } from '@/types/image';
 import { router } from '@inertiajs/react';
 import { MoveDown, MoveUp, Star, Trash2 } from 'lucide-react';
@@ -26,12 +27,20 @@ export default function ImageGallery({
     placeholderUrl = 'https://placehold.co/600x400',
 }: ImageGalleryProps) {
     const [deleting, setDeleting] = useState<number | null>(null);
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
 
     const primaryImage = images.find((img) => img.is_primary);
     const otherImages = images.filter((img) => !img.is_primary);
 
     const handleDelete = async (imageId: number) => {
-        if (!confirm('Are you sure you want to delete this image?')) return;
+        const confirmed = await confirm({
+            title: 'Delete Image',
+            message: 'Are you sure you want to delete this image?',
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
 
         setDeleting(imageId);
 
@@ -266,6 +275,8 @@ export default function ImageGallery({
                     ))}
                 </div>
             )}
+
+            <ConfirmDialogComponent />
         </div>
     );
 }

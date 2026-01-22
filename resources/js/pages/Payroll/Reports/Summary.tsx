@@ -5,6 +5,7 @@ import Input from '@/components/form/input/InputField';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency } from '@/lib/formatters';
 import type { PayrollPeriod } from '@/types/payroll';
 import type { Shop } from '@/types/shop';
 import { Head, Link, router } from '@inertiajs/react';
@@ -70,13 +71,6 @@ export default function Summary({
     const [shopId, setShopId] = useState(filters.shop_id || '');
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(amount);
-    };
 
     const handleFilter = () => {
         const params: Record<string, string> = {};

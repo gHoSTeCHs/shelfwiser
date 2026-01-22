@@ -3,6 +3,8 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency } from '@/lib/formatters';
+import { getCatalogVisibilityColor, getCatalogVisibilityLabel } from '@/lib/status-configs';
 import {
     CatalogVisibility,
     SupplierCatalogItem,
@@ -24,20 +26,6 @@ interface Props {
 }
 
 export default function Browse({ catalogItems, supplier }: Props) {
-    const getVisibilityBadge = (visibility: CatalogVisibility) => {
-        const config: Record<
-            CatalogVisibility,
-            { color: 'success' | 'info' | 'warning'; label: string }
-        > = {
-            public: { color: 'success', label: 'Public' },
-            private: { color: 'warning', label: 'Private' },
-            connections_only: { color: 'info', label: 'Connections Only' },
-        };
-
-        const { color, label } = config[visibility];
-        return <Badge color={color}>{label}</Badge>;
-    };
-
     return (
         <AppLayout>
             <Head title="Browse Supplier Catalog" />
@@ -91,7 +79,9 @@ export default function Browse({ catalogItems, supplier }: Props) {
                                                 </p>
                                             )}
                                         </div>
-                                        {getVisibilityBadge(item.visibility)}
+                                        <Badge color={getCatalogVisibilityColor(item.visibility)}>
+                                            {getCatalogVisibilityLabel(item.visibility)}
+                                        </Badge>
                                     </div>
 
                                     {item.description && (
@@ -109,10 +99,7 @@ export default function Browse({ catalogItems, supplier }: Props) {
                                                 </span>
                                             </div>
                                             <span className="text-lg font-bold text-brand-900 dark:text-brand-100">
-                                                $
-                                                {Number(
-                                                    item.base_wholesale_price,
-                                                ).toFixed(2)}
+                                                {formatCurrency(item.base_wholesale_price, 'USD')}
                                             </span>
                                         </div>
 
@@ -173,12 +160,7 @@ export default function Browse({ catalogItems, supplier }: Props) {
                                                                         units
                                                                     </span>
                                                                     <span className="font-semibold">
-                                                                        $
-                                                                        {Number(
-                                                                            tier.price,
-                                                                        ).toFixed(
-                                                                            2,
-                                                                        )}
+                                                                        {formatCurrency(tier.price, 'USD')}
                                                                     </span>
                                                                 </div>
                                                             ))}

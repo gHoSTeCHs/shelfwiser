@@ -2,6 +2,7 @@ import MetricCard from '@/components/dashboard/MetricCard';
 import DataTable from '@/components/reports/DataTable';
 import FilterBar from '@/components/reports/FilterBar';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatNumber, formatPercentage } from '@/lib/formatters';
 import { ProductProfitabilityProps } from '@/types/reports';
 import { Head } from '@inertiajs/react';
 import {
@@ -19,14 +20,6 @@ export default function ProductProfitability({
     categories,
     filters,
 }: ProductProfitabilityProps) {
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(value);
-
-    const formatPercent = (value: number) => `${value.toFixed(2)}%`;
-
     const filterConfig = [
         {
             name: 'from',
@@ -98,63 +91,69 @@ export default function ProductProfitability({
             key: 'total_quantity',
             label: 'Units Sold',
             className: 'text-right',
-            render: (value: number) => value.toLocaleString(),
+            render: (value: unknown) => formatNumber(value as number, 0),
         },
         {
             key: 'total_revenue',
             label: 'Revenue',
             className: 'text-right',
-            render: (value: number) => formatCurrency(value),
+            render: (value: unknown) => formatCurrency(value as number),
         },
         {
             key: 'total_cogs',
             label: 'COGS',
             className: 'text-right',
-            render: (value: number) => formatCurrency(value),
+            render: (value: unknown) => formatCurrency(value as number),
         },
         {
             key: 'gross_profit',
             label: 'Gross Profit',
             className: 'text-right',
-            render: (value: number) => (
-                <span
-                    className={
-                        value >= 0
-                            ? 'font-medium text-green-600 dark:text-green-400'
-                            : 'font-medium text-red-600 dark:text-red-400'
-                    }
-                >
-                    {formatCurrency(value)}
-                </span>
-            ),
+            render: (value: unknown) => {
+                const v = value as number;
+                return (
+                    <span
+                        className={
+                            v >= 0
+                                ? 'font-medium text-green-600 dark:text-green-400'
+                                : 'font-medium text-red-600 dark:text-red-400'
+                        }
+                    >
+                        {formatCurrency(v)}
+                    </span>
+                );
+            },
         },
         {
             key: 'profit_margin',
             label: 'Margin %',
             className: 'text-right',
-            render: (value: number) => (
-                <span
-                    className={
-                        value >= 0
-                            ? 'font-medium text-green-600 dark:text-green-400'
-                            : 'font-medium text-red-600 dark:text-red-400'
-                    }
-                >
-                    {formatPercent(value)}
-                </span>
-            ),
+            render: (value: unknown) => {
+                const v = value as number;
+                return (
+                    <span
+                        className={
+                            v >= 0
+                                ? 'font-medium text-green-600 dark:text-green-400'
+                                : 'font-medium text-red-600 dark:text-red-400'
+                        }
+                    >
+                        {formatPercentage(v, 2)}
+                    </span>
+                );
+            },
         },
         {
             key: 'avg_selling_price',
             label: 'Avg Price',
             className: 'text-right',
-            render: (value: number) => formatCurrency(value),
+            render: (value: unknown) => formatCurrency(value as number),
         },
         {
             key: 'cost_price',
             label: 'Cost Price',
             className: 'text-right',
-            render: (value: number) => formatCurrency(value),
+            render: (value: unknown) => formatCurrency(value as number),
         },
     ];
 
@@ -178,7 +177,7 @@ export default function ProductProfitability({
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     <MetricCard
                         title="Units Sold"
-                        value={summary.total_units_sold.toLocaleString()}
+                        value={formatNumber(summary.total_units_sold, 0)}
                         icon={Package}
                         iconColor="text-brand-600 dark:text-brand-400"
                         iconBgColor="bg-brand-100 dark:bg-brand-900/20"
@@ -206,7 +205,7 @@ export default function ProductProfitability({
                     />
                     <MetricCard
                         title="Avg Margin"
-                        value={formatPercent(summary.avg_margin)}
+                        value={formatPercentage(summary.avg_margin, 2)}
                         icon={PercentIcon}
                         iconColor="text-purple-600 dark:text-purple-400"
                         iconBgColor="bg-purple-100 dark:bg-purple-900/20"

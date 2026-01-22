@@ -1,3 +1,5 @@
+import { BadgeColor } from '@/components/ui/badge/Badge';
+import { getStockMovementTypeLabel } from '@/lib/status-configs';
 import {
     ArrowDownCircle,
     ArrowRightCircle,
@@ -10,21 +12,8 @@ import {
     Wrench,
 } from 'lucide-react';
 
-export const getMovementLabel = (type: string): string => {
-    const labels: Record<string, string> = {
-        purchase: 'Purchase',
-        sale: 'Sale',
-        adjustment_in: 'Adjustment In',
-        adjustment_out: 'Adjustment Out',
-        transfer_in: 'Transfer In',
-        transfer_out: 'Transfer Out',
-        return: 'Return',
-        damage: 'Damage',
-        loss: 'Loss',
-        stock_take: 'Stock Take',
-    };
-    return labels[type] || type;
-};
+/** @deprecated Use getStockMovementTypeLabel from @/lib/status-configs instead */
+export const getMovementLabel = getStockMovementTypeLabel;
 
 export const getMovementIcon = (type: string) => {
     switch (type) {
@@ -55,7 +44,7 @@ export const getMovementIcon = (type: string) => {
     }
 };
 
-export const getMovementBadgeColor = (type: string): string => {
+export const getMovementBadgeColor = (type: string): BadgeColor => {
     const isIncrease = [
         'purchase',
         'adjustment_in',

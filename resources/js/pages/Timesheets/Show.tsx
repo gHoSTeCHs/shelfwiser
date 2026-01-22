@@ -5,7 +5,10 @@ import Label from '@/components/form/Label';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDateTime, formatTime, formatDateShort, formatDateLong } from '@/lib/formatters';
+import { getTimesheetStatusColor, getTimesheetStatusLabel } from '@/lib/status-configs';
 import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
@@ -70,68 +73,31 @@ const TimesheetShow = ({
     canApprove,
     canDelete,
 }: Props) => {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
     const [isEditing, setIsEditing] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [notes, setNotes] = useState(timesheet.notes || '');
     const [rejectionReason, setRejectionReason] = useState('');
 
-    const getStatusBadge = (status: string) => {
-        const statusConfig: Record<
-            string,
-            {
-                color: 'light' | 'warning' | 'success' | 'error' | 'info';
-                label: string;
-            }
-        > = {
-            draft: { color: 'light', label: 'Draft' },
-            submitted: { color: 'warning', label: 'Submitted' },
-            approved: { color: 'success', label: 'Approved' },
-            rejected: { color: 'error', label: 'Rejected' },
-            paid: { color: 'info', label: 'Paid' },
-        };
+    const handleDelete = async () => {
+        const confirmed = await confirm({
+            title: 'Delete Timesheet',
+            message: 'Are you sure you want to delete this timesheet?',
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
 
-        const config = statusConfig[status] || {
-            color: 'light' as const,
-            label: status,
-        };
-        return (
-            <Badge color={config.color} size="md">
-                {config.label}
-            </Badge>
+        router.delete(
+            TimesheetController.destroy.url({ timesheet: timesheet.id }),
         );
-    };
-
-    const formatDateTime = (datetime: string | null) => {
-        if (!datetime) return 'Not set';
-        return new Date(datetime).toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
-
-    const formatTime = (datetime: string | null) => {
-        if (!datetime) return '-';
-        return new Date(datetime).toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
-
-    const handleDelete = () => {
-        if (confirm('Are you sure you want to delete this timesheet?')) {
-            router.delete(
-                TimesheetController.destroy.url({ timesheet: timesheet.id }),
-            );
-        }
     };
 
     return (
         <div className="h-screen">
             <Head
-                title={`Timesheet - ${new Date(timesheet.date).toLocaleDateString()}`}
+                title={`Timesheet - ${formatDateShort(timesheet.date)}`}
             />
 
             <div className="space-y-6">
@@ -148,20 +114,14 @@ const TimesheetShow = ({
                                 Timesheet Details
                             </h1>
                             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                {new Date(timesheet.date).toLocaleDateString(
-                                    'en-US',
-                                    {
-                                        weekday: 'long',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        year: 'numeric',
-                                    },
-                                )}
+                                {formatDateLong(timesheet.date)}
                             </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        {getStatusBadge(timesheet.status)}
+                        <Badge color={getTimesheetStatusColor(timesheet.status)} size="md">
+                            {getTimesheetStatusLabel(timesheet.status)}
+                        </Badge>
                     </div>
                 </div>
 
@@ -177,7 +137,7 @@ const TimesheetShow = ({
                                     <Label>Clock In</Label>
                                     <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
                                         <Clock className="h-5 w-5 text-green-500" />
-                                        {formatTime(timesheet.clock_in)}
+                                        {formatTime(timesheet.clock_in) ?? '-'}
                                     </div>
                                 </div>
 
@@ -185,7 +145,7 @@ const TimesheetShow = ({
                                     <Label>Clock Out</Label>
                                     <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
                                         <Clock className="h-5 w-5 text-red-500" />
-                                        {formatTime(timesheet.clock_out)}
+                                        {formatTime(timesheet.clock_out) ?? '-'}
                                     </div>
                                 </div>
                             </div>
@@ -370,9 +330,7 @@ const TimesheetShow = ({
                                                 {timesheet.approved_by.name}
                                             </p>
                                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                {formatDateTime(
-                                                    timesheet.approved_at,
-                                                )}
+                                                {formatDateTime(timesheet.approved_at) ?? 'Not set'}
                                             </p>
                                         </div>
                                     </div>
@@ -521,6 +479,8 @@ const TimesheetShow = ({
                     </Card>
                 </div>
             )}
+
+            <ConfirmDialogComponent />
         </div>
     );
 };

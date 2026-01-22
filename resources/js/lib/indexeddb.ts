@@ -369,7 +369,7 @@ export async function getSyncMetadata(key: string): Promise<unknown> {
  */
 export async function getLastSyncTime(entity: string): Promise<number | null> {
     const timestamp = await getSyncMetadata(`lastSync_${entity}`);
-    return timestamp || null;
+    return typeof timestamp === 'number' ? timestamp : null;
 }
 
 /**

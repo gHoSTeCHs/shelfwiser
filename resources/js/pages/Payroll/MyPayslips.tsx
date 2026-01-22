@@ -3,6 +3,8 @@ import Badge from '@/components/ui/badge/Badge';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort, formatNumber } from '@/lib/formatters';
+import { getPayrollStatusColor } from '@/lib/status-configs';
 import { Head, Link } from '@inertiajs/react';
 import { Calendar, FileText } from 'lucide-react';
 
@@ -39,40 +41,6 @@ interface Props {
 }
 
 export default function MyPayslips({ payslips }: Props) {
-    const formatCurrency = (amount: string | number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(parseFloat(amount.toString()));
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-NG', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'draft':
-                return 'light';
-            case 'processing':
-                return 'warning';
-            case 'processed':
-                return 'info';
-            case 'approved':
-                return 'success';
-            case 'paid':
-                return 'success';
-            case 'cancelled':
-                return 'error';
-            default:
-                return 'light';
-        }
-    };
-
     const totalGrossPay = payslips.reduce(
         (sum, payslip) => sum + parseFloat(payslip.gross_pay),
         0,
@@ -212,12 +180,12 @@ export default function MyPayslips({ payslips }: Props) {
                                                     }
                                                 </span>
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                    {formatDate(
+                                                    {formatDateShort(
                                                         payslip.payroll_period
                                                             .start_date,
                                                     )}{' '}
                                                     -{' '}
-                                                    {formatDate(
+                                                    {formatDateShort(
                                                         payslip.payroll_period
                                                             .end_date,
                                                     )}
@@ -232,7 +200,7 @@ export default function MyPayslips({ payslips }: Props) {
                                         <td className="hidden px-4 py-3 text-sm text-gray-600 md:table-cell dark:text-gray-400">
                                             <div className="flex items-center gap-1">
                                                 <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                                                {formatDate(
+                                                {formatDateShort(
                                                     payslip.payroll_period
                                                         .payment_date,
                                                 )}
@@ -241,20 +209,11 @@ export default function MyPayslips({ payslips }: Props) {
                                         <td className="hidden px-4 py-3 text-right text-sm text-gray-900 lg:table-cell dark:text-white">
                                             <div className="flex flex-col">
                                                 <span>
-                                                    {parseFloat(
-                                                        payslip.regular_hours,
-                                                    ).toFixed(2)}
-                                                    h
+                                                    {formatNumber(payslip.regular_hours, 2)}h
                                                 </span>
-                                                {parseFloat(
-                                                    payslip.overtime_hours,
-                                                ) > 0 && (
+                                                {parseFloat(payslip.overtime_hours) > 0 && (
                                                     <span className="text-xs text-warning-600 dark:text-warning-400">
-                                                        +
-                                                        {parseFloat(
-                                                            payslip.overtime_hours,
-                                                        ).toFixed(2)}
-                                                        h OT
+                                                        +{formatNumber(payslip.overtime_hours, 2)}h OT
                                                     </span>
                                                 )}
                                             </div>
@@ -272,7 +231,7 @@ export default function MyPayslips({ payslips }: Props) {
                                         </td>
                                         <td className="px-4 py-3">
                                             <Badge
-                                                color={getStatusColor(
+                                                color={getPayrollStatusColor(
                                                     payslip.payroll_period
                                                         .status,
                                                 )}

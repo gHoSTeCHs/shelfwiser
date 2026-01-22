@@ -3,6 +3,8 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDateShort, formatNumber, formatTime } from '@/lib/formatters';
+import { timesheetStatusConfig } from '@/lib/status-configs';
 import { Form, Head, Link, router } from '@inertiajs/react';
 import { Calendar, CheckCircle, Clock, Coffee, TrendingUp } from 'lucide-react';
 import React, { useState } from 'react';
@@ -111,45 +113,6 @@ const TimesheetsIndex = ({
             {},
             { preserveState: true, preserveScroll: true },
         );
-    };
-
-    const getStatusBadge = (status: string) => {
-        const statusConfig: Record<
-            string,
-            {
-                color: 'light' | 'warning' | 'success' | 'error' | 'info';
-                label: string;
-            }
-        > = {
-            draft: { color: 'light', label: 'Draft' },
-            submitted: { color: 'warning', label: 'Submitted' },
-            approved: { color: 'success', label: 'Approved' },
-            rejected: { color: 'error', label: 'Rejected' },
-            paid: { color: 'info', label: 'Paid' },
-        };
-
-        const config = statusConfig[status] || {
-            color: 'light' as const,
-            label: status,
-        };
-        return <Badge color={config.color}>{config.label}</Badge>;
-    };
-
-    const formatTime = (datetime: string | null) => {
-        if (!datetime) return '-';
-        return new Date(datetime).toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
-
-    const formatDate = (datetime: string | null) => {
-        if (!datetime) return '-';
-        return new Date(datetime).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
     };
 
     return (
@@ -314,7 +277,7 @@ const TimesheetsIndex = ({
                                     Total Hours
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                                    {summary.total_hours.toFixed(2)}
+                                    {formatNumber(summary.total_hours, 2)}
                                 </p>
                             </div>
                             <div className="rounded-lg bg-brand-50 p-3 dark:bg-brand-900/20">
@@ -330,7 +293,7 @@ const TimesheetsIndex = ({
                                     Regular Hours
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                    {summary.total_regular_hours.toFixed(2)}
+                                    {formatNumber(summary.total_regular_hours, 2)}
                                 </p>
                             </div>
                             <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
@@ -346,7 +309,7 @@ const TimesheetsIndex = ({
                                     Overtime Hours
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-orange-600 dark:text-orange-400">
-                                    {summary.total_overtime_hours.toFixed(2)}
+                                    {formatNumber(summary.total_overtime_hours, 2)}
                                 </p>
                             </div>
                             <div className="rounded-lg bg-orange-50 p-3 dark:bg-orange-900/20">
@@ -517,7 +480,7 @@ const TimesheetsIndex = ({
                                         >
                                             <td className="px-6 py-4">
                                                 <p className="font-medium text-gray-900 dark:text-white">
-                                                    {formatDate(timesheet.date)}
+                                                    {formatDateShort(timesheet.date)}
                                                 </p>
                                             </td>
                                             <td className="px-6 py-4">
@@ -567,9 +530,11 @@ const TimesheetsIndex = ({
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                {getStatusBadge(
-                                                    timesheet.status,
-                                                )}
+                                                <Badge
+                                                    color={timesheetStatusConfig[timesheet.status]?.color || 'light'}
+                                                >
+                                                    {timesheetStatusConfig[timesheet.status]?.label || timesheet.status}
+                                                </Badge>
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <Link

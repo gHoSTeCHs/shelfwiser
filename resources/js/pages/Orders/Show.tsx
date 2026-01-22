@@ -10,6 +10,8 @@ import Card from '@/components/ui/card/Card';
 import { Modal } from '@/components/ui/modal';
 import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateTime } from '@/lib/formatters';
+import { getOrderStatusColor, getPaymentStatusColor } from '@/lib/status-configs';
 import { Order, OrderStatus, PaymentStatus } from '@/types/order';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
@@ -26,15 +28,6 @@ import {
     XCircle,
 } from 'lucide-react';
 import { FormEvent } from 'react';
-
-type BadgeColor =
-    | 'primary'
-    | 'success'
-    | 'error'
-    | 'warning'
-    | 'info'
-    | 'light'
-    | 'dark';
 
 interface Props {
     order: Order;
@@ -70,61 +63,6 @@ export default function Show({
         reason: '',
     });
 
-    const getStatusColor = (status: OrderStatus): BadgeColor => {
-        switch (status) {
-            case 'pending':
-                return 'warning';
-            case 'confirmed':
-            case 'processing':
-                return 'info';
-            case 'packed':
-            case 'shipped':
-                return 'primary';
-            case 'delivered':
-                return 'success';
-            case 'cancelled':
-            case 'refunded':
-                return 'error';
-            default:
-                return 'light';
-        }
-    };
-
-    const getPaymentStatusColor = (status: PaymentStatus): BadgeColor => {
-        switch (status) {
-            case 'paid':
-                return 'success';
-            case 'partial':
-                return 'warning';
-            case 'unpaid':
-                return 'error';
-            case 'refunded':
-                return 'info';
-            case 'failed':
-                return 'error';
-            default:
-                return 'light';
-        }
-    };
-
-    const formatDate = (dateString: string | null): string => {
-        if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
-
-    const formatCurrency = (amount: number): string => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(amount);
-    };
-
     return (
         <>
             <Head title={`Order ${order.order_number}`} />
@@ -145,7 +83,7 @@ export default function Show({
                             </h1>
                             <Badge
                                 variant="light"
-                                color={getStatusColor(order.status)}
+                                color={getOrderStatusColor(order.status)}
                             >
                                 {order_statuses[order.status]}
                             </Badge>
@@ -217,9 +155,7 @@ export default function Show({
                                             </Button>
                                         </>
                                     )}
-                                {(order.status === 'delivered' ||
-                                    order.status === 'completed') &&
-                                    order.status !== 'refunded' && (
+                                {order.status === 'delivered' && (
                                         <Link
                                             href={`/orders/${order.id}/return`}
                                         >
@@ -490,7 +426,7 @@ export default function Show({
                                                 Customer
                                             </p>
                                             <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                {order.customer.name}
+                                                {order.customer.full_name}
                                             </p>
                                         </div>
                                     </div>
@@ -532,7 +468,7 @@ export default function Show({
                                         Created
                                     </span>
                                     <span className="ml-auto text-gray-900 dark:text-white">
-                                        {formatDate(order.created_at)}
+                                        {formatDateTime(order.created_at)}
                                     </span>
                                 </div>
                                 {order.confirmed_at && (
@@ -542,7 +478,7 @@ export default function Show({
                                             Confirmed
                                         </span>
                                         <span className="ml-auto text-gray-900 dark:text-white">
-                                            {formatDate(order.confirmed_at)}
+                                            {formatDateTime(order.confirmed_at)}
                                         </span>
                                     </div>
                                 )}
@@ -553,7 +489,7 @@ export default function Show({
                                             Packed
                                         </span>
                                         <span className="ml-auto text-gray-900 dark:text-white">
-                                            {formatDate(order.packed_at)}
+                                            {formatDateTime(order.packed_at)}
                                         </span>
                                     </div>
                                 )}
@@ -569,7 +505,7 @@ export default function Show({
                                             )}
                                         </span>
                                         <span className="ml-auto text-gray-900 dark:text-white">
-                                            {formatDate(order.shipped_at)}
+                                            {formatDateTime(order.shipped_at)}
                                         </span>
                                     </div>
                                 )}
@@ -580,7 +516,7 @@ export default function Show({
                                             Delivered
                                         </span>
                                         <span className="ml-auto text-gray-900 dark:text-white">
-                                            {formatDate(order.delivered_at)}
+                                            {formatDateTime(order.delivered_at)}
                                         </span>
                                     </div>
                                 )}
@@ -591,7 +527,7 @@ export default function Show({
                                             Refunded
                                         </span>
                                         <span className="ml-auto text-gray-900 dark:text-white">
-                                            {formatDate(order.refunded_at)}
+                                            {formatDateTime(order.refunded_at)}
                                         </span>
                                     </div>
                                 )}

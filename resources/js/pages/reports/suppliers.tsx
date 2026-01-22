@@ -2,6 +2,7 @@ import DataTable from '@/components/reports/DataTable';
 import FilterBar from '@/components/reports/FilterBar';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort, formatPercentage, formatNumber } from '@/lib/formatters';
 import { SupplierReportProps } from '@/types/reports';
 import { Head } from '@inertiajs/react';
 
@@ -14,21 +15,6 @@ export default function SupplierReport({
     paymentStatuses,
     canViewCosts,
 }: SupplierReportProps) {
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(value);
-
-    const formatDate = (dateString: string | null) =>
-        dateString
-            ? new Date(dateString).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-              })
-            : '-';
-
     const filterConfig = [
         {
             name: 'from',
@@ -93,44 +79,47 @@ export default function SupplierReport({
             key: 'total_amount',
             label: 'Amount',
             className: 'text-right',
-            render: (value: number) => formatCurrency(value),
+            render: (value: unknown) => formatCurrency(value as number),
         },
         {
             key: 'paid_amount',
             label: 'Paid',
             className: 'text-right',
-            render: (value: number) => formatCurrency(value),
+            render: (value: unknown) => formatCurrency(value as number),
         },
         {
             key: 'status',
             label: 'Status',
-            render: (value: string) => (
+            render: (value: unknown) => (
                 <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 capitalize dark:bg-gray-800 dark:text-gray-200">
-                    {value.replace('_', ' ')}
+                    {String(value).replace('_', ' ')}
                 </span>
             ),
         },
         {
             key: 'payment_status',
             label: 'Payment',
-            render: (value: string) => (
-                <span
-                    className={`inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize ${
-                        value === 'paid'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : value === 'overdue'
-                              ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                    }`}
-                >
-                    {value}
-                </span>
-            ),
+            render: (value: unknown) => {
+                const v = value as string;
+                return (
+                    <span
+                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize ${
+                            v === 'paid'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                : v === 'overdue'
+                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        }`}
+                    >
+                        {v}
+                    </span>
+                );
+            },
         },
         {
             key: 'created_at',
             label: 'Date',
-            render: (value: string) => formatDate(value),
+            render: (value: unknown) => formatDateShort(value as string),
         },
     ];
 
@@ -199,17 +188,18 @@ export default function SupplierReport({
                                                 )}
                                             </td>
                                             <td className="px-4 py-4 text-right text-sm text-gray-900 dark:text-white">
-                                                {(
+                                                {formatPercentage(
                                                     (supplier.completed_count /
                                                         supplier.po_count) *
-                                                    100
-                                                ).toFixed(1)}
-                                                %
+                                                    100,
+                                                    1,
+                                                )}
                                             </td>
                                             <td className="px-4 py-4 text-right text-sm text-gray-900 dark:text-white">
-                                                {Number(
+                                                {formatNumber(
                                                     supplier.avg_lead_time,
-                                                ).toFixed(0)}{' '}
+                                                    0,
+                                                )}{' '}
                                                 days
                                             </td>
                                         </tr>

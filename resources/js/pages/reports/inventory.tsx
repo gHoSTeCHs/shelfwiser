@@ -2,6 +2,7 @@ import MetricCard from '@/components/dashboard/MetricCard';
 import DataTable from '@/components/reports/DataTable';
 import FilterBar from '@/components/reports/FilterBar';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 import { InventoryReportProps } from '@/types/reports';
 import { Head } from '@inertiajs/react';
 import { AlertTriangle, Box, DollarSign, Package } from 'lucide-react';
@@ -14,12 +15,6 @@ export default function InventoryReport({
     filters,
     canViewCosts,
 }: InventoryReportProps) {
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(value);
-
     const filterConfig = [
         {
             name: 'shop',
@@ -91,7 +86,7 @@ export default function InventoryReport({
                                 isLow ? 'font-medium text-error-600' : ''
                             }
                         >
-                            {totalStock.toLocaleString()}
+                            {formatNumber(totalStock, 0)}
                         </span>
                         {isLow && (
                             <AlertTriangle className="h-4 w-4 text-error-600" />
@@ -104,7 +99,7 @@ export default function InventoryReport({
             key: 'reorder_level',
             label: 'Reorder Level',
             className: 'text-right',
-            render: (value: number | null) => value?.toLocaleString() || '-',
+            render: (value: unknown) => value ? formatNumber(value as number, 0) : '-',
         },
         ...(canViewCosts
             ? [
@@ -112,8 +107,8 @@ export default function InventoryReport({
                       key: 'cost_price',
                       label: 'Cost Price',
                       className: 'text-right',
-                      render: (value: number | null) =>
-                          value ? formatCurrency(value) : '-',
+                      render: (value: unknown) =>
+                          value ? formatCurrency(value as number) : '-',
                   },
                   {
                       key: 'valuation',
@@ -152,14 +147,14 @@ export default function InventoryReport({
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <MetricCard
                         title="Total Products"
-                        value={summary.total_products.toLocaleString()}
+                        value={formatNumber(summary.total_products, 0)}
                         icon={Package}
                         iconColor="text-brand-600 dark:text-brand-400"
                         iconBgColor="bg-brand-100 dark:bg-brand-900/20"
                     />
                     <MetricCard
                         title="Total Variants"
-                        value={summary.total_variants.toLocaleString()}
+                        value={formatNumber(summary.total_variants, 0)}
                         icon={Box}
                         iconColor="text-blue-600 dark:text-blue-400"
                         iconBgColor="bg-blue-100 dark:bg-blue-900/20"
@@ -175,7 +170,7 @@ export default function InventoryReport({
                     )}
                     <MetricCard
                         title="Low Stock Items"
-                        value={summary.low_stock_count.toLocaleString()}
+                        value={formatNumber(summary.low_stock_count, 0)}
                         icon={AlertTriangle}
                         iconColor="text-error-600 dark:text-error-400"
                         iconBgColor="bg-error-100 dark:bg-error-900/20"

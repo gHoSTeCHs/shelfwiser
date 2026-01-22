@@ -7,7 +7,8 @@ import Select from '@/components/form/Select';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
-import { EmployeeCustomDeduction, User } from '@/types/payroll';
+import { User } from '@/types';
+import { DeductionType, EmployeeCustomDeduction } from '@/types/payroll';
 import { Form, Head, router } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
@@ -27,7 +28,7 @@ export default function Edit({ employee, deduction, deductionTypes }: Props) {
     const [deductionName, setDeductionName] = useState(
         deduction.deduction_name,
     );
-    const [deductionType, setDeductionType] = useState(
+    const [deductionType, setDeductionType] = useState<DeductionType | ''>(
         deduction.deduction_type,
     );
     const [amount, setAmount] = useState(deduction.amount.toString());
@@ -125,7 +126,7 @@ export default function Edit({ employee, deduction, deductionTypes }: Props) {
                                         })),
                                     ]}
                                     onChange={(value) =>
-                                        setDeductionType(value)
+                                        setDeductionType(value as DeductionType | '')
                                     }
                                     defaultValue={deductionType}
                                 />
@@ -244,8 +245,8 @@ export default function Edit({ employee, deduction, deductionTypes }: Props) {
                                     id="is_active"
                                     name="is_active"
                                     checked={isActive}
-                                    onChange={(e) =>
-                                        setIsActive(e.target.checked)
+                                    onChange={(checked) =>
+                                        setIsActive(checked)
                                     }
                                 />
                                 <Label

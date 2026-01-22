@@ -2,7 +2,9 @@ import CustomerController from '@/actions/App/Http/Controllers/CustomerControlle
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDateShort, formatDateLong } from '@/lib/formatters';
 import type { CustomerShowPageProps } from '@/types/customer';
 import { formatCurrency, getAvailableCredit } from '@/types/customer';
 import { Head, Link, router } from '@inertiajs/react';
@@ -25,18 +27,23 @@ export default function Show({
     recentOrders,
     canManageCredit,
 }: CustomerShowPageProps) {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
     const availableCredit = getAvailableCredit(customer);
 
-    const handleToggleStatus = () => {
-        if (
-            confirm(
-                `Are you sure you want to ${customer.is_active ? 'deactivate' : 'activate'} this customer?`,
-            )
-        ) {
-            router.patch(
-                CustomerController.toggleStatus.url({ customer: customer.id }),
-            );
-        }
+    const handleToggleStatus = async () => {
+        const action = customer.is_active ? 'deactivate' : 'activate';
+        const confirmed = await confirm({
+            title: `${action.charAt(0).toUpperCase() + action.slice(1)} Customer`,
+            message: `Are you sure you want to ${action} this customer?`,
+            variant: customer.is_active ? 'warning' : 'success',
+            confirmLabel: action.charAt(0).toUpperCase() + action.slice(1),
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
+
+        router.patch(
+            CustomerController.toggleStatus.url({ customer: customer.id }),
+        );
     };
 
     return (
@@ -265,9 +272,7 @@ export default function Show({
                                                         </p>
                                                         <p className="text-xs text-gray-500 dark:text-gray-400">
                                                             {order.shop?.name} •{' '}
-                                                            {new Date(
-                                                                order.created_at,
-                                                            ).toLocaleDateString()}
+                                                            {formatDateShort(order.created_at)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -412,13 +417,7 @@ export default function Show({
                                             Registered
                                         </label>
                                         <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            {new Date(
-                                                customer.created_at,
-                                            ).toLocaleDateString('en-US', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                            })}
+                                            {formatDateLong(customer.created_at)}
                                         </p>
                                     </div>
 
@@ -428,13 +427,7 @@ export default function Show({
                                                 Last Purchase
                                             </label>
                                             <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                                {new Date(
-                                                    customer.last_purchase_at,
-                                                ).toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric',
-                                                })}
+                                                {formatDateLong(customer.last_purchase_at)}
                                             </p>
                                         </div>
                                     )}
@@ -445,13 +438,7 @@ export default function Show({
                                                 Email Verified
                                             </label>
                                             <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                                {new Date(
-                                                    customer.email_verified_at,
-                                                ).toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric',
-                                                })}
+                                                {formatDateLong(customer.email_verified_at)}
                                             </p>
                                         </div>
                                     )}
@@ -483,6 +470,8 @@ export default function Show({
                     </div>
                 </div>
             </div>
+
+            <ConfirmDialogComponent />
         </>
     );
 }

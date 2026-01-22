@@ -5,6 +5,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -77,6 +78,7 @@ export default function Index({
     filters,
     statistics,
 }: Props) {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
     const [search, setSearch] = useState(filters.search || '');
 
     const handleSearch = (e: React.FormEvent) => {
@@ -96,20 +98,28 @@ export default function Index({
         });
     };
 
-    const handleDelete = (template: ProductTemplate) => {
+    const handleDelete = async (template: ProductTemplate) => {
         if (template.usage_count > 0) {
             alert(
                 'Cannot delete template that has been used to create products.',
             );
             return;
         }
-        if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
-            router.delete(
-                AdminProductTemplateController.destroy.url({
-                    product_template: template.id,
-                }),
-            );
-        }
+
+        const confirmed = await confirm({
+            title: 'Delete Template',
+            message: `Are you sure you want to delete "${template.name}"?`,
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
+
+        router.delete(
+            AdminProductTemplateController.destroy.url({
+                product_template: template.id,
+            }),
+        );
     };
 
     return (
@@ -436,6 +446,8 @@ export default function Index({
                     </Card>
                 )}
             </div>
+
+            <ConfirmDialogComponent />
         </>
     );
 }

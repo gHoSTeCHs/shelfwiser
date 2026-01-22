@@ -5,6 +5,8 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
+import { getPayrollStatusColor } from '@/lib/status-configs';
 import { Head, Link, router } from '@inertiajs/react';
 import { Calendar, DollarSign, FileText, Plus, Users } from 'lucide-react';
 import { useState } from 'react';
@@ -76,40 +78,6 @@ export default function Index({
     const handleStatusChange = (value: string) => {
         setStatus(value);
         handleFilterChange(shopId, value);
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'draft':
-                return 'light';
-            case 'processing':
-                return 'warning';
-            case 'processed':
-                return 'info';
-            case 'approved':
-                return 'success';
-            case 'paid':
-                return 'success';
-            case 'cancelled':
-                return 'error';
-            default:
-                return 'light';
-        }
-    };
-
-    const formatCurrency = (amount: string | number) => {
-        return new Intl.NumberFormat('en-NG', {
-            style: 'currency',
-            currency: 'NGN',
-        }).format(parseFloat(amount.toString()));
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-NG', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
     };
 
     const totalGrossPay = payrollPeriods.reduce(
@@ -334,7 +302,7 @@ export default function Index({
                                                 </span>
                                                 <span className="text-sm text-gray-500 dark:text-gray-400">
                                                     Payment:{' '}
-                                                    {formatDate(
+                                                    {formatDateShort(
                                                         period.payment_date,
                                                     )}
                                                 </span>
@@ -350,7 +318,7 @@ export default function Index({
                                         <td className="hidden px-4 py-3 md:table-cell">
                                             <div className="flex flex-col text-sm text-gray-600 dark:text-gray-300">
                                                 <span>
-                                                    {formatDate(
+                                                    {formatDateShort(
                                                         period.start_date,
                                                     )}
                                                 </span>
@@ -358,7 +326,7 @@ export default function Index({
                                                     to
                                                 </span>
                                                 <span>
-                                                    {formatDate(
+                                                    {formatDateShort(
                                                         period.end_date,
                                                     )}
                                                 </span>
@@ -398,7 +366,7 @@ export default function Index({
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col gap-1">
                                                 <Badge
-                                                    color={getStatusColor(
+                                                    color={getPayrollStatusColor(
                                                         period.status,
                                                     )}
                                                     size="sm"

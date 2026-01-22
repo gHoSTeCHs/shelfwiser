@@ -1,4 +1,5 @@
 import Button from '@/components/ui/button/Button';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 import { Copy, Download, Printer, RefreshCw } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -132,6 +133,9 @@ export const BarcodeDisplay: React.FC<BarcodeDisplayProps> = ({
         if (!printWindow) return;
 
         const svgData = new XMLSerializer().serializeToString(svgRef.current);
+        const formattedPrice = price !== undefined
+            ? `${currencySymbol}${formatNumber(price, 2)}`
+            : '';
 
         printWindow.document.write(`
             <!DOCTYPE html>
@@ -181,7 +185,7 @@ export const BarcodeDisplay: React.FC<BarcodeDisplayProps> = ({
                     ${productName ? `<div class="product-name">${productName}</div>` : ''}
                     ${sku ? `<div class="sku">SKU: ${sku}</div>` : ''}
                     ${svgData}
-                    ${price !== undefined ? `<div class="price">${currencySymbol}${price.toFixed(2)}</div>` : ''}
+                    ${formattedPrice ? `<div class="price">${formattedPrice}</div>` : ''}
                 </div>
                 <script>
                     window.onload = function() {

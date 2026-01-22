@@ -6,6 +6,7 @@ import PriceDisplay from '@/components/storefront/PriceDisplay';
 import ProductCard from '@/components/storefront/ProductCard';
 import QuantitySelector from '@/components/storefront/QuantitySelector';
 import Badge from '@/components/ui/badge/Badge';
+import useCurrency from '@/hooks/useCurrency';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
 import { StorefrontProductDetailProps } from '@/types/storefront';
 import { motion } from 'framer-motion';
@@ -22,6 +23,7 @@ const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
     relatedProducts,
     cartSummary,
 }) => {
+    const { formatCurrency } = useCurrency(shop);
     const [selectedVariantId, setSelectedVariantId] = React.useState(
         product.variants?.[0]?.id || 0,
     );
@@ -38,7 +40,7 @@ const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
     const variantOptions =
         product.variants?.map((variant) => ({
             value: variant.id.toString(),
-            label: `${variant.sku} - ${shop.currency_symbol}${Number(variant.price).toFixed(2)}`,
+            label: `${variant.sku} - ${formatCurrency(variant.price)}`,
         })) || [];
 
     const packagingOptions =
@@ -79,9 +81,9 @@ const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
                         transition={{ duration: 0.5 }}
                         className="group relative aspect-square overflow-hidden rounded-2xl bg-gray-100 sm:rounded-3xl dark:bg-navy-800"
                     >
-                        {product.image ? (
+                        {product.images?.[0]?.url ? (
                             <img
-                                src={product.image}
+                                src={product.images[0].url}
                                 alt={product.name}
                                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                             />
@@ -139,7 +141,6 @@ const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
                             <div className="flex items-baseline gap-3">
                                 <PriceDisplay
                                     price={selectedVariant.price}
-                                    retailPrice={selectedVariant.retail_price}
                                     shop={shop}
                                     size="lg"
                                     showTaxLabel={true}

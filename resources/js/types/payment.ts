@@ -5,6 +5,7 @@
  * Paystack, OPay, Flutterwave, and cryptocurrency payments.
  */
 
+import type { BadgeColor } from '@/components/ui/badge/Badge';
 import type { ReactNode } from 'react';
 
 export interface PaymentGateway {
@@ -41,6 +42,14 @@ export interface PaystackInlineData {
     amount: number;
     currency: string;
     ref: string;
+    metadata?: {
+        custom_fields?: Array<{
+            display_name: string;
+            variable_name: string;
+            value: string;
+        }>;
+    };
+    channels?: string[];
     onClose?: () => void;
     callback?: (response: PaystackCallbackResponse) => void;
 }
@@ -211,8 +220,8 @@ export function getInternalPaymentMethodLabel(
 
 export function getInternalPaymentMethodColor(
     method: InternalPaymentMethod,
-): string {
-    return INTERNAL_PAYMENT_METHODS[method]?.color ?? 'gray';
+): BadgeColor {
+    return (INTERNAL_PAYMENT_METHODS[method]?.color ?? 'gray') as BadgeColor;
 }
 
 /**

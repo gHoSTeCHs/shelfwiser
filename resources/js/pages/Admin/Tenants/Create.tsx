@@ -282,8 +282,8 @@ export default function Create({ subscriptionPlans }: Props) {
                                     <Checkbox
                                         id="is_active"
                                         checked={isActive}
-                                        onChange={(e) =>
-                                            setIsActive(e.target.checked)
+                                        onChange={(checked) =>
+                                            setIsActive(checked)
                                         }
                                     />
                                     <input

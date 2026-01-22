@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { Modal } from '@/components/ui/modal';
 import AppLayout from '@/layouts/AppLayout';
+import { formatCurrency, formatDateShort } from '@/lib/formatters';
 import { PurchaseOrder } from '@/types/supplier';
 import { paymentStatusConfig, statusConfig } from '@/utils/purchase-order';
 import { Head, router, useForm } from '@inertiajs/react';
@@ -340,16 +341,10 @@ export default function Show({
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-medium text-gray-900 dark:text-white">
-                                                    {item.quantity} × $
-                                                    {Number(
-                                                        item.unit_price,
-                                                    ).toFixed(2)}
+                                                    {item.quantity} × {formatCurrency(item.unit_price)}
                                                 </p>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                    $
-                                                    {Number(
-                                                        item.total_price,
-                                                    ).toFixed(2)}
+                                                    {formatCurrency(item.total_price)}
                                                 </p>
                                             </div>
                                         </div>
@@ -371,7 +366,7 @@ export default function Show({
                                         Subtotal
                                     </span>
                                     <span className="font-medium text-gray-900 dark:text-white">
-                                        ${Number(po.subtotal).toFixed(2)}
+                                        {formatCurrency(po.subtotal)}
                                     </span>
                                 </div>
                                 {po.tax_amount > 0 && (
@@ -380,7 +375,7 @@ export default function Show({
                                             Tax
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            ${Number(po.tax_amount).toFixed(2)}
+                                            {formatCurrency(po.tax_amount)}
                                         </span>
                                     </div>
                                 )}
@@ -390,19 +385,14 @@ export default function Show({
                                             Shipping
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            $
-                                            {Number(po.shipping_amount).toFixed(
-                                                2,
-                                            )}
+                                            {formatCurrency(po.shipping_amount)}
                                         </span>
                                     </div>
                                 )}
                                 {po.discount_amount > 0 && (
                                     <div className="flex justify-between text-green-600">
                                         <span>Discount</span>
-                                        <span>
-                                            -${po.discount_amount.toFixed(2)}
-                                        </span>
+                                        <span>-{formatCurrency(po.discount_amount)}</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between border-t pt-3 text-base font-semibold dark:border-gray-700">
@@ -410,7 +400,7 @@ export default function Show({
                                         Total
                                     </span>
                                     <span className="text-gray-900 dark:text-white">
-                                        ${Number(po.total_amount).toFixed(2)}
+                                        {formatCurrency(po.total_amount)}
                                     </span>
                                 </div>
                             </div>
@@ -427,7 +417,7 @@ export default function Show({
                                         Paid Amount
                                     </span>
                                     <span className="font-medium text-green-600">
-                                        ${Number(po.paid_amount).toFixed(2)}
+                                        {formatCurrency(po.paid_amount)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -435,10 +425,7 @@ export default function Show({
                                         Outstanding
                                     </span>
                                     <span className="font-medium text-orange-600">
-                                        $
-                                        {(
-                                            po.total_amount - po.paid_amount
-                                        ).toFixed(2)}
+                                        {formatCurrency(po.total_amount - po.paid_amount)}
                                     </span>
                                 </div>
                                 {po.payment_due_date && (
@@ -446,9 +433,7 @@ export default function Show({
                                         <Calendar className="h-4 w-4" />
                                         <span className="text-xs">
                                             Due:{' '}
-                                            {new Date(
-                                                po.payment_due_date,
-                                            ).toLocaleDateString()}
+                                            {formatDateShort(po.payment_due_date)}
                                         </span>
                                     </div>
                                 )}
@@ -466,15 +451,10 @@ export default function Show({
                                                 className="flex justify-between text-xs text-gray-600 dark:text-gray-400"
                                             >
                                                 <span>
-                                                    {new Date(
-                                                        payment.payment_date,
-                                                    ).toLocaleDateString()}
+                                                    {formatDateShort(payment.payment_date)}
                                                 </span>
                                                 <span className="font-medium">
-                                                    $
-                                                    {Number(
-                                                        payment.amount,
-                                                    ).toFixed(2)}
+                                                    {formatCurrency(payment.amount)}
                                                 </span>
                                             </div>
                                         ))}
@@ -495,9 +475,7 @@ export default function Show({
                                             <Calendar className="h-4 w-4 text-gray-400" />
                                             <span className="text-gray-600 dark:text-gray-400">
                                                 Expected:{' '}
-                                                {new Date(
-                                                    po.expected_delivery_date,
-                                                ).toLocaleDateString()}
+                                                {formatDateShort(po.expected_delivery_date)}
                                             </span>
                                         </div>
                                     )}
@@ -506,9 +484,7 @@ export default function Show({
                                             <CheckCircle className="h-4 w-4 text-green-500" />
                                             <span className="text-gray-600 dark:text-gray-400">
                                                 Delivered:{' '}
-                                                {new Date(
-                                                    po.actual_delivery_date,
-                                                ).toLocaleDateString()}
+                                                {formatDateShort(po.actual_delivery_date)}
                                             </span>
                                         </div>
                                     )}

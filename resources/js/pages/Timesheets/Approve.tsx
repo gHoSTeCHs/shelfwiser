@@ -3,6 +3,7 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDateShort, formatTime } from '@/lib/formatters';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -72,23 +73,6 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
             {},
             { preserveState: true, preserveScroll: true },
         );
-    };
-
-    const formatDate = (datetime: string | null) => {
-        if (!datetime) return '-';
-        return new Date(datetime).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-    };
-
-    const formatTime = (datetime: string | null) => {
-        if (!datetime) return '-';
-        return new Date(datetime).toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-        });
     };
 
     return (
@@ -205,7 +189,7 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
                                                     Date
                                                 </p>
                                                 <p className="font-medium text-gray-900 dark:text-white">
-                                                    {formatDate(timesheet.date)}
+                                                    {formatDateShort(timesheet.date)}
                                                 </p>
                                             </div>
                                         </div>

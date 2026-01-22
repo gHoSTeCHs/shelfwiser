@@ -194,8 +194,26 @@ export function useOfflineProducts(
                         const data = await response.json();
                         const products = data.products || [];
 
+                        interface RawProduct {
+                            id: number;
+                            product_id?: number;
+                            product?: { id?: number; name?: string; is_taxable?: boolean };
+                            name?: string;
+                            sku?: string;
+                            barcode?: string;
+                            price?: string | number;
+                            cost_price?: string | number;
+                            stock_quantity?: number;
+                            available_stock?: number;
+                            track_stock?: boolean;
+                            reorder_level?: number;
+                            is_active?: boolean;
+                            image_url?: string;
+                            packagingTypes?: unknown[];
+                            updated_at?: string;
+                        }
                         const syncProducts: SyncProduct[] = products.map(
-                            (p: Record<string, unknown>) => ({
+                            (p: RawProduct) => ({
                                 id: p.id,
                                 product_id: p.product?.id || p.product_id,
                                 tenant_id: tenantId,
@@ -206,8 +224,8 @@ export function useOfflineProducts(
                                     `${p.product?.name || ''} ${p.name ? '- ' + p.name : ''}`.trim(),
                                 sku: p.sku,
                                 barcode: p.barcode,
-                                price: parseFloat(p.price) || 0,
-                                cost_price: parseFloat(p.cost_price) || 0,
+                                price: parseFloat(String(p.price)) || 0,
+                                cost_price: parseFloat(String(p.cost_price)) || 0,
                                 stock_quantity: p.stock_quantity || 0,
                                 available_stock:
                                     p.available_stock || p.stock_quantity || 0,

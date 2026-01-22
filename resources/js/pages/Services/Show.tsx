@@ -6,9 +6,11 @@ import VariantFormModal from '@/components/services/VariantFormModal';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import useCurrency from '@/hooks/useCurrency';
 import AppLayout from '@/layouts/AppLayout';
 import { Service, ServiceAddon, ServiceVariant } from '@/types/service';
-import { Form, Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     Building2,
@@ -31,6 +33,8 @@ interface Props {
 }
 
 export default function Show({ service, category_addons, can_manage }: Props) {
+    const { confirm, ConfirmDialogComponent } = useConfirmDialog();
+    const { formatCurrency } = useCurrency(service.shop);
     const [variantModalOpen, setVariantModalOpen] = useState(false);
     const [selectedVariant, setSelectedVariant] =
         useState<ServiceVariant | null>(null);
@@ -38,6 +42,48 @@ export default function Show({ service, category_addons, can_manage }: Props) {
     const [selectedAddon, setSelectedAddon] = useState<ServiceAddon | null>(
         null,
     );
+
+    const handleDeleteService = async () => {
+        const confirmed = await confirm({
+            title: 'Delete Service',
+            message: 'Are you sure you want to delete this service? This action cannot be undone.',
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
+
+        router.delete(ServiceController.destroy.url({ service: service.id }));
+    };
+
+    const handleDeleteVariant = async (variantId: number) => {
+        const confirmed = await confirm({
+            title: 'Delete Variant',
+            message: 'Are you sure you want to delete this variant?',
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
+
+        router.delete(ServiceVariantController.destroy.url({
+            service: service.id,
+            variant: variantId,
+        }));
+    };
+
+    const handleDeleteAddon = async (addonId: number) => {
+        const confirmed = await confirm({
+            title: 'Delete Add-on',
+            message: 'Are you sure you want to delete this add-on?',
+            variant: 'danger',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+        });
+        if (!confirmed) return;
+
+        router.delete(ServiceAddonController.destroy.url({ addon: addonId }));
+    };
 
     const handleEditVariant = (variant: ServiceVariant) => {
         setSelectedVariant(variant);
@@ -102,26 +148,13 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                         Edit
                                     </Button>
                                 </Link>
-                                <Form
-                                    action={ServiceController.destroy.url({
-                                        service: service.id,
-                                    })}
-                                    method="delete"
-                                    onSubmit={(e) => {
-                                        if (
-                                            !confirm(
-                                                'Are you sure you want to delete this service? This action cannot be undone.',
-                                            )
-                                        ) {
-                                            e.preventDefault();
-                                        }
-                                    }}
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDeleteService}
                                 >
-                                    <Button variant="destructive">
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete
-                                    </Button>
-                                </Form>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                </Button>
                             </>
                         )}
                     </div>
@@ -253,15 +286,14 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                                 </span>
                                             </div>
                                             <p className="text-info-600 dark:text-info-400 mt-1 text-lg font-bold">
-                                                ₦
-                                                {Math.min(
+                                                {formatCurrency(Math.min(
                                                     ...service.variants.map(
                                                         (v) =>
                                                             parseFloat(
                                                                 v.base_price.toString(),
                                                             ),
                                                     ),
-                                                ).toLocaleString()}
+                                                ))}
                                             </p>
                                         </div>
                                     )}
@@ -339,32 +371,17 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                                 >
                                                     <Edit className="h-3 w-3" />
                                                 </Button>
-                                                <Form
-                                                    action={ServiceVariantController.destroy.url(
-                                                        {
-                                                            service: service.id,
-                                                            variant: variant.id,
-                                                        },
-                                                    )}
-                                                    method="delete"
-                                                    onSubmit={(e) => {
-                                                        if (
-                                                            !confirm(
-                                                                'Are you sure you want to delete this variant?',
-                                                            )
-                                                        ) {
-                                                            e.preventDefault();
-                                                        }
-                                                    }}
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        handleDeleteVariant(
+                                                            variant.id,
+                                                        )
+                                                    }
                                                 >
-                                                    <Button
-                                                        type="submit"
-                                                        variant="outline"
-                                                        size="sm"
-                                                    >
-                                                        <Trash2 className="h-3 w-3 text-error-500" />
-                                                    </Button>
-                                                </Form>
+                                                    <Trash2 className="h-3 w-3 text-error-500" />
+                                                </Button>
                                             </div>
                                         )}
                                     </div>
@@ -375,10 +392,7 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                                 Base Price
                                             </p>
                                             <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-                                                ₦
-                                                {parseFloat(
-                                                    variant.base_price.toString(),
-                                                ).toLocaleString()}
+                                                {formatCurrency(variant.base_price)}
                                             </p>
                                         </div>
 
@@ -389,10 +403,7 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                                         Customer Materials
                                                     </p>
                                                     <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-                                                        ₦
-                                                        {parseFloat(
-                                                            variant.customer_materials_price.toString(),
-                                                        ).toLocaleString()}
+                                                        {formatCurrency(variant.customer_materials_price)}
                                                     </p>
                                                 </div>
                                             )}
@@ -404,10 +415,7 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                                         Shop Materials
                                                     </p>
                                                     <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-                                                        ₦
-                                                        {parseFloat(
-                                                            variant.shop_materials_price.toString(),
-                                                        ).toLocaleString()}
+                                                        {formatCurrency(variant.shop_materials_price)}
                                                     </p>
                                                 </div>
                                             )}
@@ -493,40 +501,23 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                                         >
                                                             <Edit className="h-3 w-3" />
                                                         </Button>
-                                                        <Form
-                                                            action={ServiceAddonController.destroy.url(
-                                                                {
-                                                                    addon: addon.id,
-                                                                },
-                                                            )}
-                                                            method="delete"
-                                                            onSubmit={(e) => {
-                                                                if (
-                                                                    !confirm(
-                                                                        'Are you sure you want to delete this add-on?',
-                                                                    )
-                                                                ) {
-                                                                    e.preventDefault();
-                                                                }
-                                                            }}
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() =>
+                                                                handleDeleteAddon(
+                                                                    addon.id,
+                                                                )
+                                                            }
                                                         >
-                                                            <Button
-                                                                type="submit"
-                                                                variant="ghost"
-                                                                size="sm"
-                                                            >
-                                                                <Trash2 className="h-3 w-3 text-error-500" />
-                                                            </Button>
-                                                        </Form>
+                                                            <Trash2 className="h-3 w-3 text-error-500" />
+                                                        </Button>
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="mt-2 flex items-center justify-between">
                                                 <span className="font-semibold text-gray-900 dark:text-white">
-                                                    ₦
-                                                    {parseFloat(
-                                                        addon.price.toString(),
-                                                    ).toLocaleString()}
+                                                    {formatCurrency(addon.price)}
                                                 </span>
                                                 {addon.allows_quantity && (
                                                     <Badge
@@ -571,10 +562,7 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                             </div>
                                             <div className="mt-2 flex items-center justify-between">
                                                 <span className="font-semibold text-gray-900 dark:text-white">
-                                                    ₦
-                                                    {parseFloat(
-                                                        addon.price.toString(),
-                                                    ).toLocaleString()}
+                                                    {formatCurrency(addon.price)}
                                                 </span>
                                                 {addon.allows_quantity && (
                                                     <Badge
@@ -624,6 +612,8 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                     />
                 </>
             )}
+
+            <ConfirmDialogComponent />
         </>
     );
 }

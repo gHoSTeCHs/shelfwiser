@@ -507,7 +507,8 @@ export default function Create({ shopTypes, inventoryModels }: Props) {
                                         {Object.entries(
                                             selectedType.config_schema
                                                 .properties,
-                                        ).map(([fieldName, schema]) => {
+                                        ).map(([fieldName, rawSchema]) => {
+                                            const schema = rawSchema as SchemaProperty;
                                             const isRequired =
                                                 selectedType.config_schema?.required?.includes(
                                                     fieldName,
@@ -531,13 +532,11 @@ export default function Create({ shopTypes, inventoryModels }: Props) {
                                                 >
                                                     <DynamicSchemaField
                                                         fieldName={fieldName}
-                                                        schema={
-                                                            schema as SchemaProperty
-                                                        }
+                                                        schema={schema}
                                                         value={
                                                             shopConfig[
                                                                 fieldName
-                                                            ]
+                                                            ] as import('@/types').SchemaPropertyValue
                                                         }
                                                         onChange={(value) =>
                                                             handleConfigChange(
@@ -587,11 +586,11 @@ export default function Create({ shopTypes, inventoryModels }: Props) {
                                                         <input
                                                             type="hidden"
                                                             name={`config[${fieldName}]`}
-                                                            value={
+                                                            value={String(
                                                                 shopConfig[
                                                                     fieldName
                                                                 ] ?? ''
-                                                            }
+                                                            )}
                                                         />
                                                     )}
                                                 </div>

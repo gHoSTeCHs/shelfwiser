@@ -463,10 +463,13 @@ const CustomersIndex = ({
                                         onClick={() =>
                                             link.url && router.get(link.url)
                                         }
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
+                                    >
+                                        <span
+                                            dangerouslySetInnerHTML={{
+                                                __html: link.label,
+                                            }}
+                                        />
+                                    </Button>
                                 ))}
                             </div>
                         </div>

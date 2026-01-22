@@ -5,7 +5,10 @@ import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import Label from '@/components/form/Label';
 import InputError from '@/components/form/InputError';
+import useCurrency from '@/hooks/useCurrency';
+import { formatDateTime } from '@/lib/formatters';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
+import { getOrderStatusColor, getOrderStatusLabel, getPaymentStatusColor, getPaymentStatusLabel } from '@/lib/status-configs';
 import { AccountOrderDetailProps } from '@/types/storefront';
 import { Form, Link } from '@inertiajs/react';
 import { ArrowLeft, XCircle } from 'lucide-react';
@@ -16,6 +19,7 @@ import React, { useState } from 'react';
  * Shows complete order information including items, addresses, and status.
  */
 const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
+    const { formatCurrency } = useCurrency(shop);
     const shippingAddress = JSON.parse(order.shipping_address);
     const billingAddress = JSON.parse(order.billing_address);
     const [showCancelModal, setShowCancelModal] = useState(false);
@@ -45,34 +49,13 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                         </h1>
                         <p className="text-gray-600">
                             Placed on{' '}
-                            {new Date(order.created_at).toLocaleDateString(
-                                'en-US',
-                                {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                },
-                            )}
+                            {formatDateTime(order.created_at)}
                         </p>
                     </div>
                     <div className="space-y-2 text-right">
                         <div>
-                            <Badge
-                                color={
-                                    order.status === 'delivered'
-                                        ? 'success'
-                                        : order.status === 'cancelled'
-                                          ? 'error'
-                                          : order.status === 'shipped'
-                                            ? 'info'
-                                            : order.status === 'processing'
-                                              ? 'warning'
-                                              : 'light'
-                                }
-                            >
-                                {order.status.replace('_', ' ').toUpperCase()}
+                            <Badge color={getOrderStatusColor(order.status)}>
+                                {getOrderStatusLabel(order.status)}
                             </Badge>
                             {order.tracking_number && (
                                 <p className="mt-2 text-sm text-gray-600">
@@ -131,15 +114,10 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                         </div>
                                         <div className="ml-4 text-right">
                                             <p className="font-semibold">
-                                                {shop.currency_symbol}
-                                                {item.total_amount.toFixed(2)}
+                                                {formatCurrency(item.total_amount)}
                                             </p>
                                             <p className="mt-1 text-sm text-gray-600">
-                                                {shop.currency_symbol}
-                                                {item.unit_price.toFixed(
-                                                    2,
-                                                )}{' '}
-                                                each
+                                                {formatCurrency(item.unit_price)} each
                                             </p>
                                         </div>
                                     </div>
@@ -219,15 +197,7 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                     {order.cancelled_at && (
                                         <p className="mt-2 text-xs text-error-600">
                                             Cancelled on{' '}
-                                            {new Date(
-                                                order.cancelled_at,
-                                            ).toLocaleDateString('en-US', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })}
+                                            {formatDateTime(order.cancelled_at)}
                                         </p>
                                     )}
                                 </Card>
@@ -244,8 +214,7 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                 <div className="flex justify-between text-sm">
                                     <p className="text-gray-600">Subtotal</p>
                                     <p className="font-medium">
-                                        {shop.currency_symbol}
-                                        {order.subtotal.toFixed(2)}
+                                        {formatCurrency(order.subtotal)}
                                     </p>
                                 </div>
 
@@ -253,8 +222,7 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                     <div className="flex justify-between text-sm">
                                         <p className="text-gray-600">Tax</p>
                                         <p className="font-medium">
-                                            {shop.currency_symbol}
-                                            {order.tax_amount.toFixed(2)}
+                                            {formatCurrency(order.tax_amount)}
                                         </p>
                                     </div>
                                 )}
@@ -265,18 +233,14 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                             Shipping
                                         </p>
                                         <p className="font-medium">
-                                            {shop.currency_symbol}
-                                            {order.shipping_cost.toFixed(2)}
+                                            {formatCurrency(order.shipping_cost)}
                                         </p>
                                     </div>
                                 )}
 
                                 <div className="flex justify-between border-t pt-3 text-lg font-bold">
                                     <p>Total</p>
-                                    <p>
-                                        {shop.currency_symbol}
-                                        {order.total_amount.toFixed(2)}
-                                    </p>
+                                    <p>{formatCurrency(order.total_amount)}</p>
                                 </div>
                             </div>
 
@@ -296,14 +260,8 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                     <p className="mb-1 text-sm text-gray-600">
                                         Payment Status
                                     </p>
-                                    <Badge
-                                        color={
-                                            order.payment_status === 'paid'
-                                                ? 'success'
-                                                : 'warning'
-                                        }
-                                    >
-                                        {order.payment_status.toUpperCase()}
+                                    <Badge color={getPaymentStatusColor(order.payment_status)}>
+                                        {getPaymentStatusLabel(order.payment_status)}
                                     </Badge>
                                 </div>
                             </div>
