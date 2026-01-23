@@ -161,7 +161,7 @@ const Checkout: React.FC<CheckoutProps> = ({
 
     const getItemName = (item: CartItem) => {
         if (isProduct(item)) {
-            return item.productVariant?.product?.name || 'Product';
+            return item.product_variant?.product?.name || 'Product';
         } else if (isService(item)) {
             const serviceVariant = item.sellable as (ServiceVariant & { service?: Service }) | undefined;
             return serviceVariant?.service?.name || 'Service';
@@ -171,7 +171,7 @@ const Checkout: React.FC<CheckoutProps> = ({
 
     const getItemVariantName = (item: CartItem) => {
         if (isProduct(item)) {
-            return item.productVariant?.sku;
+            return item.product_variant?.sku;
         } else if (isService(item)) {
             return item.sellable?.name;
         }
@@ -183,6 +183,7 @@ const Checkout: React.FC<CheckoutProps> = ({
             shop={shop}
             customer={customer}
             cartItemCount={cartSummary.item_count}
+            cartSummary={cartSummary}
         >
             <div className="mx-auto max-w-6xl">
                 <Breadcrumbs

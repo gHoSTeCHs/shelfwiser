@@ -31,7 +31,11 @@ class CartController extends Controller
             'cart' => $cart->load([
                 'items.productVariant.product',
                 'items.packagingType',
-                'items.sellable.service', // For service variants
+                'items.sellable' => function ($morphTo) {
+                    $morphTo->morphWith([
+                        \App\Models\ServiceVariant::class => ['service'],
+                    ]);
+                },
             ]),
             'cartSummary' => $cartSummary,
         ]);

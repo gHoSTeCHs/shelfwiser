@@ -110,6 +110,8 @@ class ProductVariant extends Model
         'max_order_quantity' => 'integer',
     ];
 
+    protected $appends = ['available_stock', 'total_stock'];
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
@@ -173,7 +175,7 @@ class ProductVariant extends Model
             }
 
             $currentQty = $variant->total_stock;
-            $currentCost = (float) $variant->cost_price;
+            $currentCost = (float)$variant->cost_price;
 
             if ($currentQty + $newQuantity <= 0) {
                 return;
@@ -191,7 +193,7 @@ class ProductVariant extends Model
      */
     public function getCostForPackage(ProductPackagingType $package): float
     {
-        return ((float) $this->cost_price) * $package->units_per_package;
+        return ((float)$this->cost_price) * $package->units_per_package;
     }
 
     /**

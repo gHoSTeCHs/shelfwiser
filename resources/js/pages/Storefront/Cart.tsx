@@ -78,7 +78,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
 
     const getItemName = (item: CartItem) => {
         if (isProduct(item)) {
-            return item.productVariant?.product?.name || 'Product';
+            return item.product_variant?.product?.name || 'Product';
         } else if (isService(item)) {
             const serviceVariant = item.sellable as (ServiceVariant & { service?: Service }) | undefined;
             return serviceVariant?.service?.name || 'Service';
@@ -88,7 +88,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
 
     const getItemImage = (item: CartItem): string | undefined => {
         if (isProduct(item)) {
-            return item.productVariant?.product?.images?.[0]?.url;
+            return item.product_variant?.product?.images?.[0]?.url;
         } else if (isService(item)) {
             const serviceVariant = item.sellable as (ServiceVariant & { service?: Service }) | undefined;
             return serviceVariant?.service?.image_url ?? undefined;
@@ -108,7 +108,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
     };
 
     return (
-        <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count}>
+        <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count} cartSummary={cartSummary}>
             <div className="space-y-6">
                 <Breadcrumbs
                     items={[
@@ -221,16 +221,16 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                                     SKU:{' '}
                                                                     {
                                                                         item
-                                                                            .productVariant
+                                                                            .product_variant
                                                                             ?.sku
                                                                     }
                                                                 </p>
-                                                                {item.packagingType && (
+                                                                {item.packaging_type && (
                                                                     <p className="text-sm text-gray-600 dark:text-gray-400">
                                                                         Packaging:{' '}
                                                                         {
                                                                             item
-                                                                                .packagingType
+                                                                                .packaging_type
                                                                                 .name
                                                                         }
                                                                     </p>
@@ -341,7 +341,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                                             max={
                                                                 isProduct(item)
                                                                     ? item
-                                                                          .productVariant
+                                                                          .product_variant
                                                                           ?.available_stock ||
                                                                       999
                                                                     : 999
@@ -378,16 +378,16 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
 
                                                 {/* Stock warning for products only */}
                                                 {isProduct(item) &&
-                                                    item.productVariant &&
-                                                    item.productVariant.available_stock !== undefined &&
+                                                    item.product_variant &&
+                                                    item.product_variant.available_stock !== undefined &&
                                                     item.quantity >
-                                                        item.productVariant
+                                                        item.product_variant
                                                             .available_stock && (
                                                         <p className="mt-2 text-sm text-error-600 dark:text-error-400">
                                                             Only{' '}
                                                             {
                                                                 item
-                                                                    .productVariant
+                                                                    .product_variant
                                                                     .available_stock
                                                             }{' '}
                                                             available in stock

@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::prefix('store/{shop:slug}')->name('storefront.')->group(function () {
+Route::prefix('store/{shop:slug}')->middleware('storefront.enabled')->name('storefront.')->group(function () {
     Route::get('/', [StorefrontController::class, 'index'])->name('index');
     Route::get('/products', [StorefrontController::class, 'products'])->name('products');
     Route::get('/products/{product:slug}', [StorefrontController::class, 'show'])->name('product');
@@ -49,7 +49,9 @@ Route::prefix('store/{shop:slug}')->name('storefront.')->group(function () {
     });
 
     Route::get('/payment/callback', [CheckoutController::class, 'paymentCallback'])->name('payment.callback');
-    Route::post('/payment/webhook', [CheckoutController::class, 'paymentWebhook'])->name('payment.webhook');
+    Route::post('/payment/webhook', [CheckoutController::class, 'paymentWebhook'])
+        ->withoutMiddleware('storefront.enabled')
+        ->name('payment.webhook');
 
     Route::get('/verify-email/{id}/{hash}', [CustomerAuthController::class, 'verifyEmail'])
         ->middleware('signed')

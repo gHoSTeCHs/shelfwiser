@@ -1,18 +1,21 @@
 import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
 import Button from '@/components/ui/button/Button';
 import useCart from '@/hooks/useCart';
+import useCurrency from '@/hooks/useCurrency';
 import useToast from '@/hooks/useToast';
+import { MaterialOption } from '@/types/service';
 import { Shop } from '@/types/shop';
 import { router } from '@inertiajs/react';
 import { ShoppingCart } from 'lucide-react';
 import React, { useState } from 'react';
 
-interface AddToCartButtonProps {
+interface AddServiceToCartButtonProps {
     shop: Shop;
-    variantId: number;
-    quantity: number;
-    packagingTypeId?: number | null;
-    availableStock: number;
+    serviceVariantId: number;
+    materialOption: MaterialOption;
+    hasMaterialOptions: boolean;
+    selectedAddons: Record<number, number>;
+    totalPrice: number;
     disabled?: boolean;
     fullWidth?: boolean;
     size?: 'sm' | 'md' | 'lg';
@@ -21,15 +24,16 @@ interface AddToCartButtonProps {
     onSuccess?: () => void;
 }
 
-const AddToCartButton: React.FC<AddToCartButtonProps> = ({
+const AddServiceToCartButton: React.FC<AddServiceToCartButtonProps> = ({
     shop,
-    variantId,
-    quantity,
-    packagingTypeId,
-    availableStock,
+    serviceVariantId,
+    materialOption,
+    hasMaterialOptions,
+    selectedAddons,
+    totalPrice,
     disabled = false,
     fullWidth = false,
-    size = 'md',
+    size = 'lg',
     variant = 'primary',
     openDrawerOnSuccess = false,
     onSuccess,
@@ -37,29 +41,32 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     const [isAdding, setIsAdding] = useState(false);
     const toast = useToast();
     const cart = useCart();
-
-    const isOutOfStock = availableStock <= 0;
-    const exceedsStock = quantity > availableStock;
+    const { formatCurrency } = useCurrency(shop);
 
     const handleAddToCart = () => {
-        if (isAdding || isOutOfStock || exceedsStock || disabled) return;
+        if (isAdding || disabled) return;
 
         setIsAdding(true);
 
-        const data: Record<string, number | null> = {
-            variant_id: variantId,
-            quantity,
+        const transformedAddons = Object.entries(selectedAddons)
+            .filter(([_, qty]) => qty > 0)
+            .map(([addonId, quantity]) => ({
+                addon_id: parseInt(addonId),
+                quantity: quantity,
+            }));
+
+        const data = {
+            service_variant_id: serviceVariantId,
+            quantity: 1,
+            material_option: hasMaterialOptions ? materialOption : null,
+            selected_addons: transformedAddons,
         };
 
-        if (packagingTypeId) {
-            data.packaging_type_id = packagingTypeId;
-        }
-
-        router.post(CartController.store.url({ shop: shop.slug }), data, {
+        router.post(CartController.storeService.url({ shop: shop.slug }), data, {
             preserveScroll: true,
             only: ['cartSummary', 'cartItemCount', 'cart'],
             onSuccess: () => {
-                toast.success('Added to cart');
+                toast.success('Service added to cart');
                 if (openDrawerOnSuccess) {
                     cart.openDrawer();
                 }
@@ -69,7 +76,7 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
                 const errorMessage =
                     typeof errors === 'object' && errors !== null
                         ? Object.values(errors)[0]
-                        : 'Failed to add item to cart';
+                        : 'Failed to add service to cart';
                 toast.error(String(errorMessage));
             },
             onFinish: () => setIsAdding(false),
@@ -82,18 +89,16 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
             variant={variant}
             size={size}
             fullWidth={fullWidth}
-            disabled={disabled || isAdding || isOutOfStock || exceedsStock}
+            disabled={disabled || isAdding}
             loading={isAdding}
             startIcon={<ShoppingCart />}
             onClick={handleAddToCart}
         >
-            {isOutOfStock
-                ? 'Out of Stock'
-                : exceedsStock
-                  ? 'Exceeds Stock'
-                  : 'Add to Cart'}
+            {isAdding
+                ? 'Adding to Cart...'
+                : `Book Service - ${formatCurrency(totalPrice)}`}
         </Button>
     );
 };
 
-export default AddToCartButton;
+export default AddServiceToCartButton;

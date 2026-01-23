@@ -40,7 +40,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                             >
                                 <div>
                                     <p className="font-medium text-gray-900">
-                                        {item.productVariant?.product?.name}
+                                        {item.product_variant?.product?.name}
                                     </p>
                                     <p className="text-gray-600">
                                         Qty: {item.quantity}

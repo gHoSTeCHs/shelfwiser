@@ -50,7 +50,7 @@ const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
         })) || [];
 
     return (
-        <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count}>
+        <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count} cartSummary={cartSummary}>
             <div className="space-y-8 sm:space-y-12">
                 <Breadcrumbs
                     items={[
@@ -232,7 +232,7 @@ const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
                                     </div>
                                 )}
 
-                                {/* Quantity */}
+                                {/* Quantity with Live Price */}
                                 <div>
                                     <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
                                         Quantity
@@ -243,6 +243,10 @@ const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
                                         min={1}
                                         max={availableStock}
                                         disabled={availableStock === 0}
+                                        unitPrice={selectedVariant?.price}
+                                        showTotal={true}
+                                        currencySymbol={shop.currency_symbol}
+                                        currencyDecimals={shop.currency_decimals}
                                     />
                                 </div>
 

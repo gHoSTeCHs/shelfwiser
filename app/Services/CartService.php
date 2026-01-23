@@ -224,33 +224,35 @@ class CartService
      */
     public function getCartSummary(Cart $cart): array
     {
-        $cacheKey = $this->getCartSummaryCacheKey($cart->tenant_id, $cart->id);
+        $cart->load([
+            'items.productVariant.product.images',
+            'items.packagingType',
+            'items.sellable' => function ($morphTo) {
+                $morphTo->morphWith([
+                    ServiceVariant::class => ['service'],
+                ]);
+            },
+        ]);
 
-        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($cart) {
-            $items = $cart->items()->with([
-                'productVariant.product',
-                'packagingType',
-                'sellable',
-            ])->get();
+        $items = $cart->items;
 
-            $subtotal = $items->sum(fn ($item) => $item->price * $item->quantity);
+        $subtotal = $items->sum(fn ($item) => $item->price * $item->quantity);
 
-            $productSubtotal = $items->filter(fn ($item) => $item->isProduct())
-                ->sum(fn ($item) => $item->price * $item->quantity);
-            $shippingFee = $this->calculateShipping($cart, $productSubtotal);
+        $productSubtotal = $items->filter(fn ($item) => $item->isProduct())
+            ->sum(fn ($item) => $item->price * $item->quantity);
+        $shippingFee = $this->calculateShipping($cart, $productSubtotal);
 
-            $tax = $this->calculateTaxFromItems($cart, $items);
-            $total = $subtotal + $shippingFee + $tax;
+        $tax = $this->calculateTaxFromItems($cart, $items);
+        $total = $subtotal + $shippingFee + $tax;
 
-            return [
-                'items' => $items,
-                'subtotal' => round($subtotal, 2),
-                'shipping_fee' => round($shippingFee, 2),
-                'tax' => round($tax, 2),
-                'total' => round($total, 2),
-                'item_count' => $items->sum('quantity'),
-            ];
-        });
+        return [
+            'items' => $items,
+            'subtotal' => round($subtotal, 2),
+            'shipping_fee' => round($shippingFee, 2),
+            'tax' => round($tax, 2),
+            'total' => round($total, 2),
+            'item_count' => $items->sum('quantity'),
+        ];
     }
 
     /**

@@ -85,7 +85,7 @@ const Products: React.FC<StorefrontProductsProps> = ({
     ).length;
 
     return (
-        <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count}>
+        <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count} cartSummary={cartSummary}>
             <div className="space-y-4 sm:space-y-6">
                 {/* Breadcrumbs */}
                 <Breadcrumbs

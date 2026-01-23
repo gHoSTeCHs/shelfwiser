@@ -106,7 +106,7 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
                                                             <p className="font-medium">
                                                                 {
                                                                     item
-                                                                        .productVariant
+                                                                        .product_variant
                                                                         ?.product
                                                                         ?.name
                                                                 }

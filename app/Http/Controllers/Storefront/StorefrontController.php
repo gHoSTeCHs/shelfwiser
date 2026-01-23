@@ -24,11 +24,6 @@ class StorefrontController extends Controller
      */
     public function index(Shop $shop): Response
     {
-        // Check if storefront is enabled
-        if (! $shop->storefront_enabled) {
-            abort(404, 'Storefront not available for this shop');
-        }
-
         $featuredProducts = $this->storefrontService->getFeaturedProducts($shop);
         $categories = $this->storefrontService->getCategories($shop);
 

@@ -45,7 +45,7 @@ const Home: React.FC<StorefrontHomeProps> = ({
     cartSummary,
 }) => {
     return (
-        <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count}>
+        <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count} cartSummary={cartSummary}>
             <div className="space-y-12 md:space-y-16">
                 {/* Hero Section */}
                 <motion.section

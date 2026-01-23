@@ -168,7 +168,11 @@ class CheckoutService
             return $order->fresh([
                 'items.productVariant.product',
                 'items.packagingType',
-                'items.sellable.service',
+                'items.sellable' => function ($morphTo) {
+                    $morphTo->morphWith([
+                        \App\Models\ServiceVariant::class => ['service'],
+                    ]);
+                },
             ]);
         });
     }

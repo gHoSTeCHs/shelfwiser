@@ -18,7 +18,7 @@ class StorefrontService
         $cacheKey = $this->getCacheKey($shop->tenant_id, $shop->id, 'featured_products', $limit);
 
         return Cache::remember($cacheKey, now()->addMinutes(30), function () use ($shop, $limit) {
-            return Product::where('tenant_id', $shop->tenant_id)
+            $featured = Product::where('tenant_id', $shop->tenant_id)
                 ->where('shop_id', $shop->id)
                 ->where('is_active', true)
                 ->where('is_featured', true)
@@ -29,6 +29,20 @@ class StorefrontService
                 ->orderBy('name')
                 ->limit($limit)
                 ->get();
+
+            if ($featured->isEmpty()) {
+                return Product::where('tenant_id', $shop->tenant_id)
+                    ->where('shop_id', $shop->id)
+                    ->where('is_active', true)
+                    ->with(['variants' => fn ($q) => $q->where('is_available_online', true)
+                        ->where('is_active', true)
+                        ->with('inventoryLocations')])
+                    ->orderBy('created_at', 'desc')
+                    ->limit($limit)
+                    ->get();
+            }
+
+            return $featured;
         });
     }
 

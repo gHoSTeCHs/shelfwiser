@@ -84,7 +84,11 @@ class CheckoutController extends Controller
             'cart' => $cart->load([
                 'items.productVariant.product',
                 'items.packagingType',
-                'items.sellable.service',
+                'items.sellable' => function ($morphTo) {
+                    $morphTo->morphWith([
+                        \App\Models\ServiceVariant::class => ['service'],
+                    ]);
+                },
             ]),
             'cartSummary' => $cartSummary,
             'addresses' => $addresses,
@@ -223,7 +227,11 @@ class CheckoutController extends Controller
         $order->load([
             'items.productVariant.product',
             'items.packagingType',
-            'items.sellable.service',
+            'items.sellable' => function ($morphTo) {
+                $morphTo->morphWith([
+                    \App\Models\ServiceVariant::class => ['service'],
+                ]);
+            },
         ]);
 
         return Inertia::render('Storefront/CheckoutSuccess', [
@@ -250,7 +258,11 @@ class CheckoutController extends Controller
         $order->load([
             'items.productVariant.product',
             'items.packagingType',
-            'items.sellable.service',
+            'items.sellable' => function ($morphTo) {
+                $morphTo->morphWith([
+                    \App\Models\ServiceVariant::class => ['service'],
+                ]);
+            },
         ]);
 
         return Inertia::render('Storefront/CheckoutPending', [

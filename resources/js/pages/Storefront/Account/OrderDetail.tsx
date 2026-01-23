@@ -95,17 +95,17 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
                                         <div className="flex-1">
                                             <p className="text-lg font-semibold">
                                                 {
-                                                    item.productVariant?.product
+                                                    item.product_variant?.product
                                                         ?.name
                                                 }
                                             </p>
                                             <p className="mt-1 text-sm text-gray-600">
-                                                SKU: {item.productVariant?.sku}
+                                                SKU: {item.product_variant?.sku}
                                             </p>
-                                            {item.packagingType && (
+                                            {item.packaging_type && (
                                                 <p className="text-sm text-gray-600">
                                                     Packaging:{' '}
-                                                    {item.packagingType.name}
+                                                    {item.packaging_type.name}
                                                 </p>
                                             )}
                                             <p className="mt-2 text-sm text-gray-600">

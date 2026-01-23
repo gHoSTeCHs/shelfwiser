@@ -74,14 +74,14 @@ export default function ProductProfitability({
             render: (_: any, row: any) => (
                 <div>
                     <div className="font-medium text-gray-900 dark:text-white">
-                        {row.productVariant?.product?.name || 'N/A'}
+                        {row.product_variant?.product?.name || 'N/A'}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                        SKU: {row.productVariant?.sku || 'N/A'}
+                        SKU: {row.product_variant?.sku || 'N/A'}
                     </div>
-                    {row.productVariant?.product?.category && (
+                    {row.product_variant?.product?.category && (
                         <div className="text-xs text-gray-400 dark:text-gray-500">
-                            {row.productVariant.product.category.name}
+                            {row.product_variant.product.category.name}
                         </div>
                     )}
                 </div>

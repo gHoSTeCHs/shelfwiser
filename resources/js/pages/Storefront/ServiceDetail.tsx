@@ -1,19 +1,17 @@
-import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
 import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 import Checkbox from '@/components/form/input/Checkbox';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
+import AddServiceToCartButton from '@/components/storefront/AddServiceToCartButton';
 import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import ServiceCard from '@/components/storefront/ServiceCard';
 import Badge from '@/components/ui/badge/Badge';
-import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import useCurrency from '@/hooks/useCurrency';
 import StorefrontLayout from '@/layouts/StorefrontLayout';
 import { MaterialOption } from '@/types/service';
 import { StorefrontServiceDetailProps } from '@/types/storefront';
-import { Form } from '@inertiajs/react';
-import { Clock, ShoppingCart } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import React from 'react';
 
 /**
@@ -149,7 +147,7 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
     const allAddons = [...(service.addons || []), ...(categoryAddons || [])];
 
     return (
-        <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count}>
+        <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count} cartSummary={cartSummary}>
             <div className="space-y-8">
                 <Breadcrumbs
                     items={[
@@ -433,46 +431,16 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
                                 </div>
                             )}
 
-                            {/* Add to Cart Button */}
                             {selectedVariant && (
-                                <Form
-                                    action={CartController.storeService.url({
-                                        shop: shop.slug,
-                                    })}
-                                    method="post"
-                                    transform={(data) => ({
-                                        service_variant_id: selectedVariantId,
-                                        quantity: 1,
-                                        material_option:
-                                            service.has_material_options
-                                                ? materialOption
-                                                : null,
-                                        selected_addons: Object.entries(
-                                            selectedAddons,
-                                        )
-                                            .filter(([_, qty]) => qty > 0)
-                                            .map(([addonId, quantity]) => ({
-                                                addon_id: parseInt(addonId),
-                                                quantity: quantity,
-                                            })),
-                                    })}
-                                >
-                                    {({ processing }) => (
-                                        <Button
-                                            type="submit"
-                                            variant="primary"
-                                            size="lg"
-                                            fullWidth
-                                            startIcon={<ShoppingCart />}
-                                            disabled={processing}
-                                            loading={processing}
-                                        >
-                                            {processing
-                                                ? 'Adding to Cart...'
-                                                : `Book Service - ${formatCurrency(totalPrice)}`}
-                                        </Button>
-                                    )}
-                                </Form>
+                                <AddServiceToCartButton
+                                    shop={shop}
+                                    serviceVariantId={selectedVariantId}
+                                    materialOption={materialOption}
+                                    hasMaterialOptions={service.has_material_options}
+                                    selectedAddons={selectedAddons}
+                                    totalPrice={totalPrice}
+                                    fullWidth
+                                />
                             )}
                         </Card>
                     </div>

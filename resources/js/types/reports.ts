@@ -347,7 +347,7 @@ export interface CustomerAnalyticsProps {
 // Product Profitability Types
 export interface ProductProfitabilityItem {
     product_variant_id: number;
-    productVariant?: ProductVariant;
+    product_variant?: ProductVariant;
     total_quantity: number;
     total_revenue: number;
     total_cogs: number;

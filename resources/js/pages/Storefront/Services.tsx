@@ -84,7 +84,7 @@ const Services: React.FC<StorefrontServicesProps> = ({
     ).length;
 
     return (
-        <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count}>
+        <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count} cartSummary={cartSummary}>
             <div className="space-y-4 sm:space-y-6">
                 <Breadcrumbs
                     items={[

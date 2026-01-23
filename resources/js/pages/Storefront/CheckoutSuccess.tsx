@@ -34,7 +34,7 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
 
     const getItemName = (item: OrderItem) => {
         if (isProduct(item)) {
-            return item.productVariant?.product?.name || 'Product';
+            return item.product_variant?.product?.name || 'Product';
         } else if (isService(item)) {
             const serviceVariant = item.sellable as (ServiceVariant & { service?: Service }) | undefined;
             return serviceVariant?.service?.name || 'Service';
@@ -44,7 +44,7 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
 
     const getItemDetails = (item: OrderItem) => {
         if (isProduct(item)) {
-            return `${item.productVariant?.sku} × ${item.quantity}`;
+            return `${item.product_variant?.sku} × ${item.quantity}`;
         } else if (isService(item)) {
             const details = [item.sellable?.name];
             if (item.quantity > 1) {

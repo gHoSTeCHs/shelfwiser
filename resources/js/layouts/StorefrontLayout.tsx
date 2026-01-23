@@ -1,11 +1,14 @@
-import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
 import CustomerAuthController from '@/actions/App/Http/Controllers/Storefront/CustomerAuthController';
 import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
 import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
 import FlashMessage from '@/components/FlashMessage';
+import CartDrawer from '@/components/storefront/CartDrawer';
+import MiniCartPreview from '@/components/storefront/MiniCartPreview';
+import { CartProvider } from '@/contexts/CartContext';
 import { initializeTheme, useAppearance } from '@/hooks/use-appearance';
+import useCart from '@/hooks/useCart';
 import { Customer } from '@/types/customer';
-import { Shop } from '@/types/storefront';
+import { CartItem, CartSummary, Shop } from '@/types/storefront';
 import { Form, Head, Link, router } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -19,32 +22,48 @@ import {
     User,
     X,
 } from 'lucide-react';
-import React from 'react';
+import React, { useRef, useState } from 'react';
 
 interface StorefrontLayoutProps {
     shop: Shop;
     customer?: Customer | null;
     cartItemCount?: number;
+    cartItems?: CartItem[];
+    cartSummary?: CartSummary;
     children: React.ReactNode;
 }
 
-/**
- * Main layout component for customer-facing storefront pages.
- * Features playful-luxury design with mobile-first approach.
- * Provides navigation, cart badge, and customer account menu.
- */
-const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
+const defaultCartSummary: CartSummary = {
+    items: [],
+    subtotal: 0,
+    shipping_fee: 0,
+    tax: 0,
+    total: 0,
+    item_count: 0,
+};
+
+interface StorefrontLayoutInnerProps extends StorefrontLayoutProps {
+    resolvedCartItems: CartItem[];
+    resolvedCartSummary: CartSummary;
+}
+
+const StorefrontLayoutInner: React.FC<StorefrontLayoutInnerProps> = ({
     shop,
     customer,
     cartItemCount = 0,
+    resolvedCartItems,
+    resolvedCartSummary,
     children,
 }) => {
-    const [showUserMenu, setShowUserMenu] = React.useState(false);
-    const [showThemeMenu, setShowThemeMenu] = React.useState(false);
-    const [showMobileMenu, setShowMobileMenu] = React.useState(false);
-    const [isNavigating, setIsNavigating] = React.useState(false);
-    const [isScrolled, setIsScrolled] = React.useState(false);
+    const [showUserMenu, setShowUserMenu] = useState(false);
+    const [showThemeMenu, setShowThemeMenu] = useState(false);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
+    const [isNavigating, setIsNavigating] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
+    const [showMiniCart, setShowMiniCart] = useState(false);
     const { appearance, updateAppearance } = useAppearance();
+    const cart = useCart();
+    const miniCartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     React.useEffect(() => {
         initializeTheme();
@@ -258,29 +277,56 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
                                     </AnimatePresence>
                                 </div>
 
-                                {/* Cart */}
-                                <Link
-                                    href={CartController.index.url({
-                                        shop: shop.slug,
-                                    })}
-                                    className="relative rounded-xl p-2.5 text-gray-600 transition-all hover:bg-brand-50 hover:text-brand-600 dark:text-gray-400 dark:hover:bg-navy-800 dark:hover:text-brand-400"
+                                {/* Cart with Mini Preview */}
+                                <div
+                                    className="relative"
+                                    data-menu-container
+                                    onMouseEnter={() => {
+                                        if (miniCartTimeoutRef.current) {
+                                            clearTimeout(miniCartTimeoutRef.current);
+                                        }
+                                        setShowMiniCart(true);
+                                    }}
+                                    onMouseLeave={() => {
+                                        miniCartTimeoutRef.current = setTimeout(() => {
+                                            setShowMiniCart(false);
+                                        }, 300);
+                                    }}
                                 >
-                                    <ShoppingCart className="h-5 w-5" />
-                                    <AnimatePresence>
-                                        {cartItemCount > 0 && (
-                                            <motion.span
-                                                initial={{ scale: 0 }}
-                                                animate={{ scale: 1 }}
-                                                exit={{ scale: 0 }}
-                                                className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-semibold text-white shadow-sm"
-                                            >
-                                                {cartItemCount > 99
-                                                    ? '99+'
-                                                    : cartItemCount}
-                                            </motion.span>
-                                        )}
-                                    </AnimatePresence>
-                                </Link>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowMiniCart(false);
+                                            cart.openDrawer();
+                                        }}
+                                        className="relative rounded-xl p-2.5 text-gray-600 transition-all hover:bg-brand-50 hover:text-brand-600 dark:text-gray-400 dark:hover:bg-navy-800 dark:hover:text-brand-400"
+                                        aria-label="Open cart"
+                                    >
+                                        <ShoppingCart className="h-5 w-5" />
+                                        <AnimatePresence>
+                                            {cartItemCount > 0 && (
+                                                <motion.span
+                                                    initial={{ scale: 0 }}
+                                                    animate={{ scale: 1 }}
+                                                    exit={{ scale: 0 }}
+                                                    className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-[10px] font-semibold text-white shadow-sm"
+                                                >
+                                                    {cartItemCount > 99
+                                                        ? '99+'
+                                                        : cartItemCount}
+                                                </motion.span>
+                                            )}
+                                        </AnimatePresence>
+                                    </button>
+
+                                    <MiniCartPreview
+                                        shop={shop}
+                                        cartItems={resolvedCartItems}
+                                        cartSummary={resolvedCartSummary}
+                                        isVisible={showMiniCart && !cart.isDrawerOpen}
+                                        onClose={() => setShowMiniCart(false)}
+                                    />
+                                </div>
 
                                 {/* User Menu */}
                                 {customer ? (
@@ -508,8 +554,29 @@ const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
                         </div>
                     </div>
                 </footer>
+
+                <CartDrawer
+                    shop={shop}
+                    cartItems={resolvedCartItems}
+                    cartSummary={resolvedCartSummary}
+                />
             </div>
         </>
+    );
+};
+
+const StorefrontLayout: React.FC<StorefrontLayoutProps> = (props) => {
+    const resolvedCartItems = props.cartItems || props.cartSummary?.items || [];
+    const resolvedCartSummary = props.cartSummary || defaultCartSummary;
+
+    return (
+        <CartProvider>
+            <StorefrontLayoutInner
+                {...props}
+                resolvedCartItems={resolvedCartItems}
+                resolvedCartSummary={resolvedCartSummary}
+            />
+        </CartProvider>
     );
 };
 

@@ -80,10 +80,10 @@ export interface OrderItem {
     updated_at: string;
 
     // Relationships
-    productVariant?: ProductVariant & {
+    product_variant?: ProductVariant & {
         product?: Product;
     };
-    packagingType?: ProductPackagingType;
+    packaging_type?: ProductPackagingType;
     sellable?: Sellable;
 }
 
@@ -128,10 +128,10 @@ export interface CartItem {
     updated_at: string;
 
     // Relationships
-    productVariant?: ProductVariant & {
+    product_variant?: ProductVariant & {
         product?: Product;
     };
-    packagingType?: ProductPackagingType;
+    packaging_type?: ProductPackagingType;
     sellable?: Sellable;
     subtotal?: number;
 }
