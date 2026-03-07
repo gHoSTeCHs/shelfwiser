@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Services\Payment\BasePaymentGateway;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * OPay payment gateway implementation.
@@ -134,6 +135,12 @@ class OpayGateway extends BasePaymentGateway
 
     public function validateWebhook(Request $request): bool
     {
+        $allowedIps = $this->config['webhook_allowed_ips'] ?? [];
+        if (!empty($allowedIps) && !in_array($request->ip(), $allowedIps, true)) {
+            Log::warning('OPay webhook from unexpected IP', ['ip' => $request->ip()]);
+            return false;
+        }
+
         $signature = $request->header('Authorization');
         $webhookSecret = $this->config['webhook_secret'] ?? null;
 
