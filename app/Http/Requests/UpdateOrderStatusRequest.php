@@ -10,7 +10,7 @@ class UpdateOrderStatusRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('manage', $this->route('order'));
+        return true;
     }
 
     public function rules(): array
@@ -18,6 +18,9 @@ class UpdateOrderStatusRequest extends FormRequest
         return [
             'status' => ['required', Rule::enum(OrderStatus::class)],
             'reason' => ['nullable', 'string', 'required_if:status,'.OrderStatus::CANCELLED->value],
+            'tracking_number' => ['nullable', 'string', 'max:255'],
+            'carrier' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
 

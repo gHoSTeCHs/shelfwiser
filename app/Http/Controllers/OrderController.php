@@ -264,6 +264,8 @@ class OrderController extends Controller
      */
     public function updateStatus(UpdateOrderStatusRequest $request, Order $order): RedirectResponse
     {
+        Gate::authorize('manage', $order);
+
         try {
             $newStatus = OrderStatus::from($request->input('status'));
 
@@ -275,18 +277,18 @@ class OrderController extends Controller
                 $this->orderService->packOrder($order, $request->user());
             } elseif ($newStatus === OrderStatus::SHIPPED) {
                 $shippingData = [
-                    'tracking_number' => $request->input('tracking_number'),
-                    'carrier' => $request->input('carrier'),
-                    'notes' => $request->input('notes'),
+                    'tracking_number' => $request->validated('tracking_number'),
+                    'carrier' => $request->validated('carrier'),
+                    'notes' => $request->validated('notes'),
                 ];
                 $this->orderService->shipOrder($order, $request->user(), $shippingData);
             } elseif ($newStatus === OrderStatus::DELIVERED) {
-                $this->orderService->deliverOrder($order, $request->user(), $request->input('notes'));
+                $this->orderService->deliverOrder($order, $request->user(), $request->validated('notes'));
             } elseif ($newStatus === OrderStatus::CANCELLED) {
                 $this->orderService->cancelOrder(
                     $order,
                     $request->user(),
-                    $request->input('reason')
+                    $request->validated('reason')
                 );
             } else {
                 if (! $order->status->canTransitionTo($newStatus)) {
@@ -335,6 +337,8 @@ class OrderController extends Controller
 
     public function updatePaymentStatus(UpdatePaymentStatusRequest $request, Order $order): RedirectResponse
     {
+        Gate::authorize('manage', $order);
+
         try {
             $newStatus = PaymentStatus::from($request->input('payment_status'));
 
