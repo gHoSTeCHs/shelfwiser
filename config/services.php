@@ -55,6 +55,7 @@ return [
         'merchant_id' => env('OPAY_MERCHANT_ID'),
         'base_url' => env('OPAY_BASE_URL', 'https://cashierapi.opayweb.com'),
         'webhook_secret' => env('OPAY_WEBHOOK_SECRET'),
+        'webhook_allowed_ips' => array_filter(explode(',', env('OPAY_WEBHOOK_IPS', ''))),
     ],
 
     'flutterwave' => [
@@ -63,6 +64,7 @@ return [
         'encryption_key' => env('FLUTTERWAVE_ENCRYPTION_KEY'),
         'base_url' => env('FLUTTERWAVE_BASE_URL', 'https://api.flutterwave.com/v3'),
         'webhook_secret' => env('FLUTTERWAVE_WEBHOOK_SECRET'),
+        'webhook_allowed_ips' => array_filter(explode(',', env('FLUTTERWAVE_WEBHOOK_IPS', ''))),
     ],
 
     'crypto' => [
