@@ -14,8 +14,10 @@ trait BelongsToTenant
         static::addGlobalScope(new TenantScope);
 
         static::creating(function ($model) {
-            if (auth()->hasUser() && ! $model->tenant_id) {
-                $model->tenant_id = auth()->user()->tenant_id;
+            if (auth('web')->hasUser() && ! $model->tenant_id) {
+                $model->tenant_id = auth('web')->user()->tenant_id;
+            } elseif (auth('customer')->hasUser() && ! $model->tenant_id) {
+                $model->tenant_id = auth('customer')->user()->tenant_id;
             }
         });
     }
