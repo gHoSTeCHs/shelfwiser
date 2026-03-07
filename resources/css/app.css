@@ -232,6 +232,106 @@ layer(base);
     animation: shimmer 2s infinite linear;
 }
 
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes scroll-left {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+@keyframes scroll-right {
+    0% {
+        transform: translateX(-50%);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+@keyframes line-draw {
+    0% {
+        transform: scaleX(0);
+    }
+    100% {
+        transform: scaleX(1);
+    }
+}
+
+@keyframes step-appear {
+    0% {
+        opacity: 0;
+        transform: translateY(16px) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.reveal-item {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+        opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-item.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.reveal-section {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+        opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-section.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.reveal-section.revealed .line-draw {
+    transform-origin: left;
+    animation: line-draw 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+}
+
+.reveal-section.revealed .step-item {
+    opacity: 0;
+    animation: step-appear 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reveal-item,
+    .reveal-section {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    .reveal-section.revealed .line-draw,
+    .reveal-section.revealed .step-item {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+}
+
 @utility menu-item {
     @apply relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-theme-sm font-medium;
 }
