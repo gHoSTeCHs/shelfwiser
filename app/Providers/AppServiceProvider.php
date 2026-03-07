@@ -45,6 +45,10 @@ use App\Policies\StorefrontPolicy;
 use App\Policies\SupplierPolicy;
 use App\Policies\TimesheetPolicy;
 use App\Policies\WageAdvancePolicy;
+use App\Support\Cache\TaggableDatabaseStore;
+use Illuminate\Cache\DatabaseStore;
+use Illuminate\Cache\Repository;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -55,7 +59,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->booting(function () {
+            Cache::extend('database', function ($app, $config) {
+                $connection = $app['db']->connection($config['connection'] ?? null);
+
+                $inner = new DatabaseStore(
+                    $connection,
+                    $config['table'] ?? 'cache',
+                    $app['config']['cache.prefix'] ?? '',
+                    $config['lock_connection'] ?? null,
+                    $config['lock_table'] ?? null,
+                );
+
+                return new Repository(new TaggableDatabaseStore($inner));
+            });
+        });
     }
 
     /**

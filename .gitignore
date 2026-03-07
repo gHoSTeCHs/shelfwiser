@@ -27,7 +27,7 @@ yarn-error.log
 /.vscode
 /.zed
 nul
-/docs
-.claude
-CLAUDE.md
+#/docs
+#.claude
+#CLAUDE.md
 

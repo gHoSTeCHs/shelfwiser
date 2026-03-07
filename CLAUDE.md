@@ -225,18 +225,18 @@
 
 ### Production Standards
 
-| Area            | Standard                                    | Enforcement                          |
-|-----------------|---------------------------------------------|--------------------------------------|
-| Type Safety     | No `any` types, strict TypeScript           | `typescript-pro` agent               |
-| Validation      | All inputs via Form Requests                | `code-reviewer` agent                |
-| Security        | OWASP Top 10, no SQL injection, no XSS      | `/code-review` skill                 |
-| Architecture    | Service layer, thin controllers             | `/architecture-patterns` skill       |
-| API Design      | Consistent responses, proper error handling | `/api-design-principles` skill       |
-| Testing         | Coverage on critical paths                  | `/javascript-testing-patterns` skill |
-| Performance     | No N+1 queries, use eager loading           | `laravel-boost` MCP                  |
-| UI Design       | Follow design system, dark mode             | `/frontend-design` skill             |
-| Multi-Tenancy   | All queries scoped to tenant_id             | Code review                          |
-| Stock Tracking  | All changes via StockMovementService        | Code review                          |
+| Area           | Standard                                    | Enforcement                          |
+|----------------|---------------------------------------------|--------------------------------------|
+| Type Safety    | No `any` types, strict TypeScript           | `typescript-pro` agent               |
+| Validation     | All inputs via Form Requests                | `code-reviewer` agent                |
+| Security       | OWASP Top 10, no SQL injection, no XSS      | `/code-review` skill                 |
+| Architecture   | Service layer, thin controllers             | `/architecture-patterns` skill       |
+| API Design     | Consistent responses, proper error handling | `/api-design-principles` skill       |
+| Testing        | Coverage on critical paths                  | `/javascript-testing-patterns` skill |
+| Performance    | No N+1 queries, use eager loading           | `laravel-boost` MCP                  |
+| UI Design      | Follow design system, dark mode             | `/frontend-design` skill             |
+| Multi-Tenancy  | All queries scoped to tenant_id             | Code review                          |
+| Stock Tracking | All changes via StockMovementService        | Code review                          |
 
 ### Code Review Triggers
 
@@ -252,12 +252,12 @@ Automatically invoke `/code-review` or `code-reviewer` agent after:
 
 ### Testing Requirements
 
-| Layer                 | Tool         | Minimum Coverage                       |
-|-----------------------|--------------|----------------------------------------|
-| PHP Unit Tests        | Pest/PHPUnit | Services, Tax/Payroll calculations     |
-| React Component Tests | Vitest/Jest  | Forms, complex components              |
-| E2E Tests             | Playwright   | Auth flow, POS, Order creation         |
-| API Tests             | Pest         | All public endpoints                   |
+| Layer                 | Tool         | Minimum Coverage                   |
+|-----------------------|--------------|------------------------------------|
+| PHP Unit Tests        | Pest/PHPUnit | Services, Tax/Payroll calculations |
+| React Component Tests | Vitest/Jest  | Forms, complex components          |
+| E2E Tests             | Playwright   | Auth flow, POS, Order creation     |
+| API Tests             | Pest         | All public endpoints               |
 
 ### Security Checklist
 

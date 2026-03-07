@@ -46,19 +46,18 @@ layer(base);
     --color-white: #ffffff;
     --color-black: #101828;
 
-    /* Primary - Warm Terracotta (playful warmth) */
-    --color-brand-25: #fef7f4;
-    --color-brand-50: #fdeee6;
-    --color-brand-100: #fbd9c9;
-    --color-brand-200: #f8b99c;
-    --color-brand-300: #f4926a;
-    --color-brand-400: #f07d4a;
-    --color-brand-500: #e86f42;
-    --color-brand-600: #d55a2c;
-    --color-brand-700: #b14523;
-    --color-brand-800: #8f3a22;
-    --color-brand-900: #743320;
-    --color-brand-950: #4a1f12;
+    --color-brand-25: #f2f7ff;
+    --color-brand-50: #ecf3ff;
+    --color-brand-100: #dde9ff;
+    --color-brand-200: #c2d6ff;
+    --color-brand-300: #9cb9ff;
+    --color-brand-400: #7592ff;
+    --color-brand-500: #465fff;
+    --color-brand-600: #3641f5;
+    --color-brand-700: #2a31d8;
+    --color-brand-800: #252dae;
+    --color-brand-900: #262e89;
+    --color-brand-950: #161950;
 
     /* Secondary - Deep Navy (luxury grounding) */
     --color-navy-50: #f4f6f9;
@@ -175,9 +174,7 @@ layer(base);
         0px 20px 24px -4px rgba(16, 24, 40, 0.08),
         0px 8px 8px -4px rgba(16, 24, 40, 0.03);
     --shadow-datepicker: -5px 0 0 #262d3c, 5px 0 0 #262d3c;
-    --shadow-focus-ring: 0px 0px 0px 4px rgba(232, 111, 66, 0.12);
-    --shadow-warm-glow:
-        0 0 0 4px rgba(232, 111, 66, 0.12), 0 8px 24px rgba(232, 111, 66, 0.15);
+    --shadow-focus-ring: 0px 0px 0px 4px rgba(70, 95, 255, 0.12);
     --shadow-slider-navigation:
         0px 1px 2px 0px rgba(16, 24, 40, 0.1),
         0px 1px 3px 0px rgba(16, 24, 40, 0.1);
