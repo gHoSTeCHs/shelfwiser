@@ -234,9 +234,10 @@ class CustomerAuthController extends Controller
             ]);
         }
 
-        $status = Password::broker('customers')->sendResetLink(
-            ['email' => $request->email]
-        );
+        $status = Password::broker('customers')->sendResetLink([
+            'email' => $request->email,
+            'tenant_id' => $shop->tenant_id,
+        ]);
 
         if ($status === Password::RESET_LINK_SENT) {
             return back()->with('status', __($status));
@@ -280,8 +281,11 @@ class CustomerAuthController extends Controller
             ]);
         }
 
+        $credentials = $request->only('email', 'password', 'password_confirmation', 'token');
+        $credentials['tenant_id'] = $shop->tenant_id;
+
         $status = Password::broker('customers')->reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
+            $credentials,
             function (Customer $customer, string $password) {
                 $customer->forceFill([
                     'password' => Hash::make($password),
