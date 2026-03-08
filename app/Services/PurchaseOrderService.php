@@ -453,6 +453,7 @@ class PurchaseOrderService
         $location = $variant->inventoryLocations()
             ->where('location_type', Shop::class)
             ->where('location_id', $po->shop_id)
+            ->lockForUpdate()
             ->first();
 
         if (! $location) {
@@ -486,9 +487,16 @@ class PurchaseOrderService
     protected function generatePONumber(): string
     {
         $date = now()->format('Ymd');
-        $random = strtoupper(substr(md5(uniqid()), 0, 6));
 
-        return "PO-{$date}-{$random}";
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $candidate = 'PO-' . $date . '-' . strtoupper(\Illuminate\Support\Str::random(6));
+
+            if (! PurchaseOrder::query()->where('po_number', $candidate)->exists()) {
+                return $candidate;
+            }
+        }
+
+        return 'PO-' . $date . '-' . strtoupper(\Illuminate\Support\Str::random(8));
     }
 
     /**
