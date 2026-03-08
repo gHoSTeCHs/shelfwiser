@@ -279,7 +279,7 @@ class CartService
                 return $customerCart;
             }
 
-            $guestCart->load('items.productVariant.product');
+            $guestCart->load('items.productVariant.product', 'items.productVariant.inventoryLocations');
 
             foreach ($guestCart->items as $guestItem) {
                 if ($guestItem->isProduct()) {
