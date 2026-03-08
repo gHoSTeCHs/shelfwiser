@@ -36,13 +36,13 @@ class CartService
             $cacheKey = $this->getCartCacheKey($shop->tenant_id, $shop->id, $customerId);
 
             return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($customerId, $shop) {
-                return Cart::firstOrCreate(
+                return Cart::query()->firstOrCreate(
                     [
                         'customer_id' => $customerId,
                         'shop_id' => $shop->id,
+                        'tenant_id' => $shop->tenant_id,
                     ],
                     [
-                        'tenant_id' => $shop->tenant_id,
                         'expires_at' => now()->addDays(30),
                     ]
                 );
@@ -53,8 +53,10 @@ class CartService
         $cacheKey = $this->getCartCacheKey($shop->tenant_id, $shop->id, null, $sessionId);
 
         $existingCart = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($sessionId, $shop) {
-            return Cart::where('session_id', $sessionId)
+            return Cart::query()
+                ->where('session_id', $sessionId)
                 ->where('shop_id', $shop->id)
+                ->where('tenant_id', $shop->tenant_id)
                 ->first();
         });
 
@@ -65,7 +67,7 @@ class CartService
         Session::regenerate();
         $newSessionId = Session::getId();
 
-        $cart = Cart::create([
+        $cart = Cart::query()->create([
             'session_id' => $newSessionId,
             'shop_id' => $shop->id,
             'tenant_id' => $shop->tenant_id,
@@ -265,8 +267,10 @@ class CartService
             $shop = Shop::find($shopId);
             $customerCart = $this->getCart($shop, $customerId);
 
-            $guestCart = Cart::where('session_id', $sessionId)
+            $guestCart = Cart::query()
+                ->where('session_id', $sessionId)
                 ->where('shop_id', $shopId)
+                ->where('tenant_id', $shop->tenant_id)
                 ->first();
 
             if (! $guestCart) {
@@ -274,6 +278,8 @@ class CartService
 
                 return $customerCart;
             }
+
+            $guestCart->load('items.productVariant.product');
 
             foreach ($guestCart->items as $guestItem) {
                 if ($guestItem->isProduct()) {
@@ -285,7 +291,20 @@ class CartService
 
                     if ($existingItem) {
                         $newQuantity = $existingItem->quantity + $guestItem->quantity;
-                        $existingItem->update(['quantity' => $newQuantity]);
+
+                        $variant = $guestItem->productVariant;
+                        if ($variant && ($variant->product->track_stock ?? true)) {
+                            $available = $this->stockMovementService->getAvailableStock($variant, $customerCart->shop_id);
+                            $newQuantity = min($newQuantity, max(0, $available));
+                        }
+
+                        if ($variant?->max_order_quantity) {
+                            $newQuantity = min($newQuantity, $variant->max_order_quantity);
+                        }
+
+                        if ($newQuantity > 0) {
+                            $existingItem->update(['quantity' => $newQuantity]);
+                        }
                     } else {
                         $guestItem->update(['cart_id' => $customerCart->id]);
                     }
@@ -423,16 +442,20 @@ class CartService
         Cache::forget($cacheKey);
 
         if ($customerId) {
-            $cart = Cart::where('customer_id', $customerId)
+            $cart = Cart::query()
+                ->where('customer_id', $customerId)
                 ->where('shop_id', $shopId)
+                ->where('tenant_id', $tenantId)
                 ->first();
 
             if ($cart) {
                 Cache::forget($this->getCartSummaryCacheKey($tenantId, $cart->id));
             }
         } elseif ($sessionId) {
-            $cart = Cart::where('session_id', $sessionId)
+            $cart = Cart::query()
+                ->where('session_id', $sessionId)
                 ->where('shop_id', $shopId)
+                ->where('tenant_id', $tenantId)
                 ->first();
 
             if ($cart) {
