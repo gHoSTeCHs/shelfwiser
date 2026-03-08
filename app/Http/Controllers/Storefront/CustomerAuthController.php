@@ -255,16 +255,6 @@ class CustomerAuthController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $customer = Customer::where('email', $request->email)
-            ->where('tenant_id', $shop->tenant_id)
-            ->first();
-
-        if (! $customer) {
-            throw ValidationException::withMessages([
-                'email' => ['We could not find a customer with that email address.'],
-            ]);
-        }
-
         $credentials = $request->only('email', 'password', 'password_confirmation', 'token');
         $credentials['tenant_id'] = $shop->tenant_id;
 
@@ -287,7 +277,7 @@ class CustomerAuthController extends Controller
         }
 
         throw ValidationException::withMessages([
-            'email' => [__($status)],
+            'email' => ['This password reset link is invalid or has expired.'],
         ]);
     }
 }
