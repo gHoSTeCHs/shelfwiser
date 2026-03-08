@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import type { CustomerIndexPageProps } from '@/types/customer';
 import { formatCurrency } from '@/types/customer';
+import { decodePaginationLabel } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/react';
 import { CreditCard, Mail, Phone, Search, UserPlus, Users } from 'lucide-react';
 import React, { useState } from 'react';
@@ -464,11 +465,7 @@ const CustomersIndex = ({
                                             link.url && router.get(link.url)
                                         }
                                     >
-                                        <span
-                                            dangerouslySetInnerHTML={{
-                                                __html: link.label,
-                                            }}
-                                        />
+                                        <span>{decodePaginationLabel(link.label)}</span>
                                     </Button>
                                 ))}
                             </div>

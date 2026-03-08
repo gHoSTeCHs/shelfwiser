@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
 import { getSubscriptionPlanColor } from '@/lib/status-configs';
+import { decodePaginationLabel } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/react';
 import { Building2, Edit, Eye, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
@@ -297,10 +298,9 @@ export default function Index({ tenants, filters }: Props) {
                                                       ? 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
                                                       : 'cursor-not-allowed text-gray-300 dark:text-gray-600'
                                             }`}
-                                            dangerouslySetInnerHTML={{
-                                                __html: link.label,
-                                            }}
-                                        />
+                                        >
+                                            <span>{decodePaginationLabel(link.label)}</span>
+                                        </button>
                                     ))}
                                 </div>
                             </div>

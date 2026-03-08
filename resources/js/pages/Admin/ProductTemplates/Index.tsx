@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
+import { decodePaginationLabel } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     Edit,
@@ -435,10 +436,9 @@ export default function Index({
                                                       ? 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
                                                       : 'cursor-not-allowed text-gray-300 dark:text-gray-600'
                                             }`}
-                                            dangerouslySetInnerHTML={{
-                                                __html: link.label,
-                                            }}
-                                        />
+                                        >
+                                            <span>{decodePaginationLabel(link.label)}</span>
+                                        </button>
                                     ))}
                                 </div>
                             </div>

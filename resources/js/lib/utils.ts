@@ -96,3 +96,7 @@ export const formatDate = (dateString: string): string => {
         minute: '2-digit',
     });
 };
+
+export function decodePaginationLabel(label: string): string {
+    return label.replace(/&laquo;/g, '«').replace(/&raquo;/g, '»');
+}
