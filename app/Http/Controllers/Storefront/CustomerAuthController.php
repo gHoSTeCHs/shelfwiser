@@ -224,28 +224,12 @@ class CustomerAuthController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        $customer = Customer::where('email', $request->email)
-            ->where('tenant_id', $shop->tenant_id)
-            ->first();
-
-        if (! $customer) {
-            return back()->withErrors([
-                'email' => 'We could not find a customer with that email address.',
-            ]);
-        }
-
-        $status = Password::broker('customers')->sendResetLink([
+        Password::broker('customers')->sendResetLink([
             'email' => $request->email,
             'tenant_id' => $shop->tenant_id,
         ]);
 
-        if ($status === Password::RESET_LINK_SENT) {
-            return back()->with('status', __($status));
-        }
-
-        throw ValidationException::withMessages([
-            'email' => [__($status)],
-        ]);
+        return back()->with('status', 'If that email is registered, a reset link has been sent.');
     }
 
     /**
