@@ -2130,6 +2130,7 @@ public function resolveThemeConfig(StorefrontConfig $config): array
                 'id' => 'sec_abc123',
                 'type' => 'hero_banner',
                 'variant' => 'split_image',
+                'is_visible' => true,
                 'scroll_animation' => 'fade_up',
                 'config' => [...],
                 'data' => [],
@@ -2139,6 +2140,8 @@ public function resolveThemeConfig(StorefrontConfig $config): array
     'seo' => [...],
     'cart' => [...],
     'navigation' => [...],
+    'customer' => [...] | null,   // Authenticated customer data or null for guests
+    'csrfToken' => '...',         // CSRF token for non-Inertia fetch calls
 ]
 ```
 

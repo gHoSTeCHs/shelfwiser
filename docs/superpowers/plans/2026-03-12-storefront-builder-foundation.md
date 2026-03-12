@@ -1001,7 +1001,7 @@ git commit -m "feat(storefront): implement render service with theme resolution 
 ### Task 7: Render Controller, Routes & Blade View
 
 **Files:**
-- Create: `app/Http/Controllers/Storefront/StorefrontRenderController.php`
+- Create: `app/Http/Controllers/Storefront/StorefrontRenderController.php` (namespace: `App\Http\Controllers\Storefront`)
 - Modify: `routes/storefront.php` — add new render routes alongside existing
 - Create: `resources/views/storefront/builder-app.blade.php`
 - Modify: `vite.config.ts` — add second entry point
@@ -1234,15 +1234,17 @@ Route::prefix('store/{shop:slug}')
             Route::get('/reset-password/{token}', [StorefrontRenderController::class, 'resetPassword'])->name('password.reset');
         });
 
+        // Email verification — outside auth group (customers click from email when not logged in)
+        Route::get('/verify-email/{id}/{hash}', [StorefrontApiController::class, 'verifyEmail'])
+            ->middleware('signed')
+            ->name('verification.verify');
+
         // Authenticated customer pages
         Route::middleware('auth:customer')->group(function () {
             Route::get('/checkout', [StorefrontRenderController::class, 'checkout'])->name('checkout');
             Route::get('/checkout/success/{order}', [StorefrontRenderController::class, 'checkoutSuccess'])->name('checkout.success');
             Route::get('/checkout/pending/{order}', [StorefrontRenderController::class, 'checkoutPending'])->name('checkout.pending');
             Route::get('/verify-email', [StorefrontRenderController::class, 'verifyEmail'])->name('verification.notice');
-            Route::get('/verify-email/{id}/{hash}', [StorefrontApiController::class, 'verifyEmail'])
-                ->middleware('signed')
-                ->name('verification.verify');
             Route::get('/account', [StorefrontRenderController::class, 'accountDashboard'])->name('account.dashboard');
             Route::get('/account/orders', [StorefrontRenderController::class, 'accountOrders'])->name('account.orders');
             Route::get('/account/orders/{order}', [StorefrontRenderController::class, 'accountOrderDetail'])->name('account.orders.show');
@@ -1263,7 +1265,8 @@ Route::prefix('store/{shop:slug}')
                 ->middleware('throttle:5,1')->name('auth.login');
             Route::post('/auth/register', [StorefrontApiController::class, 'register'])
                 ->middleware('throttle:5,1')->name('auth.register');
-            Route::post('/auth/logout', [StorefrontApiController::class, 'logout'])->name('auth.logout');
+            Route::post('/auth/logout', [StorefrontApiController::class, 'logout'])
+                ->middleware('auth:customer')->name('auth.logout');
             Route::post('/auth/forgot-password', [StorefrontApiController::class, 'forgotPassword'])
                 ->middleware('throttle:3,1')->name('auth.forgotPassword');
             Route::post('/auth/reset-password', [StorefrontApiController::class, 'resetPassword'])->name('auth.resetPassword');
@@ -1284,10 +1287,25 @@ Route::prefix('store/{shop:slug}')
         // Payment gateway callbacks (stay as-is — external redirects)
         Route::get('/payment/callback', [StorefrontApiController::class, 'paymentCallback'])->name('payment.callback');
         Route::post('/payment/webhook', [StorefrontApiController::class, 'paymentWebhook'])
-            ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+            ->withoutMiddleware(['storefront.enabled', \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
             ->name('payment.webhook');
     });
 ```
+
+**Route name migration:** The new routes preserve most `storefront.*` names from the old routes. Key changes:
+- `storefront.cart.store` → `storefront.api.cart.add` (POST now goes to JSON API)
+- `storefront.cart.store-service` → `storefront.api.cart.addService`
+- `storefront.cart.update` → `storefront.api.cart.update`
+- `storefront.cart.destroy` → `storefront.api.cart.remove`
+- `storefront.logout` → `storefront.api.auth.logout`
+- `storefront.password.email` → `storefront.api.auth.forgotPassword`
+- `storefront.password.update` → `storefront.api.auth.resetPassword`
+- `storefront.verification.send` → `storefront.api.auth.resendVerification`
+- `storefront.checkout.process` → `storefront.api.checkout.process`
+- `storefront.account.orders.cancel` → `storefront.api.account.cancelOrder`
+- `storefront.account.profile.update` → `storefront.api.account.updateProfile`
+
+Search the codebase for any uses of old route names (emails, notifications, redirects) and update to new names.
 
 **Fallback:** If a shop has a published `StorefrontConfig`, the new render controller serves theme-driven pages. If not, the render controller returns 404 — shops must set up the builder to have a storefront.
 
@@ -1296,7 +1314,7 @@ Route::prefix('store/{shop:slug}')
 - [ ] **Step 8: Commit**
 
 ```bash
-git add app/Http/Controllers/StorefrontRenderController.php resources/views/storefront/builder-app.blade.php vite.config.ts routes/storefront.php tests/Feature/Http/Controllers/StorefrontRenderControllerTest.php
+git add app/Http/Controllers/Storefront/StorefrontRenderController.php resources/views/storefront/builder-app.blade.php vite.config.ts routes/storefront.php tests/Feature/Http/Controllers/StorefrontRenderControllerTest.php
 git commit -m "feat(storefront): add render controller, Blade view, and second Vite entry for decoupled storefront"
 ```
 
@@ -1308,8 +1326,12 @@ git commit -m "feat(storefront): add render controller, Blade view, and second V
 
 **Files:**
 - Create: `resources/js/storefront/types/storefront.ts`
+- Create: `resources/js/storefront/lib/fetch-client.ts`
 - Create: `resources/js/storefront/app.tsx`
 - Create: `resources/js/storefront/StorefrontRenderer.tsx`
+- Create: `resources/js/storefront/layouts/registry.ts`
+- Create: `resources/js/storefront/sections/registry.ts`
+- Create: `resources/js/storefront/pages/registry.ts`
 
 **Reference:** Spec § React Storefront Architecture. Types must cover the full page payload, theme config, section definitions, and all component props.
 
@@ -1532,7 +1554,7 @@ export function StorefrontRenderer(props: StorefrontPageData) {
 }
 ```
 
-- [ ] **Step 4: Create stub registries**
+- [ ] **Step 5: Create stub registries**
 
 ```tsx
 // resources/js/storefront/layouts/registry.ts
@@ -1544,14 +1566,19 @@ export const templateLayoutRegistry: Record<string, React.FC<LayoutProps>> = {};
 import type { SectionProps } from '../types/storefront';
 
 export const sectionRegistry: Record<string, React.FC<SectionProps>> = {};
+
+// resources/js/storefront/pages/registry.ts
+import type { FixedPageProps } from '../types/storefront';
+
+export const fixedPageRegistry: Record<string, React.FC<FixedPageProps>> = {};
 ```
 
-- [ ] **Step 5: Run TypeScript check**
+- [ ] **Step 6: Run TypeScript check**
 
 Run: `npx tsc --noEmit`
 Expected: No errors (or only pre-existing ones).
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add resources/js/storefront/
@@ -1877,7 +1904,7 @@ git commit -m "feat(storefront): implement all 20 section React components with 
 ### Task 12: StorefrontApiController + API Routes
 
 **Files:**
-- Create: `app/Http/Controllers/StorefrontApiController.php`
+- Create: `app/Http/Controllers/Storefront/StorefrontApiController.php`
 - Create: `app/Http/Requests/Storefront/AddToCartApiRequest.php`
 - Create: `app/Http/Requests/Storefront/AddServiceToCartApiRequest.php`
 - Create: `app/Http/Requests/Storefront/UpdateCartItemApiRequest.php`
@@ -1885,6 +1912,9 @@ git commit -m "feat(storefront): implement all 20 section React components with 
 - Create: `app/Http/Requests/Storefront/CustomerLoginApiRequest.php`
 - Create: `app/Http/Requests/Storefront/CustomerRegisterApiRequest.php`
 - Create: `app/Http/Requests/Storefront/UpdateCustomerProfileApiRequest.php`
+- Create: `app/Http/Requests/Storefront/ForgotPasswordApiRequest.php`
+- Create: `app/Http/Requests/Storefront/ResetPasswordApiRequest.php`
+- Create: `app/Http/Requests/Storefront/CancelOrderApiRequest.php`
 - Modify: `routes/storefront.php` — replace ALL existing routes with new structure
 - Test: `tests/Feature/Http/Controllers/StorefrontApiControllerTest.php`
 
@@ -2048,6 +2078,11 @@ use App\Http\Requests\Storefront\ProcessCheckoutApiRequest;
 use App\Http\Requests\Storefront\CustomerLoginApiRequest;
 use App\Http\Requests\Storefront\CustomerRegisterApiRequest;
 use App\Http\Requests\Storefront\UpdateCustomerProfileApiRequest;
+use App\Http\Requests\Storefront\ForgotPasswordApiRequest;
+use App\Http\Requests\Storefront\ResetPasswordApiRequest;
+use App\Http\Requests\Storefront\CancelOrderApiRequest;
+use App\Enums\OrderStatus;
+use App\Enums\OrderType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -2083,10 +2118,16 @@ class StorefrontApiController extends Controller
     {
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
 
+        $materialOption = $request->validated('material_option')
+            ? \App\Enums\MaterialOption::from($request->validated('material_option'))
+            : null;
+
         $cartItem = $this->cartService->addServiceItem(
             $cart,
             $request->validated('service_variant_id'),
-            $request->validated('quantity', 1)
+            $request->validated('quantity', 1),
+            $materialOption,
+            $request->validated('selected_addons', [])
         );
 
         return response()->json([
@@ -2097,6 +2138,9 @@ class StorefrontApiController extends Controller
 
     public function updateCartItem(UpdateCartItemApiRequest $request, Shop $shop, CartItem $item): JsonResponse
     {
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
+        abort_unless($item->cart_id === $cart->id, 404);
+
         $updated = $this->cartService->updateQuantity($item, $request->validated('quantity'));
 
         return response()->json([
@@ -2107,6 +2151,9 @@ class StorefrontApiController extends Controller
 
     public function removeCartItem(Shop $shop, CartItem $item): JsonResponse
     {
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
+        abort_unless($item->cart_id === $cart->id, 404);
+
         $this->cartService->removeItem($item);
 
         return response()->json(['message' => 'Item removed']);
@@ -2193,10 +2240,8 @@ class StorefrontApiController extends Controller
         return response()->json(['message' => 'Logged out']);
     }
 
-    public function forgotPassword(Request $request, Shop $shop): JsonResponse
+    public function forgotPassword(ForgotPasswordApiRequest $request, Shop $shop): JsonResponse
     {
-        $request->validate(['email' => ['required', 'email']]);
-
         Password::broker('customers')->sendResetLink(
             array_merge($request->only('email'), ['tenant_id' => $shop->tenant_id])
         );
@@ -2204,14 +2249,8 @@ class StorefrontApiController extends Controller
         return response()->json(['message' => 'If an account exists, a reset link has been sent.']);
     }
 
-    public function resetPassword(Request $request, Shop $shop): JsonResponse
+    public function resetPassword(ResetPasswordApiRequest $request, Shop $shop): JsonResponse
     {
-        $request->validate([
-            'token' => ['required'],
-            'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', 'min:8'],
-        ]);
-
         $status = Password::broker('customers')->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($customer, $password) {
@@ -2284,7 +2323,7 @@ class StorefrontApiController extends Controller
         );
 
         $redirectUrl = null;
-        if ($order->payment_status !== 'paid') {
+        if ($order->payment_status !== \App\Enums\PaymentStatus::PAID) {
             $redirectUrl = route('storefront.checkout.pending', [$shop->slug, $order]);
         } else {
             $redirectUrl = route('storefront.checkout.success', [$shop->slug, $order]);
@@ -2308,16 +2347,22 @@ class StorefrontApiController extends Controller
         ]);
     }
 
-    public function cancelOrder(Shop $shop, int $order): JsonResponse
+    public function cancelOrder(CancelOrderApiRequest $request, Shop $shop, int $order): JsonResponse
     {
         $customer = auth('customer')->user();
         $orderModel = $customer->orders()
             ->where('shop_id', $shop->id)
+            ->where('order_type', OrderType::CUSTOMER)
             ->findOrFail($order);
 
-        abort_unless($orderModel->canBeCancelled(), 422, 'This order cannot be cancelled.');
+        abort_unless($orderModel->canCancel(), 422, 'This order cannot be cancelled.');
 
-        $orderModel->update(['status' => 'cancelled']);
+        $orderModel->update([
+            'status' => OrderStatus::CANCELLED,
+            'cancellation_reason' => $request->validated('cancellation_reason'),
+            'cancelled_at' => now(),
+            'cancelled_by' => $customer->id,
+        ]);
 
         return response()->json(['message' => 'Order cancelled']);
     }
@@ -2334,7 +2379,7 @@ class StorefrontApiController extends Controller
         try {
             $order = $this->checkoutService->verifyPaystackPayment($reference, $shop);
 
-            if ($order && $order->payment_status === \App\Enums\PaymentStatus::PAID->value) {
+            if ($order && $order->payment_status === \App\Enums\PaymentStatus::PAID) {
                 return redirect()->route('storefront.checkout.success', [$shop->slug, $order]);
             }
 
@@ -2365,7 +2410,7 @@ class StorefrontApiController extends Controller
 }
 ```
 
-**Key:** Every method matches the exact service signatures. Login and register capture `$oldSessionId` before session regeneration for guest cart merge. Route model binding used for `CartItem` to avoid manual lookup. Field name `variant_id` matches existing convention.
+**Key:** Every method matches the exact service signatures. Login and register capture `$oldSessionId` before session regeneration for guest cart merge. Route model binding used for `CartItem` to avoid manual lookup. Field name `variant_id` matches existing convention. `cancelOrder` uses manual scoped query (not route model binding) because it must verify ownership via customer relationship + shop + order type — three scoping conditions that route model binding can't express. Cart item update/remove validates ownership via `abort_unless($item->cart_id === $cart->id, 404)`.
 
 - [ ] **Step 6: Update routes/storefront.php with complete new route structure**
 
@@ -2376,7 +2421,7 @@ Replace all existing routes per the route structure defined in Step 6 of Task 7.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add app/Http/Controllers/StorefrontApiController.php app/Http/Requests/Storefront/ routes/storefront.php tests/Feature/Http/Controllers/StorefrontApiControllerTest.php
+git add app/Http/Controllers/Storefront/StorefrontApiController.php app/Http/Requests/Storefront/ routes/storefront.php tests/Feature/Http/Controllers/StorefrontApiControllerTest.php
 git commit -m "feat(storefront): add JSON API controller for cart, auth, checkout, and account mutations"
 ```
 
