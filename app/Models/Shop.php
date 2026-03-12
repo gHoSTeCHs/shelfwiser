@@ -81,4 +81,9 @@ class Shop extends Model
     {
         return $this->hasOne(ShopTaxSetting::class);
     }
+
+    public function storefrontConfig(): HasOne
+    {
+        return $this->hasOne(StorefrontConfig::class);
+    }
 }
