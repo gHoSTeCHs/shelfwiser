@@ -193,6 +193,7 @@ template_id         - foreignId → storefront_templates
 name                - string (e.g., "Lagos Express", "Eko Luxe")
 slug                - string, unique
 description         - text, nullable
+category            - StorefrontThemeCategory enum (general, fashion, grocery, health, tech, artisan)
 thumbnail_path      - string, nullable
 ideal_for           - string, nullable (e.g., "Electronics, general retail, pharmacy")
 theme_config        - jsonb (THE config object — palette, typography, component variants, animations, decorations)
@@ -2019,7 +2020,8 @@ Fixed pages share the same `ThemeProvider`, CSS variables, header/footer, and an
 /{shop-slug}/register                  → register (fixed themed, guest)
 /{shop-slug}/forgot-password           → forgotPassword (fixed themed, guest)
 /{shop-slug}/reset-password/{token}    → resetPassword (fixed themed, guest)
-/{shop-slug}/verify-email              → verifyEmail (fixed themed, auth:customer)
+/{shop-slug}/verify-email              → verifyEmail notice (fixed themed, auth:customer)
+/{shop-slug}/verify-email/{id}/{hash}  → verifyEmail handler (signed, auth:customer)
 /{shop-slug}/account                   → accountDashboard (fixed themed, auth:customer)
 /{shop-slug}/account/orders            → accountOrders (fixed themed, auth:customer)
 /{shop-slug}/account/orders/{order}    → accountOrderDetail (fixed themed, auth:customer)
@@ -2061,15 +2063,21 @@ class StorefrontRenderService
 {
     public function __construct(
         private SectionTypeRegistry $sectionRegistry,
+        private CartService $cartService,
     ) {}
 
     public function buildPage(Shop $shop, StorefrontPageType $pageType, ?string $slug = null): array;
+    public function buildFixedPage(Shop $shop, string $page, array $params = []): array;
     public function resolveSections(StorefrontPage $page, Shop $shop): array;
     public function resolveThemeConfig(StorefrontConfig $config): array;
     public function buildThemeStyles(array $resolvedTheme): string;
     public function buildSeoMeta(StorefrontPage $page, StorefrontConfig $config, Shop $shop): array;
 }
 ```
+
+`buildPage()` returns the payload for composable (section-composed) pages. `buildFixedPage()` returns the payload for fixed themed pages — same shop data, theme config, CSS variables, navigation, and header/footer, but includes `fixedPage` (string discriminator) and `fixedPageData` (page-specific data from existing services) instead of resolved sections.
+
+Both methods inject `customer` (the logged-in customer via `auth('customer')->user()`, or `null`) and `csrfToken` (via `csrf_token()`) into every page payload. The React app needs these for auth state display and CSRF-protected API calls.
 
 `resolveThemeConfig()` merges theme defaults with shop overrides:
 
@@ -2335,8 +2343,9 @@ app/
 │   └── Controllers/
 │       ├── Admin/
 │       │   └── StorefrontBuilderController.php
-│       ├── StorefrontRenderController.php
-│       └── StorefrontApiController.php
+│       └── Storefront/
+│           ├── StorefrontRenderController.php
+│           └── StorefrontApiController.php
 ├── Models/
 │   ├── StorefrontTemplate.php
 │   ├── StorefrontTheme.php
@@ -2435,6 +2444,7 @@ resources/
     │   │   │   └── GridListToggle.tsx
     │   │   └── ... (same pattern for all section types)
     │   ├── pages/                                (fixed themed pages)
+    │   │   ├── registry.ts                      (fixed page component registry)
     │   │   ├── Cart.tsx
     │   │   ├── Checkout.tsx
     │   │   ├── CheckoutSuccess.tsx
@@ -2464,6 +2474,8 @@ resources/
     │   │   ├── SearchBar.tsx
     │   │   ├── QuickViewModal.tsx
     │   │   └── ProductViewer3D.tsx              (premium, lazy-loaded)
+    │   ├── lib/
+    │   │   └── fetch-client.ts                  (CSRF-aware fetch wrapper for API calls)
     │   ├── animation/
     │   │   ├── scroll-reveal.ts                 (IntersectionObserver)
     │   │   ├── parallax.ts                      (parallax utilities)

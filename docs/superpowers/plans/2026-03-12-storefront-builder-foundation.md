@@ -25,7 +25,9 @@
 - `app/Http/Controllers/Storefront/CustomerAuthController.php` — auth logic reused in StorefrontApiController
 - `app/Http/Controllers/Storefront/CustomerPortalController.php` — account logic reused in StorefrontApiController
 
-**Key dependencies already installed:** `framer-motion`, `react-dnd`, `@radix-ui/*`, `lucide-react`, `zod`
+**Key dependencies already installed:** `framer-motion`, `@radix-ui/*`, `lucide-react`, `zod`
+
+**Installed but NOT used by this plan:** `react-dnd`, `react-dnd-html5-backend` — the builder uses `@dnd-kit` instead (better sortable list API)
 
 **Dependencies to install during implementation:**
 - `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` — drag-and-drop for builder (Task 19)
@@ -49,12 +51,14 @@ The existing `routes/storefront.php` has 30+ routes on 5 controllers (Storefront
 
 **Files:**
 - Modify: `database/factories/TenantFactory.php`
+- Create: `database/factories/ShopTypeFactory.php`
 - Modify: `database/factories/ShopFactory.php`
 - Modify: `database/factories/UserFactory.php` — add `tenant_id` and `role` defaults
+- Modify: `database/factories/CustomerFactory.php`
 - Create: `database/factories/ProductFactory.php`
 - Create: `database/factories/ProductVariantFactory.php`
 
-**Why:** Every feature test in this plan calls `Tenant::factory()->create()`, `Shop::factory()->create()`, `User::factory()->create()`, and `Product::factory()->create()`. Currently, `TenantFactory` and `ShopFactory` have **empty** `definition()` methods, `UserFactory` is missing `tenant_id`/`role` defaults, and `ProductFactory` does not exist. All tests will fail at factory creation without this.
+**Why:** Every feature test in this plan calls `Tenant::factory()->create()`, `Shop::factory()->create()`, `User::factory()->create()`, `Customer::factory()->create()`, and `Product::factory()->create()`. Currently: `TenantFactory` and `ShopFactory` have **empty** `definition()` methods, `ShopTypeFactory` does not exist (but `ShopFactory` needs `shop_type_id`), `UserFactory` is missing `tenant_id`/`role` defaults, `CustomerFactory` is empty, and `ProductFactory` does not exist. All tests will fail at factory creation without this.
 
 - [ ] **Step 1: Populate TenantFactory**
 
@@ -76,7 +80,29 @@ public function definition(): array
 }
 ```
 
-- [ ] **Step 2: Populate ShopFactory**
+- [ ] **Step 2: Create and populate ShopTypeFactory**
+
+`ShopTypeFactory` does not exist. Create it:
+
+```bash
+php artisan make:factory ShopTypeFactory
+```
+
+```php
+public function definition(): array
+{
+    return [
+        'tenant_id' => Tenant::factory(),
+        'label' => fake()->word(),
+        'slug' => fake()->unique()->slug(),
+        'description' => fake()->sentence(),
+        'config_schema' => [],
+        'is_active' => true,
+    ];
+}
+```
+
+- [ ] **Step 3: Populate ShopFactory**
 
 ```php
 public function definition(): array
@@ -98,9 +124,7 @@ public function definition(): array
 }
 ```
 
-Check if `ShopType::factory()` needs populating too. If ShopTypeFactory is empty, populate it with: `['tenant_id' => Tenant::factory(), 'label' => fake()->word(), 'slug' => fake()->unique()->slug(), 'is_active' => true]`.
-
-- [ ] **Step 3: Add defaults to UserFactory**
+- [ ] **Step 4: Add defaults to UserFactory**
 
 Add `tenant_id` and `role` to UserFactory's `definition()`:
 
@@ -110,7 +134,31 @@ Add `tenant_id` and `role` to UserFactory's `definition()`:
 'is_active' => true,
 ```
 
-- [ ] **Step 4: Create ProductFactory**
+- [ ] **Step 5: Populate CustomerFactory**
+
+`CustomerFactory` exists but has an empty `definition()`. Populate it:
+
+```php
+public function definition(): array
+{
+    return [
+        'tenant_id' => Tenant::factory(),
+        'preferred_shop_id' => Shop::factory(),
+        'first_name' => fake()->firstName(),
+        'last_name' => fake()->lastName(),
+        'email' => fake()->unique()->safeEmail(),
+        'phone' => fake()->phoneNumber(),
+        'password' => bcrypt('password'),
+        'is_active' => true,
+        'marketing_opt_in' => false,
+        'account_balance' => 0,
+        'credit_limit' => 0,
+        'total_purchases' => 0,
+    ];
+}
+```
+
+- [ ] **Step 6: Create ProductFactory**
 
 ```bash
 php artisan make:factory ProductFactory
@@ -140,7 +188,7 @@ public function featured(): static
 }
 ```
 
-- [ ] **Step 5: Create ProductVariantFactory**
+- [ ] **Step 7: Create ProductVariantFactory**
 
 ```bash
 php artisan make:factory ProductVariantFactory
@@ -148,17 +196,17 @@ php artisan make:factory ProductVariantFactory
 
 Populate with: `product_id`, `tenant_id`, `name`, `sku` (unique), `price`, `cost_price`, `stock_quantity`, `is_available_online`. Check the ProductVariant model's fillable for exact columns.
 
-- [ ] **Step 6: Run existing tests to verify factories don't break anything**
+- [ ] **Step 8: Run existing tests to verify factories don't break anything**
 
 Run: `php artisan test --compact`
 
 If any existing tests relied on the empty factories (unlikely but possible), fix them.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add database/factories/
-git commit -m "chore: populate Tenant, Shop, User, Product, and ProductVariant factories for storefront tests"
+git commit -m "chore: populate Tenant, ShopType, Shop, User, Customer, Product, and ProductVariant factories for storefront tests"
 ```
 
 ---
@@ -308,6 +356,7 @@ Schema::create('storefront_themes', function (Blueprint $table) {
     $table->string('name');
     $table->string('slug')->unique();
     $table->text('description')->nullable();
+    $table->string('category');
     $table->string('thumbnail_path')->nullable();
     $table->string('ideal_for')->nullable();
     $table->jsonb('theme_config');
@@ -618,7 +667,7 @@ it('registers and retrieves section types', function () {
     $section->shouldReceive('type')->andReturn('hero_banner');
     $section->shouldReceive('category')->andReturn(SectionCategory::HERO);
     $section->shouldReceive('allowedPageTypes')->andReturn([]);
-    $section->shouldReceive('minimumAnimationTier')->andReturn(StorefrontAnimationTier::Subtle);
+    $section->shouldReceive('minimumAnimationTier')->andReturn(StorefrontAnimationTier::SUBTLE);
 
     $registry->register($section);
 
@@ -924,9 +973,19 @@ it('builds CSS variable string from resolved theme', function () {
 
 - [ ] **Step 3: Implement StorefrontRenderService**
 
-Inject `SectionTypeRegistry` via constructor. Implement all methods per spec. `resolveThemeConfig()` uses the merge logic from spec. `buildPage()` assembles the complete page payload for composable pages: shop data, resolved theme, CSS variables, resolved sections with data, SEO meta, cart summary, navigation.
+Inject `SectionTypeRegistry` via constructor. Implement all methods per spec. `resolveThemeConfig()` uses the merge logic from spec. Both `buildPage()` and `buildFixedPage()` inject:
+- `customer`: the logged-in customer (`auth('customer')->user()`) or `null`
+- `csrfToken`: `csrf_token()` — needed by the React app's `StorefrontFetchClient` for all POST/PATCH/DELETE requests
 
-`buildFixedPage()` assembles the page payload for fixed themed pages: same shop data + resolved theme + CSS variables + header/footer, but instead of resolved sections, it loads page-specific data (cart items from CartService, orders from query, customer profile, etc.) keyed by the fixed page name. The fixed page data is loaded from existing services — no new business logic needed.
+`buildPage()` assembles the complete page payload for composable pages: shop data, resolved theme, CSS variables, resolved sections with data, SEO meta, cart summary, navigation, customer, csrfToken.
+
+`buildFixedPage()` assembles the page payload for fixed themed pages: same shop data + resolved theme + CSS variables + navigation + customer + csrfToken, but instead of resolved sections, it includes `fixedPage` (string discriminator, e.g. `'cart'`, `'login'`, `'account-dashboard'`) and `fixedPageData` (page-specific data loaded from existing services). Examples:
+- `cart` → `fixedPageData: { items: [...], subtotal, tax, total }` (from `CartService::getCart()` + `getCartSummary()`)
+- `checkout` → `fixedPageData: { cart, paymentMethods, addresses }` (from CartService + shop settings)
+- `account-dashboard` → `fixedPageData: { stats: { total_orders, total_spent }, recent_orders }` (from queries)
+- `login` → `fixedPageData: { shop_name, registration_enabled }` (minimal data)
+
+No new business logic — data comes from existing services (CartService, CheckoutService, etc.) and queries copied from existing controllers.
 
 - [ ] **Step 4: Run tests — expect PASS**
 
@@ -942,7 +1001,7 @@ git commit -m "feat(storefront): implement render service with theme resolution 
 ### Task 7: Render Controller, Routes & Blade View
 
 **Files:**
-- Create: `app/Http/Controllers/StorefrontRenderController.php`
+- Create: `app/Http/Controllers/Storefront/StorefrontRenderController.php`
 - Modify: `routes/storefront.php` — add new render routes alongside existing
 - Create: `resources/views/storefront/builder-app.blade.php`
 - Modify: `vite.config.ts` — add second entry point
@@ -950,7 +1009,9 @@ git commit -m "feat(storefront): implement render service with theme resolution 
 
 **Reference:** Spec § Route Structure and Blade View. The new render controller replaces `StorefrontController` for public routes, but we keep the old controller temporarily and add the new routes in parallel until the builder is fully working.
 
-**IMPORTANT:** The new Blade view is a SEPARATE entry from the existing Inertia storefront. Name it `builder-app.blade.php` to avoid conflicts during transition.
+**Namespace:** Place new controllers in `App\Http\Controllers\Storefront\` to match existing storefront controllers (`CartController`, `CheckoutController`, `CustomerAuthController`, `CustomerPortalController`).
+
+**Blade view naming:** The spec names the Blade view `app.blade.php`, but we name it `builder-app.blade.php` to avoid conflicts with the existing Inertia storefront during the transition period. Once the old Inertia storefront is fully deprecated, rename to `app.blade.php`.
 
 - [ ] **Step 1: Write controller tests**
 
@@ -1033,8 +1094,9 @@ Add `is_published` check — abort 404 if config not published (unless previewin
 ```php
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Storefront;
 
+use App\Http\Controllers\Controller;
 use App\Models\Shop;
 use App\Enums\StorefrontPageType;
 use App\Services\Storefront\StorefrontRenderService;
@@ -1143,8 +1205,8 @@ In `routes/storefront.php`, replace **ALL** existing routes with the new two-con
 
 **Complete new `routes/storefront.php`:**
 ```php
-use App\Http\Controllers\StorefrontRenderController;
-use App\Http\Controllers\StorefrontApiController;
+use App\Http\Controllers\Storefront\StorefrontRenderController;
+use App\Http\Controllers\Storefront\StorefrontApiController;
 
 Route::prefix('store/{shop:slug}')
     ->middleware('storefront.enabled')
@@ -1178,9 +1240,12 @@ Route::prefix('store/{shop:slug}')
             Route::get('/checkout/success/{order}', [StorefrontRenderController::class, 'checkoutSuccess'])->name('checkout.success');
             Route::get('/checkout/pending/{order}', [StorefrontRenderController::class, 'checkoutPending'])->name('checkout.pending');
             Route::get('/verify-email', [StorefrontRenderController::class, 'verifyEmail'])->name('verification.notice');
+            Route::get('/verify-email/{id}/{hash}', [StorefrontApiController::class, 'verifyEmail'])
+                ->middleware('signed')
+                ->name('verification.verify');
             Route::get('/account', [StorefrontRenderController::class, 'accountDashboard'])->name('account.dashboard');
             Route::get('/account/orders', [StorefrontRenderController::class, 'accountOrders'])->name('account.orders');
-            Route::get('/account/orders/{order}', [StorefrontRenderController::class, 'accountOrderDetail'])->name('account.order');
+            Route::get('/account/orders/{order}', [StorefrontRenderController::class, 'accountOrderDetail'])->name('account.orders.show');
             Route::get('/account/profile', [StorefrontRenderController::class, 'accountProfile'])->name('account.profile');
         });
 
@@ -1188,8 +1253,8 @@ Route::prefix('store/{shop:slug}')
         Route::prefix('api')->name('api.')->group(function () {
             // Cart (no auth required — guest cart supported)
             Route::post('/cart', [StorefrontApiController::class, 'addToCart'])->name('cart.add');
-            Route::patch('/cart/{item}', [StorefrontApiController::class, 'updateCartItem'])->name('cart.update');
-            Route::delete('/cart/{item}', [StorefrontApiController::class, 'removeCartItem'])->name('cart.remove');
+            Route::patch('/cart/{item:id}', [StorefrontApiController::class, 'updateCartItem'])->name('cart.update');
+            Route::delete('/cart/{item:id}', [StorefrontApiController::class, 'removeCartItem'])->name('cart.remove');
             Route::post('/cart/service', [StorefrontApiController::class, 'addServiceToCart'])->name('cart.addService');
             Route::get('/cart/summary', [StorefrontApiController::class, 'cartSummary'])->name('cart.summary');
 
@@ -1261,10 +1326,22 @@ export interface StorefrontPageData {
     seo: SeoData;
     cart: CartSummary;
     navigation: NavigationItem[];
+    customer: CustomerData | null;
+    csrfToken: string;
+    fixedPage?: string;
+    fixedPageData?: Record<string, unknown>;
+}
+
+export interface CustomerData {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    email_verified: boolean;
 }
 
 export interface ShopData {
-    id: string;
+    id: number;
     name: string;
     slug: string;
     phone: string | null;
@@ -1314,22 +1391,86 @@ export interface SectionData {
 
 Define ALL interfaces referenced in the storefront. No `any` types.
 
-- [ ] **Step 2: Create React entry point**
+- [ ] **Step 2: Create `StorefrontFetchClient` utility**
+
+**CRITICAL:** The storefront React app is NOT Inertia — it uses `fetch()` for all API calls. Since routes are inside the `web` middleware group (which includes `VerifyCsrfToken`), every POST/PATCH/DELETE will return 419 unless the CSRF token is attached. The Blade view injects the CSRF token into the page data; this client reads it and attaches it to all requests.
+
+```typescript
+// resources/js/storefront/lib/fetch-client.ts
+
+let csrfToken = '';
+
+export function initCsrfToken(token: string) {
+    csrfToken = token;
+}
+
+interface FetchOptions extends RequestInit {
+    json?: Record<string, unknown>;
+}
+
+interface FetchResult<T = unknown> {
+    ok: boolean;
+    status: number;
+    data: T;
+    errors?: Record<string, string[]>;
+}
+
+export async function storefrontFetch<T = unknown>(
+    url: string,
+    options: FetchOptions = {}
+): Promise<FetchResult<T>> {
+    const headers: Record<string, string> = {
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(options.headers as Record<string, string> || {}),
+    };
+
+    if (options.json) {
+        headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(options.json);
+        delete options.json;
+    }
+
+    const response = await fetch(url, { ...options, headers, credentials: 'same-origin' });
+    const data = await response.json().catch(() => ({}));
+
+    if (response.status === 419) {
+        window.location.reload();
+        return { ok: false, status: 419, data: data as T };
+    }
+
+    return {
+        ok: response.ok,
+        status: response.status,
+        data: data as T,
+        errors: response.status === 422 ? data.errors : undefined,
+    };
+}
+```
+
+All fixed themed pages must use `storefrontFetch()` instead of raw `fetch()` for API calls. This handles: CSRF token injection, JSON content type, 419 auto-reload, 422 validation error extraction.
+
+- [ ] **Step 3: Create React entry point**
 
 ```tsx
 // resources/js/storefront/app.tsx
 import { createRoot } from 'react-dom/client';
 import { StorefrontRenderer } from './StorefrontRenderer';
+import { initCsrfToken } from './lib/fetch-client';
 import type { StorefrontPageData } from './types/storefront';
 
 const rootEl = document.getElementById('storefront-root');
 if (rootEl) {
     const pageData: StorefrontPageData = JSON.parse(rootEl.dataset.page || '{}');
+    initCsrfToken(pageData.csrfToken);
     createRoot(rootEl).render(<StorefrontRenderer {...pageData} />);
 }
 ```
 
-- [ ] **Step 3: Create StorefrontRenderer**
+- [ ] **Step 4: Create StorefrontRenderer**
+
+The renderer uses a discriminator field (`fixedPage`) to decide between composable and fixed page rendering. For composable pages, it renders sections. For fixed themed pages, it renders the named fixed page component with page-specific data.
 
 ```tsx
 // resources/js/storefront/StorefrontRenderer.tsx
@@ -1337,19 +1478,37 @@ import { ThemeProvider } from './ThemeProvider';
 import { AnimationProvider } from './AnimationProvider';
 import { templateLayoutRegistry } from './layouts/registry';
 import { sectionRegistry } from './sections/registry';
+import { fixedPageRegistry } from './pages/registry';
 import type { StorefrontPageData, SectionData } from './types/storefront';
 
-export function StorefrontRenderer({ shop, theme, page, cart, navigation }: StorefrontPageData) {
+export function StorefrontRenderer(props: StorefrontPageData) {
+    const { shop, theme, page, cart, navigation, customer, fixedPage, fixedPageData } = props;
     const Layout = templateLayoutRegistry[theme.template.slug];
 
     if (!Layout) {
         return <div>Template not found: {theme.template.slug}</div>;
     }
 
+    const layoutProps = { shop, navigation, cart, theme, customer };
+
+    if (fixedPage) {
+        const FixedPage = fixedPageRegistry[fixedPage];
+        if (!FixedPage) return <div>Page not found: {fixedPage}</div>;
+        return (
+            <ThemeProvider theme={theme}>
+                <AnimationProvider theme={theme}>
+                    <Layout {...layoutProps}>
+                        <FixedPage data={fixedPageData ?? {}} shop={shop} customer={customer} theme={theme} />
+                    </Layout>
+                </AnimationProvider>
+            </ThemeProvider>
+        );
+    }
+
     return (
         <ThemeProvider theme={theme}>
             <AnimationProvider theme={theme}>
-                <Layout shop={shop} navigation={navigation} cart={cart} theme={theme}>
+                <Layout {...layoutProps}>
                     {page.sections
                         .filter((s: SectionData) => s.is_visible)
                         .map((section: SectionData) => {
@@ -1720,6 +1879,7 @@ git commit -m "feat(storefront): implement all 20 section React components with 
 **Files:**
 - Create: `app/Http/Controllers/StorefrontApiController.php`
 - Create: `app/Http/Requests/Storefront/AddToCartApiRequest.php`
+- Create: `app/Http/Requests/Storefront/AddServiceToCartApiRequest.php`
 - Create: `app/Http/Requests/Storefront/UpdateCartItemApiRequest.php`
 - Create: `app/Http/Requests/Storefront/ProcessCheckoutApiRequest.php`
 - Create: `app/Http/Requests/Storefront/CustomerLoginApiRequest.php`
@@ -1774,7 +1934,7 @@ beforeEach(function () {
 
 it('adds item to cart via API', function () {
     $this->postJson("/store/{$this->shop->slug}/api/cart", [
-        'product_variant_id' => $this->variant->id,
+        'variant_id' => $this->variant->id,
         'quantity' => 2,
     ])->assertOk()
       ->assertJsonStructure(['cart', 'message']);
@@ -1782,7 +1942,7 @@ it('adds item to cart via API', function () {
 
 it('updates cart item quantity', function () {
     $this->postJson("/store/{$this->shop->slug}/api/cart", [
-        'product_variant_id' => $this->variant->id,
+        'variant_id' => $this->variant->id,
         'quantity' => 1,
     ]);
 
@@ -1795,7 +1955,7 @@ it('updates cart item quantity', function () {
 
 it('removes cart item', function () {
     $this->postJson("/store/{$this->shop->slug}/api/cart", [
-        'product_variant_id' => $this->variant->id,
+        'variant_id' => $this->variant->id,
         'quantity' => 1,
     ]);
 
@@ -1859,23 +2019,41 @@ Copy validation rules from existing controllers' inline validation or existing F
 
 - [ ] **Step 5: Implement StorefrontApiController**
 
+**CRITICAL:** Match the exact method signatures of existing services. See `app/Services/CartService.php` for the actual API:
+- `addItem(Cart $cart, int $variantId, int $quantity, ?int $packagingTypeId)` — takes a `Cart` model, NOT a Shop
+- `addServiceItem(Cart $cart, int $serviceVariantId, int $quantity, ?MaterialOption $materialOption, array $selectedAddons)` — takes a `Cart` model
+- `updateQuantity(CartItem $item, int $quantity)` — takes a `CartItem` model, NOT an int
+- `removeItem(CartItem $item)` — takes a `CartItem` model, NOT an int
+- `getCart(Shop $shop, ?int $customerId)` — returns the Cart for a shop/customer pair
+- `getCartSummary(Cart $cart)` — takes a `Cart` model
+- `mergeGuestCartIntoCustomerCart(string $sessionId, int $customerId, int $shopId)` — needs the OLD session ID before auth regeneration
+
+Field name convention: existing `CartController` validates `variant_id` (not `product_variant_id`). Match this convention.
+
 ```php
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Storefront;
 
+use App\Http\Controllers\Controller;
 use App\Models\Shop;
+use App\Models\Customer;
+use App\Models\CartItem;
 use App\Services\CartService;
 use App\Services\CheckoutService;
 use App\Http\Requests\Storefront\AddToCartApiRequest;
+use App\Http\Requests\Storefront\AddServiceToCartApiRequest;
 use App\Http\Requests\Storefront\UpdateCartItemApiRequest;
 use App\Http\Requests\Storefront\ProcessCheckoutApiRequest;
 use App\Http\Requests\Storefront\CustomerLoginApiRequest;
 use App\Http\Requests\Storefront\CustomerRegisterApiRequest;
 use App\Http\Requests\Storefront\UpdateCustomerProfileApiRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Auth\Events\Verified;
 
 class StorefrontApiController extends Controller
 {
@@ -1886,26 +2064,48 @@ class StorefrontApiController extends Controller
 
     public function addToCart(AddToCartApiRequest $request, Shop $shop): JsonResponse
     {
-        $cart = $this->cartService->addItem(
-            $shop,
-            $request->validated(),
-            auth('customer')->user()
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
+
+        $cartItem = $this->cartService->addItem(
+            $cart,
+            $request->validated('variant_id'),
+            $request->validated('quantity', 1),
+            $request->validated('packaging_type_id')
         );
 
         return response()->json([
-            'cart' => $cart,
+            'item' => $cartItem,
             'message' => 'Item added to cart',
         ]);
     }
 
-    public function updateCartItem(UpdateCartItemApiRequest $request, Shop $shop, int $item): JsonResponse
+    public function addServiceToCart(AddServiceToCartApiRequest $request, Shop $shop): JsonResponse
     {
-        $this->cartService->updateQuantity($item, $request->validated('quantity'));
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
 
-        return response()->json(['message' => 'Cart updated']);
+        $cartItem = $this->cartService->addServiceItem(
+            $cart,
+            $request->validated('service_variant_id'),
+            $request->validated('quantity', 1)
+        );
+
+        return response()->json([
+            'item' => $cartItem,
+            'message' => 'Service added to cart',
+        ]);
     }
 
-    public function removeCartItem(Shop $shop, int $item): JsonResponse
+    public function updateCartItem(UpdateCartItemApiRequest $request, Shop $shop, CartItem $item): JsonResponse
+    {
+        $updated = $this->cartService->updateQuantity($item, $request->validated('quantity'));
+
+        return response()->json([
+            'item' => $updated,
+            'message' => 'Cart updated',
+        ]);
+    }
+
+    public function removeCartItem(Shop $shop, CartItem $item): JsonResponse
     {
         $this->cartService->removeItem($item);
 
@@ -1914,35 +2114,187 @@ class StorefrontApiController extends Controller
 
     public function cartSummary(Shop $shop): JsonResponse
     {
-        $summary = $this->cartService->getCartSummary($shop, auth('customer')->user());
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
+        $summary = $this->cartService->getCartSummary($cart);
 
         return response()->json($summary);
     }
 
     public function login(CustomerLoginApiRequest $request, Shop $shop): JsonResponse
     {
-        // Reuse auth logic from existing CustomerAuthController
-        // Attempt auth with customer guard, merge guest cart on success
+        $customer = Customer::query()
+            ->where('email', $request->validated('email'))
+            ->where('tenant_id', $shop->tenant_id)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $customer || ! Hash::check($request->validated('password'), $customer->password)) {
+            return response()->json([
+                'message' => 'The provided credentials do not match our records.',
+                'errors' => ['email' => ['The provided credentials do not match our records.']],
+            ], 422);
+        }
+
+        $oldSessionId = session()->getId();
+
+        Auth::guard('customer')->login($customer, $request->boolean('remember'));
+
+        $request->session()->regenerate();
+
+        $this->cartService->mergeGuestCartIntoCustomerCart($oldSessionId, $customer->id, $shop->id);
+
+        return response()->json([
+            'customer' => [
+                'id' => $customer->id,
+                'first_name' => $customer->first_name,
+                'last_name' => $customer->last_name,
+                'email' => $customer->email,
+            ],
+            'message' => 'Logged in successfully',
+        ]);
     }
 
     public function register(CustomerRegisterApiRequest $request, Shop $shop): JsonResponse
     {
-        // Reuse registration logic from existing CustomerAuthController
+        $customer = Customer::query()->create([
+            ...$request->validated(),
+            'tenant_id' => $shop->tenant_id,
+            'preferred_shop_id' => $shop->id,
+            'password' => Hash::make($request->validated('password')),
+        ]);
+
+        $oldSessionId = session()->getId();
+
+        Auth::guard('customer')->login($customer);
+
+        $request->session()->regenerate();
+
+        $this->cartService->mergeGuestCartIntoCustomerCart($oldSessionId, $customer->id, $shop->id);
+
+        $customer->sendEmailVerificationNotification();
+
+        return response()->json([
+            'customer' => [
+                'id' => $customer->id,
+                'first_name' => $customer->first_name,
+                'last_name' => $customer->last_name,
+                'email' => $customer->email,
+            ],
+            'message' => 'Account created successfully',
+        ]);
     }
 
-    public function logout(Shop $shop): JsonResponse
+    public function logout(Request $request, Shop $shop): JsonResponse
     {
         Auth::guard('customer')->logout();
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json(['message' => 'Logged out']);
     }
 
+    public function forgotPassword(Request $request, Shop $shop): JsonResponse
+    {
+        $request->validate(['email' => ['required', 'email']]);
+
+        Password::broker('customers')->sendResetLink(
+            array_merge($request->only('email'), ['tenant_id' => $shop->tenant_id])
+        );
+
+        return response()->json(['message' => 'If an account exists, a reset link has been sent.']);
+    }
+
+    public function resetPassword(Request $request, Shop $shop): JsonResponse
+    {
+        $request->validate([
+            'token' => ['required'],
+            'email' => ['required', 'email'],
+            'password' => ['required', 'confirmed', 'min:8'],
+        ]);
+
+        $status = Password::broker('customers')->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($customer, $password) {
+                $customer->update(['password' => Hash::make($password)]);
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return response()->json(['message' => 'Password has been reset.']);
+        }
+
+        return response()->json(['message' => __($status)], 422);
+    }
+
+    public function resendVerification(Request $request, Shop $shop): JsonResponse
+    {
+        $customer = auth('customer')->user();
+
+        if ($customer->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email already verified.']);
+        }
+
+        $customer->sendEmailVerificationNotification();
+
+        return response()->json(['message' => 'Verification link sent.']);
+    }
+
+    public function verifyEmail(Request $request, Shop $shop, string $id, string $hash): \Illuminate\Http\RedirectResponse
+    {
+        $customer = Customer::query()
+            ->where('id', $id)
+            ->where('tenant_id', $shop->tenant_id)
+            ->firstOrFail();
+
+        if (! hash_equals((string) $hash, sha1($customer->getEmailForVerification()))) {
+            abort(403, 'Invalid verification link.');
+        }
+
+        if (! $customer->hasVerifiedEmail()) {
+            $customer->markEmailAsVerified();
+            event(new Verified($customer));
+        }
+
+        $oldSessionId = session()->getId();
+
+        Auth::guard('customer')->login($customer);
+
+        $request->session()->regenerate();
+
+        $this->cartService->mergeGuestCartIntoCustomerCart($oldSessionId, $customer->id, $shop->id);
+
+        return redirect()->route('storefront.index', $shop->slug)
+            ->with('status', 'Your email has been verified!');
+    }
+
     public function processCheckout(ProcessCheckoutApiRequest $request, Shop $shop): JsonResponse
     {
-        // Reuse checkout logic from existing CheckoutController::process()
-        // Return JSON with order details + payment redirect URL if applicable
+        $customer = auth('customer')->user();
+        $cart = $this->cartService->getCart($shop, $customer->id);
+
+        $order = $this->checkoutService->createOrderFromCart(
+            $cart,
+            $customer,
+            $request->validated('shipping_address'),
+            $request->validated('billing_address', $request->validated('shipping_address')),
+            $request->validated('payment_method', 'cash_on_delivery'),
+            $request->validated('customer_notes'),
+            null,
+            $request->validated('idempotency_key')
+        );
+
+        $redirectUrl = null;
+        if ($order->payment_status !== 'paid') {
+            $redirectUrl = route('storefront.checkout.pending', [$shop->slug, $order]);
+        } else {
+            $redirectUrl = route('storefront.checkout.success', [$shop->slug, $order]);
+        }
+
+        return response()->json([
+            'order' => ['id' => $order->id, 'order_number' => $order->order_number],
+            'redirect_url' => $redirectUrl,
+            'message' => 'Order placed successfully',
+        ]);
     }
 
     public function updateProfile(UpdateCustomerProfileApiRequest $request, Shop $shop): JsonResponse
@@ -1950,27 +2302,70 @@ class StorefrontApiController extends Controller
         $customer = auth('customer')->user();
         $customer->update($request->validated());
 
-        return response()->json(['customer' => $customer, 'message' => 'Profile updated']);
+        return response()->json([
+            'customer' => $customer->fresh(),
+            'message' => 'Profile updated',
+        ]);
     }
 
     public function cancelOrder(Shop $shop, int $order): JsonResponse
     {
-        // Reuse cancel logic from existing CustomerPortalController
+        $customer = auth('customer')->user();
+        $orderModel = $customer->orders()
+            ->where('shop_id', $shop->id)
+            ->findOrFail($order);
+
+        abort_unless($orderModel->canBeCancelled(), 422, 'This order cannot be cancelled.');
+
+        $orderModel->update(['status' => 'cancelled']);
+
+        return response()->json(['message' => 'Order cancelled']);
     }
 
-    public function paymentCallback(Shop $shop)
+    public function paymentCallback(Request $request, Shop $shop): \Illuminate\Http\RedirectResponse
     {
-        // Reuse from existing CheckoutController::paymentCallback()
+        $reference = $request->query('reference') ?? $request->query('trxref');
+
+        if (! $reference) {
+            return redirect()->route('storefront.index', $shop->slug)
+                ->with('error', 'Invalid payment callback');
+        }
+
+        try {
+            $order = $this->checkoutService->verifyPaystackPayment($reference, $shop);
+
+            if ($order && $order->payment_status === \App\Enums\PaymentStatus::PAID->value) {
+                return redirect()->route('storefront.checkout.success', [$shop->slug, $order]);
+            }
+
+            if ($order) {
+                return redirect()->route('storefront.checkout.pending', [$shop->slug, $order]);
+            }
+
+            return redirect()->route('storefront.index', $shop->slug)
+                ->with('error', 'Unable to verify payment.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Payment callback error', [
+                'reference' => $reference,
+                'shop_id' => $shop->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('storefront.index', $shop->slug)
+                ->with('error', 'Payment verification failed.');
+        }
     }
 
-    public function paymentWebhook(Shop $shop)
+    public function paymentWebhook(Request $request, Shop $shop): JsonResponse
     {
-        // Reuse from existing CheckoutController::paymentWebhook()
+        // Reuse from existing PaymentWebhookController / CheckoutController::paymentWebhook()
+        // Verify Paystack webhook signature, update payment status
+        return response()->json(['status' => 'ok']);
     }
 }
 ```
 
-**Key:** Each method is thin — validate via FormRequest, delegate to service, return JSON. Copy the exact business logic from the existing Inertia controllers, just change the return type.
+**Key:** Every method matches the exact service signatures. Login and register capture `$oldSessionId` before session regeneration for guest cart merge. Route model binding used for `CartItem` to avoid manual lookup. Field name `variant_id` matches existing convention.
 
 - [ ] **Step 6: Update routes/storefront.php with complete new route structure**
 
@@ -2001,7 +2396,7 @@ git commit -m "feat(storefront): add JSON API controller for cart, auth, checkou
 - Modify: `resources/js/storefront/StorefrontRenderer.tsx` — add fixed page routing
 - Modify: `resources/js/storefront/types/storefront.ts` — add cart/checkout types
 
-**Reference:** Existing Inertia pages at `resources/js/pages/Storefront/Cart.tsx`, `Checkout.tsx`, `CheckoutSuccess.tsx`. These show the data structure and UX flow. The new pages render the same content but wrapped in the theme layout (header, footer, CSS variables, animations) and use `fetch()` to the JSON API instead of Inertia form submissions.
+**Reference:** Existing Inertia pages at `resources/js/pages/Storefront/Cart.tsx`, `Checkout.tsx`, `CheckoutSuccess.tsx`. These show the data structure and UX flow. Note: `CheckoutPending.tsx` does not exist in the old Inertia pages despite being referenced by `CheckoutController::paymentPending()` — build it fresh. The new pages render the same content but wrapped in the theme layout (header, footer, CSS variables, animations) and use `storefrontFetch()` (from `lib/fetch-client.ts`) for the JSON API instead of Inertia form submissions.
 
 - [ ] **Step 1: Add cart/checkout TypeScript types**
 
@@ -2018,7 +2413,7 @@ interface CartPageData {
 
 interface CartItem {
     id: number;
-    product_variant_id: number;
+    variant_id: number;
     product_name: string;
     variant_name: string;
     sku: string;
@@ -2038,11 +2433,11 @@ interface CheckoutPageData {
 
 - [ ] **Step 2: Implement Cart page**
 
-Uses `/frontend-design` skill. Full themed page with: cart items list (with quantity controls via QuantitySelector), item removal (DELETE to API), subtotal/tax/total display (using shop currency via PriceDisplay), "Continue Shopping" link, "Proceed to Checkout" button. Empty cart state with CTA. All mutations via `fetch()` to `/{shop-slug}/api/cart/*` endpoints. Wrapped in theme layout (header, footer).
+Uses `/frontend-design` skill. Full themed page with: cart items list (with quantity controls via QuantitySelector), item removal (DELETE to API), subtotal/tax/total display (using shop currency via PriceDisplay), "Continue Shopping" link, "Proceed to Checkout" button. Empty cart state with CTA. All mutations via `storefrontFetch()` to `/{shop-slug}/api/cart/*` endpoints. Wrapped in theme layout (header, footer).
 
 - [ ] **Step 3: Implement Checkout page**
 
-Uses `/frontend-design` skill. Multi-step checkout: shipping address (AddressForm), payment method selection, order review (OrderSummary). For Paystack: redirect to payment URL returned from API. For pay-on-delivery: confirm directly. Uses `fetch()` POST to `/{shop-slug}/api/checkout`.
+Uses `/frontend-design` skill. Multi-step checkout: shipping address (AddressForm), payment method selection, order review (OrderSummary). For Paystack: redirect to payment URL returned from API. For pay-on-delivery: confirm directly. Uses `storefrontFetch()` POST to `/{shop-slug}/api/checkout`.
 
 - [ ] **Step 4: Implement CheckoutSuccess and CheckoutPending pages**
 
@@ -2119,11 +2514,11 @@ interface RegisterPageData {
 
 - [ ] **Step 2: Implement Login page**
 
-Uses `/frontend-design` skill. Centered card with email/password form. "Forgot password?" link. "Create account" link. All themed: card uses `var(--color-surface)`, button uses `var(--color-button-bg)`, fonts from theme. Form submits via `fetch()` POST to `/{shop-slug}/api/auth/login`. Handles validation errors inline. Shows loading state on submit.
+Uses `/frontend-design` skill. Centered card with email/password form. "Forgot password?" link. "Create account" link. All themed: card uses `var(--color-surface)`, button uses `var(--color-button-bg)`, fonts from theme. Form submits via `storefrontFetch()` POST to `/{shop-slug}/api/auth/login`. Handles validation errors inline. Shows loading state on submit.
 
 - [ ] **Step 3: Implement Register page**
 
-First name, last name, email, password, confirm password. Same themed card layout. Form submits to `/{shop-slug}/api/auth/register`.
+First name, last name, email, password, confirm password. Same themed card layout. Form submits via `storefrontFetch()` to `/{shop-slug}/api/auth/register`.
 
 - [ ] **Step 4: Implement ForgotPassword and ResetPassword pages**
 
@@ -2203,7 +2598,7 @@ OrderDetail: full order breakdown — items, quantities, prices, shipping addres
 
 - [ ] **Step 5: Implement Profile page**
 
-Editable form: first name, last name, email, phone. Submit via `fetch()` PATCH to `/{shop-slug}/api/account/profile`. Show success/error messages.
+Editable form: first name, last name, email, phone. Submit via `storefrontFetch()` PATCH to `/{shop-slug}/api/account/profile`. Show success/error messages.
 
 - [ ] **Step 6: Run TypeScript check**
 
@@ -2796,7 +3191,7 @@ it('completes full customer flow: browse → cart → login → checkout', funct
 
     // Add to cart via API
     $this->postJson("/store/{$shop->slug}/api/cart", [
-        'product_variant_id' => $variant->id,
+        'variant_id' => $variant->id,
         'quantity' => 2,
     ])->assertOk();
 
@@ -2854,10 +3249,10 @@ git commit -m "test(storefront): add E2E smoke tests for builder flow and full c
 | 10 | Classic Commerce Layout + Components | Task 9 | No |
 | 11 | Section React Components | Tasks 9, 10 | **Split across 3 subagents** |
 | 12 | StorefrontApiController + API Routes | Tasks 3, 7 | Yes (with Tasks 8-11) |
-| 13 | Fixed Themed Pages — Cart & Checkout | Tasks 9, 10, 12 | No |
-| 14 | Fixed Themed Pages — Auth Flow | Tasks 9, 10, 12 | Yes (with Task 13) |
-| 15 | Fixed Themed Pages — Account Portal | Tasks 9, 10, 12 | Yes (with Tasks 13-14) |
-| 16 | Fixed Themed Pages — Services | Tasks 9, 10, 12 | Yes (with Tasks 13-15) |
+| 13 | Fixed Themed Pages — Cart & Checkout | Tasks 9, 10, 12 | No (updates StorefrontRenderer) |
+| 14 | Fixed Themed Pages — Auth Flow | Task 13 | Yes (with Tasks 15-16) |
+| 15 | Fixed Themed Pages — Account Portal | Task 13 | Yes (with Tasks 14, 16) |
+| 16 | Fixed Themed Pages — Services | Task 13 | Yes (with Tasks 14-15) |
 | 17 | BuilderService | Tasks 3, 5 | Yes (with Tasks 12-16) |
 | 18 | BuilderController + FormRequests + Resources | Task 17 | No |
 | 19 | Builder Frontend | Tasks 8, 18 | **Split across 4 subagents** |
@@ -2868,6 +3263,6 @@ git commit -m "test(storefront): add E2E smoke tests for builder flow and full c
 
 **Critical path:** Task 0 first, then Tasks 1→2→3→4→5→6→7 (backend pipeline) and Tasks 8→9→10→11 (frontend pipeline) can run in parallel after Task 3. After both pipelines converge: Tasks 12→13/14/15/16 (API + fixed pages, parallelizable), then Tasks 17→18→19 (builder).
 
-**Fixed themed pages (Tasks 13-16) can be parallelized:** Cart/Checkout, Auth, Account, and Services pages are independent of each other — split across 4 subagents.
+**Fixed themed pages (Tasks 14-16) can be parallelized:** Auth, Account, and Services pages are independent of each other — split across 3 subagents after Task 13 completes. Task 13 (Cart/Checkout) must run first because it updates `StorefrontRenderer.tsx` with the fixed page routing logic that Tasks 14-16 depend on.
 
 **Estimated commit count:** 24 commits across the implementation.
