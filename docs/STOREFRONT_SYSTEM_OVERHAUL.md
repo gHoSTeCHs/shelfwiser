@@ -8,7 +8,7 @@ The system draws architectural patterns from **Amoriie**, which implements a tem
 
 ## Tech Stack
 
-- **Backend:** Laravel 12, PHP 8.2+, PostgreSQL
+- **Backend:** Laravel 12, PHP 8.2+, MySQL
 - **Frontend (Admin/Builder):** React 19, TypeScript, Tailwind CSS, Inertia.js v2
 - **Frontend (Storefront):** React 19, TypeScript, Tailwind CSS — rendered via Blade bootstrap (NOT Inertia)
 - **Animation:** GSAP (ScrollTrigger, timelines), Framer Motion (React primitives), Lenis (smooth scroll)

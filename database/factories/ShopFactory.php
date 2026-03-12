@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\ShopType;
+use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -9,15 +11,27 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ShopFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-            //
+            'tenant_id' => Tenant::factory(),
+            'shop_type_id' => ShopType::factory(),
+            'name' => fake()->company().' Store',
+            'slug' => fake()->unique()->slug(),
+            'config' => [],
+            'is_active' => true,
+            'storefront_enabled' => false,
+            'currency' => 'NGN',
+            'currency_symbol' => '₦',
+            'currency_decimals' => 2,
+            'vat_enabled' => false,
+            'vat_rate' => 0,
+            'vat_inclusive' => false,
         ];
+    }
+
+    public function withStorefront(): static
+    {
+        return $this->state(['storefront_enabled' => true]);
     }
 }

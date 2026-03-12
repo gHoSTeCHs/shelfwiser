@@ -6,7 +6,7 @@
 
 **Architecture:** Three-layer hierarchy (Template → Theme → Customization) following Amoriie's proven pattern. Public storefront decoupled from Inertia — Blade bootstraps standalone React app with JSON page data. Builder UI lives within existing Inertia admin panel. Section components are shared scaffolds driven by theme config data objects. Animation tier system loads libraries conditionally per template.
 
-**Tech Stack:** Laravel 12, PostgreSQL, React 19, TypeScript, Tailwind CSS, Inertia.js (builder only), GSAP (future), Framer Motion (already installed), dnd-kit (drag-and-drop), Tiptap (rich text), Lenis (future smooth scroll)
+**Tech Stack:** Laravel 12, MySQL, React 19, TypeScript, Tailwind CSS, Inertia.js (builder only), GSAP (future), Framer Motion (already installed), dnd-kit (drag-and-drop), Tiptap (rich text), Lenis (future smooth scroll)
 
 **Spec:** `docs/STOREFRONT_SYSTEM_OVERHAUL.md`
 
