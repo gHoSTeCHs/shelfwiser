@@ -1798,14 +1798,17 @@ Build once, used by all templates:
 6. `StorefrontServiceProvider`
 7. All 20 section type PHP classes (config schema + data resolver)
 8. `StorefrontRenderService` + `StorefrontRenderController` + Blade view
-9. React storefront entry point + `StorefrontRenderer` + `ThemeProvider`
-10. Shared React components: `ProductCard`, `CartDrawer`, `SearchBar`, responsive grid system
-11. Builder UI: `PageBuilder`, `SectionPalette`, `SectionCanvas`, `SectionConfigPanel`, `ThemeConfigPanel`, `PreviewFrame`, all config field components
-12. `StorefrontBuilderController` + `StorefrontBuilderService`
-13. Caching layer
-14. Media upload/management
-15. Publish/unpublish flow
-16. Vite second entry point
+9. `StorefrontApiController` — JSON API for cart, checkout, auth, account mutations (reuses existing services)
+10. React storefront entry point + `StorefrontRenderer` + `ThemeProvider` + `AnimationProvider`
+11. Shared React components: `ProductCard`, `CartDrawer`, `SearchBar`, responsive grid system
+12. Fixed themed pages: Cart, Checkout, Auth (Login, Register, Forgot/Reset Password), Account (Dashboard, Orders, Profile), Services — all fully themed via ThemeProvider
+13. Builder UI: `PageBuilder`, `SectionPalette`, `SectionCanvas`, `SectionConfigPanel`, `ThemeConfigPanel`, `PreviewFrame`, all config field components
+14. `StorefrontBuilderController` + `StorefrontBuilderService`
+15. Caching layer
+16. Media upload/management
+17. Publish/unpublish flow
+18. Vite second entry point
+19. Full route migration: all storefront routes go through new pipeline, old Inertia storefront pages deprecated
 
 ### Stage 1: Classic Commerce (First Template)
 
@@ -1814,16 +1817,16 @@ The broadest use case. Covers 60%+ of ShelfWiser shops.
 1. Seed Classic Commerce template with structural config
 2. Implement all 6 themes as theme config objects
 3. Build React section components with all Classic Commerce variants:
-    - Hero: centered_overlay, split_image, slideshow, minimal_text
-    - Featured Products: standard_grid, spotlight_plus_grid, horizontal_scroll
-    - Product Grid: standard_grid, sidebar_filters, grid_list_toggle
-    - Category Grid: image_overlay, image_above, chips
+    - Hero: centered_overlay, split_image, slideshow, minimal_text, video_background
+    - Featured Products: standard_grid, spotlight_plus_grid, horizontal_scroll, masonry, carousel
+    - Product Grid: standard_grid, sidebar_filters, grid_list_toggle, infinite_scroll
+    - Category Grid: image_overlay, image_above, chips, icon_grid, carousel
     - All content/layout sections
 4. Build header variants: standard, centered_logo
 5. Build footer variants: multi_column, minimal, centered
 6. Subtle animation tier: IntersectionObserver + CSS animations for entrance effects
 7. Full mobile responsiveness
-8. E2E testing
+8. E2E testing — complete flow: browse → add to cart → checkout → order confirmation
 9. Production deploy
 
 ### Stage 2: Editorial Showcase
@@ -1981,18 +1984,73 @@ Monthly boxes, recurring deliveries, curated selections.
 
 ## Storefront Rendering Pipeline
 
+### Two Page Categories
+
+The storefront has two fundamentally different page categories, both fully themed:
+
+**1. Composable pages** — shop owner drags sections, reorders, configures via the builder.
+- Home, Products listing, Product detail, About, Contact, Custom pages
+- Rendered from `StorefrontPage.sections` JSON
+- Each section is a React component driven by config + variant + theme
+
+**2. Fixed themed pages** — layout is predetermined (a cart IS a cart), but every visual element respects the theme: colors, fonts, button styles, card styles, spacing, header/footer, animations.
+- Cart, Checkout, Checkout Success/Pending
+- Auth: Login, Register, Forgot Password, Reset Password, Verify Email
+- Account: Dashboard, Orders, Order Detail, Profile
+- Services: Listing, Detail
+
+Fixed pages share the same `ThemeProvider`, CSS variables, header/footer, and animation context as composable pages. The customer experiences a single, cohesive storefront — they cannot tell which pages are section-composed and which are fixed. The difference is only visible to the shop owner in the builder.
+
 ### Route Structure
 
+**Page rendering routes** — all go through `StorefrontRenderController`, all return Blade→React:
+
 ```
-/{shop-slug}                    → StorefrontRenderController@home
-/{shop-slug}/products           → StorefrontRenderController@products
-/{shop-slug}/products/{slug}    → StorefrontRenderController@productDetail
-/{shop-slug}/cart               → StorefrontRenderController@cart
-/{shop-slug}/checkout           → StorefrontRenderController@checkout
-/{shop-slug}/about              → StorefrontRenderController@page (about)
-/{shop-slug}/contact            → StorefrontRenderController@page (contact)
-/{shop-slug}/p/{custom-slug}    → StorefrontRenderController@page (custom)
+/{shop-slug}                           → home (composable)
+/{shop-slug}/products                  → products (composable)
+/{shop-slug}/products/{slug}           → productDetail (composable)
+/{shop-slug}/services                  → services (fixed themed)
+/{shop-slug}/services/{slug}           → serviceDetail (fixed themed)
+/{shop-slug}/cart                      → cart (fixed themed)
+/{shop-slug}/checkout                  → checkout (fixed themed, auth:customer)
+/{shop-slug}/checkout/success/{order}  → checkoutSuccess (fixed themed, auth:customer)
+/{shop-slug}/checkout/pending/{order}  → checkoutPending (fixed themed, auth:customer)
+/{shop-slug}/login                     → login (fixed themed, guest)
+/{shop-slug}/register                  → register (fixed themed, guest)
+/{shop-slug}/forgot-password           → forgotPassword (fixed themed, guest)
+/{shop-slug}/reset-password/{token}    → resetPassword (fixed themed, guest)
+/{shop-slug}/verify-email              → verifyEmail (fixed themed, auth:customer)
+/{shop-slug}/account                   → accountDashboard (fixed themed, auth:customer)
+/{shop-slug}/account/orders            → accountOrders (fixed themed, auth:customer)
+/{shop-slug}/account/orders/{order}    → accountOrderDetail (fixed themed, auth:customer)
+/{shop-slug}/account/profile           → accountProfile (fixed themed, auth:customer)
+/{shop-slug}/about                     → page (composable)
+/{shop-slug}/contact                   → page (composable)
+/{shop-slug}/p/{custom-slug}           → page (composable)
 ```
+
+**JSON API routes** — used by React for form submissions and mutations (cart add/remove, checkout, login, etc.):
+
+```
+POST   /{shop-slug}/api/cart                    → add item
+PATCH  /{shop-slug}/api/cart/{item}              → update quantity
+DELETE /{shop-slug}/api/cart/{item}              → remove item
+POST   /{shop-slug}/api/cart/service             → add service item
+GET    /{shop-slug}/api/cart/summary             → cart summary (header badge)
+POST   /{shop-slug}/api/checkout                 → process checkout
+POST   /{shop-slug}/api/auth/login               → login
+POST   /{shop-slug}/api/auth/register            → register
+POST   /{shop-slug}/api/auth/logout              → logout
+POST   /{shop-slug}/api/auth/forgot-password     → send reset link
+POST   /{shop-slug}/api/auth/reset-password      → reset password
+POST   /{shop-slug}/api/auth/verify-email/resend → resend verification
+PATCH  /{shop-slug}/api/account/profile          → update profile
+POST   /{shop-slug}/api/account/orders/{order}/cancel → cancel order
+GET    /{shop-slug}/payment/callback             → Paystack redirect (unchanged)
+POST   /{shop-slug}/payment/webhook              → Paystack webhook (unchanged, CSRF exempt)
+```
+
+The JSON API controller (`StorefrontApiController`) is a thin layer — it reuses the existing `CartService`, `CheckoutService`, and auth logic from the current controllers, but returns JSON instead of Inertia redirects. The existing business logic is untouched.
 
 NOT Inertia routes. Blade views bootstrap standalone React app.
 
@@ -2271,12 +2329,14 @@ app/
 │   ├── StorefrontTemplateCategory.php
 │   ├── StorefrontAnimationTier.php
 │   ├── StorefrontPageType.php
+│   ├── StorefrontThemeCategory.php
 │   └── SectionCategory.php
 ├── Http/
 │   └── Controllers/
 │       ├── Admin/
 │       │   └── StorefrontBuilderController.php
-│       └── StorefrontRenderController.php
+│       ├── StorefrontRenderController.php
+│       └── StorefrontApiController.php
 ├── Models/
 │   ├── StorefrontTemplate.php
 │   ├── StorefrontTheme.php
@@ -2374,9 +2434,33 @@ resources/
     │   │   │   ├── InfiniteScroll.tsx
     │   │   │   └── GridListToggle.tsx
     │   │   └── ... (same pattern for all section types)
+    │   ├── pages/                                (fixed themed pages)
+    │   │   ├── Cart.tsx
+    │   │   ├── Checkout.tsx
+    │   │   ├── CheckoutSuccess.tsx
+    │   │   ├── CheckoutPending.tsx
+    │   │   ├── auth/
+    │   │   │   ├── Login.tsx
+    │   │   │   ├── Register.tsx
+    │   │   │   ├── ForgotPassword.tsx
+    │   │   │   ├── ResetPassword.tsx
+    │   │   │   └── VerifyEmail.tsx
+    │   │   ├── account/
+    │   │   │   ├── Dashboard.tsx
+    │   │   │   ├── Orders.tsx
+    │   │   │   ├── OrderDetail.tsx
+    │   │   │   └── Profile.tsx
+    │   │   └── services/
+    │   │       ├── ServiceListing.tsx
+    │   │       └── ServiceDetail.tsx
     │   ├── components/
     │   │   ├── ProductCard.tsx
     │   │   ├── CartDrawer.tsx
+    │   │   ├── CartItem.tsx
+    │   │   ├── QuantitySelector.tsx
+    │   │   ├── PriceDisplay.tsx
+    │   │   ├── AddressForm.tsx
+    │   │   ├── OrderSummary.tsx
     │   │   ├── SearchBar.tsx
     │   │   ├── QuickViewModal.tsx
     │   │   └── ProductViewer3D.tsx              (premium, lazy-loaded)
@@ -2415,7 +2499,8 @@ resources/
                 │       ├── FaqListField.tsx
                 │       ├── CollectionListField.tsx
                 │       ├── DateTimeField.tsx
-                │       └── VariantSelectorField.tsx
+                │       ├── VariantSelectorField.tsx
+                │       └── SlideListField.tsx
                 └── types/
                     └── builder.ts
 ```
@@ -2427,20 +2512,25 @@ resources/
 ### What Changes
 
 1. **Shop model** gets a `storefrontConfig()` HasOne relationship
-2. **Existing `StorefrontController`** replaced by `StorefrontRenderController`
-3. **Existing `StorefrontService`** methods become data sources called by section resolvers
-4. **Existing `storefront_settings` JSON** superseded by `StorefrontConfig`. Migration copies existing settings.
-5. **Cart and checkout routes** continue working — the builder customizes visual wrapper, not logic
-6. **Customer authentication** (separate Customer guard) unchanged
+2. **All 5 existing storefront controllers** (`StorefrontController`, `CartController`, `CheckoutController`, `CustomerAuthController`, `CustomerPortalController`) are replaced by two new controllers:
+   - `StorefrontRenderController` — ALL page rendering (composable + fixed themed), returns Blade→React
+   - `StorefrontApiController` — ALL mutations (cart CRUD, checkout processing, auth, account updates), returns JSON
+3. **Existing `StorefrontService`** methods become data sources called by section resolvers and fixed page data loaders
+4. **Existing services are reused as-is:** `CartService`, `CheckoutService`, `CustomerService` business logic is unchanged — only the controller layer changes from Inertia responses to Blade views / JSON
+5. **Existing `storefront_settings` JSON** superseded by `StorefrontConfig`. Migration copies existing settings.
+6. **Customer authentication** guard (`auth('customer')`) and `Password::broker('customers')` are unchanged — the API controller reuses the same auth logic
 7. **Vite config** needs second entry point
+8. **All storefront routes** migrate from Inertia to the new Blade→React pipeline. No Inertia pages remain on the public storefront.
 
 ### What Doesn't Change
 
 - Entire admin panel (POS, inventory, payroll, staff, reports)
 - Product, Order, Customer, Payment models and services
 - Multi-tenancy (BelongsToTenant, TenantScope)
-- Payment gateway integrations
-- API routes for cart, sync, etc.
+- Payment gateway integrations (Paystack callback/webhook routes stay as-is)
+- CartService, CheckoutService, CustomerService business logic
+- Customer auth guard configuration
+- API routes for sync, etc.
 
 ### Vite Configuration
 
