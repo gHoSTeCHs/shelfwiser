@@ -14,14 +14,145 @@
 - `app/Services/StorefrontService.php` — data resolution methods become section data resolvers
 - `app/Services/CartService.php` — untouched, used by storefront
 - `app/Services/CheckoutService.php` — untouched
-- `routes/storefront.php` — will be modified to point to new render controller
+- `routes/storefront.php` — storefront home/products/product-detail routes point to new render controller; cart, checkout, customer auth, customer portal routes stay on existing controllers untouched
 - `app/Models/Shop.php` — add storefrontConfig relationship
 - `app/Traits/BelongsToTenant.php` — used by all new tenant-scoped models
 - `app/Scopes/TenantScope.php` — auto-applied via trait
+- `resources/js/components/storefront/` — 14 existing Inertia-based storefront components (ProductCard, CartDrawer, QuantitySelector, PriceDisplay, etc.). The new builder storefront creates its own components at `resources/js/storefront/components/` — these are theme-driven and CSS-variable-based, structurally different from the existing Inertia components. The old components remain in use for the transition period until the builder storefront fully replaces the Inertia storefront.
+- `resources/js/pages/Storefront/` — 14 existing Inertia page components. These stay for cart, checkout, auth, and account pages during the transition.
 
-**Key dependencies already installed:** `framer-motion`, `react-dnd`, `@radix-ui/*`, `lucide-react`, `zod`, `tiptap`
+**Key dependencies already installed:** `framer-motion`, `react-dnd`, `@radix-ui/*`, `lucide-react`, `zod`
 
-**Note:** `@dnd-kit/core` is NOT installed — `react-dnd` is. Either install dnd-kit or adapt to use react-dnd. The spec calls for dnd-kit — install it in Task 10.
+**Dependencies to install during implementation:**
+- `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` — drag-and-drop for builder (Task 14)
+- `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-link` — rich text editor for builder config fields (Task 14)
+
+**Spec divergences:**
+- The spec defines all model PKs as `uuid`. The codebase uses auto-incrementing integer PKs exclusively. This plan uses integer PKs to match the codebase.
+- The spec does not address services (haircuts, repairs). The current storefront supports services alongside products. Service support in the builder is deferred to a future stage.
+
+**Route transition strategy:**
+The existing `routes/storefront.php` has 30+ routes on 5 controllers (StorefrontController, CartController, CheckoutController, CustomerAuthController, CustomerPortalController). The builder replaces **only** the page-rendering routes (home, products, product detail) by swapping StorefrontController for StorefrontRenderController. All other routes (cart CRUD, checkout, customer auth, customer portal) stay on their existing controllers unchanged. Service routes (`/services`, `/services/{slug}`) remain on StorefrontController until services are added to the builder in a future stage.
+
+---
+
+## Chunk 0: Prerequisites
+
+### Task 0: Populate Prerequisite Factories
+
+**Files:**
+- Modify: `database/factories/TenantFactory.php`
+- Modify: `database/factories/ShopFactory.php`
+- Modify: `database/factories/UserFactory.php` — add `tenant_id` and `role` defaults
+- Create: `database/factories/ProductFactory.php`
+- Create: `database/factories/ProductVariantFactory.php`
+
+**Why:** Every feature test in this plan calls `Tenant::factory()->create()`, `Shop::factory()->create()`, `User::factory()->create()`, and `Product::factory()->create()`. Currently, `TenantFactory` and `ShopFactory` have **empty** `definition()` methods, `UserFactory` is missing `tenant_id`/`role` defaults, and `ProductFactory` does not exist. All tests will fail at factory creation without this.
+
+- [ ] **Step 1: Populate TenantFactory**
+
+```php
+public function definition(): array
+{
+    return [
+        'name' => fake()->company(),
+        'slug' => fake()->unique()->slug(),
+        'owner_email' => fake()->unique()->safeEmail(),
+        'business_type' => fake()->randomElement(['retail', 'wholesale', 'services']),
+        'phone' => fake()->phoneNumber(),
+        'is_active' => true,
+        'subscription_plan' => 'standard',
+        'max_shops' => 5,
+        'max_users' => 20,
+        'max_products' => 500,
+    ];
+}
+```
+
+- [ ] **Step 2: Populate ShopFactory**
+
+```php
+public function definition(): array
+{
+    return [
+        'tenant_id' => Tenant::factory(),
+        'shop_type_id' => ShopType::factory(),
+        'name' => fake()->company() . ' Store',
+        'slug' => fake()->unique()->slug(),
+        'is_active' => true,
+        'storefront_enabled' => false,
+        'currency' => 'NGN',
+        'currency_symbol' => '₦',
+        'currency_decimals' => 2,
+        'vat_enabled' => false,
+        'vat_rate' => 0,
+        'vat_inclusive' => false,
+    ];
+}
+```
+
+Check if `ShopType::factory()` needs populating too. If ShopTypeFactory is empty, populate it with: `['tenant_id' => Tenant::factory(), 'label' => fake()->word(), 'slug' => fake()->unique()->slug(), 'is_active' => true]`.
+
+- [ ] **Step 3: Add defaults to UserFactory**
+
+Add `tenant_id` and `role` to UserFactory's `definition()`:
+
+```php
+'tenant_id' => Tenant::factory(),
+'role' => UserRole::OWNER,
+'is_active' => true,
+```
+
+- [ ] **Step 4: Create ProductFactory**
+
+```bash
+php artisan make:factory ProductFactory
+```
+
+```php
+public function definition(): array
+{
+    return [
+        'tenant_id' => Tenant::factory(),
+        'shop_id' => Shop::factory(),
+        'name' => fake()->words(3, true),
+        'slug' => fake()->unique()->slug(),
+        'description' => fake()->sentence(),
+        'is_active' => true,
+        'is_featured' => false,
+        'has_variants' => false,
+        'track_stock' => true,
+        'is_taxable' => false,
+        'display_order' => 0,
+    ];
+}
+
+public function featured(): static
+{
+    return $this->state(['is_featured' => true]);
+}
+```
+
+- [ ] **Step 5: Create ProductVariantFactory**
+
+```bash
+php artisan make:factory ProductVariantFactory
+```
+
+Populate with: `product_id`, `tenant_id`, `name`, `sku` (unique), `price`, `cost_price`, `stock_quantity`, `is_available_online`. Check the ProductVariant model's fillable for exact columns.
+
+- [ ] **Step 6: Run existing tests to verify factories don't break anything**
+
+Run: `php artisan test --compact`
+
+If any existing tests relied on the empty factories (unlikely but possible), fix them.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add database/factories/
+git commit -m "chore: populate Tenant, Shop, User, Product, and ProductVariant factories for storefront tests"
+```
 
 ---
 
@@ -436,7 +567,7 @@ public function storefrontConfig(): HasOne
 
 Create: `database/factories/StorefrontTemplateFactory.php`, `StorefrontThemeFactory.php`, `StorefrontConfigFactory.php`, `StorefrontPageFactory.php`, `StorefrontMediaFactory.php`
 
-Each factory should produce realistic default data. Theme factory should include a minimal but valid `theme_config` JSON. Template factory should include valid `structural_config`. Page factory should default `page_type` to `StorefrontPageType::Home` and `sections` to an empty array.
+Each factory should produce realistic default data. Theme factory should include a minimal but valid `theme_config` JSON. Template factory should include valid `structural_config`. Page factory should default `page_type` to `StorefrontPageType::HOME` and `sections` to an empty array.
 
 - [ ] **Step 10: Run tests — expect PASS**
 
@@ -514,16 +645,16 @@ it('filters sections by page type', function () {
 
     $hero = mock(StorefrontSectionInterface::class);
     $hero->shouldReceive('type')->andReturn('hero_banner');
-    $hero->shouldReceive('allowedPageTypes')->andReturn([StorefrontPageType::Home, StorefrontPageType::About]);
+    $hero->shouldReceive('allowedPageTypes')->andReturn([StorefrontPageType::HOME, StorefrontPageType::ABOUT]);
 
     $grid = mock(StorefrontSectionInterface::class);
     $grid->shouldReceive('type')->andReturn('product_grid');
-    $grid->shouldReceive('allowedPageTypes')->andReturn([StorefrontPageType::Products]);
+    $grid->shouldReceive('allowedPageTypes')->andReturn([StorefrontPageType::PRODUCTS]);
 
     $registry->register($hero);
     $registry->register($grid);
 
-    $forHome = $registry->forPageType(StorefrontPageType::Home);
+    $forHome = $registry->forPageType(StorefrontPageType::HOME);
     expect($forHome)->toHaveCount(1);
     expect($forHome[0]->type())->toBe('hero_banner');
 });
@@ -846,7 +977,7 @@ it('renders home page with complete page payload', function () {
         'tenant_id' => $tenant->id,
         'shop_id' => $shop->id,
         'storefront_config_id' => $config->id,
-        'page_type' => StorefrontPageType::Home,
+        'page_type' => StorefrontPageType::HOME,
         'title' => 'Home',
         'sections' => [],
     ]);
@@ -883,7 +1014,7 @@ it('returns 404 for unpublished storefront', function () {
 
 - [ ] **Step 3: Create StorefrontRenderController**
 
-Methods: `home()`, `products()`, `productDetail()`, `page()`, `cart()`, `checkout()`. Each resolves the shop, loads config/theme, calls `StorefrontRenderService::buildPage()`, returns Blade view with page data.
+Methods: `home()`, `products()`, `productDetail()`, `page()`. Each resolves the shop, loads config/theme, calls `StorefrontRenderService::buildPage()`, returns Blade view with page data. Cart and checkout are NOT in this controller — they stay on the existing CartController and CheckoutController (Inertia-based).
 
 Add `is_published` check — abort 404 if config not published (unless previewing from builder with admin auth).
 
@@ -904,17 +1035,17 @@ class StorefrontRenderController extends Controller
 
     public function home(Shop $shop)
     {
-        return $this->renderPage($shop, StorefrontPageType::Home);
+        return $this->renderPage($shop, StorefrontPageType::HOME);
     }
 
     public function products(Shop $shop)
     {
-        return $this->renderPage($shop, StorefrontPageType::Products);
+        return $this->renderPage($shop, StorefrontPageType::PRODUCTS);
     }
 
     public function productDetail(Shop $shop, string $slug)
     {
-        return $this->renderPage($shop, StorefrontPageType::ProductDetail, $slug);
+        return $this->renderPage($shop, StorefrontPageType::PRODUCT_DETAIL, $slug);
     }
 
     private function renderPage(Shop $shop, StorefrontPageType $pageType, ?string $slug = null)
@@ -943,11 +1074,32 @@ In `vite.config.ts`, add `'resources/js/storefront/app.tsx'` to the `input` arra
 
 - [ ] **Step 6: Add routes**
 
-In `routes/storefront.php`, add new routes pointing to `StorefrontRenderController`. Keep existing routes as fallback during transition. New routes take priority (register first or use specific path prefix).
+In `routes/storefront.php`, swap **only** the page-rendering routes from `StorefrontController` to `StorefrontRenderController`. The new render controller handles the home page, products listing, and product detail. Everything else stays as-is.
 
-**IMPORTANT:** The existing storefront routes use `->middleware('storefront.enabled')` to guard against shops with storefront disabled. All new render routes MUST also be wrapped in this middleware. Match the existing route group pattern in `routes/storefront.php`.
+**IMPORTANT:** Keep all routes inside the existing `Route::prefix('store/{shop:slug}')->middleware('storefront.enabled')` group.
 
-**Note:** Determine route strategy with existing routes — the new controller can share the same route patterns if we swap the controller reference. For now, register the new controller on the existing `store/{shop:slug}` routes.
+**Specific changes to `routes/storefront.php`:**
+```php
+use App\Http\Controllers\StorefrontRenderController;
+
+// REPLACE these 3 routes (lines 21-25):
+//   Route::get('/', [StorefrontController::class, 'index'])->name('index');
+//   Route::get('/products', [StorefrontController::class, 'products'])->name('products');
+//   Route::get('/products/{product:slug}', [StorefrontController::class, 'show'])->name('product');
+// WITH:
+Route::get('/', [StorefrontRenderController::class, 'home'])->name('index');
+Route::get('/products', [StorefrontRenderController::class, 'products'])->name('products');
+Route::get('/products/{product:slug}', [StorefrontRenderController::class, 'productDetail'])->name('product');
+
+// KEEP all other routes unchanged:
+// - /services, /services/{service:slug} → StorefrontController (until services added to builder)
+// - /cart, /cart/* → CartController
+// - /login, /register, /forgot-password → CustomerAuthController
+// - /checkout, /checkout/* → CheckoutController
+// - /account/* → CustomerPortalController
+```
+
+**Fallback:** If a shop has a published `StorefrontConfig`, the new render controller serves theme-driven pages. If not, the render controller returns 404 (the old Inertia storefront is removed for these routes — shops must set up the builder to have a storefront). If a gradual rollout is needed, add a check: if `StorefrontConfig` exists, use builder; else, fall through to old controller. But the simpler approach is to require builder setup.
 
 - [ ] **Step 7: Run tests — expect PASS**
 
@@ -1399,7 +1551,7 @@ Each subagent should use `/frontend-design` skill and register their sections in
 
 - [ ] **Step 1: Implement Hero Banner section with all Classic Commerce variants**
 
-Variants for Classic Commerce: `centered_overlay`, `split_image`, `slideshow`, `minimal_text`, `video_background`, `parallax`. Each must be responsive, use CSS variables, and respect config props. Implement all variants defined in the spec for each section — the full variant list per section is in `docs/STOREFRONT_SYSTEM_OVERHAUL.md` § Section Types.
+Variants for Classic Commerce (subtle animation tier): `centered_overlay`, `split_image`, `slideshow`, `minimal_text`, `video_background`. Each must be responsive, use CSS variables, and respect config props. The `parallax` hero variant requires polished+ tier and is NOT built for Classic Commerce — it will be added when a polished-tier template is implemented. Implement all tier-compatible variants per section — the full variant list is in `docs/STOREFRONT_SYSTEM_OVERHAUL.md` § Section Types.
 
 - [ ] **Step 2: Implement Featured Products section with variants**
 
@@ -1658,7 +1810,7 @@ Create: `app/Http/Resources/StorefrontConfigResource.php`, `StorefrontPageResour
 In `routes/web.php`, under admin middleware group:
 
 ```php
-Route::prefix('admin/storefront')->middleware(['auth:web'])->group(function () {
+Route::prefix('admin/storefront')->middleware(['auth', 'verified'])->group(function () {
     Route::get('/builder/{shop}', [StorefrontBuilderController::class, 'index'])->name('admin.storefront.builder');
     Route::get('/builder/{shop}/data', [StorefrontBuilderController::class, 'getBuilderData'])->name('admin.storefront.builder.data');
     Route::post('/builder/{shop}/theme', [StorefrontBuilderController::class, 'selectTheme'])->name('admin.storefront.builder.theme');
@@ -1948,25 +2100,26 @@ git commit -m "test(storefront): add E2E smoke test for complete builder flow"
 
 | Task | Description | Dependencies | Parallelizable |
 |------|-------------|-------------|----------------|
-| 1 | Enums | None | Yes |
-| 2 | Migrations | None | Yes (with Task 1) |
-| 3 | Models & Factories | Tasks 1, 2 | No |
+| 0 | Populate prerequisite factories | None | First |
+| 1 | Enums | Task 0 | Yes |
+| 2 | Migrations | Task 0 | Yes (with Task 1) |
+| 3 | Models & Storefront Factories | Tasks 1, 2 | No |
 | 4 | Interface & Registry | Task 1 | Yes (with Task 3) |
 | 5 | Section PHP Classes | Tasks 3, 4 | No |
 | 6 | RenderService | Tasks 3, 4, 5 | No |
 | 7 | RenderController + Blade + Routes | Task 6 | No |
 | 8 | TypeScript Types + React Entry | None | Yes (with Tasks 1-7) |
-| 9 | ThemeProvider | Task 8 | No |
+| 9 | ThemeProvider + AnimationProvider | Task 8 | No |
 | 10 | Classic Commerce Layout + Components | Task 9 | No |
 | 11 | Section React Components | Tasks 9, 10 | **Split across 3 subagents** |
 | 12 | BuilderService | Tasks 3, 5 | Yes (with Tasks 8-11) |
-| 13 | BuilderController + FormRequests | Task 12 | No |
+| 13 | BuilderController + FormRequests + Resources | Task 12 | No |
 | 14 | Builder Frontend | Tasks 8, 13 | **Split across 4 subagents** |
 | 15 | Seed Classic Commerce | Tasks 2, 3 | Yes (with Tasks 4-14) |
 | 16 | Caching | Tasks 6, 12 | No |
 | 17 | Media Management | Task 3 | Yes (with most tasks) |
 | 18 | E2E Smoke Test | All above | No |
 
-**Critical path:** Tasks 1→2→3→4→5→6→7 (backend pipeline) and Tasks 8→9→10→11 (frontend pipeline) can run in parallel after Task 3.
+**Critical path:** Task 0 first, then Tasks 1→2→3→4→5→6→7 (backend pipeline) and Tasks 8→9→10→11 (frontend pipeline) can run in parallel after Task 3.
 
-**Estimated commit count:** 18 commits across the implementation.
+**Estimated commit count:** 19 commits across the implementation.
