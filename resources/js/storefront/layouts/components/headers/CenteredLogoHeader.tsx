@@ -66,7 +66,7 @@ export function CenteredLogoHeader({
                         {leftNav.map((item) => (
                             <a
                                 key={item.slug}
-                                href={`/store/${shop.slug}/${item.page_type === 'HOME' ? '' : item.slug}`}
+                                href={`/store/${shop.slug}/${item.page_type === 'home' ? '' : item.slug}`}
                                 className="text-sm font-medium transition-colors"
                                 style={{ color: 'var(--color-text, #1a1a1a)' }}
                                 onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-primary, #e94560)')}
@@ -96,7 +96,7 @@ export function CenteredLogoHeader({
                             {rightNav.map((item) => (
                                 <a
                                     key={item.slug}
-                                    href={`/store/${shop.slug}/${item.page_type === 'HOME' ? '' : item.slug}`}
+                                    href={`/store/${shop.slug}/${item.page_type === 'home' ? '' : item.slug}`}
                                     className="text-sm font-medium transition-colors"
                                     style={{ color: 'var(--color-text, #1a1a1a)' }}
                                     onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-primary, #e94560)')}
@@ -235,7 +235,7 @@ export function CenteredLogoHeader({
                     {navItems.map((item) => (
                         <a
                             key={item.slug}
-                            href={`/store/${shop.slug}/${item.page_type === 'HOME' ? '' : item.slug}`}
+                            href={`/store/${shop.slug}/${item.page_type === 'home' ? '' : item.slug}`}
                             className="block py-3 text-base font-medium"
                             style={{ color: 'var(--color-text, #1a1a1a)', borderBottom: '1px solid var(--color-border, #f0f0f0)' }}
                         >

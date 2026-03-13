@@ -69,14 +69,21 @@ class POSService
                 ->get()
                 ->keyBy('product_variant_id');
 
-            $itemQuantities = collect($items)->keyBy('variant_id');
             foreach ($items as $item) {
                 $variant = $variants->get($item['variant_id']);
                 if (! $variant) {
                     throw new \Exception("Product variant {$item['variant_id']} not found");
                 }
 
-                $this->validateStockAvailability($variant, $item['quantity'], $shop->id);
+                if ($variant->product->track_stock ?? true) {
+                    $location = $locations->get($variant->id);
+                    $available = $location ? $location->available_quantity : 0;
+                    if ($available < $item['quantity']) {
+                        throw new \Exception(
+                            "Insufficient stock for {$variant->sku}. Available: {$available}, Requested: {$item['quantity']}"
+                        );
+                    }
+                }
             }
 
             $subtotal = 0;
@@ -108,9 +115,9 @@ class POSService
             foreach ($items as $item) {
                 $variant = $variants->get($item['variant_id']);
                 $quantity = $item['quantity'];
-                $unitPrice = $item['unit_price'] ?? $variant->price;
+                $unitPrice = $variant->price;
                 $lineTotal = $unitPrice * $quantity;
-                $lineDiscount = $item['discount_amount'] ?? 0;
+                $lineDiscount = max(0, min($item['discount_amount'] ?? 0, $unitPrice * $quantity));
                 $taxableAmount = $lineTotal - $lineDiscount;
 
                 $lineTax = 0;

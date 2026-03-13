@@ -102,7 +102,7 @@ export function SplitLayout({ config, data }: SectionProps) {
 
         try {
             const slug = shopSlug || contactData.shop_slug || '';
-            const result = await storefrontFetch(`/${slug}/api/contact`, {
+            const result = await storefrontFetch(`/store/${slug}/api/contact`, {
                 method: 'POST',
                 json: {
                     name: formData.name,

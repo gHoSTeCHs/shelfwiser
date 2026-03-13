@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Storefront;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Storefront\ProcessCheckoutRequest;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\Shop;
@@ -14,7 +15,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -53,7 +53,7 @@ class CheckoutController extends Controller
             ->unique();
 
         if ($productVariantIds->isNotEmpty()) {
-            $variants = ProductVariant::whereIn('id', $productVariantIds)
+            $variants = ProductVariant::query()->whereIn('id', $productVariantIds)
                 ->with('inventoryLocations')
                 ->get()
                 ->keyBy('id');
@@ -111,7 +111,7 @@ class CheckoutController extends Controller
     /**
      * Process checkout request and create order.
      */
-    public function process(Request $request, Shop $shop): RedirectResponse
+    public function process(ProcessCheckoutRequest $request, Shop $shop): RedirectResponse
     {
         $customer = auth('customer')->user();
 
@@ -119,33 +119,13 @@ class CheckoutController extends Controller
             return redirect()->route('storefront.login', $shop->slug);
         }
 
-        $validated = $request->validate([
-            'shipping_address' => ['required', 'array'],
-            'shipping_address.first_name' => ['required', 'string', 'max:255'],
-            'shipping_address.last_name' => ['required', 'string', 'max:255'],
-            'shipping_address.phone' => ['required', 'string', 'max:50'],
-            'shipping_address.address_line_1' => ['required', 'string', 'max:255'],
-            'shipping_address.address_line_2' => ['nullable', 'string', 'max:255'],
-            'shipping_address.city' => ['required', 'string', 'max:100'],
-            'shipping_address.state' => ['required', 'string', 'max:100'],
-            'shipping_address.postal_code' => ['nullable', 'string', 'max:20'],
-            'shipping_address.country' => ['required', 'string', 'max:100'],
-
-            'billing_same_as_shipping' => ['required', 'boolean'],
-            'billing_address' => ['required_if:billing_same_as_shipping,false', 'array'],
-
-            'payment_method' => ['required', 'string', Rule::in(PaymentMethod::storefrontValues())],
-            'payment_reference' => ['nullable', 'string', 'max:255'],
-            'idempotency_key' => ['nullable', 'string', 'max:255'],
-            'customer_notes' => ['nullable', 'string', 'max:500'],
-            'save_addresses' => ['boolean'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $idempotencyKey = $validated['idempotency_key'] ?? null;
 
             if ($idempotencyKey) {
-                $existingOrder = Order::where('offline_id', $idempotencyKey)
+                $existingOrder = Order::query()->where('offline_id', $idempotencyKey)
                     ->where('shop_id', $shop->id)
                     ->where('customer_id', $customer->id)
                     ->first();
@@ -293,7 +273,7 @@ class CheckoutController extends Controller
         try {
             $order = $this->checkoutService->verifyPaystackPayment($paymentReference, $shop);
 
-            if ($order && $order->payment_status === PaymentStatus::PAID->value) {
+            if ($order && $order->payment_status === PaymentStatus::PAID) {
                 return redirect()
                     ->route('storefront.checkout.success', [$shop->slug, $order])
                     ->with('success', 'Payment successful! Your order has been confirmed.');

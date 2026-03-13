@@ -16,33 +16,35 @@ class CustomerCreditService
      */
     public function chargeOrder(Customer $customer, Order $order): CustomerCreditTransaction
     {
-        if (! $customer->canPurchaseOnCredit($order->total_amount)) {
-            $available = $customer->availableCredit();
-            throw new \Exception(
-                $available !== null
-                    ? 'Credit limit exceeded. Available credit: ₦'.number_format($available, 2)
-                    : 'Cannot charge order to credit'
-            );
-        }
-
         return DB::transaction(function () use ($customer, $order) {
+            $lockedCustomer = Customer::query()->where('id', $customer->id)->lockForUpdate()->first();
+
+            if (! $lockedCustomer->canPurchaseOnCredit($order->total_amount)) {
+                $available = $lockedCustomer->availableCredit();
+                throw new \Exception(
+                    $available !== null
+                        ? 'Credit limit exceeded. Available credit: ₦'.number_format($available, 2)
+                        : 'Cannot charge order to credit'
+                );
+            }
+
             $transaction = CustomerCreditTransaction::create([
-                'customer_id' => $customer->id,
+                'customer_id' => $lockedCustomer->id,
                 'order_id' => $order->id,
-                'tenant_id' => $customer->tenant_id,
+                'tenant_id' => $lockedCustomer->tenant_id,
                 'shop_id' => $order->shop_id,
                 'type' => 'charge',
                 'amount' => $order->total_amount,
-                'balance_before' => $customer->account_balance,
-                'balance_after' => $customer->account_balance + $order->total_amount,
+                'balance_before' => $lockedCustomer->account_balance,
+                'balance_after' => $lockedCustomer->account_balance + $order->total_amount,
                 'description' => "Order {$order->order_number} charged to account",
                 'recorded_by' => auth()->id(),
             ]);
 
-            $customer->account_balance += $order->total_amount;
-            $customer->total_purchases += $order->total_amount;
-            $customer->last_purchase_at = now();
-            $customer->save();
+            $lockedCustomer->account_balance += $order->total_amount;
+            $lockedCustomer->total_purchases += $order->total_amount;
+            $lockedCustomer->last_purchase_at = now();
+            $lockedCustomer->save();
 
             return $transaction;
         });
@@ -60,24 +62,26 @@ class CustomerCreditService
         ?string $notes = null
     ): CustomerCreditTransaction {
         return DB::transaction(function () use ($customer, $amount, $paymentMethod, $shop, $referenceNumber, $notes) {
+            $lockedCustomer = Customer::query()->where('id', $customer->id)->lockForUpdate()->first();
+
             $transaction = CustomerCreditTransaction::create([
-                'customer_id' => $customer->id,
-                'tenant_id' => $customer->tenant_id,
+                'customer_id' => $lockedCustomer->id,
+                'tenant_id' => $lockedCustomer->tenant_id,
                 'shop_id' => $shop?->id,
                 'type' => 'payment',
                 'amount' => $amount,
-                'balance_before' => $customer->account_balance,
-                'balance_after' => max(0, $customer->account_balance - $amount),
+                'balance_before' => $lockedCustomer->account_balance,
+                'balance_after' => max(0, $lockedCustomer->account_balance - $amount),
                 'description' => "Payment received via {$paymentMethod}",
                 'reference_number' => $referenceNumber,
                 'notes' => $notes,
                 'recorded_by' => auth()->id(),
             ]);
 
-            $customer->account_balance = max(0, $customer->account_balance - $amount);
-            $customer->save();
+            $lockedCustomer->account_balance = max(0, $lockedCustomer->account_balance - $amount);
+            $lockedCustomer->save();
 
-            $this->applyPaymentToOrders($customer, $amount);
+            $this->applyPaymentToOrders($lockedCustomer, $amount);
 
             return $transaction;
         });

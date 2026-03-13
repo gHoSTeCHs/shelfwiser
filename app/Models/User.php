@@ -32,7 +32,6 @@ class User extends Authenticatable
         'email',
         'tenant_id',
         'is_tenant_owner',
-        'is_super_admin',
         'role',
         'is_active',
         'onboarding_status',

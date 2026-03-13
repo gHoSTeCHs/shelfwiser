@@ -5,12 +5,15 @@ namespace Database\Factories;
 use App\Models\Shop;
 use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Customer>
  */
 class CustomerFactory extends Factory
 {
+    protected static ?string $password;
+
     public function definition(): array
     {
         return [
@@ -20,11 +23,11 @@ class CustomerFactory extends Factory
             'last_name' => fake()->lastName(),
             'email' => fake()->unique()->safeEmail(),
             'phone' => fake()->phoneNumber(),
-            'password' => 'password',
+            'password' => static::$password ??= Hash::make('password'),
             'is_active' => true,
             'marketing_opt_in' => false,
             'account_balance' => 0,
-            'credit_limit' => 0,
+            'credit_limit' => null,
             'total_purchases' => 0,
         ];
     }

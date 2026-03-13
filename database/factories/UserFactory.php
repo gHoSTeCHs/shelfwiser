@@ -33,6 +33,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'role' => UserRole::OWNER,
+            'is_tenant_owner' => true,
             'is_active' => true,
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,

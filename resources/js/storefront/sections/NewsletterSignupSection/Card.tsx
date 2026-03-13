@@ -22,7 +22,7 @@ export function Card({ heading, subheading, placeholder, button_text, shop_slug 
         setStatus('loading');
         setErrorMessage('');
 
-        const result = await storefrontFetch(`/${shop_slug}/api/newsletter`, {
+        const result = await storefrontFetch(`/store/${shop_slug}/api/newsletter`, {
             method: 'POST',
             json: { email },
         });

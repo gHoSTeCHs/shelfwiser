@@ -28,9 +28,7 @@ use Throwable;
 
 class StockMovementController extends Controller
 {
-    public function __construct(private readonly StockMovementService $stockMovementService)
-    {
-    }
+    public function __construct(private readonly StockMovementService $stockMovementService) {}
 
     /**
      * @throws AuthorizationException
@@ -104,9 +102,15 @@ class StockMovementController extends Controller
 
     public function adjustStock(AdjustStockRequest $request): RedirectResponse|JsonResponse
     {
+        Gate::authorize('adjustStock', StockMovement::class);
+
+        $location = InventoryLocation::query()->findOrFail($request->input('inventory_location_id'));
+        if (! $request->user()->shops()->where('shops.id', $location->shop_id)->exists()) {
+            abort(403, 'You do not have access to this shop\'s inventory.');
+        }
+
         try {
             $variant = ProductVariant::query()->findOrFail($request->input('product_variant_id'));
-            $location = InventoryLocation::query()->findOrFail($request->input('inventory_location_id'));
             $type = StockMovementType::from($request->input('type'));
 
             $movement = $this->stockMovementService->adjustStock(
@@ -145,10 +149,18 @@ class StockMovementController extends Controller
      */
     public function transferStock(TransferStockRequest $request): RedirectResponse|JsonResponse
     {
+        Gate::authorize('transferStock', StockMovement::class);
+
+        $fromLocation = InventoryLocation::query()->findOrFail($request->input('from_location_id'));
+        $toLocation = InventoryLocation::query()->findOrFail($request->input('to_location_id'));
+
+        $userShops = $request->user()->shops()->pluck('shops.id');
+        if (! $userShops->contains($fromLocation->shop_id) || ! $userShops->contains($toLocation->shop_id)) {
+            abort(403, 'You do not have access to this shop\'s inventory.');
+        }
+
         try {
             $variant = ProductVariant::query()->findOrFail($request->input('product_variant_id'));
-            $fromLocation = InventoryLocation::query()->findOrFail($request->input('from_location_id'));
-            $toLocation = InventoryLocation::query()->findOrFail($request->input('to_location_id'));
 
             $movements = $this->stockMovementService->transferStock(
                 variant: $variant,
@@ -189,9 +201,15 @@ class StockMovementController extends Controller
      */
     public function stockTake(StockTakeRequest $request): RedirectResponse|JsonResponse
     {
+        Gate::authorize('stockTake', StockMovement::class);
+
+        $location = InventoryLocation::query()->findOrFail($request->input('inventory_location_id'));
+        if (! $request->user()->shops()->where('shops.id', $location->shop_id)->exists()) {
+            abort(403, 'You do not have access to this shop\'s inventory.');
+        }
+
         try {
             $variant = ProductVariant::query()->findOrFail($request->input('product_variant_id'));
-            $location = InventoryLocation::query()->findOrFail($request->input('inventory_location_id'));
 
             $movement = $this->stockMovementService->stockTake(
                 variant: $variant,
@@ -318,7 +336,7 @@ class StockMovementController extends Controller
                 ->with('success', 'Inventory locations setup successfully.');
         } catch (Exception $e) {
             return Redirect::back()
-                ->with('error', 'Failed to setup inventory locations: ' . $e->getMessage());
+                ->with('error', 'Failed to setup inventory locations: '.$e->getMessage());
         }
     }
 
@@ -345,7 +363,7 @@ class StockMovementController extends Controller
 
         $movements = $query->get();
 
-        $filename = 'stock-movements-' . now()->format('Y-m-d-His') . '.csv';
+        $filename = 'stock-movements-'.now()->format('Y-m-d-His').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',

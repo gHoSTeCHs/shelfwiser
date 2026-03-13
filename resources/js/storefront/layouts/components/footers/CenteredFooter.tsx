@@ -34,7 +34,7 @@ export function CenteredFooter({ shop, navigation }: CenteredFooterProps) {
                     {navigation.items.map((item) => (
                         <a
                             key={item.slug}
-                            href={`/store/${shop.slug}/${item.page_type === 'HOME' ? '' : item.slug}`}
+                            href={`/store/${shop.slug}/${item.page_type === 'home' ? '' : item.slug}`}
                             className="text-sm transition-opacity hover:opacity-100"
                             style={{ opacity: 0.7 }}
                         >

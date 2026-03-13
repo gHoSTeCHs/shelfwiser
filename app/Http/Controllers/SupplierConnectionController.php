@@ -56,6 +56,8 @@ class SupplierConnectionController extends Controller
 
     public function store(RequestConnectionRequest $request, Tenant $supplierTenant): RedirectResponse
     {
+        Gate::authorize('create', [SupplierConnection::class, $supplierTenant]);
+
         $this->connectionService->requestConnection(
             auth()->user()->tenant,
             $supplierTenant,

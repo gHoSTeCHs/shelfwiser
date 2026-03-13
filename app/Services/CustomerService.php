@@ -26,7 +26,7 @@ class CustomerService
             ->with(['preferredShop:id,name,slug'])
             ->withCount(['orders', 'addresses']);
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
@@ -36,12 +36,12 @@ class CustomerService
             });
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $isActive = $filters['status'] === 'active';
             $query->where('is_active', $isActive);
         }
 
-        if (!empty($filters['has_credit'])) {
+        if (! empty($filters['has_credit'])) {
             if ($filters['has_credit'] === 'yes') {
                 $query->whereNotNull('credit_limit')->where('credit_limit', '>', 0);
             } else {
@@ -51,7 +51,7 @@ class CustomerService
             }
         }
 
-        if (!empty($filters['shop_id'])) {
+        if (! empty($filters['shop_id'])) {
             $query->where('preferred_shop_id', $filters['shop_id']);
         }
 
@@ -110,12 +110,12 @@ class CustomerService
                     'password' => Hash::make($data['password']),
                     'is_active' => $data['is_active'] ?? true,
                     'marketing_opt_in' => $data['marketing_opt_in'] ?? false,
-                    'credit_limit' => !empty($data['credit_limit']) ? $data['credit_limit'] : null,
+                    'credit_limit' => ! empty($data['credit_limit']) ? $data['credit_limit'] : null,
                     'account_balance' => 0,
                     'total_purchases' => 0,
                 ]);
 
-                if (!empty($data['address'])) {
+                if (! empty($data['address'])) {
                     $this->createAddress($customer, $data['address']);
                 }
 
@@ -159,12 +159,12 @@ class CustomerService
                 }
 
                 if (array_key_exists('credit_limit', $data)) {
-                    $updateData['credit_limit'] = !empty($data['credit_limit']) ? $data['credit_limit'] : null;
+                    $updateData['credit_limit'] = ! empty($data['credit_limit']) ? $data['credit_limit'] : null;
                 }
 
                 $customer->update($updateData);
 
-                if (!empty($data['address'])) {
+                if (! empty($data['address'])) {
                     $this->updateOrCreatePrimaryAddress($customer, $data['address']);
                 }
 
@@ -195,12 +195,14 @@ class CustomerService
             $this->invalidateCustomerCache($customer);
 
             Log::info('Customer deleted successfully.', ['customer_id' => $customer->id]);
+
             return true;
         } catch (Throwable $e) {
             Log::error('Customer deletion failed.', [
                 'customer_id' => $customer->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -280,7 +282,7 @@ class CustomerService
             'last_name' => $uniqueId,
             'email' => "customer_{$timestamp}@{$tenant->slug}.local",
             'phone' => '',
-            'password' => 'password',
+            'password' => Str::random(16),
             'address' => [
                 'street' => 'Address pending update',
                 'city' => 'City',
@@ -324,6 +326,7 @@ class CustomerService
                 'state' => $addressData['state'],
                 'postal_code' => $addressData['postal_code'],
             ]);
+
             return $primaryAddress;
         }
 

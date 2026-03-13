@@ -16,9 +16,7 @@ use Inertia\Response;
 
 class SupplierCatalogController extends Controller
 {
-    public function __construct(private readonly SupplierService $supplierService)
-    {
-    }
+    public function __construct(private readonly SupplierService $supplierService) {}
 
     public function index(): Response
     {
@@ -55,6 +53,8 @@ class SupplierCatalogController extends Controller
 
     public function store(AddToCatalogRequest $request): RedirectResponse
     {
+        Gate::authorize('catalog.manage', auth()->user()->tenant);
+
         $product = Product::findOrFail($request->input('product_id'));
 
         $this->supplierService->addToCatalog(
@@ -71,6 +71,10 @@ class SupplierCatalogController extends Controller
     {
         Gate::authorize('catalog.manage', auth()->user()->tenant);
 
+        if ($catalogItem->supplier_tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
+
         $catalogItem->load(['product.variants', 'pricingTiers']);
 
         return Inertia::render('Supplier/Catalog/Edit', [
@@ -80,6 +84,12 @@ class SupplierCatalogController extends Controller
 
     public function update(AddToCatalogRequest $request, SupplierCatalogItem $catalogItem): RedirectResponse
     {
+        Gate::authorize('catalog.manage', auth()->user()->tenant);
+
+        if ($catalogItem->supplier_tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
+
         $this->supplierService->updateCatalogItem($catalogItem, $request->validated());
 
         return Redirect::route('supplier.catalog.index')
@@ -89,6 +99,10 @@ class SupplierCatalogController extends Controller
     public function destroy(SupplierCatalogItem $catalogItem): RedirectResponse
     {
         Gate::authorize('catalog.manage', auth()->user()->tenant);
+
+        if ($catalogItem->supplier_tenant_id !== auth()->user()->tenant_id) {
+            abort(403);
+        }
 
         $this->supplierService->removeFromCatalog($catalogItem);
 

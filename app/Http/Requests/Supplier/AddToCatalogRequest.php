@@ -3,16 +3,14 @@
 namespace App\Http\Requests\Supplier;
 
 use App\Enums\CatalogVisibility;
-use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class AddToCatalogRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Gate::allows('manageCatalog', auth()->user()->tenant);
+        return true;
     }
 
     public function rules(): array

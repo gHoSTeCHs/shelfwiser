@@ -94,6 +94,11 @@ class HeldSaleService
             throw new \Exception('This held sale has already been retrieved.');
         }
 
+        if ($heldSale->isExpired()) {
+            $this->deleteHeldSale($heldSale);
+            throw new \Exception('This held sale has expired and the reserved stock has been released.');
+        }
+
         $heldSale->update([
             'retrieved_at' => now(),
             'retrieved_by' => auth()->id(),
@@ -134,6 +139,8 @@ class HeldSaleService
      */
     public function getActiveHeldSales(Shop $shop): Collection
     {
+        $this->cleanupExpiredHeldSalesForShop($shop);
+
         return HeldSale::forTenant(auth()->user()->tenant_id)
             ->forShop($shop->id)
             ->active()
@@ -161,6 +168,7 @@ class HeldSaleService
     public function getHeldSale(int $heldSaleId): ?HeldSale
     {
         return HeldSale::forTenant(auth()->user()->tenant_id)
+            ->notExpired()
             ->with(['customer', 'heldByUser'])
             ->find($heldSaleId);
     }
@@ -168,6 +176,25 @@ class HeldSaleService
     /**
      * Clean up expired held sales and release reserved stock (for scheduled task)
      */
+    private function cleanupExpiredHeldSalesForShop(Shop $shop): void
+    {
+        $expiredSales = HeldSale::forShop($shop->id)
+            ->expired()
+            ->limit(10)
+            ->get();
+
+        foreach ($expiredSales as $heldSale) {
+            try {
+                $this->deleteHeldSale($heldSale);
+            } catch (\Exception $e) {
+                Log::error('Failed to cleanup expired held sale inline', [
+                    'held_sale_id' => $heldSale->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
     public function cleanupExpiredHeldSales(): int
     {
         $expiredSales = HeldSale::expired()->get();

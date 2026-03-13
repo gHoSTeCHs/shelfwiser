@@ -27,7 +27,7 @@ export function NewsletterSignupSection({ config, variant }: SectionProps) {
                 className="mx-auto px-4 sm:px-6"
                 style={{ maxWidth: 'var(--container-width, 1280px)' }}
             >
-                {variant === 'card' ? (
+                {variant === 'stacked' || variant === 'split' ? (
                     <Card {...variantProps} />
                 ) : (
                     <Inline {...variantProps} />

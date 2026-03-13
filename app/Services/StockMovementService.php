@@ -254,6 +254,11 @@ class StockMovementService
                 $user,
                 $notes
             ) {
+                $location = InventoryLocation::query()
+                    ->where('id', $location->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
                 $baseUnits = $packageQuantity * $packagingType->units_per_package;
                 $costPerBaseUnit = $costPerPackage / $packagingType->units_per_package;
 
@@ -341,6 +346,11 @@ class StockMovementService
                 $notes,
                 $releaseReservation
             ) {
+                $location = InventoryLocation::query()
+                    ->where('id', $location->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
                 $quantityBefore = $location->quantity;
 
                 if ($location->quantity < $quantity) {
@@ -416,6 +426,11 @@ class StockMovementService
 
         try {
             $movement = DB::transaction(function () use ($variant, $location, $actualQuantity, $user, $notes) {
+                $location = InventoryLocation::query()
+                    ->where('id', $location->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
                 $quantityBefore = $location->quantity;
                 $difference = $actualQuantity - $quantityBefore;
 

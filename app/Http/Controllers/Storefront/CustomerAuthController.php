@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Storefront\CustomerLoginRequest;
+use App\Http\Requests\Storefront\CustomerRegisterRequest;
+use App\Http\Requests\Storefront\CustomerResetPasswordRequest;
+use App\Http\Requests\Storefront\CustomerSendResetLinkRequest;
 use App\Models\Customer;
 use App\Models\Shop;
 use App\Services\CartService;
@@ -15,8 +19,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -40,14 +42,10 @@ class CustomerAuthController extends Controller
     /**
      * Handle customer login request.
      */
-    public function login(Request $request, Shop $shop): RedirectResponse
+    public function login(CustomerLoginRequest $request, Shop $shop): RedirectResponse
     {
-        $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ]);
-
-        $customer = Customer::where('email', $request->email)
+        $customer = Customer::query()
+            ->where('email', $request->email)
             ->where('tenant_id', $shop->tenant_id)
             ->where('is_active', true)
             ->first();
@@ -82,26 +80,11 @@ class CustomerAuthController extends Controller
     /**
      * Handle customer registration request.
      */
-    public function register(Request $request, Shop $shop): RedirectResponse
+    public function register(CustomerRegisterRequest $request, Shop $shop): RedirectResponse
     {
-        $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('customers')->where('tenant_id', $shop->tenant_id),
-            ],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'marketing_opt_in' => ['boolean'],
-        ]);
-
         $oldSessionId = session()->getId();
 
-        $customer = Customer::create([
+        $customer = Customer::query()->create([
             'tenant_id' => $shop->tenant_id,
             'preferred_shop_id' => $shop->id,
             'first_name' => $request->first_name,
@@ -157,7 +140,8 @@ class CustomerAuthController extends Controller
      */
     public function verifyEmail(Request $request, Shop $shop, string $id, string $hash): RedirectResponse
     {
-        $customer = Customer::where('id', $id)
+        $customer = Customer::query()
+            ->where('id', $id)
             ->where('tenant_id', $shop->tenant_id)
             ->firstOrFail();
 
@@ -218,11 +202,8 @@ class CustomerAuthController extends Controller
     /**
      * Send password reset link.
      */
-    public function sendResetLink(Request $request, Shop $shop): RedirectResponse
+    public function sendResetLink(CustomerSendResetLinkRequest $request, Shop $shop): RedirectResponse
     {
-        $request->validate([
-            'email' => ['required', 'email'],
-        ]);
 
         Password::broker('customers')->sendResetLink([
             'email' => $request->email,
@@ -247,14 +228,8 @@ class CustomerAuthController extends Controller
     /**
      * Handle password reset.
      */
-    public function resetPassword(Request $request, Shop $shop): RedirectResponse
+    public function resetPassword(CustomerResetPasswordRequest $request, Shop $shop): RedirectResponse
     {
-        $request->validate([
-            'token' => ['required'],
-            'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
-
         $credentials = $request->only('email', 'password', 'password_confirmation', 'token');
         $credentials['tenant_id'] = $shop->tenant_id;
 

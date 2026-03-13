@@ -23,7 +23,6 @@ class TenantService extends Controller
                 'slug' => $this->generateUniqueSlug($tenantData['name']),
                 'owner_email' => $tenantData['email'],
                 'phone' => $tenantData['phone'] ?? null,
-                'address' => $tenantData['address'] ?? null,
                 'is_active' => true,
                 'max_users' => $tenantData['max_users'] ?? 10,
                 'trial_ends_at' => now()->addDays(50),

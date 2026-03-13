@@ -4,8 +4,10 @@ import { SplitLayout } from './SplitLayout';
 import { Standard } from './Standard';
 
 const variants: Record<string, React.FC<SectionProps>> = {
-    standard: Standard,
-    split_layout: SplitLayout,
+    stacked: Standard,
+    form_only: Standard,
+    side_by_side: SplitLayout,
+    card_grid: Standard,
 };
 
 export function ContactFormSection(props: SectionProps) {

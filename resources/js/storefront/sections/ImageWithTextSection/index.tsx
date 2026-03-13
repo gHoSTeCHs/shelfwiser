@@ -5,14 +5,20 @@ import { ImageLeft } from './ImageLeft';
 import { ImageRight } from './ImageRight';
 
 const variants: Record<string, React.FC<SectionProps>> = {
-    image_left: ImageLeft,
-    image_right: ImageRight,
-    image_above: ImageAbove,
+    side_by_side: ImageLeft,
+    overlap: ImageRight,
+    stacked: ImageAbove,
+    text_wrap: ImageLeft,
 };
 
 export function ImageWithTextSection(props: SectionProps) {
-    const variantKey = props.variant || (props.config.image_position as string) || 'image_left';
-    const Variant = variants[variantKey] || ImageLeft;
+    const position = props.config.image_position as string | undefined;
+    const variantKey = props.variant || 'side_by_side';
+    let Variant = variants[variantKey] || ImageLeft;
+
+    if (variantKey === 'side_by_side' && position === 'right') {
+        Variant = ImageRight;
+    }
 
     return <Variant {...props} />;
 }

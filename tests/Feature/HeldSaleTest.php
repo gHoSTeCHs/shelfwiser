@@ -427,7 +427,7 @@ test('user from different tenant cannot access shop held sales', function () {
     $response = $this->actingAs($otherUser)
         ->getJson(route('pos.held-sales', $this->shop));
 
-    $response->assertForbidden();
+    $response->assertNotFound();
 });
 
 test('held sale sets correct expiration time', function () {

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Hash;
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 test('password update page is displayed', function () {
+    $this->withoutVite();
     $user = User::factory()->create();
 
     $response = $this
@@ -23,15 +24,15 @@ test('password can be updated', function () {
         ->from(route('password.edit'))
         ->put(route('password.update'), [
             'current_password' => 'password',
-            'password' => 'new-password',
-            'password_confirmation' => 'new-password',
+            'password' => 'N3wP@ssw0rd!',
+            'password_confirmation' => 'N3wP@ssw0rd!',
         ]);
 
     $response
         ->assertSessionHasNoErrors()
         ->assertRedirect(route('password.edit'));
 
-    expect(Hash::check('new-password', $user->refresh()->password))->toBeTrue();
+    expect(Hash::check('N3wP@ssw0rd!', $user->refresh()->password))->toBeTrue();
 });
 
 test('correct password must be provided to update password', function () {
@@ -42,8 +43,8 @@ test('correct password must be provided to update password', function () {
         ->from(route('password.edit'))
         ->put(route('password.update'), [
             'current_password' => 'wrong-password',
-            'password' => 'new-password',
-            'password_confirmation' => 'new-password',
+            'password' => 'N3wP@ssw0rd!',
+            'password_confirmation' => 'N3wP@ssw0rd!',
         ]);
 
     $response

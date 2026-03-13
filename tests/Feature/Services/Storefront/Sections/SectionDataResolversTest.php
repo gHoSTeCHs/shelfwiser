@@ -23,7 +23,8 @@ it('featured products resolves featured products from database', function () {
     $section = app(FeaturedProductsSection::class);
     $data = $section->resolveData(['product_source' => 'featured', 'max_items' => 8], $shop);
 
-    expect($data)->toHaveCount(3);
+    expect($data)->toHaveKey('products')
+        ->and($data['products'])->toHaveCount(3);
 });
 
 it('featured products resolves newest products from database', function () {
@@ -38,7 +39,8 @@ it('featured products resolves newest products from database', function () {
     $section = app(FeaturedProductsSection::class);
     $data = $section->resolveData(['product_source' => 'newest', 'max_items' => 4], $shop);
 
-    expect($data)->toHaveCount(2);
+    expect($data)->toHaveKey('products')
+        ->and($data['products'])->toHaveCount(2);
 });
 
 it('featured products respects max_items limit', function () {
@@ -54,7 +56,8 @@ it('featured products respects max_items limit', function () {
     $section = app(FeaturedProductsSection::class);
     $data = $section->resolveData(['product_source' => 'featured', 'max_items' => 3], $shop);
 
-    expect($data)->toHaveCount(3);
+    expect($data)->toHaveKey('products')
+        ->and($data['products'])->toHaveCount(3);
 });
 
 it('category grid resolves auto categories from database', function () {

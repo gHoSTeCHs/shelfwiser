@@ -51,6 +51,7 @@ use Illuminate\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -81,6 +82,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Password::defaults(function () {
+            return Password::min(8)
+                ->mixedCase()
+                ->numbers()
+                ->symbols();
+        });
+
         Gate::policy(User::class, StaffPolicy::class);
         Gate::policy(Shop::class, ShopPolicy::class);
         Gate::policy(Shop::class, StorefrontPolicy::class);

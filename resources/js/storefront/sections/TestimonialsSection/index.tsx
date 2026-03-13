@@ -5,9 +5,11 @@ import { Quotes } from './Quotes';
 import { Slider } from './Slider';
 
 const variants: Record<string, React.FC<SectionProps>> = {
-    cards: Cards,
-    slider: Slider,
-    quotes: Quotes,
+    grid: Cards,
+    carousel: Slider,
+    single_spotlight: Quotes,
+    masonry: Cards,
+    marquee: Slider,
 };
 
 export function TestimonialsSection(props: SectionProps) {

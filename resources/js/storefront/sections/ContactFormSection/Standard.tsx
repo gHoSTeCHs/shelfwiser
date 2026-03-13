@@ -68,7 +68,7 @@ export function Standard({ config, data }: SectionProps) {
 
         try {
             const slug = shopSlug || ((data as Record<string, unknown>).shop_slug as string) || '';
-            const result = await storefrontFetch(`/${slug}/api/contact`, {
+            const result = await storefrontFetch(`/store/${slug}/api/contact`, {
                 method: 'POST',
                 json: {
                     name: formData.name,

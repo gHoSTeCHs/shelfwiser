@@ -111,7 +111,7 @@ class ImageController extends Controller
     public function reorder(Request $request)
     {
         $validated = $request->validate([
-            'model_type' => 'required|string',
+            'model_type' => ['required', 'string', 'in:Product,ProductVariant,Service,User'],
             'model_id' => 'required|integer',
             'image_ids' => 'required|array',
             'image_ids.*' => 'required|integer|exists:images,id',

@@ -20,7 +20,6 @@ return [
         'image/png',
         'image/gif',
         'image/webp',
-        'image/svg+xml',
     ],
 
     /**
@@ -32,7 +31,6 @@ return [
         'png',
         'gif',
         'webp',
-        'svg',
     ],
 
     /**

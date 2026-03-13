@@ -7,6 +7,8 @@ use App\Models\OrderPayment;
 use App\Services\Payment\PaymentGatewayManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -20,7 +22,7 @@ class PaymentController extends Controller
     public function callback(Request $request, string $gatewayName, Order $order): RedirectResponse
     {
         // Verify tenant ownership if user is authenticated
-        if (auth()->check() && $order->tenant_id !== auth()->user()->tenant_id) {
+        if ($order->tenant_id !== auth()->user()->tenant_id) {
             abort(403, 'Unauthorized access to order');
         }
 
@@ -36,13 +38,35 @@ class PaymentController extends Controller
         $result = $gateway->verifyPayment($reference);
 
         if ($result->isSuccessful()) {
-            $existingPayment = OrderPayment::where('reference_number', $reference)->first();
+            DB::transaction(function () use ($order, $reference, $result, $gatewayName, $gateway) {
+                $lockedOrder = Order::query()->where('id', $order->id)->lockForUpdate()->first();
 
-            if (! $existingPayment) {
+                if ($lockedOrder->payment_reference && $lockedOrder->payment_reference !== $reference) {
+                    Log::warning('Payment reference mismatch', [
+                        'order_id' => $lockedOrder->id,
+                        'expected' => $lockedOrder->payment_reference,
+                        'received' => $reference,
+                    ]);
+
+                    return;
+                }
+
+                if (OrderPayment::query()->where('reference_number', $reference)->exists()) {
+                    return;
+                }
+
+                if ($result->amount < $lockedOrder->remainingBalance() * 0.99) {
+                    Log::warning('Payment amount less than expected', [
+                        'order_id' => $lockedOrder->id,
+                        'expected' => $lockedOrder->remainingBalance(),
+                        'received' => $result->amount,
+                    ]);
+                }
+
                 OrderPayment::create([
-                    'order_id' => $order->id,
-                    'tenant_id' => $order->tenant_id,
-                    'shop_id' => $order->shop_id,
+                    'order_id' => $lockedOrder->id,
+                    'tenant_id' => $lockedOrder->tenant_id,
+                    'shop_id' => $lockedOrder->shop_id,
                     'amount' => $result->amount,
                     'currency' => $result->currency ?? 'NGN',
                     'gateway_fee' => $result->gatewayFee ?? 0,
@@ -57,7 +81,7 @@ class PaymentController extends Controller
                     'notes' => "Payment via {$gateway->getName()}",
                     'recorded_by' => null,
                 ]);
-            }
+            });
 
             return redirect()
                 ->route('orders.show', $order)
@@ -81,7 +105,7 @@ class PaymentController extends Controller
     public function initialize(Request $request, Order $order): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         // Verify tenant ownership
-        if (auth()->check() && $order->tenant_id !== auth()->user()->tenant_id) {
+        if ($order->tenant_id !== auth()->user()->tenant_id) {
             abort(403, 'Unauthorized access to order');
         }
 
@@ -144,7 +168,7 @@ class PaymentController extends Controller
     public function verify(Request $request, Order $order): \Illuminate\Http\JsonResponse
     {
         // Verify tenant ownership
-        if (auth()->check() && $order->tenant_id !== auth()->user()->tenant_id) {
+        if ($order->tenant_id !== auth()->user()->tenant_id) {
             return response()->json(['error' => 'Unauthorized access to order'], 403);
         }
 

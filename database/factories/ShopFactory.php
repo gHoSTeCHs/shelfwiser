@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\InventoryModel;
 use App\Models\ShopType;
 use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -19,6 +20,7 @@ class ShopFactory extends Factory
             'name' => fake()->company().' Store',
             'slug' => fake()->unique()->slug(),
             'config' => [],
+            'inventory_model' => InventoryModel::SIMPLE_RETAIL,
             'is_active' => true,
             'storefront_enabled' => false,
             'currency' => 'NGN',

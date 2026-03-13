@@ -9,6 +9,7 @@ use App\Models\Shop;
 use App\Services\CartService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -64,7 +65,9 @@ class CartController extends Controller
 
             return redirect()->back()->with('success', 'Item added to cart successfully');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            Log::error('Cart operation failed', ['error' => $e->getMessage()]);
+
+            return redirect()->back()->with('error', 'Something went wrong. Please try again.');
         }
     }
 
@@ -103,7 +106,9 @@ class CartController extends Controller
 
             return redirect()->back()->with('success', 'Service added to cart successfully');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            Log::error('Cart operation failed', ['error' => $e->getMessage()]);
+
+            return redirect()->back()->with('error', 'Something went wrong. Please try again.');
         }
     }
 
@@ -127,7 +132,9 @@ class CartController extends Controller
 
             return redirect()->back()->with('success', 'Cart updated successfully');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            Log::error('Cart operation failed', ['error' => $e->getMessage()]);
+
+            return redirect()->back()->with('error', 'Something went wrong. Please try again.');
         }
     }
 

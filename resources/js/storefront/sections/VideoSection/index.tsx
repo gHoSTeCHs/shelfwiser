@@ -27,7 +27,7 @@ export function VideoSection({ config, variant }: SectionProps) {
         return null;
     }
 
-    if (variant === 'background') {
+    if (variant === 'background_loop') {
         return (
             <section style={{ padding: 'var(--section-spacing, 64px) 0' }}>
                 <Background

@@ -22,7 +22,6 @@ class Tenant extends Model
         'phone',
         'logo_path',
         'settings',
-        'address',
         'is_active',
         'subscription_plan',
         'trial_ends_at',

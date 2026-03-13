@@ -2,12 +2,10 @@
 
 namespace App\Services;
 
-use App\DTOs\Payment\RefundResult;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\StockMovementType;
 use App\Models\Order;
-use App\Models\OrderPayment;
 use App\Models\User;
 use App\Services\Payment\PaymentGatewayManager;
 use Exception;
@@ -24,6 +22,7 @@ class OrderRefundService
 
     /**
      * Process a full order refund
+     *
      * @throws Throwable
      */
     public function refundOrder(
@@ -47,7 +46,7 @@ class OrderRefundService
                 // Process refunds through payment gateways
                 foreach ($order->payments as $payment) {
                     if ($payment->amount > 0) {
-                        $gateway = $this->paymentGatewayManager->getGateway($payment->payment_method);
+                        $gateway = $this->paymentGatewayManager->gateway($payment->payment_method);
 
                         if ($gateway->supportsRefunds()) {
                             $refundResult = $gateway->refund($payment, null, $reason);
@@ -130,6 +129,7 @@ class OrderRefundService
 
     /**
      * Process a partial refund for specific order items
+     *
      * @throws Throwable
      */
     public function partialRefund(
@@ -156,7 +156,7 @@ class OrderRefundService
                     }
 
                     if ($quantity > $orderItem->quantity) {
-                        throw new Exception("Refund quantity cannot exceed ordered quantity");
+                        throw new Exception('Refund quantity cannot exceed ordered quantity');
                     }
 
                     // Calculate proportional refund
@@ -188,13 +188,21 @@ class OrderRefundService
                 // Process partial refund through payment gateway
                 if ($refundAmount > 0 && $order->payments->count() > 0) {
                     $payment = $order->payments()->orderBy('created_at', 'desc')->first();
-                    $gateway = $this->paymentGatewayManager->getGateway($payment->payment_method);
+                    $gateway = $this->paymentGatewayManager->gateway($payment->payment_method);
 
                     if ($gateway->supportsRefunds()) {
+                        $newRefundTotal = ($payment->refund_amount ?? 0) + $refundAmount;
+                        if ($newRefundTotal > $payment->amount) {
+                            throw new Exception(
+                                "Refund amount ({$refundAmount}) would exceed original payment ({$payment->amount}). "
+                                ."Already refunded: {$payment->refund_amount}"
+                            );
+                        }
+
                         $refundResult = $gateway->refund($payment, $refundAmount, $reason);
 
                         $payment->update([
-                            'refund_amount' => ($payment->refund_amount ?? 0) + $refundAmount,
+                            'refund_amount' => $newRefundTotal,
                             'refund_status' => $refundResult->status,
                             'refund_reference' => $refundResult->refundReference,
                             'refund_reason' => $reason,

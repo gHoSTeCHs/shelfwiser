@@ -142,9 +142,9 @@ class StorefrontTemplateSeeder extends Seeder
             ],
             'default_sections' => [
                 ['type' => 'hero_banner', 'variant' => 'centered_overlay', 'config' => ['heading' => 'Welcome to Our Store', 'subheading' => 'Discover amazing products', 'cta_text' => 'Shop Now', 'cta_link' => '/products']],
-                ['type' => 'featured_products', 'variant' => 'standard_grid', 'config' => ['heading' => 'Featured Products', 'product_source' => 'featured', 'limit' => 8, 'columns' => 4]],
+                ['type' => 'featured_products', 'variant' => 'standard_grid', 'config' => ['heading' => 'Featured Products', 'product_source' => 'featured', 'max_items' => 8, 'columns' => 4]],
                 ['type' => 'category_grid', 'variant' => 'image_overlay', 'config' => ['heading' => 'Shop by Category', 'columns' => 3]],
-                ['type' => 'testimonials', 'variant' => 'cards', 'config' => ['heading' => 'What Our Customers Say']],
+                ['type' => 'testimonials', 'variant' => 'grid', 'config' => ['heading' => 'What Our Customers Say']],
                 ['type' => 'newsletter_signup', 'variant' => 'inline', 'config' => ['heading' => 'Stay Updated', 'subheading' => 'Subscribe for deals and new arrivals']],
                 ['type' => 'spacer', 'variant' => 'default', 'config' => ['height' => '2rem']],
             ],
@@ -190,8 +190,8 @@ class StorefrontTemplateSeeder extends Seeder
             'default_sections' => [
                 ['type' => 'hero_banner', 'variant' => 'split_image', 'config' => ['heading' => 'Fresh From the Market', 'subheading' => 'Quality produce delivered to your door', 'cta_text' => 'Shop Fresh', 'cta_link' => '/products']],
                 ['type' => 'category_grid', 'variant' => 'image_above', 'config' => ['heading' => 'Browse Categories', 'columns' => 4]],
-                ['type' => 'featured_products', 'variant' => 'standard_grid', 'config' => ['heading' => 'Today\'s Picks', 'product_source' => 'featured', 'limit' => 8, 'columns' => 4]],
-                ['type' => 'newsletter_signup', 'variant' => 'card', 'config' => ['heading' => 'Get Weekly Deals', 'subheading' => 'Fresh savings delivered to your inbox']],
+                ['type' => 'featured_products', 'variant' => 'standard_grid', 'config' => ['heading' => 'Today\'s Picks', 'product_source' => 'featured', 'max_items' => 8, 'columns' => 4]],
+                ['type' => 'newsletter_signup', 'variant' => 'stacked', 'config' => ['heading' => 'Get Weekly Deals', 'subheading' => 'Fresh savings delivered to your inbox']],
             ],
         ];
     }
@@ -233,9 +233,9 @@ class StorefrontTemplateSeeder extends Seeder
             ],
             'default_sections' => [
                 ['type' => 'hero_banner', 'variant' => 'centered_overlay', 'config' => ['heading' => 'Your Health, Our Priority', 'subheading' => 'Trusted products for your wellbeing', 'cta_text' => 'Explore', 'cta_link' => '/products']],
-                ['type' => 'featured_products', 'variant' => 'standard_grid', 'config' => ['heading' => 'Popular Products', 'product_source' => 'featured', 'limit' => 8, 'columns' => 4]],
-                ['type' => 'image_with_text', 'variant' => 'image_left', 'config' => ['heading' => 'Why Choose Us', 'body' => 'Quality assured products with fast delivery.']],
-                ['type' => 'testimonials', 'variant' => 'quotes', 'config' => ['heading' => 'Customer Reviews']],
+                ['type' => 'featured_products', 'variant' => 'standard_grid', 'config' => ['heading' => 'Popular Products', 'product_source' => 'featured', 'max_items' => 8, 'columns' => 4]],
+                ['type' => 'image_with_text', 'variant' => 'side_by_side', 'config' => ['heading' => 'Why Choose Us', 'body' => 'Quality assured products with fast delivery.']],
+                ['type' => 'testimonials', 'variant' => 'single_spotlight', 'config' => ['heading' => 'Customer Reviews']],
             ],
         ];
     }
@@ -278,8 +278,8 @@ class StorefrontTemplateSeeder extends Seeder
             ],
             'default_sections' => [
                 ['type' => 'hero_banner', 'variant' => 'centered_overlay', 'config' => ['heading' => 'Next-Gen Tech', 'subheading' => 'Latest gadgets at the best prices', 'cta_text' => 'Shop Now', 'cta_link' => '/products']],
-                ['type' => 'featured_products', 'variant' => 'horizontal_scroll', 'config' => ['heading' => 'Trending Now', 'product_source' => 'featured', 'limit' => 10]],
-                ['type' => 'banner', 'variant' => 'default', 'config' => ['heading' => 'Free Delivery on Orders Over ₦50,000', 'background_color' => '#EFF6FF']],
+                ['type' => 'featured_products', 'variant' => 'horizontal_scroll', 'config' => ['heading' => 'Trending Now', 'product_source' => 'featured', 'max_items' => 10]],
+                ['type' => 'banner', 'variant' => 'default', 'config' => ['alt_text' => 'Free Delivery on Orders Over ₦50,000', 'height' => '200px']],
                 ['type' => 'product_grid', 'variant' => 'standard_grid', 'config' => ['heading' => 'All Products', 'columns' => 4, 'rows' => 3]],
             ],
         ];
@@ -324,8 +324,8 @@ class StorefrontTemplateSeeder extends Seeder
             'default_sections' => [
                 ['type' => 'hero_banner', 'variant' => 'slideshow', 'config' => ['slides' => [['heading' => 'New Collection', 'subheading' => 'Express your style', 'cta_text' => 'Shop Now', 'cta_link' => '/products']]]],
                 ['type' => 'category_grid', 'variant' => 'image_overlay', 'config' => ['heading' => 'Collections', 'columns' => 3]],
-                ['type' => 'featured_products', 'variant' => 'spotlight_plus_grid', 'config' => ['heading' => 'Trending', 'product_source' => 'featured', 'limit' => 5]],
-                ['type' => 'image_with_text', 'variant' => 'image_right', 'config' => ['heading' => 'Our Story', 'body' => 'Celebrating Nigerian fashion with contemporary flair.']],
+                ['type' => 'featured_products', 'variant' => 'spotlight_plus_grid', 'config' => ['heading' => 'Trending', 'product_source' => 'featured', 'max_items' => 5]],
+                ['type' => 'image_with_text', 'variant' => 'side_by_side', 'config' => ['heading' => 'Our Story', 'body' => 'Celebrating Nigerian fashion with contemporary flair.', 'image_position' => 'right']],
                 ['type' => 'newsletter_signup', 'variant' => 'inline', 'config' => ['heading' => 'Join the Community', 'subheading' => 'Be the first to know about new drops']],
             ],
         ];
@@ -369,7 +369,7 @@ class StorefrontTemplateSeeder extends Seeder
             'default_sections' => [
                 ['type' => 'hero_banner', 'variant' => 'minimal_text', 'config' => ['heading' => 'Business Supplies', 'subheading' => 'Everything you need at wholesale prices', 'cta_text' => 'Browse Catalog', 'cta_link' => '/products']],
                 ['type' => 'category_grid', 'variant' => 'chips', 'config' => ['heading' => 'Categories']],
-                ['type' => 'featured_products', 'variant' => 'standard_grid', 'config' => ['heading' => 'Popular Products', 'product_source' => 'featured', 'limit' => 12, 'columns' => 4]],
+                ['type' => 'featured_products', 'variant' => 'standard_grid', 'config' => ['heading' => 'Popular Products', 'product_source' => 'featured', 'max_items' => 12, 'columns' => 4]],
                 ['type' => 'spacer', 'variant' => 'default', 'config' => ['height' => '2rem']],
             ],
         ];
