@@ -17,9 +17,11 @@ class StorefrontConfigFactory extends Factory
 
     public function definition(): array
     {
+        $tenant = Tenant::factory()->create();
+
         return [
-            'tenant_id' => Tenant::factory(),
-            'shop_id' => Shop::factory(),
+            'tenant_id' => $tenant->id,
+            'shop_id' => Shop::factory()->state(['tenant_id' => $tenant->id]),
             'theme_id' => StorefrontTheme::factory(),
             'color_preset' => null,
             'color_overrides' => null,

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Enums\StorefrontPageType;
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Models\Shop;
 use App\Services\Storefront\StorefrontRenderService;
 use Illuminate\View\View;
@@ -29,11 +30,19 @@ class StorefrontRenderController extends Controller
         return $this->renderPage($shop, StorefrontPageType::PRODUCT_DETAIL, $slug);
     }
 
-    public function page(Shop $shop, ?string $slug = null): View
+    public function about(Shop $shop): View
     {
-        $pageType = $this->resolvePageType($slug);
+        return $this->renderPage($shop, StorefrontPageType::ABOUT);
+    }
 
-        return $this->renderPage($shop, $pageType, $slug);
+    public function contact(Shop $shop): View
+    {
+        return $this->renderPage($shop, StorefrontPageType::CONTACT);
+    }
+
+    public function page(Shop $shop, string $slug): View
+    {
+        return $this->renderPage($shop, StorefrontPageType::CUSTOM, $slug);
     }
 
     public function services(Shop $shop): View
@@ -56,13 +65,17 @@ class StorefrontRenderController extends Controller
         return $this->renderFixedPage($shop, 'checkout');
     }
 
-    public function checkoutSuccess(Shop $shop, $order): View
+    public function checkoutSuccess(Shop $shop, Order $order): View
     {
+        $this->authorizeOrderAccess($order);
+
         return $this->renderFixedPage($shop, 'checkout-success', ['order' => $order]);
     }
 
-    public function checkoutPending(Shop $shop, $order): View
+    public function checkoutPending(Shop $shop, Order $order): View
     {
+        $this->authorizeOrderAccess($order);
+
         return $this->renderFixedPage($shop, 'checkout-pending', ['order' => $order]);
     }
 
@@ -101,8 +114,10 @@ class StorefrontRenderController extends Controller
         return $this->renderFixedPage($shop, 'account-orders');
     }
 
-    public function accountOrderDetail(Shop $shop, $order): View
+    public function accountOrderDetail(Shop $shop, Order $order): View
     {
+        $this->authorizeOrderAccess($order);
+
         return $this->renderFixedPage($shop, 'account-order-detail', ['order' => $order]);
     }
 
@@ -139,12 +154,9 @@ class StorefrontRenderController extends Controller
         ]);
     }
 
-    private function resolvePageType(?string $slug): StorefrontPageType
+    private function authorizeOrderAccess(Order $order): void
     {
-        return match ($slug) {
-            'about' => StorefrontPageType::ABOUT,
-            'contact' => StorefrontPageType::CONTACT,
-            default => StorefrontPageType::CUSTOM,
-        };
+        $customer = auth('customer')->user();
+        abort_unless($customer && $order->customer_id === $customer->id, 403);
     }
 }

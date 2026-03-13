@@ -73,21 +73,35 @@ class CollectionListSection implements StorefrontSectionInterface
 
     public function resolveData(array $config, Shop $shop): array
     {
+        $collections = $config['collections'] ?? [];
+
+        if (empty($collections)) {
+            return [];
+        }
+
+        $categoryIds = array_filter(array_column($collections, 'category_id'));
+        $maxLimit = max(array_column($collections, 'max_items') ?: [8]);
+
+        $products = Product::query()
+            ->where('tenant_id', $shop->tenant_id)
+            ->where('shop_id', $shop->id)
+            ->where('is_active', true)
+            ->when(! empty($categoryIds), fn ($q) => $q->whereIn('category_id', $categoryIds))
+            ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true)])
+            ->get();
+
         $result = [];
 
-        foreach ($config['collections'] ?? [] as $collection) {
-            $query = Product::query()
-                ->where('shop_id', $shop->id)
-                ->where('is_active', true)
-                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true)]);
+        foreach ($collections as $collection) {
+            $filtered = $products;
 
             if (! empty($collection['category_id'])) {
-                $query->where('category_id', $collection['category_id']);
+                $filtered = $products->where('category_id', $collection['category_id']);
             }
 
             $result[] = [
                 'title' => $collection['title'] ?? '',
-                'products' => $query->limit($collection['max_items'] ?? 8)->get()->toArray(),
+                'products' => $filtered->take($collection['max_items'] ?? 8)->values()->toArray(),
             ];
         }
 

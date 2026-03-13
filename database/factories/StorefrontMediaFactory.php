@@ -16,11 +16,13 @@ class StorefrontMediaFactory extends Factory
 
     public function definition(): array
     {
+        $tenant = Tenant::factory()->create();
+
         return [
-            'tenant_id' => Tenant::factory(),
-            'shop_id' => Shop::factory(),
-            'file_path' => 'storefront/media/' . fake()->uuid() . '.jpg',
-            'file_name' => fake()->word() . '.jpg',
+            'tenant_id' => $tenant->id,
+            'shop_id' => Shop::factory()->state(['tenant_id' => $tenant->id]),
+            'file_path' => 'storefront/media/'.fake()->uuid().'.jpg',
+            'file_name' => fake()->word().'.jpg',
             'mime_type' => 'image/jpeg',
             'file_size' => fake()->numberBetween(10000, 5000000),
             'dimensions' => ['width' => 1200, 'height' => 800],

@@ -6,6 +6,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\ProductVariant;
 use App\Models\Shop;
 use App\Services\CartService;
 use App\Services\CheckoutService;
@@ -203,8 +204,10 @@ class CheckoutController extends Controller
                 ->with('success', 'Order placed successfully!');
 
         } catch (\Exception $e) {
+            Log::error('Checkout failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+
             return back()
-                ->with('error', $e->getMessage())
+                ->with('error', 'Something went wrong while processing your order. Please try again.')
                 ->withInput();
         }
     }
@@ -359,7 +362,8 @@ class CheckoutController extends Controller
                     $this->checkoutService->updatePaymentStatus(
                         $reference,
                         PaymentStatus::PAID,
-                        $data['id'] ?? null
+                        $data['id'] ?? null,
+                        ($data['amount'] ?? 0) / 100
                     );
                 }
             } catch (\Exception $e) {

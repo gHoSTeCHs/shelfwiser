@@ -21,6 +21,7 @@
     @vite('resources/js/storefront/app.tsx')
 </head>
 <body>
-    <div id="storefront-root" data-page="{{ json_encode($pageData, JSON_THROW_ON_ERROR) }}"></div>
+    <div id="storefront-root"></div>
+    <script>window.__STOREFRONT_PAGE__ = {!! Js::from($pageData) !!};</script>
 </body>
 </html>

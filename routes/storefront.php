@@ -27,8 +27,8 @@ Route::prefix('store/{shop:slug}')->middleware('storefront.enabled')->name('stor
     Route::get('/', [StorefrontRenderController::class, 'home'])->name('index');
     Route::get('/products', [StorefrontRenderController::class, 'products'])->name('products');
     Route::get('/products/{product:slug}', [StorefrontRenderController::class, 'productDetail'])->name('product');
-    Route::get('/about', [StorefrontRenderController::class, 'page'])->name('about');
-    Route::get('/contact', [StorefrontRenderController::class, 'page'])->name('contact');
+    Route::get('/about', [StorefrontRenderController::class, 'about'])->name('about');
+    Route::get('/contact', [StorefrontRenderController::class, 'contact'])->name('contact');
     Route::get('/p/{slug}', [StorefrontRenderController::class, 'page'])->name('page');
 
     // === FIXED THEMED PAGES ===

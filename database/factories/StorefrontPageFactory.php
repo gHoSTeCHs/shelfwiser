@@ -18,10 +18,16 @@ class StorefrontPageFactory extends Factory
 
     public function definition(): array
     {
+        $tenant = Tenant::factory()->create();
+        $shop = Shop::factory()->create(['tenant_id' => $tenant->id]);
+
         return [
-            'tenant_id' => Tenant::factory(),
-            'shop_id' => Shop::factory(),
-            'storefront_config_id' => StorefrontConfig::factory(),
+            'tenant_id' => $tenant->id,
+            'shop_id' => $shop->id,
+            'storefront_config_id' => StorefrontConfig::factory()->state([
+                'tenant_id' => $tenant->id,
+                'shop_id' => $shop->id,
+            ]),
             'page_type' => StorefrontPageType::HOME,
             'slug' => null,
             'title' => 'Home',
@@ -34,7 +40,7 @@ class StorefrontPageFactory extends Factory
         ];
     }
 
-    public function custom(string $slug = null): static
+    public function custom(?string $slug = null): static
     {
         return $this->state([
             'page_type' => StorefrontPageType::CUSTOM,

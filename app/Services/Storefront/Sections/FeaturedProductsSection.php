@@ -129,6 +129,7 @@ class FeaturedProductsSection implements StorefrontSectionInterface
         return match ($config['product_source'] ?? 'featured') {
             'featured' => $this->storefrontService->getFeaturedProducts($shop, $limit)->toArray(),
             'newest' => Product::query()
+                ->where('tenant_id', $shop->tenant_id)
                 ->where('shop_id', $shop->id)
                 ->where('is_active', true)
                 ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true)])
@@ -137,6 +138,8 @@ class FeaturedProductsSection implements StorefrontSectionInterface
                 ->get()
                 ->toArray(),
             'manual' => Product::query()
+                ->where('tenant_id', $shop->tenant_id)
+                ->where('shop_id', $shop->id)
                 ->whereIn('id', $config['manual_product_ids'] ?? [])
                 ->where('is_active', true)
                 ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true)])

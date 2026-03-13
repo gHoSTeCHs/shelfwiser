@@ -251,7 +251,9 @@ class StorefrontService
      */
     public function invalidateProductCache(int $tenantId, int $shopId, ?int $productId = null): void
     {
-        Cache::forget($this->getCacheKey($tenantId, $shopId, 'featured_products', 8));
+        foreach ([2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24] as $limit) {
+            Cache::forget($this->getCacheKey($tenantId, $shopId, 'featured_products', $limit));
+        }
         Cache::forget($this->getCacheKey($tenantId, $shopId, 'categories'));
 
         if ($productId) {

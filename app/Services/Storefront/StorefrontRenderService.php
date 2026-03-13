@@ -23,6 +23,7 @@ class StorefrontRenderService
             ->where('shop_id', $shop->id)
             ->where('storefront_config_id', $config->id)
             ->where('page_type', $pageType)
+            ->where('is_published', true)
             ->when($slug, fn ($q) => $q->where('slug', $slug))
             ->firstOrFail();
 
@@ -371,8 +372,14 @@ class StorefrontRenderService
 
     private function loadOrderStatusData(array $params): array
     {
+        $order = $params['order'] ?? null;
+
+        if ($order) {
+            $order->load(['items.productVariant.product', 'payments']);
+        }
+
         return [
-            'order' => $params['order'] ?? null,
+            'order' => $order,
         ];
     }
 
@@ -417,8 +424,14 @@ class StorefrontRenderService
 
     private function loadAccountOrderDetailData(Shop $shop, array $params): array
     {
+        $order = $params['order'] ?? null;
+
+        if ($order) {
+            $order->load(['items.productVariant.product', 'payments']);
+        }
+
         return [
-            'order' => $params['order'] ?? null,
+            'order' => $order,
         ];
     }
 
@@ -473,7 +486,7 @@ class StorefrontRenderService
 
         return [
             'id' => $customer->id,
-            'name' => $customer->name,
+            'name' => $customer->full_name,
             'email' => $customer->email,
         ];
     }
