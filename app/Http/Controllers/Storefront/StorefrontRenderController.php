@@ -67,14 +67,14 @@ class StorefrontRenderController extends Controller
 
     public function checkoutSuccess(Shop $shop, Order $order): View
     {
-        $this->authorizeOrderAccess($order);
+        $this->authorizeOrderAccess($order, $shop);
 
         return $this->renderFixedPage($shop, 'checkout-success', ['order' => $order]);
     }
 
     public function checkoutPending(Shop $shop, Order $order): View
     {
-        $this->authorizeOrderAccess($order);
+        $this->authorizeOrderAccess($order, $shop);
 
         return $this->renderFixedPage($shop, 'checkout-pending', ['order' => $order]);
     }
@@ -116,7 +116,7 @@ class StorefrontRenderController extends Controller
 
     public function accountOrderDetail(Shop $shop, Order $order): View
     {
-        $this->authorizeOrderAccess($order);
+        $this->authorizeOrderAccess($order, $shop);
 
         return $this->renderFixedPage($shop, 'account-order-detail', ['order' => $order]);
     }
@@ -154,9 +154,12 @@ class StorefrontRenderController extends Controller
         ]);
     }
 
-    private function authorizeOrderAccess(Order $order): void
+    private function authorizeOrderAccess(Order $order, Shop $shop): void
     {
         $customer = auth('customer')->user();
-        abort_unless($customer && $order->customer_id === $customer->id, 403);
+        abort_unless(
+            $customer && $order->customer_id === $customer->id && $order->shop_id === $shop->id,
+            403
+        );
     }
 }

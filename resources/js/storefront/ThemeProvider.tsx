@@ -1,3 +1,4 @@
+import type React from 'react';
 import { createContext, useMemo } from 'react';
 import type { ResolvedTheme, TemplateData } from './types/storefront';
 

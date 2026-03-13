@@ -1,3 +1,4 @@
+import type React from 'react';
 import type { SectionProps } from '../../types/storefront';
 import { ImageAbove } from './ImageAbove';
 import { ImageLeft } from './ImageLeft';

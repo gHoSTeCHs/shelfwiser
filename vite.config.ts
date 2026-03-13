@@ -8,7 +8,7 @@ import svgr from 'vite-plugin-svgr';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.tsx', 'resources/js/storefront/app.tsx'],
+            input: ['resources/css/app.css', 'resources/css/storefront.css', 'resources/js/app.tsx', 'resources/js/storefront/app.tsx'],
             ssr: 'resources/js/ssr.tsx',
             refresh: true,
         }),

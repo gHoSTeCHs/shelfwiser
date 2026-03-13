@@ -25,18 +25,21 @@ class Shop extends Model
         'vat_enabled', 'vat_rate', 'vat_inclusive',
     ];
 
-    protected $casts = [
-        'config' => 'array',
-        'storefront_settings' => 'array',
-        'inventory_model' => InventoryModel::class,
-        'is_active' => 'boolean',
-        'storefront_enabled' => 'boolean',
-        'allow_retail_sales' => 'boolean',
-        'vat_enabled' => 'boolean',
-        'vat_inclusive' => 'boolean',
-        'currency_decimals' => 'integer',
-        'vat_rate' => 'decimal:2',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'config' => 'array',
+            'storefront_settings' => 'array',
+            'inventory_model' => InventoryModel::class,
+            'is_active' => 'boolean',
+            'storefront_enabled' => 'boolean',
+            'allow_retail_sales' => 'boolean',
+            'vat_enabled' => 'boolean',
+            'vat_inclusive' => 'boolean',
+            'currency_decimals' => 'integer',
+            'vat_rate' => 'decimal:2',
+        ];
+    }
 
     public function tenant(): BelongsTo
     {
@@ -85,5 +88,10 @@ class Shop extends Model
     public function storefrontConfig(): HasOne
     {
         return $this->hasOne(StorefrontConfig::class);
+    }
+
+    public function storefrontPages(): HasMany
+    {
+        return $this->hasMany(StorefrontPage::class);
     }
 }

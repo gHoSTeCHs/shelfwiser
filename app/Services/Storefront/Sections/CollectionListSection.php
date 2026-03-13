@@ -88,6 +88,7 @@ class CollectionListSection implements StorefrontSectionInterface
             ->where('is_active', true)
             ->when(! empty($categoryIds), fn ($q) => $q->whereIn('category_id', $categoryIds))
             ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true)])
+            ->limit($maxLimit)
             ->get();
 
         $result = [];

@@ -20,6 +20,7 @@ class StorefrontRenderService
         $config = $this->loadConfig($shop);
 
         $page = StorefrontPage::query()
+            ->where('tenant_id', $shop->tenant_id)
             ->where('shop_id', $shop->id)
             ->where('storefront_config_id', $config->id)
             ->where('page_type', $pageType)
@@ -249,6 +250,7 @@ class StorefrontRenderService
     private function buildNavigation(Shop $shop, StorefrontConfig $config): array
     {
         $pages = StorefrontPage::query()
+            ->where('tenant_id', $shop->tenant_id)
             ->where('shop_id', $shop->id)
             ->where('storefront_config_id', $config->id)
             ->where('is_published', true)

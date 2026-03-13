@@ -1,3 +1,4 @@
+import type React from 'react';
 import type { SectionProps } from '../../types/storefront';
 import { Cards } from './Cards';
 import { Quotes } from './Quotes';

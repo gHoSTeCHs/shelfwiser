@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useRef, useEffect, useState } from 'react';
 import { useAnimation } from '../hooks/useAnimation';
 

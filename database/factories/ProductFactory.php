@@ -16,7 +16,7 @@ class ProductFactory extends Factory
     {
         return [
             'tenant_id' => Tenant::factory(),
-            'shop_id' => Shop::factory(),
+            'shop_id' => fn (array $attributes) => Shop::factory()->create(['tenant_id' => $attributes['tenant_id']])->id,
             'product_type_id' => fn (array $attributes) => ProductType::factory()->create(['tenant_id' => $attributes['tenant_id']])->id,
             'name' => fake()->words(3, true),
             'slug' => fake()->unique()->slug(),

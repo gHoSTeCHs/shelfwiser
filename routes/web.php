@@ -52,6 +52,7 @@ use Inertia\Inertia;
 Route::get('/_debug_login', function () {
     $user = \App\Models\User::where('email', 'test@test.com')->first();
     auth()->login($user);
+
     return redirect('/dashboard');
 });
 
@@ -95,6 +96,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->name('admin.')->gro
 });
 
 Route::get('/payment/callback/{gateway}/{order}', [PaymentController::class, 'callback'])
+    ->middleware('auth')
     ->name('payment.callback');
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -495,6 +497,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 });
 
-require __DIR__.'/storefront.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

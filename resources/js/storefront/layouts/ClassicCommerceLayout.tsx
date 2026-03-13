@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useState, useCallback } from 'react';
 import { StandardHeader } from './components/headers/StandardHeader';
 import { CenteredLogoHeader } from './components/headers/CenteredLogoHeader';

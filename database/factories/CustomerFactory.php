@@ -15,7 +15,7 @@ class CustomerFactory extends Factory
     {
         return [
             'tenant_id' => Tenant::factory(),
-            'preferred_shop_id' => Shop::factory(),
+            'preferred_shop_id' => fn (array $attributes) => Shop::factory()->create(['tenant_id' => $attributes['tenant_id']])->id,
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
             'email' => fake()->unique()->safeEmail(),

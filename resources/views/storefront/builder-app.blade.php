@@ -18,7 +18,7 @@
         :root { {!! $themeStyles !!} }
     </style>
 
-    @vite('resources/js/storefront/app.tsx')
+    @vite(['resources/css/storefront.css', 'resources/js/storefront/app.tsx'])
 </head>
 <body>
     <div id="storefront-root"></div>

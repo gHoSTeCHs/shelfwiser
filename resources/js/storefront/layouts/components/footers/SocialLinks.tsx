@@ -1,3 +1,5 @@
+import type React from 'react';
+
 interface SocialLinksProps {
     links: Record<string, string>;
     className?: string;

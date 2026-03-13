@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useState } from 'react';
 import { ScrollAnimation } from '../../components/ScrollAnimation';
 import { storefrontFetch } from '../../lib/fetch-client';

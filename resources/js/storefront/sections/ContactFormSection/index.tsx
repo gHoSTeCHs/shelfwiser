@@ -1,3 +1,4 @@
+import type React from 'react';
 import type { SectionProps } from '../../types/storefront';
 import { SplitLayout } from './SplitLayout';
 import { Standard } from './Standard';
