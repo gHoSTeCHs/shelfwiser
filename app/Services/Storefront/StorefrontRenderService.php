@@ -103,33 +103,38 @@ class StorefrontRenderService
         $vars = [];
 
         foreach ($resolved['colors'] ?? [] as $key => $value) {
-            $vars[] = "--color-{$key}: {$value}";
+            $vars[] = "--color-{$this->sanitizeCssValue($key)}: {$this->sanitizeCssValue($value)}";
         }
 
         if (isset($resolved['typography']['heading_font'])) {
-            $vars[] = '--font-heading: "'.$resolved['typography']['heading_font'].'"';
+            $vars[] = '--font-heading: "'.$this->sanitizeCssValue($resolved['typography']['heading_font']).'"';
         }
         if (isset($resolved['typography']['body_font'])) {
-            $vars[] = '--font-body: "'.$resolved['typography']['body_font'].'"';
+            $vars[] = '--font-body: "'.$this->sanitizeCssValue($resolved['typography']['body_font']).'"';
         }
         if (isset($resolved['typography']['base_size'])) {
-            $vars[] = '--font-base-size: '.$resolved['typography']['base_size'].'px';
+            $vars[] = '--font-base-size: '.$this->sanitizeCssValue((string) $resolved['typography']['base_size']).'px';
         }
         if (isset($resolved['typography']['line_height'])) {
-            $vars[] = '--line-height: '.$resolved['typography']['line_height'];
+            $vars[] = '--line-height: '.$this->sanitizeCssValue((string) $resolved['typography']['line_height']);
         }
 
         if (isset($resolved['feel']['border_radius'])) {
-            $vars[] = '--radius: '.$resolved['feel']['border_radius'];
+            $vars[] = '--radius: '.$this->sanitizeCssValue($resolved['feel']['border_radius']);
         }
         if (isset($resolved['feel']['section_spacing'])) {
-            $vars[] = '--section-spacing: '.$resolved['feel']['section_spacing'];
+            $vars[] = '--section-spacing: '.$this->sanitizeCssValue($resolved['feel']['section_spacing']);
         }
         if (isset($resolved['feel']['shadow_depth'])) {
-            $vars[] = '--shadow-depth: '.$resolved['feel']['shadow_depth'];
+            $vars[] = '--shadow-depth: '.$this->sanitizeCssValue($resolved['feel']['shadow_depth']);
         }
 
         return implode('; ', $vars);
+    }
+
+    private function sanitizeCssValue(string $value): string
+    {
+        return str_replace(['<', '>', '{', '}', '\\', '/*', '*/'], '', $value);
     }
 
     public function resolveSections(array $sections, Shop $shop): array
@@ -220,7 +225,11 @@ class StorefrontRenderService
     {
         $shop->loadMissing('storefrontConfig.theme');
 
-        return $shop->storefrontConfig;
+        $config = $shop->storefrontConfig;
+
+        abort_if($config === null, 404);
+
+        return $config;
     }
 
     private function serializeShop(Shop $shop): array
@@ -338,7 +347,15 @@ class StorefrontRenderService
         $summary = $this->cartService->getCartSummary($cart);
 
         return [
-            'cart' => $cart,
+            'items' => $cart->items->map(fn ($item) => [
+                'id' => $item->id,
+                'name' => $item->productVariant?->product?->name ?? $item->sellable?->name ?? '',
+                'variant_name' => $item->productVariant?->name,
+                'price' => (float) $item->unit_price,
+                'quantity' => $item->quantity,
+                'image' => $item->productVariant?->product?->primary_image_url ?? null,
+                'max_quantity' => $item->productVariant?->stock_quantity,
+            ])->all(),
             'summary' => $summary,
         ];
     }
@@ -369,10 +386,19 @@ class StorefrontRenderService
     {
         $customerId = auth('customer')->id();
         $cart = $this->cartService->getCart($shop, $customerId);
+        $cart->load(['items.productVariant.product', 'items.sellable']);
         $summary = $this->cartService->getCartSummary($cart);
 
         return [
-            'cart' => $cart->load(['items.productVariant.product', 'items.sellable']),
+            'items' => $cart->items->map(fn ($item) => [
+                'id' => $item->id,
+                'name' => $item->productVariant?->product?->name ?? $item->sellable?->name ?? '',
+                'variant_name' => $item->productVariant?->name,
+                'price' => (float) $item->unit_price,
+                'quantity' => $item->quantity,
+                'image' => $item->productVariant?->product?->primary_image_url ?? null,
+                'max_quantity' => $item->productVariant?->stock_quantity,
+            ])->all(),
             'summary' => $summary,
             'payment_methods' => $shop->storefront_settings['payment_methods'] ?? ['paystack'],
         ];
@@ -382,12 +408,14 @@ class StorefrontRenderService
     {
         $order = $params['order'] ?? null;
 
-        if ($order) {
-            $order->load(['items.productVariant.product', 'payments']);
+        if (! $order) {
+            return ['order' => null];
         }
 
+        $order->load(['items.productVariant.product', 'payments']);
+
         return [
-            'order' => $order,
+            'order' => $this->serializeOrder($order),
         ];
     }
 
@@ -399,17 +427,19 @@ class StorefrontRenderService
             return [];
         }
 
+        $recentOrders = $customer->orders()
+            ->where('shop_id', $shop->id)
+            ->with('items')
+            ->latest()
+            ->limit(5)
+            ->get();
+
         return [
             'stats' => [
                 'total_orders' => $customer->orders()->where('shop_id', $shop->id)->count(),
                 'total_spent' => (float) $customer->orders()->where('shop_id', $shop->id)->sum('total'),
             ],
-            'recent_orders' => $customer->orders()
-                ->where('shop_id', $shop->id)
-                ->with('items')
-                ->latest()
-                ->limit(5)
-                ->get(),
+            'recent_orders' => $recentOrders->map(fn ($order) => $this->serializeOrder($order))->all(),
         ];
     }
 
@@ -418,15 +448,25 @@ class StorefrontRenderService
         $customer = auth('customer')->user();
 
         if (! $customer) {
-            return ['orders' => []];
+            return ['orders' => ['data' => [], 'meta' => []]];
         }
 
+        $paginator = $customer->orders()
+            ->where('shop_id', $shop->id)
+            ->with('items')
+            ->latest()
+            ->paginate(10);
+
         return [
-            'orders' => $customer->orders()
-                ->where('shop_id', $shop->id)
-                ->with('items')
-                ->latest()
-                ->paginate(10),
+            'orders' => [
+                'data' => collect($paginator->items())->map(fn ($order) => $this->serializeOrder($order))->all(),
+                'meta' => [
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                ],
+            ],
         ];
     }
 
@@ -434,12 +474,14 @@ class StorefrontRenderService
     {
         $order = $params['order'] ?? null;
 
-        if ($order) {
-            $order->load(['items.productVariant.product', 'payments']);
+        if (! $order) {
+            return ['order' => null];
         }
 
+        $order->load(['items.productVariant.product', 'payments']);
+
         return [
-            'order' => $order,
+            'order' => $this->serializeOrder($order),
         ];
     }
 
@@ -447,8 +489,18 @@ class StorefrontRenderService
     {
         $customer = auth('customer')->user();
 
+        if (! $customer) {
+            return ['customer' => null];
+        }
+
         return [
-            'customer' => $customer,
+            'customer' => [
+                'id' => $customer->id,
+                'first_name' => $customer->first_name,
+                'last_name' => $customer->last_name,
+                'email' => $customer->email,
+                'phone' => $customer->phone,
+            ],
         ];
     }
 
@@ -506,6 +558,38 @@ class StorefrontRenderService
             'item_count' => $summary['item_count'] ?? 0,
             'subtotal' => $summary['subtotal'] ?? 0,
             'total' => $summary['total'] ?? 0,
+        ];
+    }
+
+    private function serializeOrder(\App\Models\Order $order): array
+    {
+        return [
+            'id' => $order->id,
+            'order_number' => $order->order_number,
+            'status' => $order->status?->value ?? $order->status,
+            'subtotal' => (float) $order->subtotal,
+            'tax' => (float) $order->tax,
+            'total' => (float) $order->total,
+            'created_at' => $order->created_at?->toISOString(),
+            'items' => $order->relationLoaded('items')
+                ? $order->items->map(fn ($item) => [
+                    'id' => $item->id,
+                    'name' => $item->productVariant?->product?->name ?? $item->product_name ?? '',
+                    'variant_name' => $item->productVariant?->name ?? $item->variant_name ?? null,
+                    'quantity' => $item->quantity,
+                    'unit_price' => (float) $item->unit_price,
+                    'total' => (float) $item->total,
+                    'image' => $item->productVariant?->product?->primary_image_url ?? null,
+                ])->all()
+                : [],
+            'payments' => $order->relationLoaded('payments')
+                ? $order->payments->map(fn ($payment) => [
+                    'id' => $payment->id,
+                    'method' => $payment->payment_method,
+                    'amount' => (float) $payment->amount,
+                    'status' => $payment->status?->value ?? $payment->status,
+                ])->all()
+                : [],
         ];
     }
 

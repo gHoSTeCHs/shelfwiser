@@ -18,19 +18,18 @@ class StorefrontPageFactory extends Factory
 
     public function definition(): array
     {
-        $tenant = Tenant::factory()->create();
-        $shop = Shop::factory()->create(['tenant_id' => $tenant->id]);
-
         return [
-            'tenant_id' => $tenant->id,
-            'shop_id' => $shop->id,
-            'storefront_config_id' => StorefrontConfig::factory()->state([
-                'tenant_id' => $tenant->id,
-                'shop_id' => $shop->id,
-            ]),
-            'page_type' => StorefrontPageType::HOME,
-            'slug' => null,
-            'title' => 'Home',
+            'tenant_id' => Tenant::factory(),
+            'shop_id' => fn (array $attributes) => Shop::factory()->create(['tenant_id' => $attributes['tenant_id']])->id,
+            'storefront_config_id' => fn (array $attributes) => StorefrontConfig::factory()->create([
+                'tenant_id' => $attributes['tenant_id'],
+                'shop_id' => $attributes['shop_id'],
+            ])->id,
+            'page_type' => fake()->randomElement(StorefrontPageType::cases()),
+            'slug' => fn (array $attributes) => $attributes['page_type'] === StorefrontPageType::CUSTOM
+                ? fake()->unique()->slug()
+                : null,
+            'title' => fake()->words(3, true),
             'sections' => [],
             'seo_title' => null,
             'seo_description' => null,

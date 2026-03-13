@@ -15,7 +15,7 @@ class ShopFactory extends Factory
     {
         return [
             'tenant_id' => Tenant::factory(),
-            'shop_type_id' => ShopType::factory(),
+            'shop_type_id' => fn (array $attributes) => ShopType::factory()->create(['tenant_id' => $attributes['tenant_id']])->id,
             'name' => fake()->company().' Store',
             'slug' => fake()->unique()->slug(),
             'config' => [],

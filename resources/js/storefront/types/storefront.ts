@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 export interface StorefrontPageData {
     shop: ShopData;
     template: TemplateData;
@@ -216,7 +218,7 @@ export interface LayoutProps {
     cart: CartSummary;
     theme: ResolvedTheme;
     customer: CustomerData | null;
-    children: React.ReactNode;
+    children: ReactNode;
 }
 
 export interface SectionProps {

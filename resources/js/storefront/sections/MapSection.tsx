@@ -7,9 +7,20 @@ interface MapConfig {
     height?: string;
 }
 
+const SAFE_EMBED_PATTERNS = [
+    /^https:\/\/www\.google\.com\/maps\/embed/,
+    /^https:\/\/maps\.google\.com\//,
+    /^https:\/\/www\.openstreetmap\.org\//,
+];
+
+function isSafeEmbedUrl(url: string): boolean {
+    return SAFE_EMBED_PATTERNS.some((pattern) => pattern.test(url));
+}
+
 export function MapSection({ config }: SectionProps) {
     const { heading, address, embed_url, height } = config as unknown as MapConfig;
     const mapHeight = height || '400px';
+    const safeEmbedUrl = embed_url && isSafeEmbedUrl(embed_url) ? embed_url : null;
 
     return (
         <section style={{ padding: 'var(--section-spacing, 64px) 0' }}>
@@ -30,7 +41,7 @@ export function MapSection({ config }: SectionProps) {
                     </h2>
                 )}
 
-                {embed_url ? (
+                {safeEmbedUrl ? (
                     <div
                         className="w-full overflow-hidden"
                         style={{
@@ -40,7 +51,7 @@ export function MapSection({ config }: SectionProps) {
                         }}
                     >
                         <iframe
-                            src={embed_url}
+                            src={safeEmbedUrl}
                             title={heading || 'Map'}
                             className="h-full w-full border-0"
                             loading="lazy"

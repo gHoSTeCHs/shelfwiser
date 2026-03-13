@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import { ScrollAnimation } from '../components/ScrollAnimation';
+import { sanitizeHtml } from '../lib/sanitize-html';
 import type { SectionProps } from '../types/storefront';
 
 const maxWidthMap: Record<string, string> = {
@@ -9,7 +11,8 @@ const maxWidthMap: Record<string, string> = {
 };
 
 export function RichTextSection({ config }: SectionProps) {
-    const content = (config.content as string) ?? '';
+    const rawContent = (config.content as string) ?? '';
+    const content = useMemo(() => sanitizeHtml(rawContent), [rawContent]);
     const maxWidth = maxWidthMap[(config.max_width as string) ?? 'medium'] ?? '768px';
 
     if (!content) {

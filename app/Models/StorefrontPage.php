@@ -12,6 +12,10 @@ class StorefrontPage extends Model
 {
     use BelongsToTenant, HasFactory;
 
+    protected $attributes = [
+        'sections' => '[]',
+    ];
+
     protected $fillable = [
         'tenant_id',
         'shop_id',

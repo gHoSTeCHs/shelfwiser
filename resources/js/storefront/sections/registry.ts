@@ -1,3 +1,4 @@
+import type { FC } from 'react';
 import type { SectionProps } from '../types/storefront';
 import { HeroBannerSection } from './HeroBannerSection';
 import { FeaturedProductsSection } from './FeaturedProductsSection';
@@ -20,7 +21,7 @@ import { CollectionListSection } from './CollectionListSection';
 import { RecentlyViewedSection } from './RecentlyViewedSection';
 import { MapSection } from './MapSection';
 
-export const sectionRegistry: Record<string, React.FC<SectionProps>> = {
+export const sectionRegistry: Record<string, FC<SectionProps>> = {
     hero_banner: HeroBannerSection,
     featured_products: FeaturedProductsSection,
     product_grid: ProductGridSection,
