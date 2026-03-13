@@ -126,27 +126,25 @@ class FeaturedProductsSection implements StorefrontSectionInterface
     {
         $limit = $config['max_items'] ?? 8;
 
-        return match ($config['product_source'] ?? 'featured') {
-            'featured' => $this->storefrontService->getFeaturedProducts($shop, $limit)->toArray(),
+        $query = match ($config['product_source'] ?? 'featured') {
+            'featured' => $this->storefrontService->getFeaturedProducts($shop, $limit),
             'newest' => Product::query()
                 ->where('tenant_id', $shop->tenant_id)
                 ->where('shop_id', $shop->id)
                 ->where('is_active', true)
-                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true)])
+                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category'])
                 ->latest()
                 ->limit($limit)
-                ->get()
-                ->toArray(),
+                ->get(),
             'bestselling' => Product::query()
                 ->where('tenant_id', $shop->tenant_id)
                 ->where('shop_id', $shop->id)
                 ->where('is_active', true)
-                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true)])
+                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category'])
                 ->withCount('orderItems')
                 ->orderByDesc('order_items_count')
                 ->limit($limit)
-                ->get()
-                ->toArray(),
+                ->get(),
             'on_sale' => Product::query()
                 ->where('tenant_id', $shop->tenant_id)
                 ->where('shop_id', $shop->id)
@@ -157,20 +155,38 @@ class FeaturedProductsSection implements StorefrontSectionInterface
                     ->whereNotNull('compare_at_price')
                     ->whereColumn('price', '<', 'compare_at_price')
                 )
-                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true)])
+                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category'])
                 ->limit($limit)
-                ->get()
-                ->toArray(),
+                ->get(),
             'manual' => Product::query()
                 ->where('tenant_id', $shop->tenant_id)
                 ->where('shop_id', $shop->id)
                 ->whereIn('id', $config['manual_product_ids'] ?? [])
                 ->where('is_active', true)
-                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true)])
-                ->get()
-                ->toArray(),
-            default => $this->storefrontService->getFeaturedProducts($shop, $limit)->toArray(),
+                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category'])
+                ->get(),
+            default => $this->storefrontService->getFeaturedProducts($shop, $limit),
         };
+
+        $products = $query->map(fn (Product $product) => $this->serializeProduct($product))->all();
+
+        return ['products' => $products];
+    }
+
+    private function serializeProduct(Product $product): array
+    {
+        $firstVariant = $product->variants->first();
+
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'slug' => $product->slug,
+            'price' => (float) ($firstVariant?->price ?? 0),
+            'compare_at_price' => $firstVariant?->compare_at_price ? (float) $firstVariant->compare_at_price : null,
+            'image' => $product->primary_image_url ?? null,
+            'category_name' => $product->category?->name,
+            'is_new' => $product->created_at?->isAfter(now()->subDays(14)) ?? false,
+        ];
     }
 
     public function allowedPageTypes(): array

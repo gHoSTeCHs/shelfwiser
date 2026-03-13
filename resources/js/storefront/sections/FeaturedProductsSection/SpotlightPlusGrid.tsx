@@ -25,7 +25,7 @@ export function SpotlightPlusGrid({ config, data }: SectionProps) {
 
     const spotlightProduct = products[0];
     const gridProducts = products.slice(1);
-    const spotlightUrl = shopSlug ? `/${shopSlug}/products/${spotlightProduct.slug}` : '#';
+    const spotlightUrl = shopSlug ? `/store/${shopSlug}/products/${spotlightProduct.slug}` : '#';
 
     return (
         <section style={{ padding: 'var(--section-spacing, 64px) 0' }}>

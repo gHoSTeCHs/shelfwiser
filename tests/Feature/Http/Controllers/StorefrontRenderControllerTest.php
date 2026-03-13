@@ -136,5 +136,5 @@ it('page data contains theme styles', function () {
 
     $response = $this->get("/store/{$shop->slug}");
 
-    $response->assertViewHas('themeStyles');
+    $response->assertViewHas('themeStyleVars');
 });

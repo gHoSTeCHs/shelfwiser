@@ -21,14 +21,19 @@ class StorefrontPageFactory extends Factory
         return [
             'tenant_id' => Tenant::factory(),
             'shop_id' => fn (array $attributes) => Shop::factory()->create(['tenant_id' => $attributes['tenant_id']])->id,
-            'storefront_config_id' => fn (array $attributes) => StorefrontConfig::factory()->create([
-                'tenant_id' => $attributes['tenant_id'],
-                'shop_id' => $attributes['shop_id'],
-            ])->id,
+            'storefront_config_id' => fn (array $attributes) => StorefrontConfig::query()
+                ->where('shop_id', $attributes['shop_id'])
+                ->first()?->id ?? StorefrontConfig::factory()->create([
+                    'tenant_id' => $attributes['tenant_id'],
+                    'shop_id' => $attributes['shop_id'],
+                ])->id,
             'page_type' => fake()->randomElement(StorefrontPageType::cases()),
             'slug' => fn (array $attributes) => $attributes['page_type'] === StorefrontPageType::CUSTOM
+                || $attributes['page_type'] === StorefrontPageType::CUSTOM->value
                 ? fake()->unique()->slug()
-                : null,
+                : ($attributes['page_type'] instanceof StorefrontPageType
+                    ? $attributes['page_type']->value
+                    : $attributes['page_type']),
             'title' => fake()->words(3, true),
             'sections' => [],
             'seo_title' => null,

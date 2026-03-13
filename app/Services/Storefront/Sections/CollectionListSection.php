@@ -76,37 +76,64 @@ class CollectionListSection implements StorefrontSectionInterface
         $collections = $config['collections'] ?? [];
 
         if (empty($collections)) {
-            return [];
+            return ['collections' => []];
         }
 
         $categoryIds = array_filter(array_column($collections, 'category_id'));
-        $maxLimit = max(array_column($collections, 'max_items') ?: [8]);
+        $totalLimit = array_sum(array_column($collections, 'max_items') ?: [8]);
+
+        $categories = ! empty($categoryIds)
+            ? \App\Models\ProductCategory::query()
+                ->whereIn('id', $categoryIds)
+                ->withCount(['products' => fn ($q) => $q
+                    ->where('shop_id', $shop->id)
+                    ->where('is_active', true),
+                ])
+                ->get()
+                ->keyBy('id')
+            : collect();
 
         $products = Product::query()
             ->where('tenant_id', $shop->tenant_id)
             ->where('shop_id', $shop->id)
             ->where('is_active', true)
             ->when(! empty($categoryIds), fn ($q) => $q->whereIn('category_id', $categoryIds))
-            ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true)])
-            ->limit($maxLimit)
+            ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category'])
+            ->limit($totalLimit)
             ->get();
 
         $result = [];
 
         foreach ($collections as $collection) {
+            $categoryId = $collection['category_id'] ?? null;
             $filtered = $products;
 
-            if (! empty($collection['category_id'])) {
-                $filtered = $products->where('category_id', $collection['category_id']);
+            if ($categoryId) {
+                $filtered = $products->where('category_id', $categoryId);
             }
 
+            $category = $categoryId ? $categories->get($categoryId) : null;
+
             $result[] = [
-                'title' => $collection['title'] ?? '',
-                'products' => $filtered->take($collection['max_items'] ?? 8)->values()->toArray(),
+                'id' => $categoryId ?? 0,
+                'name' => $category?->name ?? ($collection['title'] ?? ''),
+                'slug' => $category?->slug ?? '',
+                'image' => $category?->image ?? null,
+                'product_count' => $category?->products_count ?? $filtered->count(),
+                'description' => $category?->description ?? null,
+                'products' => $filtered->take($collection['max_items'] ?? 8)->values()->map(fn ($product) => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'price' => (float) ($product->variants->first()?->price ?? 0),
+                    'compare_at_price' => $product->variants->first()?->compare_at_price ? (float) $product->variants->first()->compare_at_price : null,
+                    'image' => $product->primary_image_url ?? null,
+                    'category_name' => $product->category?->name,
+                ])->all(),
             ];
         }
 
-        return $result;
+        return ['collections' => $result];
     }
 
     public function allowedPageTypes(): array

@@ -49,13 +49,6 @@ use App\Http\Controllers\Web\StaffManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/_debug_login', function () {
-    $user = \App\Models\User::where('email', 'test@test.com')->first();
-    auth()->login($user);
-
-    return redirect('/dashboard');
-});
-
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');

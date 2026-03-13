@@ -111,11 +111,17 @@ it('config has many pages', function () {
         'theme_id' => $theme->id,
     ]);
 
-    StorefrontPage::factory()->count(3)->create([
-        'tenant_id' => $tenant->id,
-        'shop_id' => $shop->id,
-        'storefront_config_id' => $config->id,
-    ]);
+    $pageTypes = [\App\Enums\StorefrontPageType::HOME, \App\Enums\StorefrontPageType::PRODUCTS, \App\Enums\StorefrontPageType::ABOUT];
+
+    foreach ($pageTypes as $pageType) {
+        StorefrontPage::factory()->create([
+            'tenant_id' => $tenant->id,
+            'shop_id' => $shop->id,
+            'storefront_config_id' => $config->id,
+            'page_type' => $pageType,
+            'slug' => $pageType->value,
+        ]);
+    }
 
     expect($config->pages)->toHaveCount(3);
     expect($config->pages->first())->toBeInstanceOf(StorefrontPage::class);

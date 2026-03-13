@@ -136,7 +136,7 @@ class StorefrontRenderController extends Controller
         return view('storefront.builder-app', [
             'pageData' => $pageData,
             'seo' => $pageData['seo'],
-            'themeStyles' => $pageData['themeStyles'],
+            'themeStyleVars' => $pageData['themeStyleVars'],
         ]);
     }
 
@@ -150,7 +150,7 @@ class StorefrontRenderController extends Controller
         return view('storefront.builder-app', [
             'pageData' => $pageData,
             'seo' => $pageData['seo'],
-            'themeStyles' => $pageData['themeStyles'],
+            'themeStyleVars' => $pageData['themeStyleVars'],
         ]);
     }
 

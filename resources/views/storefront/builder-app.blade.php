@@ -14,14 +14,21 @@
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <style>
-        :root { {!! $themeStyles !!} }
-    </style>
-
     @vite(['resources/css/storefront.css', 'resources/js/storefront/app.tsx'])
 </head>
 <body>
     <div id="storefront-root"></div>
-    <script>window.__STOREFRONT_PAGE__ = {!! Js::from($pageData) !!};</script>
+    <script>
+        window.__STOREFRONT_PAGE__ = {!! Js::from($pageData) !!};
+        (function() {
+            var styles = {!! Js::from($themeStyleVars) !!};
+            var root = document.documentElement;
+            for (var key in styles) {
+                if (styles.hasOwnProperty(key)) {
+                    root.style.setProperty(key, styles[key]);
+                }
+            }
+        })();
+    </script>
 </body>
 </html>

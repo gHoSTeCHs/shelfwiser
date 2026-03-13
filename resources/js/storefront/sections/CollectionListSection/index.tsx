@@ -49,7 +49,7 @@ export function CollectionListSection({ config, variant, data }: SectionProps) {
                     </h2>
                 )}
 
-                {variant === 'list' ? (
+                {variant === 'rows' ? (
                     <List collections={collections} shop_slug={shop_slug} />
                 ) : (
                     <Cards collections={collections} shop_slug={shop_slug} />

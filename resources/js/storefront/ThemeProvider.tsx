@@ -30,7 +30,7 @@ export function ThemeProvider({ theme, template, children }: ThemeProviderProps)
             vars['--font-body'] = `"${theme.typography.body_font}", sans-serif`;
         }
         if (theme.typography.base_size) {
-            vars['--font-size-base'] = `${theme.typography.base_size}px`;
+            vars['--font-base-size'] = `${theme.typography.base_size}px`;
         }
         if (theme.typography.line_height) {
             vars['--line-height'] = String(theme.typography.line_height);

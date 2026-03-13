@@ -18,11 +18,11 @@ class StorefrontService
         $cacheKey = $this->getCacheKey($shop->tenant_id, $shop->id, 'featured_products', $limit);
 
         return Cache::remember($cacheKey, now()->addMinutes(30), function () use ($shop, $limit) {
-            $featured = Product::where('tenant_id', $shop->tenant_id)
+            $featured = Product::query()->where('tenant_id', $shop->tenant_id)
                 ->where('shop_id', $shop->id)
                 ->where('is_active', true)
                 ->where('is_featured', true)
-                ->with(['variants' => fn ($q) => $q->where('is_available_online', true)
+                ->with(['category', 'variants' => fn ($q) => $q->where('is_available_online', true)
                     ->where('is_active', true)
                     ->with('inventoryLocations')])
                 ->orderBy('display_order')
@@ -31,10 +31,10 @@ class StorefrontService
                 ->get();
 
             if ($featured->isEmpty()) {
-                return Product::where('tenant_id', $shop->tenant_id)
+                return Product::query()->where('tenant_id', $shop->tenant_id)
                     ->where('shop_id', $shop->id)
                     ->where('is_active', true)
-                    ->with(['variants' => fn ($q) => $q->where('is_available_online', true)
+                    ->with(['category', 'variants' => fn ($q) => $q->where('is_available_online', true)
                         ->where('is_active', true)
                         ->with('inventoryLocations')])
                     ->orderBy('created_at', 'desc')
@@ -53,7 +53,7 @@ class StorefrontService
         string $sortBy = 'name',
         int $perPage = 12
     ): LengthAwarePaginator {
-        $query = Product::where('tenant_id', $shop->tenant_id)
+        $query = Product::query()->where('tenant_id', $shop->tenant_id)
             ->where('shop_id', $shop->id)
             ->where('is_active', true)
             ->with([
@@ -100,7 +100,7 @@ class StorefrontService
         $cacheKey = $this->getCacheKey($shop->tenant_id, $shop->id, 'product_slug', $slug);
 
         return Cache::remember($cacheKey, now()->addMinutes(30), function () use ($shop, $slug) {
-            return Product::where('tenant_id', $shop->tenant_id)
+            return Product::query()->where('tenant_id', $shop->tenant_id)
                 ->where('shop_id', $shop->id)
                 ->where('slug', $slug)
                 ->where('is_active', true)
@@ -120,7 +120,7 @@ class StorefrontService
         $cacheKey = $this->getCacheKey($product->tenant_id, $product->shop_id, 'related_products', $product->id, $limit);
 
         return Cache::remember($cacheKey, now()->addMinutes(30), function () use ($product, $limit) {
-            return Product::where('tenant_id', $product->tenant_id)
+            return Product::query()->where('tenant_id', $product->tenant_id)
                 ->where('shop_id', $product->shop_id)
                 ->where('category_id', $product->category_id)
                 ->where('id', '!=', $product->id)
@@ -138,7 +138,7 @@ class StorefrontService
         $cacheKey = $this->getCacheKey($shop->tenant_id, $shop->id, 'categories');
 
         return Cache::remember($cacheKey, now()->addMinutes(60), function () use ($shop) {
-            return ProductCategory::where('tenant_id', $shop->tenant_id)
+            return ProductCategory::query()->where('tenant_id', $shop->tenant_id)
                 ->whereNull('parent_id')
                 ->withCount(['products' => fn ($q) => $q->where('shop_id', $shop->id)->where('is_active', true)])
                 ->orderBy('name')
@@ -162,7 +162,7 @@ class StorefrontService
         string $sortBy = 'name',
         int $perPage = 12
     ): LengthAwarePaginator {
-        $query = Service::where('tenant_id', $shop->tenant_id)
+        $query = Service::query()->where('tenant_id', $shop->tenant_id)
             ->where('shop_id', $shop->id)
             ->where('is_active', true)
             ->where('is_available_online', true)
@@ -206,7 +206,7 @@ class StorefrontService
         $cacheKey = $this->getCacheKey($shop->tenant_id, $shop->id, 'service_categories');
 
         return Cache::remember($cacheKey, now()->addMinutes(60), function () use ($shop) {
-            return ServiceCategory::where('tenant_id', $shop->tenant_id)
+            return ServiceCategory::query()->where('tenant_id', $shop->tenant_id)
                 ->whereNull('parent_id')
                 ->withCount(['services' => fn ($q) => $q->where('shop_id', $shop->id)
                     ->where('is_active', true)
@@ -223,7 +223,7 @@ class StorefrontService
         $cacheKey = $this->getCacheKey($service->tenant_id, $service->shop_id, 'related_services', $service->id, $limit);
 
         return Cache::remember($cacheKey, now()->addMinutes(30), function () use ($service, $limit) {
-            return Service::where('tenant_id', $service->tenant_id)
+            return Service::query()->where('tenant_id', $service->tenant_id)
                 ->where('shop_id', $service->shop_id)
                 ->where('service_category_id', $service->service_category_id)
                 ->where('id', '!=', $service->id)
@@ -257,7 +257,7 @@ class StorefrontService
         Cache::forget($this->getCacheKey($tenantId, $shopId, 'categories'));
 
         if ($productId) {
-            $product = Product::find($productId);
+            $product = Product::query()->where('tenant_id', $tenantId)->find($productId);
             if ($product) {
                 Cache::forget($this->getCacheKey($tenantId, $shopId, 'product_slug', $product->slug));
                 Cache::forget($this->getCacheKey($tenantId, $shopId, 'related_products', $productId, 4));

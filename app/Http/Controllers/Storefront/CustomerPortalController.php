@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Enums\OrderStatus;
 use App\Enums\OrderType;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CancelOrderRequest;
+use App\Http\Requests\Storefront\UpdateCustomerProfileRequest;
 use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,12 +35,12 @@ class CustomerPortalController extends Controller
             'pending_orders' => $customer->orders()
                 ->where('shop_id', $shop->id)
                 ->where('order_type', OrderType::CUSTOMER->value)
-                ->where('status', 'pending')
+                ->where('status', OrderStatus::PENDING)
                 ->count(),
             'total_spent' => $customer->orders()
                 ->where('shop_id', $shop->id)
                 ->where('order_type', OrderType::CUSTOMER->value)
-                ->where('payment_status', 'paid')
+                ->where('payment_status', PaymentStatus::PAID)
                 ->sum('total_amount'),
         ];
 
@@ -128,7 +130,7 @@ class CustomerPortalController extends Controller
     /**
      * Update customer profile information.
      */
-    public function updateProfile(Request $request, Shop $shop): RedirectResponse
+    public function updateProfile(UpdateCustomerProfileRequest $request, Shop $shop): RedirectResponse
     {
         $customer = auth('customer')->user();
 
@@ -136,14 +138,7 @@ class CustomerPortalController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'marketing_opt_in' => ['boolean'],
-        ]);
-
-        $customer->update($validated);
+        $customer->update($request->validated());
 
         return back()->with('success', 'Profile updated successfully');
     }

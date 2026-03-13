@@ -39,6 +39,7 @@ class StorefrontRenderService
             'template' => $this->serializeTemplate($config),
             'theme' => $resolved,
             'themeStyles' => $themeStyles,
+            'themeStyleVars' => $this->buildThemeStyleVars($resolved),
             'sections' => $sections,
             'seo' => $seo,
             'cart' => $this->resolveCartSummary($shop),
@@ -62,6 +63,7 @@ class StorefrontRenderService
             'template' => $this->serializeTemplate($config),
             'theme' => $resolved,
             'themeStyles' => $themeStyles,
+            'themeStyleVars' => $this->buildThemeStyleVars($resolved),
             'fixedPage' => $page,
             'fixedPageData' => $fixedPageData,
             'seo' => $seo,
@@ -101,41 +103,61 @@ class StorefrontRenderService
 
     public function buildThemeStyles(array $resolved): string
     {
+        $vars = $this->buildThemeStyleVars($resolved);
+
+        $parts = [];
+        foreach ($vars as $key => $value) {
+            $parts[] = "{$key}: {$value}";
+        }
+
+        return implode('; ', $parts);
+    }
+
+    public function buildThemeStyleVars(array $resolved): array
+    {
         $vars = [];
 
         foreach ($resolved['colors'] ?? [] as $key => $value) {
-            $vars[] = "--color-{$this->sanitizeCssValue($key)}: {$this->sanitizeCssValue($value)}";
+            $safeKey = preg_replace('/[^a-zA-Z0-9_-]/', '', $key);
+            $vars["--color-{$safeKey}"] = $this->sanitizeCssValue($value);
         }
 
         if (isset($resolved['typography']['heading_font'])) {
-            $vars[] = '--font-heading: "'.$this->sanitizeCssValue($resolved['typography']['heading_font']).'"';
+            $vars['--font-heading'] = '"'.$this->sanitizeCssValue($resolved['typography']['heading_font']).'"';
         }
         if (isset($resolved['typography']['body_font'])) {
-            $vars[] = '--font-body: "'.$this->sanitizeCssValue($resolved['typography']['body_font']).'"';
+            $vars['--font-body'] = '"'.$this->sanitizeCssValue($resolved['typography']['body_font']).'"';
         }
         if (isset($resolved['typography']['base_size'])) {
-            $vars[] = '--font-base-size: '.$this->sanitizeCssValue((string) $resolved['typography']['base_size']).'px';
+            $vars['--font-base-size'] = $this->sanitizeCssValue((string) $resolved['typography']['base_size']).'px';
         }
         if (isset($resolved['typography']['line_height'])) {
-            $vars[] = '--line-height: '.$this->sanitizeCssValue((string) $resolved['typography']['line_height']);
+            $vars['--line-height'] = $this->sanitizeCssValue((string) $resolved['typography']['line_height']);
         }
 
         if (isset($resolved['feel']['border_radius'])) {
-            $vars[] = '--radius: '.$this->sanitizeCssValue($resolved['feel']['border_radius']);
+            $vars['--radius'] = $this->sanitizeCssValue($resolved['feel']['border_radius']);
         }
         if (isset($resolved['feel']['section_spacing'])) {
-            $vars[] = '--section-spacing: '.$this->sanitizeCssValue($resolved['feel']['section_spacing']);
+            $vars['--section-spacing'] = $this->sanitizeCssValue($resolved['feel']['section_spacing']);
         }
         if (isset($resolved['feel']['shadow_depth'])) {
-            $vars[] = '--shadow-depth: '.$this->sanitizeCssValue($resolved['feel']['shadow_depth']);
+            $vars['--shadow-depth'] = $this->sanitizeCssValue($resolved['feel']['shadow_depth']);
         }
 
-        return implode('; ', $vars);
+        return $vars;
     }
 
     private function sanitizeCssValue(string $value): string
     {
-        return str_replace(['<', '>', '{', '}', '\\', '/*', '*/'], '', $value);
+        $value = str_replace(['<', '>', '{', '}', '\\', '/*', '*/', ';'], '', $value);
+
+        $value = preg_replace('/url\s*\(/i', '', $value);
+        $value = preg_replace('/expression\s*\(/i', '', $value);
+        $value = preg_replace('/javascript\s*:/i', '', $value);
+        $value = preg_replace('/@import/i', '', $value);
+
+        return $value;
     }
 
     public function resolveSections(array $sections, Shop $shop): array
@@ -353,7 +375,7 @@ class StorefrontRenderService
                 'id' => $item->id,
                 'name' => $item->productVariant?->product?->name ?? $item->sellable?->name ?? '',
                 'variant_name' => $item->productVariant?->name,
-                'price' => (float) $item->unit_price,
+                'price' => (float) $item->price,
                 'quantity' => $item->quantity,
                 'image' => $item->productVariant?->product?->primary_image_url ?? null,
                 'max_quantity' => $item->productVariant?->stock_quantity,
@@ -396,7 +418,7 @@ class StorefrontRenderService
                 'id' => $item->id,
                 'name' => $item->productVariant?->product?->name ?? $item->sellable?->name ?? '',
                 'variant_name' => $item->productVariant?->name,
-                'price' => (float) $item->unit_price,
+                'price' => (float) $item->price,
                 'quantity' => $item->quantity,
                 'image' => $item->productVariant?->product?->primary_image_url ?? null,
                 'max_quantity' => $item->productVariant?->stock_quantity,
@@ -439,7 +461,7 @@ class StorefrontRenderService
         return [
             'stats' => [
                 'total_orders' => $customer->orders()->where('shop_id', $shop->id)->count(),
-                'total_spent' => (float) $customer->orders()->where('shop_id', $shop->id)->sum('total'),
+                'total_spent' => (float) $customer->orders()->where('shop_id', $shop->id)->sum('total_amount'),
             ],
             'recent_orders' => $recentOrders->map(fn ($order) => $this->serializeOrder($order))->all(),
         ];
@@ -508,13 +530,15 @@ class StorefrontRenderService
 
     private function loadServicesData(Shop $shop): array
     {
+        $services = \App\Models\Service::query()
+            ->where('tenant_id', $shop->tenant_id)
+            ->where('shop_id', $shop->id)
+            ->where('is_active', true)
+            ->with(['variants', 'category'])
+            ->get();
+
         return [
-            'services' => \App\Models\Service::query()
-                ->where('tenant_id', $shop->tenant_id)
-                ->where('shop_id', $shop->id)
-                ->where('is_active', true)
-                ->with(['variants', 'category'])
-                ->get(),
+            'services' => $services->map(fn ($service) => $this->serializeService($service))->all(),
         ];
     }
 
@@ -534,7 +558,35 @@ class StorefrontRenderService
             ->first();
 
         return [
-            'service' => $service,
+            'service' => $service ? $this->serializeService($service) : null,
+        ];
+    }
+
+    private function serializeService(\App\Models\Service $service): array
+    {
+        return [
+            'id' => $service->id,
+            'name' => $service->name,
+            'slug' => $service->slug,
+            'description' => $service->description,
+            'category_name' => $service->category?->name,
+            'is_active' => $service->is_active,
+            'variants' => $service->relationLoaded('variants')
+                ? $service->variants->map(fn ($variant) => [
+                    'id' => $variant->id,
+                    'name' => $variant->name,
+                    'price' => (float) $variant->price,
+                    'duration_minutes' => $variant->duration_minutes,
+                    'is_active' => $variant->is_active,
+                ])->all()
+                : [],
+            'addons' => $service->relationLoaded('addons')
+                ? $service->addons->map(fn ($addon) => [
+                    'id' => $addon->id,
+                    'name' => $addon->name,
+                    'price' => (float) $addon->price,
+                ])->all()
+                : [],
         ];
     }
 
@@ -570,8 +622,8 @@ class StorefrontRenderService
             'order_number' => $order->order_number,
             'status' => $order->status?->value ?? $order->status,
             'subtotal' => (float) $order->subtotal,
-            'tax' => (float) $order->tax,
-            'total' => (float) $order->total,
+            'tax' => (float) $order->tax_amount,
+            'total' => (float) $order->total_amount,
             'created_at' => $order->created_at?->toISOString(),
             'items' => $order->relationLoaded('items')
                 ? $order->items->map(fn ($item) => [
@@ -580,7 +632,7 @@ class StorefrontRenderService
                     'variant_name' => $item->productVariant?->name ?? $item->variant_name ?? null,
                     'quantity' => $item->quantity,
                     'unit_price' => (float) $item->unit_price,
-                    'total' => (float) $item->total,
+                    'total' => (float) $item->total_amount,
                     'image' => $item->productVariant?->product?->primary_image_url ?? null,
                 ])->all()
                 : [],
