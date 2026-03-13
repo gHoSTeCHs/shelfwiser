@@ -1,14 +1,17 @@
-import '../../../resources/css/app.css';
+import { createRoot } from 'react-dom/client';
+import { StorefrontRenderer } from './StorefrontRenderer';
+import { initCsrfToken } from './lib/fetch-client';
+import type { StorefrontPageData } from './types/storefront';
 
 declare global {
     interface Window {
-        __STOREFRONT_PAGE__: Record<string, unknown>;
+        __STOREFRONT_PAGE__: StorefrontPageData;
     }
 }
 
-const root = document.getElementById('storefront-root');
-
-if (root) {
-    const pageData = window.__STOREFRONT_PAGE__ ?? {};
-    console.log('Storefront loaded', pageData);
+const rootEl = document.getElementById('storefront-root');
+if (rootEl) {
+    const pageData: StorefrontPageData = window.__STOREFRONT_PAGE__;
+    initCsrfToken(pageData.csrfToken);
+    createRoot(rootEl).render(<StorefrontRenderer {...pageData} />);
 }

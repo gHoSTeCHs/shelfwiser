@@ -35,10 +35,12 @@ class StorefrontRenderService
 
         return [
             'shop' => $this->serializeShop($shop),
+            'template' => $this->serializeTemplate($config),
             'theme' => $resolved,
             'themeStyles' => $themeStyles,
             'sections' => $sections,
             'seo' => $seo,
+            'cart' => $this->resolveCartSummary($shop),
             'navigation' => $navigation,
             'customer' => $this->resolveCustomer(),
             'csrfToken' => csrf_token(),
@@ -56,11 +58,13 @@ class StorefrontRenderService
 
         return [
             'shop' => $this->serializeShop($shop),
+            'template' => $this->serializeTemplate($config),
             'theme' => $resolved,
             'themeStyles' => $themeStyles,
             'fixedPage' => $page,
             'fixedPageData' => $fixedPageData,
             'seo' => $seo,
+            'cart' => $this->resolveCartSummary($shop),
             'navigation' => $navigation,
             'customer' => $this->resolveCustomer(),
             'csrfToken' => csrf_token(),
@@ -136,7 +140,11 @@ class StorefrontRenderService
             $data = $this->registry->resolveData($type, $config, $shop);
 
             return [
+                'id' => $section['id'] ?? \Illuminate\Support\Str::uuid()->toString(),
                 'type' => $type,
+                'variant' => $section['variant'] ?? 'default',
+                'is_visible' => $section['is_visible'] ?? true,
+                'scroll_animation' => $section['scroll_animation'] ?? 'none',
                 'config' => $config,
                 'data' => $data,
             ];
@@ -473,6 +481,31 @@ class StorefrontRenderService
 
         return [
             'service' => $service,
+        ];
+    }
+
+    private function serializeTemplate(StorefrontConfig $config): array
+    {
+        $config->loadMissing('theme.template');
+        $template = $config->theme?->template;
+
+        return [
+            'slug' => $template?->slug ?? 'classic-commerce',
+            'animation_tier' => $template?->animation_tier?->value ?? 'subtle',
+            'structural_config' => $template?->structural_config ?? [],
+        ];
+    }
+
+    private function resolveCartSummary(Shop $shop): array
+    {
+        $customerId = auth('customer')->id();
+        $cart = $this->cartService->getCart($shop, $customerId);
+        $summary = $this->cartService->getCartSummary($cart);
+
+        return [
+            'item_count' => $summary['item_count'] ?? 0,
+            'subtotal' => $summary['subtotal'] ?? 0,
+            'total' => $summary['total'] ?? 0,
         ];
     }
 

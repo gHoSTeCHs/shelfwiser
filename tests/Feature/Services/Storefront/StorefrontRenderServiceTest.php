@@ -142,10 +142,12 @@ it('builds complete page payload for composable page', function () {
     $pageData = $service->buildPage($shop, StorefrontPageType::HOME);
 
     expect($pageData)
-        ->toHaveKeys(['shop', 'theme', 'themeStyles', 'sections', 'seo', 'navigation', 'customer', 'csrfToken'])
+        ->toHaveKeys(['shop', 'template', 'theme', 'themeStyles', 'sections', 'seo', 'cart', 'navigation', 'customer', 'csrfToken'])
         ->and($pageData['shop']['name'])->toBe($shop->name)
+        ->and($pageData['template'])->toHaveKeys(['slug', 'animation_tier', 'structural_config'])
         ->and($pageData['themeStyles'])->toBeString()
         ->and($pageData['sections'])->toBeArray()
+        ->and($pageData['cart'])->toHaveKeys(['item_count', 'subtotal', 'total'])
         ->and($pageData['seo']['title'])->toBe('My Shop - Home')
         ->and($pageData['customer'])->toBeNull()
         ->and($pageData)->toHaveKey('csrfToken');
@@ -158,9 +160,11 @@ it('builds fixed page payload', function () {
     $pageData = $service->buildFixedPage($shop, 'login');
 
     expect($pageData)
-        ->toHaveKeys(['shop', 'theme', 'themeStyles', 'fixedPage', 'fixedPageData', 'navigation', 'customer', 'csrfToken'])
+        ->toHaveKeys(['shop', 'template', 'theme', 'themeStyles', 'fixedPage', 'fixedPageData', 'cart', 'navigation', 'customer', 'csrfToken'])
         ->and($pageData['fixedPage'])->toBe('login')
         ->and($pageData['fixedPageData'])->toHaveKey('shop_name')
+        ->and($pageData['template'])->toHaveKeys(['slug', 'animation_tier', 'structural_config'])
+        ->and($pageData['cart'])->toHaveKeys(['item_count', 'subtotal', 'total'])
         ->and($pageData['seo'])->toBeArray();
 });
 
@@ -183,6 +187,46 @@ it('builds SEO meta from page data', function () {
 
     expect($pageData['seo']['title'])->toBe('Custom Home Title')
         ->and($pageData['seo']['description'])->toBe('Default description');
+});
+
+it('preserves section metadata through resolveSections', function () {
+    ['shop' => $shop, 'config' => $config] = createStorefrontStack();
+    StorefrontPage::factory()->create([
+        'tenant_id' => $shop->tenant_id,
+        'shop_id' => $shop->id,
+        'storefront_config_id' => $config->id,
+        'page_type' => StorefrontPageType::HOME,
+        'title' => 'Home',
+        'sections' => [
+            [
+                'id' => 'section-abc-123',
+                'type' => 'hero_banner',
+                'variant' => 'split_image',
+                'is_visible' => true,
+                'scroll_animation' => 'fade_up',
+                'config' => ['heading' => 'Welcome'],
+            ],
+            [
+                'type' => 'rich_text',
+                'config' => ['body' => 'Hello world'],
+            ],
+        ],
+    ]);
+
+    $service = app(StorefrontRenderService::class);
+    $pageData = $service->buildPage($shop, StorefrontPageType::HOME);
+
+    $sections = $pageData['sections'];
+
+    expect($sections)->toHaveCount(2)
+        ->and($sections[0]['id'])->toBe('section-abc-123')
+        ->and($sections[0]['variant'])->toBe('split_image')
+        ->and($sections[0]['is_visible'])->toBeTrue()
+        ->and($sections[0]['scroll_animation'])->toBe('fade_up')
+        ->and($sections[1]['id'])->toBeString()
+        ->and($sections[1]['variant'])->toBe('default')
+        ->and($sections[1]['is_visible'])->toBeTrue()
+        ->and($sections[1]['scroll_animation'])->toBe('none');
 });
 
 it('returns 404 page data when page does not exist', function () {
