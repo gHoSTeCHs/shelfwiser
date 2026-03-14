@@ -128,9 +128,6 @@ class StorefrontRenderController extends Controller
 
     private function renderPage(Shop $shop, StorefrontPageType $pageType, ?string $slug = null): View
     {
-        $config = $shop->storefrontConfig;
-        abort_unless($config?->is_published, 404);
-
         $pageData = $this->renderService->buildPage($shop, $pageType, $slug);
 
         return view('storefront.builder-app', [
@@ -142,9 +139,6 @@ class StorefrontRenderController extends Controller
 
     private function renderFixedPage(Shop $shop, string $page, array $params = []): View
     {
-        $config = $shop->storefrontConfig;
-        abort_unless($config?->is_published, 404);
-
         $pageData = $this->renderService->buildFixedPage($shop, $page, $params);
 
         return view('storefront.builder-app', [
@@ -158,7 +152,10 @@ class StorefrontRenderController extends Controller
     {
         $customer = auth('customer')->user();
         abort_unless(
-            $customer && $order->customer_id === $customer->id && $order->shop_id === $shop->id,
+            $customer
+                && $order->customer_id === $customer->id
+                && $order->shop_id === $shop->id
+                && $order->tenant_id === $shop->tenant_id,
             403
         );
     }

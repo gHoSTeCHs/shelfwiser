@@ -66,7 +66,7 @@ export function Chips({ config, data }: SectionProps) {
                     >
                         {categories.map((category) => {
                             const categoryUrl = shopSlug
-                                ? `/${shopSlug}/products?category=${category.slug}`
+                                ? `/store/${shopSlug}/products?category=${category.slug}`
                                 : '#';
 
                             return (

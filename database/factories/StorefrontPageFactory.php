@@ -21,7 +21,8 @@ class StorefrontPageFactory extends Factory
         return [
             'tenant_id' => Tenant::factory(),
             'shop_id' => fn (array $attributes) => Shop::factory()->create(['tenant_id' => $attributes['tenant_id']])->id,
-            'storefront_config_id' => fn (array $attributes) => StorefrontConfig::query()
+            'storefront_config_id' => fn (array $attributes) => StorefrontConfig::withoutGlobalScopes()
+                ->where('tenant_id', $attributes['tenant_id'])
                 ->where('shop_id', $attributes['shop_id'])
                 ->first()?->id ?? StorefrontConfig::factory()->create([
                     'tenant_id' => $attributes['tenant_id'],

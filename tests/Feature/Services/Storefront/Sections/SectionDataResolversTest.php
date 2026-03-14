@@ -68,5 +68,6 @@ it('category grid resolves auto categories from database', function () {
     $section = app(CategoryGridSection::class);
     $data = $section->resolveData(['category_source' => 'auto', 'max_items' => 6], $shop);
 
-    expect($data)->toHaveCount(3);
+    expect($data)->toHaveKey('categories')
+        ->and($data['categories'])->toHaveCount(3);
 });

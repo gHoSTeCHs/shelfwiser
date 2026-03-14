@@ -8,8 +8,24 @@
     @if(!empty($seo['description']))
         <meta name="description" content="{{ $seo['description'] }}">
     @endif
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ $seo['title'] ?? '' }}">
+    @if(!empty($seo['description']))
+        <meta property="og:description" content="{{ $seo['description'] }}">
+    @endif
     @if(!empty($seo['image']))
         <meta property="og:image" content="{{ $seo['image'] }}">
+    @endif
+    <meta property="og:url" content="{{ url()->current() }}">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $seo['title'] ?? '' }}">
+    @if(!empty($seo['description']))
+        <meta name="twitter:description" content="{{ $seo['description'] }}">
+    @endif
+    @if(!empty($seo['image']))
+        <meta name="twitter:image" content="{{ $seo['image'] }}">
     @endif
 
     <meta name="csrf-token" content="{{ csrf_token() }}">

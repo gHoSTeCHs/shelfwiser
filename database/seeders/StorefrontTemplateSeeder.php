@@ -234,7 +234,7 @@ class StorefrontTemplateSeeder extends Seeder
             'default_sections' => [
                 ['type' => 'hero_banner', 'variant' => 'centered_overlay', 'config' => ['heading' => 'Your Health, Our Priority', 'subheading' => 'Trusted products for your wellbeing', 'cta_text' => 'Explore', 'cta_link' => '/products']],
                 ['type' => 'featured_products', 'variant' => 'standard_grid', 'config' => ['heading' => 'Popular Products', 'product_source' => 'featured', 'max_items' => 8, 'columns' => 4]],
-                ['type' => 'image_with_text', 'variant' => 'side_by_side', 'config' => ['heading' => 'Why Choose Us', 'body' => 'Quality assured products with fast delivery.']],
+                ['type' => 'image_with_text', 'variant' => 'side_by_side', 'config' => ['heading' => 'Why Choose Us', 'text' => 'Quality assured products with fast delivery.']],
                 ['type' => 'testimonials', 'variant' => 'single_spotlight', 'config' => ['heading' => 'Customer Reviews']],
             ],
         ];
@@ -325,7 +325,7 @@ class StorefrontTemplateSeeder extends Seeder
                 ['type' => 'hero_banner', 'variant' => 'slideshow', 'config' => ['slides' => [['heading' => 'New Collection', 'subheading' => 'Express your style', 'cta_text' => 'Shop Now', 'cta_link' => '/products']]]],
                 ['type' => 'category_grid', 'variant' => 'image_overlay', 'config' => ['heading' => 'Collections', 'columns' => 3]],
                 ['type' => 'featured_products', 'variant' => 'spotlight_plus_grid', 'config' => ['heading' => 'Trending', 'product_source' => 'featured', 'max_items' => 5]],
-                ['type' => 'image_with_text', 'variant' => 'side_by_side', 'config' => ['heading' => 'Our Story', 'body' => 'Celebrating Nigerian fashion with contemporary flair.', 'image_position' => 'right']],
+                ['type' => 'image_with_text', 'variant' => 'side_by_side', 'config' => ['heading' => 'Our Story', 'text' => 'Celebrating Nigerian fashion with contemporary flair.', 'image_position' => 'right']],
                 ['type' => 'newsletter_signup', 'variant' => 'inline', 'config' => ['heading' => 'Join the Community', 'subheading' => 'Be the first to know about new drops']],
             ],
         ];

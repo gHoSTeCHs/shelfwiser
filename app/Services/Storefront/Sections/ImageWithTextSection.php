@@ -48,7 +48,7 @@ class ImageWithTextSection implements StorefrontSectionInterface
                 'default' => '',
                 'description' => 'Section heading',
             ],
-            'content' => [
+            'text' => [
                 'type' => 'rich_text_editor',
                 'default' => '',
                 'description' => 'Body content',

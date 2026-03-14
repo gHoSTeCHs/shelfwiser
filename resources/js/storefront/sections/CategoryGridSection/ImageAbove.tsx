@@ -66,7 +66,7 @@ export function ImageAbove({ config, data }: SectionProps) {
                 <div className={`grid ${gridColsClass} gap-4 sm:gap-6`}>
                     {categories.map((category, index) => {
                         const categoryUrl = shopSlug
-                            ? `/${shopSlug}/products?category=${category.slug}`
+                            ? `/store/${shopSlug}/products?category=${category.slug}`
                             : '#';
 
                         return (

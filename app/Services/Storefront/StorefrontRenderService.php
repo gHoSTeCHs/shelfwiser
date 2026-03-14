@@ -162,13 +162,13 @@ class StorefrontRenderService
 
     public function resolveSections(array $sections, Shop $shop): array
     {
-        return array_map(function (array $section) use ($shop) {
+        return array_values(array_map(function (array $section, int $index) use ($shop) {
             $type = $section['type'] ?? '';
             $config = $section['config'] ?? [];
             $data = $this->registry->resolveData($type, $config, $shop);
 
             return [
-                'id' => $section['id'] ?? \Illuminate\Support\Str::uuid()->toString(),
+                'id' => $section['id'] ?? 'section-'.$type.'-'.$index,
                 'type' => $type,
                 'variant' => $section['variant'] ?? 'default',
                 'is_visible' => $section['is_visible'] ?? true,
@@ -176,7 +176,7 @@ class StorefrontRenderService
                 'config' => $config,
                 'data' => $data,
             ];
-        }, $sections);
+        }, $sections, array_keys($sections)));
     }
 
     private function resolveColors(array $themeConfig, StorefrontConfig $config): array
@@ -246,11 +246,12 @@ class StorefrontRenderService
 
     private function loadConfig(Shop $shop): StorefrontConfig
     {
-        $shop->loadMissing('storefrontConfig.theme');
+        $shop->load('storefrontConfig.theme');
 
         $config = $shop->storefrontConfig;
 
         abort_if($config === null, 404);
+        abort_unless($config->is_published, 404);
 
         return $config;
     }
@@ -557,8 +558,10 @@ class StorefrontRenderService
             ->with(['variants', 'category', 'addons'])
             ->first();
 
+        abort_if($service === null, 404);
+
         return [
-            'service' => $service ? $this->serializeService($service) : null,
+            'service' => $this->serializeService($service),
         ];
     }
 

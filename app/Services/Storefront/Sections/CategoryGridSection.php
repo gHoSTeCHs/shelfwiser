@@ -95,17 +95,21 @@ class CategoryGridSection implements StorefrontSectionInterface
     public function resolveData(array $config, Shop $shop): array
     {
         if (($config['category_source'] ?? 'auto') === 'manual' && ! empty($config['manual_category_ids'])) {
-            return ProductCategory::query()
+            $categories = ProductCategory::query()
                 ->where('tenant_id', $shop->tenant_id)
                 ->whereIn('id', $config['manual_category_ids'])
                 ->withCount(['products' => fn ($q) => $q->where('shop_id', $shop->id)->where('is_active', true)])
                 ->get()
                 ->toArray();
+
+            return ['categories' => $categories];
         }
 
-        return $this->storefrontService->getCategories($shop)
+        $categories = $this->storefrontService->getCategories($shop)
             ->take($config['max_items'] ?? 6)
             ->toArray();
+
+        return ['categories' => $categories];
     }
 
     public function allowedPageTypes(): array

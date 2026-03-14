@@ -33,12 +33,15 @@ export function CartDrawer({ shop, cart, isOpen, onClose, onCartUpdate }: CartDr
 
     const fetchCart = useCallback(async () => {
         setIsLoading(true);
-        const res = await storefrontFetch<CartDetail>(`/store/${shop.slug}/api/cart`);
-        if (res.ok) {
-            setDetail(res.data);
-            onCartUpdate?.(res.data.summary);
+        try {
+            const res = await storefrontFetch<CartDetail>(`/store/${shop.slug}/api/cart`);
+            if (res.ok) {
+                setDetail(res.data);
+                onCartUpdate?.(res.data.summary);
+            }
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     }, [shop.slug, onCartUpdate]);
 
     useEffect(() => {
