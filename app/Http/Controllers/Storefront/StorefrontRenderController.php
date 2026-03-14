@@ -128,7 +128,8 @@ class StorefrontRenderController extends Controller
 
     private function renderPage(Shop $shop, StorefrontPageType $pageType, ?string $slug = null): View
     {
-        $pageData = $this->renderService->buildPage($shop, $pageType, $slug);
+        $customer = auth('customer')->user();
+        $pageData = $this->renderService->buildPage($shop, $pageType, $slug, $customer);
 
         return view('storefront.builder-app', [
             'pageData' => $pageData,
@@ -139,7 +140,8 @@ class StorefrontRenderController extends Controller
 
     private function renderFixedPage(Shop $shop, string $page, array $params = []): View
     {
-        $pageData = $this->renderService->buildFixedPage($shop, $page, $params);
+        $customer = auth('customer')->user();
+        $pageData = $this->renderService->buildFixedPage($shop, $page, $params, $customer);
 
         return view('storefront.builder-app', [
             'pageData' => $pageData,

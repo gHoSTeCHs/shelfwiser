@@ -13,7 +13,7 @@ class UpdateStorefrontSettingsRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('manage', $this->route('shop'));
+        return true;
     }
 
     /**

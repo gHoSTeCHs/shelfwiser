@@ -231,28 +231,6 @@ export interface SortOption {
     label: string;
 }
 
-// Storefront Settings (from shop.storefront_settings)
-export interface StorefrontSettings {
-    theme_color?: string;
-    banner_image?: string;
-    logo?: string;
-    description?: string;
-    meta_title?: string;
-    meta_description?: string;
-    social_links?: {
-        facebook?: string;
-        instagram?: string;
-        twitter?: string;
-    };
-    business_hours?: string;
-    contact_email?: string;
-    enable_reviews?: boolean;
-    enable_wishlist?: boolean;
-    min_order_amount?: number;
-    shipping_fee?: number;
-    free_shipping_threshold?: number;
-}
-
 export interface AuthLoginProps {
     shop: Shop;
 }

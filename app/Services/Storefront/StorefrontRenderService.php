@@ -3,6 +3,7 @@
 namespace App\Services\Storefront;
 
 use App\Enums\StorefrontPageType;
+use App\Models\Customer;
 use App\Models\Shop;
 use App\Models\StorefrontConfig;
 use App\Models\StorefrontPage;
@@ -15,7 +16,7 @@ class StorefrontRenderService
         private readonly CartService $cartService
     ) {}
 
-    public function buildPage(Shop $shop, StorefrontPageType $pageType, ?string $slug = null): array
+    public function buildPage(Shop $shop, StorefrontPageType $pageType, ?string $slug = null, ?Customer $customer = null): array
     {
         $config = $this->loadConfig($shop);
 
@@ -42,20 +43,20 @@ class StorefrontRenderService
             'themeStyleVars' => $this->buildThemeStyleVars($resolved),
             'sections' => $sections,
             'seo' => $seo,
-            'cart' => $this->resolveCartSummary($shop),
+            'cart' => $this->resolveCartSummary($shop, $customer),
             'navigation' => $navigation,
-            'customer' => $this->resolveCustomer(),
+            'customer' => $this->serializeCustomer($customer),
             'csrfToken' => csrf_token(),
         ];
     }
 
-    public function buildFixedPage(Shop $shop, string $page, array $params = []): array
+    public function buildFixedPage(Shop $shop, string $page, array $params = [], ?Customer $customer = null): array
     {
         $config = $this->loadConfig($shop);
         $resolved = $this->resolveThemeConfig($config);
         $themeStyles = $this->buildThemeStyles($resolved);
         $navigation = $this->buildNavigation($shop, $config);
-        $fixedPageData = $this->loadFixedPageData($shop, $page, $params);
+        $fixedPageData = $this->loadFixedPageData($shop, $page, $params, $customer);
         $seo = $this->buildFixedPageSeo($shop, $page, $config);
 
         return [
@@ -67,9 +68,9 @@ class StorefrontRenderService
             'fixedPage' => $page,
             'fixedPageData' => $fixedPageData,
             'seo' => $seo,
-            'cart' => $this->resolveCartSummary($shop),
+            'cart' => $this->resolveCartSummary($shop, $customer),
             'navigation' => $navigation,
-            'customer' => $this->resolveCustomer(),
+            'customer' => $this->serializeCustomer($customer),
             'csrfToken' => csrf_token(),
         ];
     }
@@ -77,7 +78,7 @@ class StorefrontRenderService
     public function resolveThemeConfig(StorefrontConfig $config): array
     {
         $config->loadMissing('theme');
-        $themeConfig = $config->theme->theme_config ?? [];
+        $themeConfig = $config->theme?->theme_config ?? [];
 
         $colors = $this->resolveColors($themeConfig, $config);
         $typography = $this->resolveTypography($themeConfig, $config);
@@ -341,28 +342,28 @@ class StorefrontRenderService
         ];
     }
 
-    private function loadFixedPageData(Shop $shop, string $page, array $params): array
+    private function loadFixedPageData(Shop $shop, string $page, array $params, ?Customer $customer): array
     {
         return match ($page) {
-            'cart' => $this->loadCartData($shop),
+            'cart' => $this->loadCartData($shop, $customer),
             'login' => $this->loadLoginData($shop),
             'register' => $this->loadRegisterData($shop),
             'forgot-password', 'reset-password', 'verify-email' => $this->loadAuthPageData($shop),
-            'checkout' => $this->loadCheckoutData($shop),
+            'checkout' => $this->loadCheckoutData($shop, $customer),
             'checkout-success', 'checkout-pending' => $this->loadOrderStatusData($params),
-            'account-dashboard' => $this->loadAccountDashboardData($shop),
-            'account-orders' => $this->loadAccountOrdersData($shop),
+            'account-dashboard' => $this->loadAccountDashboardData($shop, $customer),
+            'account-orders' => $this->loadAccountOrdersData($shop, $customer),
             'account-order-detail' => $this->loadAccountOrderDetailData($shop, $params),
-            'account-profile' => $this->loadAccountProfileData(),
+            'account-profile' => $this->loadAccountProfileData($customer),
             'services' => $this->loadServicesData($shop),
             'service-detail' => $this->loadServiceDetailData($shop, $params),
             default => [],
         };
     }
 
-    private function loadCartData(Shop $shop): array
+    private function loadCartData(Shop $shop, ?Customer $customer): array
     {
-        $customerId = auth('customer')->id();
+        $customerId = $customer?->id;
         $cart = $this->cartService->getCart($shop, $customerId);
         $cart->load([
             'items.productVariant.product',
@@ -407,9 +408,9 @@ class StorefrontRenderService
         ];
     }
 
-    private function loadCheckoutData(Shop $shop): array
+    private function loadCheckoutData(Shop $shop, ?Customer $customer): array
     {
-        $customerId = auth('customer')->id();
+        $customerId = $customer?->id;
         $cart = $this->cartService->getCart($shop, $customerId);
         $cart->load(['items.productVariant.product', 'items.sellable']);
         $summary = $this->cartService->getCartSummary($cart);
@@ -444,10 +445,8 @@ class StorefrontRenderService
         ];
     }
 
-    private function loadAccountDashboardData(Shop $shop): array
+    private function loadAccountDashboardData(Shop $shop, ?Customer $customer): array
     {
-        $customer = auth('customer')->user();
-
         if (! $customer) {
             return [];
         }
@@ -468,10 +467,8 @@ class StorefrontRenderService
         ];
     }
 
-    private function loadAccountOrdersData(Shop $shop): array
+    private function loadAccountOrdersData(Shop $shop, ?Customer $customer): array
     {
-        $customer = auth('customer')->user();
-
         if (! $customer) {
             return ['orders' => ['data' => [], 'meta' => []]];
         }
@@ -510,10 +507,8 @@ class StorefrontRenderService
         ];
     }
 
-    private function loadAccountProfileData(): array
+    private function loadAccountProfileData(?Customer $customer): array
     {
-        $customer = auth('customer')->user();
-
         if (! $customer) {
             return ['customer' => null];
         }
@@ -605,9 +600,9 @@ class StorefrontRenderService
         ];
     }
 
-    private function resolveCartSummary(Shop $shop): array
+    private function resolveCartSummary(Shop $shop, ?Customer $customer): array
     {
-        $customerId = auth('customer')->id();
+        $customerId = $customer?->id;
         $cart = $this->cartService->getCart($shop, $customerId);
         $summary = $this->cartService->getCartSummary($cart);
 
@@ -650,10 +645,8 @@ class StorefrontRenderService
         ];
     }
 
-    private function resolveCustomer(): ?array
+    private function serializeCustomer(?Customer $customer): ?array
     {
-        $customer = auth('customer')->user();
-
         if (! $customer) {
             return null;
         }

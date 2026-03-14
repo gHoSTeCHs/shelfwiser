@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Order;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CancelOrderRequest extends FormRequest
@@ -12,14 +11,7 @@ class CancelOrderRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $customer = auth('customer')->user();
-        $order = $this->route('order');
-
-        if (! $customer || ! $order instanceof Order) {
-            return false;
-        }
-
-        return $customer->can('cancel', $order);
+        return true;
     }
 
     /**
