@@ -1,12 +1,16 @@
 import { useState } from 'react';
+import { AuthGatePrompt } from '../../components/AuthGatePrompt';
 import { storefrontFetch } from '../../lib/fetch-client';
-import type { AuthPageData, FixedPageProps } from '../../types/storefront';
+import type { FixedPageProps } from '../../types/storefront';
 
-export function VerifyEmailPage({ data, shop }: FixedPageProps) {
-    const pageData = data as unknown as AuthPageData;
+export function VerifyEmailPage({ data, shop, customer }: FixedPageProps) {
     const [processing, setProcessing] = useState(false);
     const [sent, setSent] = useState(false);
     const [error, setError] = useState('');
+
+    if (!customer) {
+        return <AuthGatePrompt shop={shop} />;
+    }
 
     async function handleResend() {
         setProcessing(true);
@@ -47,7 +51,7 @@ export function VerifyEmailPage({ data, shop }: FixedPageProps) {
                 )}
 
                 {sent ? (
-                    <div style={{ padding: '12px 16px', backgroundColor: 'var(--color-primary, #10b981)', color: '#fff', borderRadius: 'var(--radius, 6px)', fontSize: '14px', fontWeight: 500, marginBottom: '16px' }}>
+                    <div style={{ padding: '12px 16px', backgroundColor: '#10b981', color: '#fff', borderRadius: 'var(--radius, 6px)', fontSize: '14px', fontWeight: 500, marginBottom: '16px' }}>
                         Verification link sent! Check your inbox.
                     </div>
                 ) : (

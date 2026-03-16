@@ -1,5 +1,9 @@
-import type React from 'react';
-import { createContext, useMemo } from 'react';
+import {
+    type CSSProperties,
+    type ReactNode,
+    createContext,
+    useMemo,
+} from 'react';
 import type { ResolvedTheme, TemplateData } from './types/storefront';
 
 export interface ThemeContextValue {
@@ -12,10 +16,14 @@ export const ThemeContext = createContext<ThemeContextValue | null>(null);
 interface ThemeProviderProps {
     theme: ResolvedTheme;
     template: TemplateData;
-    children: React.ReactNode;
+    children: ReactNode;
 }
 
-export function ThemeProvider({ theme, template, children }: ThemeProviderProps) {
+export function ThemeProvider({
+    theme,
+    template,
+    children,
+}: ThemeProviderProps) {
     const style = useMemo(() => {
         const vars: Record<string, string> = {};
 
@@ -24,7 +32,8 @@ export function ThemeProvider({ theme, template, children }: ThemeProviderProps)
         }
 
         if (theme.typography.heading_font) {
-            vars['--font-heading'] = `"${theme.typography.heading_font}", sans-serif`;
+            vars['--font-heading'] =
+                `"${theme.typography.heading_font}", sans-serif`;
         }
         if (theme.typography.body_font) {
             vars['--font-body'] = `"${theme.typography.body_font}", sans-serif`;
@@ -41,11 +50,15 @@ export function ThemeProvider({ theme, template, children }: ThemeProviderProps)
         if (theme.feel.section_spacing) {
             vars['--section-spacing'] = theme.feel.section_spacing;
         }
+        if (theme.feel.shadow_depth) {
+            vars['--shadow-depth'] = theme.feel.shadow_depth;
+        }
         if (template.structural_config.container_max_width) {
-            vars['--container-width'] = template.structural_config.container_max_width as string;
+            vars['--container-width'] = template.structural_config
+                .container_max_width as string;
         }
 
-        return vars as React.CSSProperties;
+        return vars as CSSProperties;
     }, [theme, template]);
 
     return (

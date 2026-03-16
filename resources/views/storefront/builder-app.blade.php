@@ -30,6 +30,7 @@
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    @viteReactRefresh
     @vite(['resources/css/storefront.css', 'resources/js/storefront/app.tsx'])
 </head>
 <body>

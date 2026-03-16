@@ -476,7 +476,7 @@ class StorefrontRenderService
     private function loadAccountDashboardData(Shop $shop, ?Customer $customer): array
     {
         if (! $customer) {
-            return [];
+            return ['stats' => ['total_orders' => 0, 'total_spent' => 0.0], 'recent_orders' => []];
         }
 
         $orderQuery = $customer->orders()->where('shop_id', $shop->id);
@@ -654,7 +654,7 @@ class StorefrontRenderService
             'subtotal' => (float) $order->subtotal,
             'tax' => (float) $order->tax_amount,
             'total' => (float) $order->total_amount,
-            'created_at' => $order->created_at?->toISOString(),
+            'created_at' => $order->created_at?->toISOString() ?? '',
             'items' => $order->relationLoaded('items')
                 ? $order->items->map(fn ($item) => [
                     'id' => $item->id,

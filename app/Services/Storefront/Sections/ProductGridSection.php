@@ -113,7 +113,7 @@ class ProductGridSection implements StorefrontSectionInterface
         $products = $this->storefrontService->getProducts($shop, null, null, $sort, $perPage);
 
         return [
-            'products' => $products->toArray(),
+            'products' => collect($products->items())->toArray(),
             'categories' => $this->storefrontService->getCategories($shop)->toArray(),
         ];
     }

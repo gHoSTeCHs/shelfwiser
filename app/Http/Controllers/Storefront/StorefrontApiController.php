@@ -197,7 +197,7 @@ class StorefrontApiController extends Controller
             'email' => $request->validated('email'),
             'phone' => $request->validated('phone'),
             'password' => Hash::make($request->validated('password')),
-            'marketing_opt_in' => $request->boolean('marketing_opt_in'),
+            'marketing_opt_in' => (bool) $request->validated('marketing_opt_in', false),
         ]);
 
         event(new Registered($customer));

@@ -50,7 +50,7 @@ export function ForgotPasswordPage({ data, shop }: FixedPageProps) {
                 <div style={{ padding: '32px', border: '1px solid var(--color-border, #e5e7eb)', borderRadius: 'var(--radius, 6px)', backgroundColor: 'var(--color-surface, #fff)' }}>
                     {success ? (
                         <div style={{ textAlign: 'center' }}>
-                            <div style={{ width: '48px', height: '48px', margin: '0 auto 16px', borderRadius: '50%', backgroundColor: 'var(--color-primary, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#fff' }}>
+                            <div style={{ width: '48px', height: '48px', margin: '0 auto 16px', borderRadius: '50%', backgroundColor: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#fff' }}>
                                 &#10003;
                             </div>
                             <p style={{ fontSize: '15px', color: 'var(--color-foreground, #111)', margin: '0 0 8px', fontWeight: 500 }}>

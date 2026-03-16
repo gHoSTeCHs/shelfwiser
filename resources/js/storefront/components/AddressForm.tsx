@@ -64,6 +64,7 @@ function FormField({ label, value, onChange, error, disabled, required, fullWidt
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 disabled={disabled}
+                required={required}
                 maxLength={maxLength}
                 style={{
                     width: '100%',

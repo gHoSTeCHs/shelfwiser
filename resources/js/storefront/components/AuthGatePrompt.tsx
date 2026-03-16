@@ -5,6 +5,10 @@ interface AuthGatePromptProps {
 }
 
 export function AuthGatePrompt({ shop }: AuthGatePromptProps) {
+    const currentPath = typeof window !== 'undefined'
+        ? encodeURIComponent(window.location.pathname + window.location.search)
+        : '';
+
     return (
         <div style={{ minHeight: '40vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', fontFamily: 'var(--font-body)' }}>
             <div style={{ textAlign: 'center' }}>
@@ -15,7 +19,7 @@ export function AuthGatePrompt({ shop }: AuthGatePromptProps) {
                     You need to be signed in to access this page.
                 </p>
                 <a
-                    href={`/store/${shop.slug}/login`}
+                    href={`/store/${shop.slug}/login${currentPath ? `?redirect=${currentPath}` : ''}`}
                     style={{
                         display: 'inline-block',
                         padding: '10px 24px',

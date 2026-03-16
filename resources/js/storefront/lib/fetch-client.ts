@@ -32,11 +32,18 @@ export async function storefrontFetch<T = unknown>(
         delete options.json;
     }
 
-    const response = await fetch(url, {
-        ...options,
-        headers,
-        credentials: 'same-origin',
-    });
+    let response: Response;
+
+    try {
+        response = await fetch(url, {
+            ...options,
+            headers,
+            credentials: 'same-origin',
+        });
+    } catch {
+        return { ok: false, status: 0, data: {} as T };
+    }
+
     const data = await response.json().catch(() => ({}));
 
     if (response.status === 419) {

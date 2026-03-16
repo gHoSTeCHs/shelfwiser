@@ -57,7 +57,7 @@ export function ProfilePage({ data, shop, customer }: FixedPageProps) {
                     style={{ padding: '32px', border: '1px solid var(--color-border, #e5e7eb)', borderRadius: 'var(--radius, 6px)', backgroundColor: 'var(--color-surface, #fff)' }}
                 >
                     {success && (
-                        <div style={{ padding: '10px 16px', marginBottom: '16px', backgroundColor: 'var(--color-primary, #10b981)', color: '#fff', borderRadius: 'var(--radius, 6px)', fontSize: '14px', fontWeight: 500 }}>
+                        <div style={{ padding: '10px 16px', marginBottom: '16px', backgroundColor: '#10b981', color: '#fff', borderRadius: 'var(--radius, 6px)', fontSize: '14px', fontWeight: 500 }}>
                             Profile updated successfully.
                         </div>
                     )}

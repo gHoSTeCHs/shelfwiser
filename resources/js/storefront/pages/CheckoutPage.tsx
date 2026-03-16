@@ -47,7 +47,12 @@ export function CheckoutPage({ data, shop, customer }: FixedPageProps) {
         }
     }, [isEmpty, shop.slug]);
 
+    if (isEmpty) {
+        return null;
+    }
+
     if (!customer) {
+        const redirectTarget = encodeURIComponent(`/store/${shop.slug}/checkout`);
         return (
             <div
                 style={{
@@ -65,7 +70,7 @@ export function CheckoutPage({ data, shop, customer }: FixedPageProps) {
                     You need an account to complete your purchase.
                 </p>
                 <a
-                    href={`/store/${shop.slug}/login?redirect=/store/${shop.slug}/checkout`}
+                    href={`/store/${shop.slug}/login?redirect=${redirectTarget}`}
                     style={{
                         display: 'inline-block',
                         padding: '10px 24px',
@@ -80,10 +85,6 @@ export function CheckoutPage({ data, shop, customer }: FixedPageProps) {
                 </a>
             </div>
         );
-    }
-
-    if (isEmpty) {
-        return null;
     }
 
     async function handleSubmit(e: React.FormEvent) {
