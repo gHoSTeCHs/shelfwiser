@@ -21,7 +21,10 @@ export function LoginPage({ data, shop }: FixedPageProps) {
         );
 
         if (result.ok) {
-            window.location.href = `/store/${shop.slug}`;
+            const params = new URLSearchParams(window.location.search);
+            const redirect = params.get('redirect');
+            const target = redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : `/store/${shop.slug}`;
+            window.location.href = target;
             return;
         }
 

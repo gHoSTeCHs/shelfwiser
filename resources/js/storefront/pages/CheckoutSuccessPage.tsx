@@ -1,27 +1,6 @@
+import { StatusBadge } from '../components/StatusBadge';
 import { formatCurrency } from '../lib/formatters';
-import type { FixedPageProps, OrderData, OrderPageData } from '../types/storefront';
-
-const STATUS_COLORS: Record<string, string> = {
-    pending: '#f59e0b',
-    confirmed: '#3b82f6',
-    processing: '#8b5cf6',
-    packed: '#6366f1',
-    shipped: '#06b6d4',
-    delivered: '#10b981',
-    cancelled: '#ef4444',
-    refunded: '#6b7280',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-    pending: 'Pending',
-    confirmed: 'Confirmed',
-    processing: 'Processing',
-    packed: 'Packed',
-    shipped: 'Shipped',
-    delivered: 'Delivered',
-    cancelled: 'Cancelled',
-    refunded: 'Refunded',
-};
+import type { FixedPageProps, OrderPageData } from '../types/storefront';
 
 export function CheckoutSuccessPage({ data, shop }: FixedPageProps) {
     const pageData = data as unknown as OrderPageData;
@@ -172,24 +151,6 @@ export function CheckoutSuccessPage({ data, shop }: FixedPageProps) {
     );
 }
 
-function StatusBadge({ status }: { status: string }) {
-    return (
-        <span
-            style={{
-                display: 'inline-block',
-                padding: '4px 12px',
-                borderRadius: '999px',
-                backgroundColor: STATUS_COLORS[status] ?? '#6b7280',
-                color: '#fff',
-                fontSize: '12px',
-                fontWeight: 600,
-                textTransform: 'capitalize',
-            }}
-        >
-            {STATUS_LABELS[status] ?? status}
-        </span>
-    );
-}
 
 function TotalRow({ label, value, bold = false }: { label: string; value: string; bold?: boolean }) {
     return (

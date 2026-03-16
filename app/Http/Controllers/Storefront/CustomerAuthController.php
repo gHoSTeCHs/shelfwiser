@@ -45,12 +45,12 @@ class CustomerAuthController extends Controller
     public function login(CustomerLoginRequest $request, Shop $shop): RedirectResponse
     {
         $customer = Customer::query()
-            ->where('email', $request->email)
+            ->where('email', $request->validated('email'))
             ->where('tenant_id', $shop->tenant_id)
             ->where('is_active', true)
             ->first();
 
-        if (! $customer || ! Hash::check($request->password, $customer->password)) {
+        if (! $customer || ! Hash::check($request->validated('password'), $customer->password)) {
             return back()->withErrors([
                 'email' => 'The provided credentials do not match our records.',
             ])->onlyInput('email');
@@ -87,11 +87,11 @@ class CustomerAuthController extends Controller
         $customer = Customer::query()->create([
             'tenant_id' => $shop->tenant_id,
             'preferred_shop_id' => $shop->id,
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
+            'first_name' => $request->validated('first_name'),
+            'last_name' => $request->validated('last_name'),
+            'email' => $request->validated('email'),
+            'phone' => $request->validated('phone'),
+            'password' => Hash::make($request->validated('password')),
             'marketing_opt_in' => $request->boolean('marketing_opt_in'),
         ]);
 

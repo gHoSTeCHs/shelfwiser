@@ -326,3 +326,72 @@ export interface ResetPasswordPageData {
     token: string;
     email: string;
 }
+
+export interface AccountDashboardPageData {
+    stats: {
+        total_orders: number;
+        total_spent: number;
+    };
+    recent_orders: OrderData[];
+}
+
+export interface PaginationMeta {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+}
+
+export interface AccountOrdersPageData {
+    orders: {
+        data: OrderData[];
+        meta: PaginationMeta;
+    };
+}
+
+export interface AccountOrderDetailPageData {
+    order: OrderData | null;
+}
+
+export interface AccountProfilePageData {
+    customer: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        email: string;
+        phone: string | null;
+    } | null;
+}
+
+export interface ServiceVariantData {
+    id: number;
+    name: string;
+    price: number;
+    duration_minutes: number;
+    is_active: boolean;
+}
+
+export interface ServiceAddonData {
+    id: number;
+    name: string;
+    price: number;
+}
+
+export interface ServiceItemData {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    category_name: string | null;
+    is_active: boolean;
+    variants: ServiceVariantData[];
+    addons: ServiceAddonData[];
+}
+
+export interface ServicesPageData {
+    services: ServiceItemData[];
+}
+
+export interface ServiceDetailPageData {
+    service: ServiceItemData | null;
+}

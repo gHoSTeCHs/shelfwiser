@@ -6,7 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\OrderType;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\CancelOrderRequest;
+use App\Http\Requests\Storefront\CancelOrderApiRequest;
 use App\Http\Requests\Storefront\UpdateCustomerProfileRequest;
 use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
@@ -146,7 +146,7 @@ class CustomerPortalController extends Controller
     /**
      * Cancel a customer order.
      */
-    public function cancelOrder(CancelOrderRequest $request, Shop $shop, $orderId): RedirectResponse
+    public function cancelOrder(CancelOrderApiRequest $request, Shop $shop, $orderId): RedirectResponse
     {
         $customer = auth('customer')->user();
 

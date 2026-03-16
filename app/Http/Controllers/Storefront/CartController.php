@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Enums\MaterialOption;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Storefront\AddServiceToCartApiRequest;
+use App\Http\Requests\Storefront\AddToCartApiRequest;
+use App\Http\Requests\Storefront\UpdateCartItemApiRequest;
 use App\Models\CartItem;
 use App\Models\Shop;
 use App\Services\CartService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -45,13 +47,9 @@ class CartController extends Controller
     /**
      * Add product item to cart.
      */
-    public function store(Request $request, Shop $shop): RedirectResponse
+    public function store(AddToCartApiRequest $request, Shop $shop): RedirectResponse
     {
-        $validated = $request->validate([
-            'variant_id' => ['required', 'integer', 'exists:product_variants,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'packaging_type_id' => ['nullable', 'integer', 'exists:product_packaging_types,id'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $cart = $this->cartService->getCart($shop, auth('customer')->id());
@@ -74,16 +72,9 @@ class CartController extends Controller
     /**
      * Add service item to cart.
      */
-    public function storeService(Request $request, Shop $shop): RedirectResponse
+    public function storeService(AddServiceToCartApiRequest $request, Shop $shop): RedirectResponse
     {
-        $validated = $request->validate([
-            'service_variant_id' => ['required', 'integer', 'exists:service_variants,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'material_option' => ['nullable', 'string', 'in:customer_materials,shop_materials,none'],
-            'selected_addons' => ['nullable', 'array'],
-            'selected_addons.*.addon_id' => ['required', 'integer', 'exists:service_addons,id'],
-            'selected_addons.*.quantity' => ['required', 'integer', 'min:1'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $cart = $this->cartService->getCart($shop, auth('customer')->id());
@@ -115,17 +106,14 @@ class CartController extends Controller
     /**
      * Update cart item quantity.
      */
-    public function update(Request $request, Shop $shop, CartItem $item): RedirectResponse
+    public function update(UpdateCartItemApiRequest $request, Shop $shop, CartItem $item): RedirectResponse
     {
-        // Ensure cart item belongs to current cart
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
         if ($item->cart_id !== $cart->id) {
             abort(403, 'Unauthorized');
         }
 
-        $validated = $request->validate([
-            'quantity' => ['required', 'integer', 'min:0'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $this->cartService->updateQuantity($item, $validated['quantity']);

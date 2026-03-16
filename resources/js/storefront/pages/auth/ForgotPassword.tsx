@@ -19,8 +19,14 @@ export function ForgotPasswordPage({ data, shop }: FixedPageProps) {
             { method: 'POST', json: { email } },
         );
 
-        if (result.errors?.email) {
+        if (!result.ok && result.errors?.email) {
             setErrors(result.errors);
+            setProcessing(false);
+            return;
+        }
+
+        if (!result.ok) {
+            setErrors({ email: ['Something went wrong. Please try again.'] });
             setProcessing(false);
             return;
         }

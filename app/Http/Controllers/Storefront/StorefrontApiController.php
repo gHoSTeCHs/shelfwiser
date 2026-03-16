@@ -304,7 +304,7 @@ class StorefrontApiController extends Controller
             return response()->json(['message' => 'Your cart is empty.'], 422);
         }
 
-        $billingAddress = ($validated['billing_same_as_shipping'] ?? true)
+        $billingAddress = $validated['billing_same_as_shipping']
             ? $validated['shipping_address']
             : $validated['billing_address'];
 
@@ -368,7 +368,7 @@ class StorefrontApiController extends Controller
 
         $orderModel = $customer->orders()
             ->where('shop_id', $shop->id)
-            ->where('order_type', OrderType::CUSTOMER)
+            ->where('order_type', OrderType::CUSTOMER->value)
             ->findOrFail($order);
 
         if (! $orderModel->canCancel()) {

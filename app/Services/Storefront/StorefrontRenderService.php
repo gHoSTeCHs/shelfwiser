@@ -389,7 +389,13 @@ class StorefrontRenderService
                 'image' => $item->productVariant?->product?->primary_image_url ?? null,
                 'max_quantity' => $item->productVariant?->stock_quantity,
             ])->all(),
-            'summary' => $summary,
+            'summary' => [
+                'subtotal' => $summary['subtotal'],
+                'shipping_fee' => $summary['shipping_fee'],
+                'tax' => $summary['tax'],
+                'total' => $summary['total'],
+                'item_count' => $summary['item_count'],
+            ],
         ];
     }
 
@@ -441,7 +447,13 @@ class StorefrontRenderService
                 'image' => $item->productVariant?->product?->primary_image_url ?? null,
                 'max_quantity' => $item->productVariant?->stock_quantity,
             ])->all(),
-            'summary' => $summary,
+            'summary' => [
+                'subtotal' => $summary['subtotal'],
+                'shipping_fee' => $summary['shipping_fee'],
+                'tax' => $summary['tax'],
+                'total' => $summary['total'],
+                'item_count' => $summary['item_count'],
+            ],
             'payment_methods' => $shop->storefront_settings['payment_methods'] ?? ['paystack'],
         ];
     }
@@ -491,7 +503,7 @@ class StorefrontRenderService
     private function loadAccountOrdersData(Shop $shop, ?Customer $customer): array
     {
         if (! $customer) {
-            return ['orders' => ['data' => [], 'meta' => []]];
+            return ['orders' => ['data' => [], 'meta' => ['current_page' => 1, 'last_page' => 1, 'per_page' => 10, 'total' => 0]]];
         }
 
         $paginator = $customer->orders()
@@ -564,7 +576,7 @@ class StorefrontRenderService
         $slug = $params['slug'] ?? null;
 
         if (! $slug) {
-            return [];
+            return ['service' => null];
         }
 
         $service = \App\Models\Service::query()

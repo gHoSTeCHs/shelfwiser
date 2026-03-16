@@ -65,7 +65,7 @@ export function CheckoutPage({ data, shop, customer }: FixedPageProps) {
                     You need an account to complete your purchase.
                 </p>
                 <a
-                    href={`/store/${shop.slug}/login`}
+                    href={`/store/${shop.slug}/login?redirect=/store/${shop.slug}/checkout`}
                     style={{
                         display: 'inline-block',
                         padding: '10px 24px',
