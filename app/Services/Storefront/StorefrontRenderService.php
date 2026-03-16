@@ -30,7 +30,8 @@ class StorefrontRenderService
             ->firstOrFail();
 
         $resolved = $this->resolveThemeConfig($config);
-        $themeStyles = $this->buildThemeStyles($resolved);
+        $themeStyleVars = $this->buildThemeStyleVars($resolved);
+        $themeStyles = $this->buildThemeStylesFromVars($themeStyleVars);
         $sections = $this->resolveSections($page->sections ?? [], $shop);
         $seo = $this->buildSeoMeta($page, $config);
         $navigation = $this->buildNavigation($shop, $config);
@@ -40,7 +41,7 @@ class StorefrontRenderService
             'template' => $this->serializeTemplate($config),
             'theme' => $resolved,
             'themeStyles' => $themeStyles,
-            'themeStyleVars' => $this->buildThemeStyleVars($resolved),
+            'themeStyleVars' => $themeStyleVars,
             'sections' => $sections,
             'seo' => $seo,
             'cart' => $this->resolveCartSummary($shop, $customer),
@@ -54,7 +55,8 @@ class StorefrontRenderService
     {
         $config = $this->loadConfig($shop);
         $resolved = $this->resolveThemeConfig($config);
-        $themeStyles = $this->buildThemeStyles($resolved);
+        $themeStyleVars = $this->buildThemeStyleVars($resolved);
+        $themeStyles = $this->buildThemeStylesFromVars($themeStyleVars);
         $navigation = $this->buildNavigation($shop, $config);
         $fixedPageData = $this->loadFixedPageData($shop, $page, $params, $customer);
         $seo = $this->buildFixedPageSeo($shop, $page, $config);
@@ -64,7 +66,7 @@ class StorefrontRenderService
             'template' => $this->serializeTemplate($config),
             'theme' => $resolved,
             'themeStyles' => $themeStyles,
-            'themeStyleVars' => $this->buildThemeStyleVars($resolved),
+            'themeStyleVars' => $themeStyleVars,
             'fixedPage' => $page,
             'fixedPageData' => $fixedPageData,
             'seo' => $seo,
@@ -104,8 +106,11 @@ class StorefrontRenderService
 
     public function buildThemeStyles(array $resolved): string
     {
-        $vars = $this->buildThemeStyleVars($resolved);
+        return $this->buildThemeStylesFromVars($this->buildThemeStyleVars($resolved));
+    }
 
+    private function buildThemeStylesFromVars(array $vars): string
+    {
         $parts = [];
         foreach ($vars as $key => $value) {
             $parts[] = "{$key}: {$value}";
@@ -251,8 +256,9 @@ class StorefrontRenderService
 
         $config = $shop->storefrontConfig;
 
-        abort_if($config === null, 404);
-        abort_unless($config->is_published, 404);
+        if ($config === null || ! $config->is_published) {
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Storefront config not found or not published.');
+        }
 
         return $config;
     }
@@ -348,7 +354,8 @@ class StorefrontRenderService
             'cart' => $this->loadCartData($shop, $customer),
             'login' => $this->loadLoginData($shop),
             'register' => $this->loadRegisterData($shop),
-            'forgot-password', 'reset-password', 'verify-email' => $this->loadAuthPageData($shop),
+            'forgot-password', 'verify-email' => $this->loadAuthPageData($shop),
+            'reset-password' => $this->loadResetPasswordData($shop, $params),
             'checkout' => $this->loadCheckoutData($shop, $customer),
             'checkout-success', 'checkout-pending' => $this->loadOrderStatusData($params),
             'account-dashboard' => $this->loadAccountDashboardData($shop, $customer),
@@ -408,6 +415,15 @@ class StorefrontRenderService
         ];
     }
 
+    private function loadResetPasswordData(Shop $shop, array $params): array
+    {
+        return [
+            'shop_name' => $shop->name,
+            'token' => $params['token'] ?? '',
+            'email' => request('email', ''),
+        ];
+    }
+
     private function loadCheckoutData(Shop $shop, ?Customer $customer): array
     {
         $customerId = $customer?->id;
@@ -451,8 +467,13 @@ class StorefrontRenderService
             return [];
         }
 
-        $recentOrders = $customer->orders()
-            ->where('shop_id', $shop->id)
+        $orderQuery = $customer->orders()->where('shop_id', $shop->id);
+
+        $stats = (clone $orderQuery)
+            ->selectRaw('COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_spent')
+            ->first();
+
+        $recentOrders = (clone $orderQuery)
             ->with('items')
             ->latest()
             ->limit(5)
@@ -460,8 +481,8 @@ class StorefrontRenderService
 
         return [
             'stats' => [
-                'total_orders' => $customer->orders()->where('shop_id', $shop->id)->count(),
-                'total_spent' => (float) $customer->orders()->where('shop_id', $shop->id)->sum('total_amount'),
+                'total_orders' => (int) $stats->total_orders,
+                'total_spent' => (float) $stats->total_spent,
             ],
             'recent_orders' => $recentOrders->map(fn ($order) => $this->serializeOrder($order))->all(),
         ];
@@ -550,10 +571,9 @@ class StorefrontRenderService
             ->where('tenant_id', $shop->tenant_id)
             ->where('shop_id', $shop->id)
             ->where('slug', $slug)
+            ->where('is_active', true)
             ->with(['variants', 'category', 'addons'])
-            ->first();
-
-        abort_if($service === null, 404);
+            ->firstOrFail();
 
         return [
             'service' => $this->serializeService($service),

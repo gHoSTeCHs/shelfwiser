@@ -4,6 +4,7 @@ use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\CustomerAuthController;
 use App\Http\Controllers\Storefront\CustomerPortalController;
+use App\Http\Controllers\Storefront\StorefrontApiController;
 use App\Http\Controllers\Storefront\StorefrontRenderController;
 use Illuminate\Support\Facades\Route;
 
@@ -55,11 +56,40 @@ Route::prefix('store/{shop:slug}')->middleware('storefront.enabled')->name('stor
             ->name('password.update');
     });
 
-    // Cart mutations (keep existing controllers)
+    // Cart mutations (existing Inertia controllers — kept during transition)
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
     Route::post('/cart/service', [CartController::class, 'storeService'])->name('cart.store-service');
     Route::patch('/cart/{item}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{item}', [CartController::class, 'destroy'])->name('cart.destroy');
+
+    // === JSON API (for themed storefront pages via storefrontFetch) ===
+    Route::prefix('api')->group(function () {
+        Route::post('/cart', [StorefrontApiController::class, 'addToCart']);
+        Route::post('/cart/service', [StorefrontApiController::class, 'addServiceToCart']);
+        Route::patch('/cart/{item}', [StorefrontApiController::class, 'updateCartItem'])->whereNumber('item');
+        Route::delete('/cart/{item}', [StorefrontApiController::class, 'removeCartItem'])->whereNumber('item');
+        Route::get('/cart/summary', [StorefrontApiController::class, 'cartSummary']);
+
+        Route::middleware('guest:customer')->group(function () {
+            Route::post('/auth/login', [StorefrontApiController::class, 'login'])
+                ->middleware('throttle:5,1');
+            Route::post('/auth/register', [StorefrontApiController::class, 'register'])
+                ->middleware('throttle:3,1');
+            Route::post('/auth/forgot-password', [StorefrontApiController::class, 'forgotPassword'])
+                ->middleware('throttle:3,1');
+            Route::post('/auth/reset-password', [StorefrontApiController::class, 'resetPassword'])
+                ->middleware('throttle:3,1');
+        });
+
+        Route::middleware('auth:customer')->group(function () {
+            Route::post('/auth/logout', [StorefrontApiController::class, 'logout']);
+            Route::post('/auth/verify-email/resend', [StorefrontApiController::class, 'resendVerification'])
+                ->middleware('throttle:6,1');
+            Route::post('/checkout', [StorefrontApiController::class, 'processCheckout']);
+            Route::patch('/account/profile', [StorefrontApiController::class, 'updateProfile']);
+            Route::post('/account/orders/{order}/cancel', [StorefrontApiController::class, 'cancelOrder']);
+        });
+    });
 
     // Payment gateway callbacks
     Route::get('/payment/callback', [CheckoutController::class, 'paymentCallback'])->name('payment.callback');

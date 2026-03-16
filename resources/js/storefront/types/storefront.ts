@@ -5,6 +5,7 @@ export interface StorefrontPageData {
     template: TemplateData;
     theme: ResolvedTheme;
     themeStyles: string;
+    themeStyleVars: Record<string, string>;
     sections?: SectionData[];
     seo: SeoData;
     cart: CartSummary;
@@ -233,4 +234,95 @@ export interface FixedPageProps {
     shop: ShopData;
     customer: CustomerData | null;
     theme: ResolvedTheme;
+}
+
+export interface CartItemData {
+    id: number;
+    name: string;
+    variant_name: string | null;
+    price: number;
+    quantity: number;
+    image: string | null;
+    max_quantity: number | null;
+}
+
+export interface CartPageData {
+    items: CartItemData[];
+    summary: CartSummaryDetail;
+}
+
+export interface CartSummaryDetail {
+    subtotal: number;
+    shipping_fee: number;
+    tax: number;
+    total: number;
+    item_count: number;
+}
+
+export interface CheckoutPageData extends CartPageData {
+    payment_methods: string[];
+}
+
+export interface ShippingAddress {
+    first_name: string;
+    last_name: string;
+    phone: string;
+    address_line_1: string;
+    address_line_2: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+}
+
+export interface OrderItemData {
+    id: number;
+    name: string;
+    variant_name: string | null;
+    quantity: number;
+    unit_price: number;
+    total: number;
+    image: string | null;
+}
+
+export interface PaymentData {
+    id: number;
+    method: string;
+    amount: number;
+    status: string;
+}
+
+export interface OrderData {
+    id: number;
+    order_number: string;
+    status: string;
+    subtotal: number;
+    tax: number;
+    total: number;
+    created_at: string;
+    items: OrderItemData[];
+    payments: PaymentData[];
+}
+
+export interface OrderPageData {
+    order: OrderData | null;
+}
+
+export interface LoginPageData {
+    shop_name: string;
+    registration_enabled: boolean;
+}
+
+export interface RegisterPageData {
+    shop_name: string;
+}
+
+export interface AuthPageData {
+    shop_name: string;
+}
+
+export interface ResetPasswordPageData {
+    shop_name: string;
+    token: string;
+    email: string;
 }

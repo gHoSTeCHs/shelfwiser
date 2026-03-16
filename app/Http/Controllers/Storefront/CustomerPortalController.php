@@ -168,7 +168,6 @@ class CustomerPortalController extends Controller
             'status' => OrderStatus::CANCELLED,
             'cancellation_reason' => $request->validated('cancellation_reason'),
             'cancelled_at' => now(),
-            'cancelled_by' => $customer->id,
         ]);
 
         return back()->with('success', 'Order cancelled successfully.');
