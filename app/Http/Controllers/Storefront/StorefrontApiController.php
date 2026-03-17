@@ -265,7 +265,7 @@ class StorefrontApiController extends Controller
     {
         $customer = auth('customer')->user();
 
-        if ($customer->hasVerifiedEmail()) {
+        if (! $customer || $customer->hasVerifiedEmail()) {
             return response()->json(['message' => 'Email already verified.']);
         }
 
@@ -345,6 +345,8 @@ class StorefrontApiController extends Controller
     public function updateProfile(UpdateCustomerProfileRequest $request, Shop $shop): JsonResponse
     {
         $customer = auth('customer')->user();
+        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
+
         $customer->update($request->validated());
 
         $customer->refresh();

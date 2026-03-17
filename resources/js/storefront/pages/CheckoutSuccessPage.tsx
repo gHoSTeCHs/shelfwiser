@@ -1,8 +1,13 @@
+import { AuthGatePrompt } from '../components/AuthGatePrompt';
 import { StatusBadge } from '../components/StatusBadge';
 import { formatCurrency } from '../lib/formatters';
 import type { FixedPageProps, OrderPageData } from '../types/storefront';
 
-export function CheckoutSuccessPage({ data, shop }: FixedPageProps) {
+export function CheckoutSuccessPage({ data, shop, customer }: FixedPageProps) {
+    if (!customer) {
+        return <AuthGatePrompt shop={shop} />;
+    }
+
     const pageData = data as unknown as OrderPageData;
     const order = pageData.order;
 

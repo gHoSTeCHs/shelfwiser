@@ -48,7 +48,7 @@ export async function storefrontFetch<T = unknown>(
 
     if (response.status === 419) {
         window.location.reload();
-        return { ok: false, status: 419, data: data as T };
+        return new Promise(() => {});
     }
 
     return {

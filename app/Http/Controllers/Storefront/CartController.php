@@ -79,12 +79,10 @@ class CartController extends Controller
         try {
             $cart = $this->cartService->getCart($shop, auth('customer')->id());
 
-            // Convert material option string to enum
             $materialOption = isset($validated['material_option'])
                 ? MaterialOption::from($validated['material_option'])
                 : null;
 
-            // Format selected addons for CartService
             $selectedAddons = $validated['selected_addons'] ?? [];
 
             $this->cartService->addServiceItem(
@@ -131,7 +129,6 @@ class CartController extends Controller
      */
     public function destroy(Shop $shop, CartItem $item): RedirectResponse
     {
-        // Ensure cart item belongs to current cart
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
         if ($item->cart_id !== $cart->id) {
             abort(403, 'Unauthorized');

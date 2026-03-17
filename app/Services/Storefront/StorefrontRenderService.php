@@ -51,9 +51,12 @@ class StorefrontRenderService
         ];
     }
 
+    private const UNPUBLISH_SAFE_PAGES = ['login', 'register', 'forgot-password', 'reset-password', 'verify-email', 'cart', 'checkout'];
+
     public function buildFixedPage(Shop $shop, string $page, array $params = [], ?Customer $customer = null): array
     {
-        $config = $this->loadConfig($shop);
+        $requirePublished = ! in_array($page, self::UNPUBLISH_SAFE_PAGES, true);
+        $config = $this->loadConfig($shop, $requirePublished);
         $resolved = $this->resolveThemeConfig($config);
         $themeStyleVars = $this->buildThemeStyleVars($resolved);
         $themeStyles = $this->buildThemeStylesFromVars($themeStyleVars);
@@ -250,14 +253,18 @@ class StorefrontRenderService
         return $typography;
     }
 
-    private function loadConfig(Shop $shop): StorefrontConfig
+    private function loadConfig(Shop $shop, bool $requirePublished = true): StorefrontConfig
     {
         $shop->load('storefrontConfig.theme');
 
         $config = $shop->storefrontConfig;
 
-        if ($config === null || ! $config->is_published) {
-            throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Storefront config not found or not published.');
+        if ($config === null) {
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Storefront config not found.');
+        }
+
+        if ($requirePublished && ! $config->is_published) {
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Storefront is not published.');
         }
 
         return $config;
@@ -479,7 +486,9 @@ class StorefrontRenderService
             return ['stats' => ['total_orders' => 0, 'total_spent' => 0.0], 'recent_orders' => []];
         }
 
-        $orderQuery = $customer->orders()->where('shop_id', $shop->id);
+        $orderQuery = $customer->orders()
+            ->where('shop_id', $shop->id)
+            ->where('order_type', \App\Enums\OrderType::CUSTOMER->value);
 
         $stats = (clone $orderQuery)
             ->selectRaw('COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_spent')
@@ -508,6 +517,7 @@ class StorefrontRenderService
 
         $paginator = $customer->orders()
             ->where('shop_id', $shop->id)
+            ->where('order_type', \App\Enums\OrderType::CUSTOMER->value)
             ->with('items')
             ->latest()
             ->paginate(10);

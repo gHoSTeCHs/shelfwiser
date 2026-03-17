@@ -12,6 +12,14 @@ export function ServiceDetailPage({ data, shop }: FixedPageProps) {
     const pageData = data as unknown as ServiceDetailPageData;
     const service = pageData.service;
 
+    const activeVariants = service?.variants.filter((v) => v.is_active) ?? [];
+    const [selectedVariantId, setSelectedVariantId] = useState<number>(activeVariants[0]?.id ?? 0);
+    const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
+    const [quantity, setQuantity] = useState(1);
+    const [adding, setAdding] = useState(false);
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+
     if (!service) {
         return (
             <div style={{ maxWidth: 'var(--container-width, 1280px)', margin: '0 auto', padding: '80px 24px', textAlign: 'center', fontFamily: 'var(--font-body)' }}>
@@ -20,14 +28,6 @@ export function ServiceDetailPage({ data, shop }: FixedPageProps) {
             </div>
         );
     }
-
-    const activeVariants = service.variants.filter((v) => v.is_active);
-    const [selectedVariantId, setSelectedVariantId] = useState<number>(activeVariants[0]?.id ?? 0);
-    const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
-    const [quantity, setQuantity] = useState(1);
-    const [adding, setAdding] = useState(false);
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
 
     const selectedVariant = activeVariants.find((v) => v.id === selectedVariantId);
     const basePrice = selectedVariant?.price ?? 0;

@@ -23,9 +23,7 @@ class CustomerPortalController extends Controller
     {
         $customer = auth('customer')->user();
 
-        if ($customer->tenant_id !== $shop->tenant_id) {
-            abort(403, 'Unauthorized');
-        }
+        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
 
         $stats = [
             'total_orders' => $customer->orders()
@@ -66,9 +64,7 @@ class CustomerPortalController extends Controller
     {
         $customer = auth('customer')->user();
 
-        if ($customer->tenant_id !== $shop->tenant_id) {
-            abort(403, 'Unauthorized');
-        }
+        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
 
         $orders = $customer->orders()
             ->where('shop_id', $shop->id)
@@ -90,9 +86,7 @@ class CustomerPortalController extends Controller
     {
         $customer = auth('customer')->user();
 
-        if ($customer->tenant_id !== $shop->tenant_id) {
-            abort(403, 'Unauthorized');
-        }
+        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
 
         $order = $customer->orders()
             ->where('id', $orderId)
@@ -114,9 +108,7 @@ class CustomerPortalController extends Controller
     {
         $customer = auth('customer')->user();
 
-        if ($customer->tenant_id !== $shop->tenant_id) {
-            abort(403, 'Unauthorized');
-        }
+        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
 
         $addresses = $customer->addresses;
 
@@ -133,10 +125,7 @@ class CustomerPortalController extends Controller
     public function updateProfile(UpdateCustomerProfileRequest $request, Shop $shop): RedirectResponse
     {
         $customer = auth('customer')->user();
-
-        if ($customer->tenant_id !== $shop->tenant_id) {
-            abort(403, 'Unauthorized');
-        }
+        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
 
         $customer->update($request->validated());
 
@@ -149,10 +138,7 @@ class CustomerPortalController extends Controller
     public function cancelOrder(CancelOrderApiRequest $request, Shop $shop, $orderId): RedirectResponse
     {
         $customer = auth('customer')->user();
-
-        if ($customer->tenant_id !== $shop->tenant_id) {
-            abort(403, 'Unauthorized');
-        }
+        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
 
         $order = $customer->orders()
             ->where('id', $orderId)

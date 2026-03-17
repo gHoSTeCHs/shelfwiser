@@ -1,6 +1,11 @@
+import { AuthGatePrompt } from '../components/AuthGatePrompt';
 import type { FixedPageProps, OrderPageData } from '../types/storefront';
 
-export function CheckoutPendingPage({ data, shop }: FixedPageProps) {
+export function CheckoutPendingPage({ data, shop, customer }: FixedPageProps) {
+    if (!customer) {
+        return <AuthGatePrompt shop={shop} />;
+    }
+
     const pageData = data as unknown as OrderPageData;
     const order = pageData.order;
 
