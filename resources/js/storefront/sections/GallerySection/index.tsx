@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Grid } from './Grid';
 import { Masonry } from './Masonry';
+import { Carousel } from './Carousel';
+import { FullscreenSlider } from './FullscreenSlider';
 import type { SectionProps } from '../../types/storefront';
+import { narrowConfig } from '../../lib/section-helpers';
 
 interface GalleryImage {
     url: string;
@@ -139,7 +142,7 @@ function Lightbox({
 }
 
 export function GallerySection({ config, variant }: SectionProps) {
-    const { heading, images, columns } = config as unknown as GalleryConfig;
+    const { heading, images, columns } = narrowConfig<GalleryConfig>(config);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
     if (!images || images.length === 0) {
@@ -187,6 +190,16 @@ export function GallerySection({ config, variant }: SectionProps) {
                     <Masonry
                         images={images}
                         columns={columns}
+                        onImageClick={openLightbox}
+                    />
+                ) : variant === 'carousel' ? (
+                    <Carousel
+                        images={images}
+                        onImageClick={openLightbox}
+                    />
+                ) : variant === 'fullscreen_slider' ? (
+                    <FullscreenSlider
+                        images={images}
                         onImageClick={openLightbox}
                     />
                 ) : (

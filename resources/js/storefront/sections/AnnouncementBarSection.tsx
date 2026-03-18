@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { narrowConfig } from '../lib/section-helpers';
 import type { SectionProps } from '../types/storefront';
 
 interface AnnouncementBarConfig {
@@ -17,7 +18,7 @@ export function AnnouncementBarSection({ config }: SectionProps) {
         background_color,
         text_color,
         is_dismissible,
-    } = config as unknown as AnnouncementBarConfig;
+    } = narrowConfig<AnnouncementBarConfig>(config);
 
     if (isDismissed || !text) {
         return null;

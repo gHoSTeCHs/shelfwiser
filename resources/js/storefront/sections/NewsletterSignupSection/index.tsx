@@ -1,6 +1,8 @@
 import { Inline } from './Inline';
 import { Card } from './Card';
+import { PopupTrigger } from './PopupTrigger';
 import type { SectionProps } from '../../types/storefront';
+import { narrowConfig } from '../../lib/section-helpers';
 
 interface NewsletterConfig {
     heading: string;
@@ -17,7 +19,7 @@ export function NewsletterSignupSection({ config, variant }: SectionProps) {
         placeholder,
         button_text,
         shop_slug,
-    } = config as unknown as NewsletterConfig;
+    } = narrowConfig<NewsletterConfig>(config);
 
     const variantProps = { heading, subheading, placeholder, button_text, shop_slug };
 
@@ -27,7 +29,9 @@ export function NewsletterSignupSection({ config, variant }: SectionProps) {
                 className="mx-auto px-4 sm:px-6"
                 style={{ maxWidth: 'var(--container-width, 1280px)' }}
             >
-                {variant === 'stacked' || variant === 'split' ? (
+                {variant === 'popup_trigger' ? (
+                    <PopupTrigger {...variantProps} />
+                ) : variant === 'stacked' || variant === 'split' ? (
                     <Card {...variantProps} />
                 ) : (
                     <Inline {...variantProps} />

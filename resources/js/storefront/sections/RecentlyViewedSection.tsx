@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatCurrency } from '../lib/formatters';
+import { narrowConfig } from '../lib/section-helpers';
 import type { SectionProps } from '../types/storefront';
 
 interface RecentlyViewedItem {
@@ -39,7 +40,7 @@ export function RecentlyViewedSection({ config }: SectionProps) {
         shop_slug,
         currency_symbol,
         currency_decimals,
-    } = config as unknown as RecentlyViewedConfig;
+    } = narrowConfig<RecentlyViewedConfig>(config);
 
     const [items, setItems] = useState<RecentlyViewedItem[]>([]);
 

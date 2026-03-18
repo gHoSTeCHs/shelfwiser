@@ -2,6 +2,7 @@ import React from 'react';
 import type { SectionProps, ProductCardData } from '../../types/storefront';
 import { ProductCard } from '../../components/ProductCard';
 import { ScrollAnimation } from '../../components/ScrollAnimation';
+import { narrowData } from '../../lib/section-helpers';
 
 interface FeaturedData {
     products?: ProductCardData[];
@@ -10,7 +11,7 @@ interface FeaturedData {
 }
 
 export function StandardGrid({ config, data }: SectionProps) {
-    const featuredData = data as unknown as FeaturedData;
+    const featuredData = narrowData<FeaturedData>(data);
     const products = featuredData.products ?? [];
     const heading = (config.heading as string) || featuredData.title;
     const subheading = (config.subheading as string) || featuredData.subtitle;

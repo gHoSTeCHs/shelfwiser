@@ -1,3 +1,4 @@
+import { narrowConfig } from '../lib/section-helpers';
 import type { SectionProps } from '../types/storefront';
 
 interface MapConfig {
@@ -18,7 +19,7 @@ function isSafeEmbedUrl(url: string): boolean {
 }
 
 export function MapSection({ config }: SectionProps) {
-    const { heading, address, embed_url, height } = config as unknown as MapConfig;
+    const { heading, address, embed_url, height } = narrowConfig<MapConfig>(config);
     const mapHeight = height || '400px';
     const safeEmbedUrl = embed_url && isSafeEmbedUrl(embed_url) ? embed_url : null;
 

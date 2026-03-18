@@ -1,3 +1,4 @@
+import { narrowConfig } from '../lib/section-helpers';
 import type { SectionProps } from '../types/storefront';
 
 interface SpacerConfig {
@@ -6,7 +7,7 @@ interface SpacerConfig {
 }
 
 export function SpacerSection({ config }: SectionProps) {
-    const { height, show_divider } = config as unknown as SpacerConfig;
+    const { height, show_divider } = narrowConfig<SpacerConfig>(config);
     const spacerHeight = height || 'var(--section-spacing, 64px)';
 
     return (

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import type { SectionProps, ProductCardData } from '../../types/storefront';
 import { ProductCard } from '../../components/ProductCard';
 import { ScrollAnimation } from '../../components/ScrollAnimation';
+import { narrowData } from '../../lib/section-helpers';
 
 interface CategoryItem {
     id: number;
@@ -42,7 +43,7 @@ function sortProducts(products: ProductCardData[], sort: SortOption): ProductCar
 }
 
 export function SidebarFilters({ config, data }: SectionProps) {
-    const gridData = data as unknown as GridData;
+    const gridData = narrowData<GridData>(data);
     const allProducts = gridData.products ?? [];
     const categories = gridData.categories ?? [];
     const heading = config.heading as string | undefined;

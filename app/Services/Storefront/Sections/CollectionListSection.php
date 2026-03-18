@@ -86,6 +86,7 @@ class CollectionListSection implements StorefrontSectionInterface
             ? \App\Models\ProductCategory::query()
                 ->whereIn('id', $categoryIds)
                 ->withCount(['products' => fn ($q) => $q
+                    ->where('tenant_id', $shop->tenant_id)
                     ->where('shop_id', $shop->id)
                     ->where('is_active', true),
                 ])

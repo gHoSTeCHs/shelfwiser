@@ -1,3 +1,4 @@
+import { narrowConfig } from '../lib/section-helpers';
 import type { SectionProps } from '../types/storefront';
 
 interface BannerConfig {
@@ -17,7 +18,7 @@ export function BannerSection({ config }: SectionProps) {
         cta_link,
         background_image,
         background_color,
-    } = config as unknown as BannerConfig;
+    } = narrowConfig<BannerConfig>(config);
 
     const bgColor = background_color || 'var(--color-primary, #1a1a1a)';
 

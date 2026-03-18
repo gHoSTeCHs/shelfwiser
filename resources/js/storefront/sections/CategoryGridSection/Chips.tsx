@@ -1,13 +1,14 @@
 import React from 'react';
 import type { SectionProps, CategoryData } from '../../types/storefront';
 import { ScrollAnimation } from '../../components/ScrollAnimation';
+import { narrowData } from '../../lib/section-helpers';
 
 interface CategoryGridData {
     categories?: CategoryData[];
 }
 
 export function Chips({ config, data }: SectionProps) {
-    const gridData = data as unknown as CategoryGridData;
+    const gridData = narrowData<CategoryGridData>(data);
     const categories = gridData.categories ?? [];
     const heading = config.heading as string | undefined;
     const subheading = config.subheading as string | undefined;

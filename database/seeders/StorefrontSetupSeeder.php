@@ -8,6 +8,7 @@ use App\Models\StorefrontConfig;
 use App\Models\StorefrontPage;
 use App\Models\StorefrontTheme;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class StorefrontSetupSeeder extends Seeder
 {
@@ -67,7 +68,7 @@ class StorefrontSetupSeeder extends Seeder
                 'sort_order' => 1,
                 'sections' => [
                     [
-                        'id' => 'hero-1',
+                        'id' => 'sec_'.Str::random(12),
                         'type' => 'hero_banner',
                         'variant' => 'default',
                         'is_visible' => true,
@@ -80,7 +81,7 @@ class StorefrontSetupSeeder extends Seeder
                         ],
                     ],
                     [
-                        'id' => 'featured-1',
+                        'id' => 'sec_'.Str::random(12),
                         'type' => 'featured_products',
                         'variant' => 'standard_grid',
                         'is_visible' => true,
@@ -94,7 +95,7 @@ class StorefrontSetupSeeder extends Seeder
                         ],
                     ],
                     [
-                        'id' => 'category-1',
+                        'id' => 'sec_'.Str::random(12),
                         'type' => 'category_grid',
                         'variant' => 'image_above',
                         'is_visible' => true,
@@ -105,7 +106,7 @@ class StorefrontSetupSeeder extends Seeder
                         ],
                     ],
                     [
-                        'id' => 'newsletter-1',
+                        'id' => 'sec_'.Str::random(12),
                         'type' => 'newsletter_signup',
                         'variant' => 'default',
                         'is_visible' => true,
@@ -124,7 +125,7 @@ class StorefrontSetupSeeder extends Seeder
                 'sort_order' => 2,
                 'sections' => [
                     [
-                        'id' => 'product-grid-1',
+                        'id' => 'sec_'.Str::random(12),
                         'type' => 'product_grid',
                         'variant' => 'standard_grid',
                         'is_visible' => true,

@@ -164,6 +164,7 @@ class FeaturedProductsSection implements StorefrontSectionInterface
                 ->whereIn('id', $config['manual_product_ids'] ?? [])
                 ->where('is_active', true)
                 ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category'])
+                ->limit($limit)
                 ->get(),
             default => $this->storefrontService->getFeaturedProducts($shop, $limit),
         };

@@ -1,11 +1,11 @@
 <?php
 
+use App\Models\Shop;
+use App\Models\StorefrontConfig;
+use App\Models\StorefrontMedia;
+use App\Models\StorefrontPage;
 use App\Models\StorefrontTemplate;
 use App\Models\StorefrontTheme;
-use App\Models\StorefrontConfig;
-use App\Models\StorefrontPage;
-use App\Models\StorefrontMedia;
-use App\Models\Shop;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -87,7 +87,7 @@ it('enforces one config per shop', function () {
     ]))->toThrow(\Illuminate\Database\QueryException::class);
 });
 
-it('media belongs to shop', function () {
+it('media belongs to shop and tenant', function () {
     $tenant = Tenant::factory()->create();
     $shop = Shop::factory()->create(['tenant_id' => $tenant->id]);
 
@@ -98,6 +98,36 @@ it('media belongs to shop', function () {
 
     expect($media->shop)->toBeInstanceOf(Shop::class);
     expect($media->shop->id)->toBe($shop->id);
+    expect($media->tenant)->toBeInstanceOf(Tenant::class);
+    expect($media->tenant->id)->toBe($tenant->id);
+});
+
+it('enforces unique page per shop, page type, and slug', function () {
+    $tenant = Tenant::factory()->create();
+    $shop = Shop::factory()->create(['tenant_id' => $tenant->id]);
+    $template = StorefrontTemplate::factory()->create();
+    $theme = StorefrontTheme::factory()->create(['template_id' => $template->id]);
+    $config = StorefrontConfig::factory()->create([
+        'tenant_id' => $tenant->id,
+        'shop_id' => $shop->id,
+        'theme_id' => $theme->id,
+    ]);
+
+    StorefrontPage::factory()->create([
+        'tenant_id' => $tenant->id,
+        'shop_id' => $shop->id,
+        'storefront_config_id' => $config->id,
+        'page_type' => \App\Enums\StorefrontPageType::HOME,
+        'slug' => 'home',
+    ]);
+
+    expect(fn () => StorefrontPage::factory()->create([
+        'tenant_id' => $tenant->id,
+        'shop_id' => $shop->id,
+        'storefront_config_id' => $config->id,
+        'page_type' => \App\Enums\StorefrontPageType::HOME,
+        'slug' => 'home',
+    ]))->toThrow(\Illuminate\Database\QueryException::class);
 });
 
 it('config has many pages', function () {

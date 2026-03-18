@@ -1,3 +1,4 @@
+import { narrowConfig } from '../lib/section-helpers';
 import type { SectionProps } from '../types/storefront';
 
 interface LogoItem {
@@ -12,7 +13,7 @@ interface LogoCloudConfig {
 }
 
 export function LogoCloudSection({ config }: SectionProps) {
-    const { heading, logos } = config as unknown as LogoCloudConfig;
+    const { heading, logos } = narrowConfig<LogoCloudConfig>(config);
 
     if (!logos || logos.length === 0) {
         return null;

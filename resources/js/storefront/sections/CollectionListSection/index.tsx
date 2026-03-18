@@ -1,6 +1,8 @@
 import { Cards } from './Cards';
 import { List } from './List';
+import { Accordion } from './Accordion';
 import type { SectionProps } from '../../types/storefront';
+import { narrowConfig, narrowData } from '../../lib/section-helpers';
 
 interface CollectionItem {
     id: number;
@@ -23,8 +25,8 @@ interface CollectionListData {
 }
 
 export function CollectionListSection({ config, variant, data }: SectionProps) {
-    const { heading, shop_slug } = config as unknown as CollectionListConfig;
-    const { collections } = data as unknown as CollectionListData;
+    const { heading, shop_slug } = narrowConfig<CollectionListConfig>(config);
+    const { collections } = narrowData<CollectionListData>(data);
 
     if (!collections || collections.length === 0) {
         return null;
@@ -49,7 +51,9 @@ export function CollectionListSection({ config, variant, data }: SectionProps) {
                     </h2>
                 )}
 
-                {variant === 'rows' ? (
+                {variant === 'accordion' ? (
+                    <Accordion collections={collections} shop_slug={shop_slug} />
+                ) : variant === 'rows' ? (
                     <List collections={collections} shop_slug={shop_slug} />
                 ) : (
                     <Cards collections={collections} shop_slug={shop_slug} />

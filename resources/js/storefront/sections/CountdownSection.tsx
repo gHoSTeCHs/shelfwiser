@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { narrowConfig } from '../lib/section-helpers';
 import type { SectionProps } from '../types/storefront';
 
 interface CountdownConfig {
@@ -62,7 +63,7 @@ export function CountdownSection({ config }: SectionProps) {
         expired_message,
         cta_text,
         cta_link,
-    } = config as unknown as CountdownConfig;
+    } = narrowConfig<CountdownConfig>(config);
 
     const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(
         () => calculateTimeRemaining(target_date),
