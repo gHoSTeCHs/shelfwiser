@@ -19,13 +19,14 @@ class ShopResource extends JsonResource
             'country' => $this->country,
             'phone' => $this->phone,
             'email' => $this->email,
-            'type' => [
+            'type' => $this->type ? [
                 'slug' => $this->type->slug,
                 'label' => $this->type->label,
                 'description' => $this->type->description,
-            ],
+            ] : null,
             'config' => $this->config,
             'is_active' => $this->is_active,
+            'storefront_enabled' => $this->storefront_enabled,
             'users_count' => $this->whenLoaded('users', fn () => $this->users->count()),
             'can_manage' => $request->user()->can('manage', $this->resource),
             'created_at' => $this->created_at->toIso8601String(),

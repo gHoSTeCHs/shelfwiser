@@ -10,6 +10,7 @@ import { Shop } from '@/types/shop';
 import { Head, Link } from '@inertiajs/react';
 import {
     Building2,
+    LayoutTemplate,
     Mail,
     MapPin,
     Package,
@@ -235,18 +236,33 @@ export default function Index({ shops, shopTypes }: Props) {
                                                 </Button>
                                             </Link>
                                         </div>
-                                        <Link
-                                            href={`/shops/${shop.id}/storefront-settings`}
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <Button
-                                                variant="outline"
-                                                className="w-full"
-                                            >
-                                                <Store className="mr-2 h-4 w-4" />
-                                                Storefront Settings
-                                            </Button>
-                                        </Link>
+                                        {shop.storefront_enabled && (
+                                            <div className="flex gap-2">
+                                                <Link
+                                                    href={`/shops/${shop.id}/storefront-builder`}
+                                                    className="flex-1"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <Button className="w-full">
+                                                        <LayoutTemplate className="mr-2 h-4 w-4" />
+                                                        Builder
+                                                    </Button>
+                                                </Link>
+                                                <Link
+                                                    href={`/shops/${shop.id}/storefront-settings`}
+                                                    className="flex-1"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <Button
+                                                        variant="outline"
+                                                        className="w-full"
+                                                    >
+                                                        <Store className="mr-2 h-4 w-4" />
+                                                        Settings
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </Card>

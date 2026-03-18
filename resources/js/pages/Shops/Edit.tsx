@@ -28,7 +28,7 @@ export default function Edit({ shop, shopTypes, inventoryModels }: Props) {
         useState<string>(shop.inventory_model || 'simple_retail');
     const [isActive, setIsActive] = useState<boolean>(shop.is_active ?? true);
 
-    const selectedType = shopTypes.find((type) => type.slug === shop.type.slug);
+    const selectedType = shopTypes.find((type) => type.slug === shop.type?.slug);
 
     const selectedInventoryModelData = inventoryModels.find(
         (model) => model.value === selectedInventoryModel,
@@ -152,7 +152,7 @@ export default function Edit({ shop, shopTypes, inventoryModels }: Props) {
                                         <Input
                                             type="text"
                                             id="shop_type"
-                                            value={shop.type.label}
+                                            value={shop.type?.label ?? 'Unknown Type'}
                                             disabled
                                             className="bg-gray-50 dark:bg-gray-900"
                                         />
