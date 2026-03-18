@@ -10,12 +10,14 @@ import type {
     BuilderTheme,
     ThemeCategory,
 } from './types/builder';
-import { Loader2, Sparkles, Store } from 'lucide-react';
+import Button from '@/components/ui/button/Button';
+import { ArrowLeft, Loader2, Sparkles, Store } from 'lucide-react';
 
 interface ThemeSelectorProps {
     themes: BuilderTheme[];
     shop: Shop;
     onThemeSelected: (data: BuilderDataResponse) => void;
+    onCancel?: () => void;
 }
 
 const categoryColors: Record<ThemeCategory, 'brand' | 'success' | 'info' | 'warning' | 'purple' | 'blue'> = {
@@ -36,7 +38,7 @@ const categoryGradients: Record<ThemeCategory, string> = {
     artisan: 'from-warning-500/20 via-warning-400/10 to-transparent',
 };
 
-export function ThemeSelector({ themes, shop, onThemeSelected }: ThemeSelectorProps) {
+export function ThemeSelector({ themes, shop, onThemeSelected, onCancel }: ThemeSelectorProps) {
     const [selectingThemeId, setSelectingThemeId] = useState<number | null>(null);
     const { error: showError } = useToast();
 
@@ -76,14 +78,28 @@ export function ThemeSelector({ themes, shop, onThemeSelected }: ThemeSelectorPr
     return (
         <div className="space-y-8">
             <div className="text-center">
+                {onCancel && (
+                    <div className="mb-4 flex justify-start">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            startIcon={<ArrowLeft className="h-4 w-4" />}
+                            onClick={onCancel}
+                        >
+                            Back to Builder
+                        </Button>
+                    </div>
+                )}
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 dark:bg-brand-500/10">
                     <Store className="h-7 w-7 text-brand-600 dark:text-brand-400" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Choose Your Storefront Theme
+                    {onCancel ? 'Switch Your Theme' : 'Choose Your Storefront Theme'}
                 </h2>
                 <p className="mx-auto mt-2 max-w-md text-sm text-gray-500 dark:text-gray-400">
-                    Pick a starting point for your online store. Every theme is fully customizable — colors, fonts, layout, and more.
+                    {onCancel
+                        ? 'Select a new theme for your storefront. Your sections will be preserved, but theme styles will change.'
+                        : 'Pick a starting point for your online store. Every theme is fully customizable — colors, fonts, layout, and more.'}
                 </p>
             </div>
 

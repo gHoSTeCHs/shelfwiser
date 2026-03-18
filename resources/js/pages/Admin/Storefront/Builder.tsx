@@ -60,6 +60,7 @@ export default function Builder({ shop, config: initialConfig, themes: rawThemes
     const [confirmAction, setConfirmAction] = useState<'publish' | 'unpublish' | null>(null);
     const [isPublishing, setIsPublishing] = useState(false);
     const [mobileTab, setMobileTab] = useState<MobileTab>('canvas');
+    const [showThemeSelector, setShowThemeSelector] = useState(false);
 
     const storeConfig = useBuilderStore((s) => s.config);
     const pages = useBuilderStore((s) => s.pages);
@@ -98,6 +99,7 @@ export default function Builder({ shop, config: initialConfig, themes: rawThemes
 
     function handleThemeSelected(data: BuilderDataResponse) {
         loadBuilderData(data);
+        setShowThemeSelector(false);
     }
 
     async function handlePublishConfirm() {
@@ -135,7 +137,7 @@ export default function Builder({ shop, config: initialConfig, themes: rawThemes
         );
     }
 
-    if (!storeConfig) {
+    if (!storeConfig || showThemeSelector) {
         return (
             <>
                 <Head title="Choose a Theme" />
@@ -143,6 +145,7 @@ export default function Builder({ shop, config: initialConfig, themes: rawThemes
                     themes={themes}
                     shop={shop}
                     onThemeSelected={handleThemeSelected}
+                    onCancel={storeConfig ? () => setShowThemeSelector(false) : undefined}
                 />
             </>
         );
@@ -185,6 +188,15 @@ export default function Builder({ shop, config: initialConfig, themes: rawThemes
                         </div>
 
                         <div className="flex items-center gap-2">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                startIcon={<LayoutTemplate className="h-4 w-4" />}
+                                className="hidden sm:inline-flex"
+                                onClick={() => setShowThemeSelector(true)}
+                            >
+                                Change Theme
+                            </Button>
                             <Button
                                 size="sm"
                                 variant="outline"

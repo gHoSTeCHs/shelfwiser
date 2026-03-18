@@ -46,7 +46,7 @@ export default function Index({ shops, shopTypes }: Props) {
             shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             shop.slug.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType =
-            !selectedShopType || shop.type.slug === selectedShopType;
+            !selectedShopType || shop.type?.slug === selectedShopType;
 
         return matchesSearch && matchesType;
     });
@@ -165,7 +165,7 @@ export default function Index({ shops, shopTypes }: Props) {
                                     <div className="space-y-2">
                                         <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                                             <Building2 className="mr-2 h-4 w-4" />
-                                            {shop.type.label}
+                                            {shop.type?.label ?? 'Unknown Type'}
                                         </div>
 
                                         {/* Show address if available */}
