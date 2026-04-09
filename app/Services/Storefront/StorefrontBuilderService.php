@@ -2,6 +2,7 @@
 
 namespace App\Services\Storefront;
 
+use App\Cache\StorefrontBuilderCache;
 use App\Enums\StorefrontPageType;
 use App\Models\Shop;
 use App\Models\StorefrontConfig;
@@ -12,6 +13,10 @@ use Illuminate\Support\Str;
 
 class StorefrontBuilderService
 {
+    public function __construct(
+        private readonly StorefrontBuilderCache $cache
+    ) {}
+
     public function initializeStorefront(Shop $shop, StorefrontTheme $theme): StorefrontConfig
     {
         return DB::transaction(function () use ($shop, $theme) {
@@ -66,6 +71,8 @@ class StorefrontBuilderService
                 }
             }
 
+            $this->cache->invalidateShop($shop);
+
             return $config;
         });
     }
@@ -92,6 +99,7 @@ class StorefrontBuilderService
         }
 
         $page->update(['sections' => $sections]);
+        $this->invalidatePageShop($page);
 
         return $page;
     }
@@ -120,6 +128,7 @@ class StorefrontBuilderService
         }
 
         $page->update(['sections' => $sections]);
+        $this->invalidatePageShop($page);
 
         return $page;
     }
@@ -136,6 +145,7 @@ class StorefrontBuilderService
         }
 
         $page->update(['sections' => $sections]);
+        $this->invalidatePageShop($page);
 
         return $page;
     }
@@ -160,6 +170,7 @@ class StorefrontBuilderService
         }
 
         $page->update(['sections' => $reordered]);
+        $this->invalidatePageShop($page);
 
         return $page;
     }
@@ -183,6 +194,7 @@ class StorefrontBuilderService
         }
 
         $page->update(['sections' => $sections]);
+        $this->invalidatePageShop($page);
 
         return $page;
     }
@@ -194,6 +206,8 @@ class StorefrontBuilderService
             'published_at' => now(),
         ]);
 
+        $this->invalidateConfigShop($config);
+
         return $config;
     }
 
@@ -203,6 +217,8 @@ class StorefrontBuilderService
             'is_published' => false,
             'published_at' => null,
         ]);
+
+        $this->invalidateConfigShop($config);
 
         return $config;
     }
@@ -220,6 +236,8 @@ class StorefrontBuilderService
             'header_overrides' => null,
             'footer_overrides' => null,
         ]);
+
+        $this->invalidateConfigShop($config);
 
         return $config;
     }
@@ -240,6 +258,18 @@ class StorefrontBuilderService
     private function generateSectionId(): string
     {
         return 'sec_'.Str::random(12);
+    }
+
+    private function invalidatePageShop(StorefrontPage $page): void
+    {
+        $page->loadMissing('shop');
+        $this->cache->invalidateShop($page->shop);
+    }
+
+    private function invalidateConfigShop(StorefrontConfig $config): void
+    {
+        $config->loadMissing('shop');
+        $this->cache->invalidateShop($config->shop);
     }
 
     private function getPageSortOrder(StorefrontPageType $pageType): int

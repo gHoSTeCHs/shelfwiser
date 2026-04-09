@@ -2,6 +2,7 @@
 
 namespace App\Services\Storefront;
 
+use App\Cache\StorefrontBuilderCache;
 use App\Enums\StorefrontPageType;
 use App\Models\Customer;
 use App\Models\Shop;
@@ -13,42 +14,48 @@ class StorefrontRenderService
 {
     public function __construct(
         private readonly SectionTypeRegistry $registry,
-        private readonly CartService $cartService
+        private readonly CartService $cartService,
+        private readonly StorefrontBuilderCache $cache
     ) {}
 
     public function buildPage(Shop $shop, StorefrontPageType $pageType, ?string $slug = null, ?Customer $customer = null): array
     {
-        $config = $this->loadConfig($shop);
+        $cached = $this->cache->page($shop, $pageType, $slug, function () use ($shop, $pageType, $slug) {
+            $config = $this->loadConfig($shop);
 
-        $page = StorefrontPage::query()
-            ->where('tenant_id', $shop->tenant_id)
-            ->where('shop_id', $shop->id)
-            ->where('storefront_config_id', $config->id)
-            ->where('page_type', $pageType)
-            ->where('is_published', true)
-            ->when($slug, fn ($q) => $q->where('slug', $slug))
-            ->firstOrFail();
+            $page = StorefrontPage::query()
+                ->where('tenant_id', $shop->tenant_id)
+                ->where('shop_id', $shop->id)
+                ->where('storefront_config_id', $config->id)
+                ->where('page_type', $pageType)
+                ->where('is_published', true)
+                ->when($slug, fn ($q) => $q->where('slug', $slug))
+                ->firstOrFail();
 
-        $resolved = $this->resolveThemeConfig($config);
-        $themeStyleVars = $this->buildThemeStyleVars($resolved);
-        $themeStyles = $this->buildThemeStylesFromVars($themeStyleVars);
-        $sections = $this->resolveSections($page->sections ?? [], $shop);
-        $seo = $this->buildSeoMeta($page, $config);
-        $navigation = $this->buildNavigation($shop, $config);
+            $resolved = $this->cachedThemeConfig($shop, $config);
+            $themeStyleVars = $this->buildThemeStyleVars($resolved);
+            $themeStyles = $this->buildThemeStylesFromVars($themeStyleVars);
+            $sections = $this->resolveSections($page->sections ?? [], $shop);
+            $seo = $this->buildSeoMeta($page, $config);
+            $navigation = $this->cachedNavigation($shop, $config);
 
-        return [
-            'shop' => $this->serializeShop($shop),
-            'template' => $this->serializeTemplate($config),
-            'theme' => $resolved,
-            'themeStyles' => $themeStyles,
-            'themeStyleVars' => $themeStyleVars,
-            'sections' => $sections,
-            'seo' => $seo,
+            return [
+                'shop' => $this->serializeShop($shop),
+                'template' => $this->serializeTemplate($config),
+                'theme' => $resolved,
+                'themeStyles' => $themeStyles,
+                'themeStyleVars' => $themeStyleVars,
+                'sections' => $sections,
+                'seo' => $seo,
+                'navigation' => $navigation,
+            ];
+        });
+
+        return array_merge($cached, [
             'cart' => $this->resolveCartSummary($shop, $customer),
-            'navigation' => $navigation,
             'customer' => $this->serializeCustomer($customer),
             'csrfToken' => csrf_token(),
-        ];
+        ]);
     }
 
     private const UNPUBLISH_SAFE_PAGES = ['login', 'register', 'forgot-password', 'reset-password', 'verify-email', 'cart', 'checkout'];
@@ -57,10 +64,10 @@ class StorefrontRenderService
     {
         $requirePublished = ! in_array($page, self::UNPUBLISH_SAFE_PAGES, true);
         $config = $this->loadConfig($shop, $requirePublished);
-        $resolved = $this->resolveThemeConfig($config);
+        $resolved = $this->cachedThemeConfig($shop, $config);
         $themeStyleVars = $this->buildThemeStyleVars($resolved);
         $themeStyles = $this->buildThemeStylesFromVars($themeStyleVars);
-        $navigation = $this->buildNavigation($shop, $config);
+        $navigation = $this->cachedNavigation($shop, $config);
         $fixedPageData = $this->loadFixedPageData($shop, $page, $params, $customer);
         $seo = $this->buildFixedPageSeo($shop, $page, $config);
 
@@ -78,6 +85,16 @@ class StorefrontRenderService
             'customer' => $this->serializeCustomer($customer),
             'csrfToken' => csrf_token(),
         ];
+    }
+
+    private function cachedThemeConfig(Shop $shop, StorefrontConfig $config): array
+    {
+        return $this->cache->config($shop, fn () => $this->resolveThemeConfig($config));
+    }
+
+    private function cachedNavigation(Shop $shop, StorefrontConfig $config): array
+    {
+        return $this->cache->navigation($shop, fn () => $this->buildNavigation($shop, $config));
     }
 
     public function resolveThemeConfig(StorefrontConfig $config): array

@@ -27,7 +27,10 @@ yarn-error.log
 /.vscode
 /.zed
 nul
-#/docs
-#.claude
-#CLAUDE.md
-
+docs
+.claude
+CLAUDE.md
+.superpowers
+.playwright-mcp
+.mcp.json
+reference_images
