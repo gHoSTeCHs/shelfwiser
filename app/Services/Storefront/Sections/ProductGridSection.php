@@ -6,6 +6,7 @@ use App\Contracts\StorefrontSectionInterface;
 use App\Enums\SectionCategory;
 use App\Enums\StorefrontAnimationTier;
 use App\Enums\StorefrontPageType;
+use App\Models\Product;
 use App\Models\Shop;
 use App\Services\StorefrontService;
 
@@ -113,8 +114,26 @@ class ProductGridSection implements StorefrontSectionInterface
         $products = $this->storefrontService->getProducts($shop, null, null, $sort, $perPage);
 
         return [
-            'products' => collect($products->items())->toArray(),
+            'products' => collect($products->items())
+                ->map(fn (Product $product) => $this->serializeProduct($product))
+                ->all(),
             'categories' => $this->storefrontService->getCategories($shop)->toArray(),
+        ];
+    }
+
+    private function serializeProduct(Product $product): array
+    {
+        $firstVariant = $product->variants->first();
+
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'slug' => $product->slug,
+            'price' => (float) ($firstVariant?->price ?? 0),
+            'compare_at_price' => $firstVariant?->compare_at_price ? (float) $firstVariant->compare_at_price : null,
+            'image' => $product->primary_image_url ?? null,
+            'category_name' => $product->category?->name,
+            'is_new' => $product->created_at?->isAfter(now()->subDays(14)) ?? false,
         ];
     }
 
