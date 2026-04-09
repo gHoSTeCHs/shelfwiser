@@ -14,6 +14,7 @@ export function Card({ heading, subheading, placeholder, button_text, shop_slug 
     const [email, setEmail] = useState('');
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState('');
+    const [btnHovered, setBtnHovered] = useState(false);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -40,21 +41,24 @@ export function Card({ heading, subheading, placeholder, button_text, shop_slug 
     }
 
     return (
-        <div className="mx-auto max-w-lg text-center">
+        <div className="mx-auto max-w-xl text-center">
             <div
-                className="p-8 sm:p-10"
                 style={{
-                    backgroundColor: 'var(--color-surface, #f5f5f5)',
-                    borderRadius: 'var(--radius, 8px)',
-                    border: '1px solid var(--color-border, #e5e5e5)',
+                    backgroundColor: 'var(--color-primary, #e94560)',
+                    borderRadius: 'calc(var(--radius, 8px) * 2)',
+                    padding: '56px 36px',
                 }}
+                className="sm:px-14 sm:py-16"
             >
                 <h2
-                    className="text-xl font-bold sm:text-2xl"
                     style={{
-                        color: 'var(--color-text, #1a1a1a)',
+                        margin: 0,
+                        fontSize: 'clamp(1.5rem, 3.5vw, 2rem)',
+                        fontWeight: 800,
+                        letterSpacing: '-0.03em',
+                        color: '#fff',
                         fontFamily: 'var(--font-heading, sans-serif)',
-                        fontWeight: 'var(--font-heading-weight, 700)',
+                        lineHeight: 1.2,
                     }}
                 >
                     {heading}
@@ -62,9 +66,11 @@ export function Card({ heading, subheading, placeholder, button_text, shop_slug 
 
                 {subheading && (
                     <p
-                        className="mx-auto mt-2 max-w-sm text-sm"
+                        className="mx-auto mt-3 max-w-sm"
                         style={{
-                            color: 'var(--color-text-muted, #666)',
+                            fontSize: 15,
+                            lineHeight: 1.6,
+                            color: 'rgba(255,255,255,0.7)',
                             fontFamily: 'var(--font-body, sans-serif)',
                         }}
                     >
@@ -73,25 +79,42 @@ export function Card({ heading, subheading, placeholder, button_text, shop_slug 
                 )}
 
                 {status === 'success' ? (
-                    <p
-                        className="mt-6 text-sm font-medium"
-                        style={{ color: 'var(--color-success, #22c55e)' }}
+                    <div
+                        className="mt-10 flex items-center justify-center gap-2.5"
+                        style={{ animation: 'newsletterFadeIn 0.4s ease forwards' }}
                     >
-                        Thank you for subscribing!
-                    </p>
+                        <span
+                            className="flex h-7 w-7 items-center justify-center shrink-0"
+                            style={{
+                                borderRadius: '50%',
+                                backgroundColor: '#fff',
+                                color: 'var(--color-primary, #e94560)',
+                            }}
+                        >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </span>
+                        <p className="text-sm font-bold" style={{ color: '#fff' }}>
+                            You're subscribed!
+                        </p>
+                    </div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="mt-6 space-y-3">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="mx-auto mt-10 max-w-sm space-y-3"
+                    >
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder={placeholder}
                             required
-                            className="w-full px-4 py-3 text-sm outline-none transition-shadow focus:ring-2"
+                            className="w-full px-5 py-4 text-sm outline-none"
                             style={{
-                                backgroundColor: 'var(--color-background, #ffffff)',
+                                backgroundColor: '#fff',
                                 color: 'var(--color-text, #1a1a1a)',
-                                border: '1px solid var(--color-border, #e5e5e5)',
+                                border: 'none',
                                 borderRadius: 'var(--radius, 8px)',
                                 fontFamily: 'var(--font-body, sans-serif)',
                             }}
@@ -99,13 +122,20 @@ export function Card({ heading, subheading, placeholder, button_text, shop_slug 
                         <button
                             type="submit"
                             disabled={status === 'loading'}
-                            className="w-full py-3 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+                            className="w-full py-4 text-sm font-bold"
                             style={{
-                                backgroundColor: 'var(--color-primary, #1a1a1a)',
-                                color: 'var(--color-primary-foreground, #ffffff)',
+                                backgroundColor: btnHovered
+                                    ? 'var(--color-foreground, #000)'
+                                    : 'rgba(0,0,0,0.85)',
+                                color: '#fff',
                                 borderRadius: 'var(--radius, 8px)',
                                 fontFamily: 'var(--font-body, sans-serif)',
+                                letterSpacing: '0.01em',
+                                opacity: status === 'loading' ? 0.7 : 1,
+                                transition: 'background-color 0.2s ease, opacity 0.2s ease',
                             }}
+                            onMouseEnter={() => setBtnHovered(true)}
+                            onMouseLeave={() => setBtnHovered(false)}
                         >
                             {status === 'loading' ? 'Sending...' : button_text}
                         </button>
@@ -114,11 +144,22 @@ export function Card({ heading, subheading, placeholder, button_text, shop_slug 
                 {status === 'error' && errorMessage && (
                     <p
                         className="mt-3 text-xs"
-                        style={{ color: 'var(--color-error, #ef4444)' }}
+                        style={{ color: 'rgba(255,255,255,0.9)' }}
                     >
                         {errorMessage}
                     </p>
                 )}
+
+                <p
+                    className="mt-5"
+                    style={{
+                        fontSize: 12,
+                        color: 'rgba(255,255,255,0.45)',
+                        fontFamily: 'var(--font-body, sans-serif)',
+                    }}
+                >
+                    No spam, ever. Unsubscribe anytime.
+                </p>
             </div>
         </div>
     );

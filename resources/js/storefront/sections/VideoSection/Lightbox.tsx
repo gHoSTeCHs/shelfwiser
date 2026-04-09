@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 interface LightboxProps {
     heading?: string;
+    subheading?: string;
     video_url: string;
     poster_image?: string;
     autoplay?: boolean;
@@ -28,8 +29,10 @@ function isDirectVideo(url: string): boolean {
     return /\.(mp4|webm|ogg)(\?|$)/i.test(url);
 }
 
-export function Lightbox({ heading, video_url, poster_image, autoplay, muted }: LightboxProps) {
+export function Lightbox({ heading, subheading, video_url, poster_image, muted }: LightboxProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [thumbHovered, setThumbHovered] = useState(false);
+    const [closeHovered, setCloseHovered] = useState(false);
 
     const handleKeyDown = useCallback(
         (e: KeyboardEvent) => {
@@ -40,7 +43,6 @@ export function Lightbox({ heading, video_url, poster_image, autoplay, muted }: 
 
     useEffect(() => {
         if (!isOpen) return;
-
         document.addEventListener('keydown', handleKeyDown);
         document.body.style.overflow = 'hidden';
         return () => {
@@ -53,101 +55,202 @@ export function Lightbox({ heading, video_url, poster_image, autoplay, muted }: 
     const isDirect = isDirectVideo(video_url);
 
     return (
-        <div className="text-center">
-            {heading && (
-                <h2
-                    className="mb-6 text-xl font-bold sm:text-2xl"
-                    style={{
-                        color: 'var(--color-text, #1a1a1a)',
-                        fontFamily: 'var(--font-heading, sans-serif)',
-                        fontWeight: 'var(--font-heading-weight, 700)',
-                    }}
-                >
-                    {heading}
-                </h2>
+        <div className="mx-auto max-w-5xl text-center">
+            {(heading || subheading) && (
+                <div style={{ marginBottom: 36 }}>
+                    {heading && (
+                        <h2
+                            style={{
+                                margin: 0,
+                                fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)',
+                                fontWeight: 800,
+                                letterSpacing: '-0.03em',
+                                lineHeight: 1.15,
+                                color: 'var(--color-foreground, #1a1a1a)',
+                                fontFamily: 'var(--font-heading, sans-serif)',
+                            }}
+                        >
+                            {heading}
+                        </h2>
+                    )}
+                    {subheading && (
+                        <p
+                            style={{
+                                marginTop: 10,
+                                fontSize: '1.05rem',
+                                color: 'var(--color-muted-foreground, #6b7280)',
+                                fontFamily: 'var(--font-body, sans-serif)',
+                            }}
+                        >
+                            {subheading}
+                        </p>
+                    )}
+                </div>
             )}
 
+            {/* Poster trigger */}
             <button
                 type="button"
                 onClick={() => setIsOpen(true)}
-                className="group relative mx-auto block w-full cursor-pointer overflow-hidden"
+                className="relative mx-auto block w-full overflow-hidden"
                 style={{
-                    borderRadius: 'var(--radius, 8px)',
+                    borderRadius: 'calc(var(--radius, 8px) * 1.5)',
                     aspectRatio: '16/9',
-                    backgroundColor: 'var(--color-surface, #000)',
+                    backgroundColor: '#000',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    boxShadow: '0 20px 60px -20px rgba(0,0,0,0.25), 0 4px 12px -4px rgba(0,0,0,0.08)',
                 }}
+                onMouseEnter={() => setThumbHovered(true)}
+                onMouseLeave={() => setThumbHovered(false)}
                 aria-label="Play video"
             >
                 {poster_image ? (
                     <img
                         src={poster_image}
                         alt={heading || 'Video thumbnail'}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="h-full w-full object-cover"
+                        style={{
+                            transform: thumbHovered ? 'scale(1.04)' : 'scale(1)',
+                            transition: 'transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
+                        }}
                     />
                 ) : (
                     <div
                         className="h-full w-full"
-                        style={{ backgroundColor: 'var(--color-surface, #1a1a1a)' }}
+                        style={{
+                            background: 'linear-gradient(135deg, var(--color-primary, #e94560) 0%, var(--color-foreground, #111) 100%)',
+                        }}
                     />
                 )}
 
+                {/* Multi-stop overlay */}
                 <div
-                    className="absolute inset-0 transition-opacity group-hover:opacity-80"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.35)' }}
+                    className="absolute inset-0"
+                    style={{
+                        background: `linear-gradient(
+                            to bottom,
+                            rgba(0,0,0,0.15) 0%,
+                            rgba(0,0,0,0.3) 50%,
+                            rgba(0,0,0,0.55) 100%
+                        )`,
+                    }}
                 />
 
+                {/* Play button */}
                 <div className="absolute inset-0 flex items-center justify-center">
                     <div
-                        className="flex h-16 w-16 items-center justify-center rounded-full transition-transform group-hover:scale-110 sm:h-20 sm:w-20"
+                        className="relative flex items-center justify-center"
                         style={{
-                            backgroundColor: 'var(--color-primary, rgba(255,255,255,0.9))',
+                            width: thumbHovered ? 92 : 80,
+                            height: thumbHovered ? 92 : 80,
+                            borderRadius: '50%',
+                            backgroundColor: 'var(--color-primary, #e94560)',
+                            boxShadow: thumbHovered
+                                ? '0 12px 40px -8px rgba(0,0,0,0.45), 0 0 0 12px rgba(255,255,255,0.08)'
+                                : '0 8px 24px -4px rgba(0,0,0,0.35), 0 0 0 8px rgba(255,255,255,0.06)',
+                            transition: 'all 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
                         }}
                     >
                         <svg
                             width="28"
                             height="28"
                             viewBox="0 0 24 24"
-                            fill="var(--color-primary-foreground, #1a1a1a)"
+                            fill="#fff"
                             stroke="none"
+                            style={{ marginLeft: 4 }}
                         >
                             <polygon points="6 3 20 12 6 21" />
                         </svg>
                     </div>
                 </div>
+
+                {/* Duration/label badge — bottom-left */}
+                <div
+                    className="absolute flex items-center gap-2 px-3 py-1.5"
+                    style={{
+                        bottom: 18,
+                        left: 18,
+                        borderRadius: 999,
+                        backgroundColor: 'rgba(0,0,0,0.55)',
+                        backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
+                    }}
+                >
+                    <span
+                        className="text-[11px] font-bold uppercase"
+                        style={{
+                            color: '#fff',
+                            letterSpacing: '0.1em',
+                            fontFamily: 'var(--font-body, sans-serif)',
+                        }}
+                    >
+                        Play Video
+                    </span>
+                </div>
             </button>
 
+            {/* Modal */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)' }}
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
+                    style={{
+                        backgroundColor: 'rgba(0,0,0,0.92)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                        animation: 'videoLightboxIn 0.25s ease forwards',
+                    }}
                     onClick={() => setIsOpen(false)}
                     role="dialog"
                     aria-modal="true"
                     aria-label="Video lightbox"
                 >
+                    <style>{`
+                        @keyframes videoLightboxIn {
+                            from { opacity: 0; }
+                            to { opacity: 1; }
+                        }
+                        @keyframes videoModalIn {
+                            from { opacity: 0; transform: scale(0.96); }
+                            to { opacity: 1; transform: scale(1); }
+                        }
+                    `}</style>
+
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center text-white opacity-70 transition-opacity hover:opacity-100"
-                        aria-label="Close lightbox"
+                        className="absolute z-10 flex h-11 w-11 items-center justify-center"
+                        style={{
+                            top: 20,
+                            right: 20,
+                            borderRadius: '50%',
+                            border: 'none',
+                            backgroundColor: closeHovered
+                                ? 'var(--color-primary, #e94560)'
+                                : 'rgba(255,255,255,0.12)',
+                            backdropFilter: 'blur(12px)',
+                            WebkitBackdropFilter: 'blur(12px)',
+                            color: '#fff',
+                            cursor: 'pointer',
+                            transform: closeHovered ? 'scale(1.05)' : 'scale(1)',
+                            transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={() => setCloseHovered(true)}
+                        onMouseLeave={() => setCloseHovered(false)}
+                        aria-label="Close video"
                     >
-                        <svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                             <line x1="18" y1="6" x2="6" y2="18" />
                             <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
                     </button>
 
                     <div
-                        className="relative w-full max-w-4xl"
-                        style={{ aspectRatio: '16/9' }}
+                        className="relative w-full max-w-5xl"
+                        style={{
+                            aspectRatio: '16/9',
+                            animation: 'videoModalIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards',
+                        }}
                         onClick={(e) => e.stopPropagation()}
                     >
                         {embedUrl ? (
@@ -155,7 +258,10 @@ export function Lightbox({ heading, video_url, poster_image, autoplay, muted }: 
                                 src={`${embedUrl}?autoplay=1${muted ? '&mute=1' : ''}`}
                                 title={heading || 'Video'}
                                 className="h-full w-full border-0"
-                                style={{ borderRadius: 'var(--radius, 8px)' }}
+                                style={{
+                                    borderRadius: 'calc(var(--radius, 8px) * 1.5)',
+                                    boxShadow: '0 30px 80px -20px rgba(0,0,0,0.5)',
+                                }}
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
                             />
@@ -168,14 +274,21 @@ export function Lightbox({ heading, video_url, poster_image, autoplay, muted }: 
                                 muted={muted}
                                 playsInline
                                 className="h-full w-full object-contain"
-                                style={{ borderRadius: 'var(--radius, 8px)' }}
+                                style={{
+                                    borderRadius: 'calc(var(--radius, 8px) * 1.5)',
+                                    backgroundColor: '#000',
+                                }}
                             />
                         ) : (
                             <div
                                 className="flex h-full w-full items-center justify-center"
-                                style={{ color: 'var(--color-text-muted, #999)' }}
+                                style={{
+                                    color: 'rgba(255,255,255,0.6)',
+                                    backgroundColor: 'rgba(255,255,255,0.06)',
+                                    borderRadius: 'calc(var(--radius, 8px) * 1.5)',
+                                }}
                             >
-                                <p className="text-sm">Unsupported video format</p>
+                                <p className="text-sm font-medium">Unsupported video format</p>
                             </div>
                         )}
                     </div>

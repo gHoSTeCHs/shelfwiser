@@ -25,8 +25,14 @@ export function NewsletterSignupSection({ config, variant }: SectionProps) {
 
     return (
         <section style={{ padding: 'var(--section-spacing, 64px) 0' }}>
+            <style>{`
+                @keyframes newsletterFadeIn {
+                    from { opacity: 0; transform: translateY(6px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
             <div
-                className="mx-auto px-4 sm:px-6"
+                className="mx-auto px-5 sm:px-8"
                 style={{ maxWidth: 'var(--container-width, 1280px)' }}
             >
                 {variant === 'popup_trigger' ? (

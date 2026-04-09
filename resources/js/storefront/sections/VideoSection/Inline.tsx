@@ -1,5 +1,6 @@
 interface InlineProps {
     heading?: string;
+    subheading?: string;
     video_url: string;
     poster_image?: string;
     autoplay?: boolean;
@@ -26,31 +27,51 @@ function isDirectVideo(url: string): boolean {
     return /\.(mp4|webm|ogg)(\?|$)/i.test(url);
 }
 
-export function Inline({ heading, video_url, poster_image, autoplay, muted }: InlineProps) {
+export function Inline({ heading, subheading, video_url, poster_image, autoplay, muted }: InlineProps) {
     const embedUrl = getEmbedUrl(video_url);
     const isDirect = isDirectVideo(video_url);
 
     return (
-        <div className="text-center">
-            {heading && (
-                <h2
-                    className="mb-6 text-xl font-bold sm:text-2xl"
-                    style={{
-                        color: 'var(--color-text, #1a1a1a)',
-                        fontFamily: 'var(--font-heading, sans-serif)',
-                        fontWeight: 'var(--font-heading-weight, 700)',
-                    }}
-                >
-                    {heading}
-                </h2>
+        <div className="mx-auto max-w-5xl text-center">
+            {(heading || subheading) && (
+                <div style={{ marginBottom: 36 }}>
+                    {heading && (
+                        <h2
+                            style={{
+                                margin: 0,
+                                fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)',
+                                fontWeight: 800,
+                                letterSpacing: '-0.03em',
+                                lineHeight: 1.15,
+                                color: 'var(--color-foreground, #1a1a1a)',
+                                fontFamily: 'var(--font-heading, sans-serif)',
+                            }}
+                        >
+                            {heading}
+                        </h2>
+                    )}
+                    {subheading && (
+                        <p
+                            style={{
+                                marginTop: 10,
+                                fontSize: '1.05rem',
+                                color: 'var(--color-muted-foreground, #6b7280)',
+                                fontFamily: 'var(--font-body, sans-serif)',
+                            }}
+                        >
+                            {subheading}
+                        </p>
+                    )}
+                </div>
             )}
 
             <div
                 className="relative w-full overflow-hidden"
                 style={{
-                    borderRadius: 'var(--radius, 8px)',
+                    borderRadius: 'calc(var(--radius, 8px) * 1.5)',
                     aspectRatio: '16/9',
-                    backgroundColor: 'var(--color-surface, #000)',
+                    backgroundColor: '#000',
+                    boxShadow: '0 20px 60px -20px rgba(0,0,0,0.25), 0 4px 12px -4px rgba(0,0,0,0.08)',
                 }}
             >
                 {embedUrl ? (
@@ -74,9 +95,9 @@ export function Inline({ heading, video_url, poster_image, autoplay, muted }: In
                 ) : (
                     <div
                         className="flex h-full w-full items-center justify-center"
-                        style={{ color: 'var(--color-text-muted, #999)' }}
+                        style={{ color: 'rgba(255,255,255,0.6)' }}
                     >
-                        <p className="text-sm">Unsupported video format</p>
+                        <p className="text-sm font-medium">Unsupported video format</p>
                     </div>
                 )}
             </div>

@@ -19,25 +19,24 @@ export function Masonry({ config, data }: SectionProps) {
     const currencySymbol = config.currency_symbol as string | undefined;
     const currencyDecimals = config.currency_decimals as number | undefined;
 
-    if (products.length === 0) {
-        return null;
-    }
+    if (products.length === 0) return null;
 
     return (
         <section style={{ padding: 'var(--section-spacing, 64px) 0' }}>
             <div
-                className="mx-auto px-4 sm:px-6"
+                className="mx-auto px-5 sm:px-8"
                 style={{ maxWidth: 'var(--container-width, 1280px)' }}
             >
                 {(heading || subheading) && (
                     <ScrollAnimation>
-                        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                        <div style={{ textAlign: 'center', marginBottom: 48 }}>
                             {heading && (
                                 <h2
                                     style={{
                                         margin: 0,
-                                        fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
-                                        fontWeight: 700,
+                                        fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)',
+                                        fontWeight: 800,
+                                        letterSpacing: '-0.03em',
                                         color: 'var(--color-foreground, #111827)',
                                         fontFamily: 'var(--font-heading, inherit)',
                                     }}
@@ -48,8 +47,8 @@ export function Masonry({ config, data }: SectionProps) {
                             {subheading && (
                                 <p
                                     style={{
-                                        marginTop: '8px',
-                                        fontSize: '1rem',
+                                        marginTop: 10,
+                                        fontSize: '1.05rem',
                                         color: 'var(--color-muted-foreground, #6b7280)',
                                         fontFamily: 'var(--font-body, inherit)',
                                     }}
@@ -61,18 +60,14 @@ export function Masonry({ config, data }: SectionProps) {
                     </ScrollAnimation>
                 )}
 
-                <div className="columns-2 gap-4 sm:gap-6 md:columns-3 lg:columns-4">
+                <div className="columns-2 gap-4 sm:gap-5 md:columns-3 lg:columns-4">
                     {products.map((product, index) => (
                         <ScrollAnimation
                             key={product.id}
                             delay={index * 50}
-                            className="mb-4 break-inside-avoid sm:mb-6"
+                            className="mb-4 break-inside-avoid sm:mb-5"
                         >
-                            <div
-                                style={{
-                                    paddingTop: index % 2 !== 0 ? '24px' : '0',
-                                }}
-                            >
+                            <div style={{ paddingTop: index % 2 !== 0 ? 20 : 0 }}>
                                 <ProductCard
                                     product={product}
                                     shopSlug={shopSlug ?? ''}

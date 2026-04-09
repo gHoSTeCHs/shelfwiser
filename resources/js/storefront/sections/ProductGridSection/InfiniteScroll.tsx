@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { SectionProps, ProductCardData } from '../../types/storefront';
 import { ProductCard } from '../../components/ProductCard';
 import { ScrollAnimation } from '../../components/ScrollAnimation';
@@ -89,7 +89,7 @@ export function InfiniteScroll({ config, data }: SectionProps) {
     return (
         <section style={{ padding: 'var(--section-spacing, 64px) 0' }}>
             <div
-                className="mx-auto px-4 sm:px-6"
+                className="mx-auto px-5 sm:px-8"
                 style={{ maxWidth: 'var(--container-width, 1280px)' }}
             >
                 <ScrollAnimation>
@@ -101,8 +101,9 @@ export function InfiniteScroll({ config, data }: SectionProps) {
                             <h2
                                 style={{
                                     margin: 0,
-                                    fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
-                                    fontWeight: 700,
+                                    fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)',
+                                    fontWeight: 800,
+                                    letterSpacing: '-0.03em',
                                     color: 'var(--color-foreground, #111827)',
                                     fontFamily: 'var(--font-heading, inherit)',
                                 }}
@@ -167,7 +168,7 @@ export function InfiniteScroll({ config, data }: SectionProps) {
                     </div>
                 ) : (
                     <>
-                        <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+                        <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
                             {visibleProducts.map((product, index) => (
                                 <ScrollAnimation key={product.id} delay={index * 40}>
                                     <ProductCard

@@ -14,169 +14,203 @@ interface AccordionProps {
     shop_slug: string;
 }
 
+function AccordionRow({
+    collection,
+    shopSlug,
+    isOpen,
+    isLast,
+    onToggle,
+}: {
+    collection: CollectionItem;
+    shopSlug: string;
+    isOpen: boolean;
+    isLast: boolean;
+    onToggle: () => void;
+}) {
+    const [rowHovered, setRowHovered] = useState(false);
+    const [ctaHovered, setCtaHovered] = useState(false);
+
+    return (
+        <div
+            style={{
+                borderBottom: isLast ? 'none' : '1px solid var(--color-border, #e5e5e5)',
+            }}
+        >
+            <button
+                type="button"
+                onClick={onToggle}
+                className="flex w-full items-center gap-5 p-5 text-left sm:gap-6 sm:px-7"
+                style={{
+                    backgroundColor: isOpen
+                        ? 'var(--color-surface, #f9fafb)'
+                        : rowHovered
+                          ? 'var(--color-surface, #f9fafb)'
+                          : 'transparent',
+                    transition: 'background-color 0.25s ease',
+                    border: 'none',
+                    cursor: 'pointer',
+                }}
+                onMouseEnter={() => setRowHovered(true)}
+                onMouseLeave={() => setRowHovered(false)}
+                aria-expanded={isOpen}
+            >
+                {/* Thumbnail */}
+                <div
+                    className="shrink-0 overflow-hidden"
+                    style={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: 'calc(var(--radius, 8px) * 1)',
+                        backgroundColor: 'var(--color-surface, #f5f5f5)',
+                    }}
+                >
+                    {collection.image ? (
+                        <img
+                            src={collection.image}
+                            alt={collection.name}
+                            loading="lazy"
+                            className="h-full w-full object-cover"
+                        />
+                    ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                            <span
+                                style={{
+                                    fontSize: 22,
+                                    fontWeight: 800,
+                                    color: 'var(--color-primary, #e94560)',
+                                    opacity: 0.2,
+                                    fontFamily: 'var(--font-heading, sans-serif)',
+                                    letterSpacing: '-0.04em',
+                                    lineHeight: 1,
+                                }}
+                            >
+                                {collection.name.charAt(0).toUpperCase()}
+                            </span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Title + count */}
+                <div className="min-w-0 flex-1">
+                    <h3
+                        className="truncate"
+                        style={{
+                            margin: 0,
+                            fontSize: 16,
+                            fontWeight: 700,
+                            letterSpacing: '-0.01em',
+                            color: isOpen ? 'var(--color-primary, #e94560)' : 'var(--color-foreground, #1a1a1a)',
+                            fontFamily: 'var(--font-heading, sans-serif)',
+                            transition: 'color 0.25s ease',
+                        }}
+                    >
+                        {collection.name}
+                    </h3>
+                    <p
+                        className="mt-1 text-xs"
+                        style={{
+                            color: 'var(--color-muted-foreground, #6b7280)',
+                            fontFamily: 'var(--font-body, sans-serif)',
+                        }}
+                    >
+                        {collection.product_count} {collection.product_count === 1 ? 'item' : 'items'}
+                    </p>
+                </div>
+
+                {/* Chevron */}
+                <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center"
+                    style={{
+                        borderRadius: '50%',
+                        backgroundColor: isOpen
+                            ? 'var(--color-primary, #e94560)'
+                            : 'var(--color-border, #f0f0f0)',
+                        color: isOpen ? '#fff' : 'var(--color-muted-foreground, #6b7280)',
+                        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.25s ease, color 0.25s ease',
+                    }}
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                </div>
+            </button>
+
+            {/* Expanded content */}
+            {isOpen && (
+                <div
+                    className="px-5 pb-6 sm:px-7 sm:pb-7"
+                    style={{
+                        backgroundColor: 'var(--color-surface, #f9fafb)',
+                    }}
+                >
+                    <div className="ml-[76px] sm:ml-[80px]">
+                        {collection.description && (
+                            <p
+                                className="mb-5 text-sm"
+                                style={{
+                                    color: 'var(--color-text, #4b5563)',
+                                    fontFamily: 'var(--font-body, sans-serif)',
+                                    lineHeight: 1.7,
+                                    maxWidth: '60ch',
+                                }}
+                            >
+                                {collection.description}
+                            </p>
+                        )}
+
+                        <a
+                            href={`/store/${shopSlug}/collections/${collection.slug}`}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold uppercase"
+                            style={{
+                                backgroundColor: ctaHovered
+                                    ? 'var(--color-foreground, #111)'
+                                    : 'var(--color-primary, #e94560)',
+                                color: '#fff',
+                                borderRadius: 'var(--radius, 8px)',
+                                letterSpacing: '0.06em',
+                                textDecoration: 'none',
+                                fontFamily: 'var(--font-body, sans-serif)',
+                                transition: 'background-color 0.2s ease',
+                            }}
+                            onMouseEnter={() => setCtaHovered(true)}
+                            onMouseLeave={() => setCtaHovered(false)}
+                        >
+                            View Collection
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                                <polyline points="12 5 19 12 12 19" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export function Accordion({ collections, shop_slug }: AccordionProps) {
     const [openId, setOpenId] = useState<number | null>(null);
-
-    function toggle(id: number) {
-        setOpenId((prev) => (prev === id ? null : id));
-    }
 
     return (
         <div
             className="overflow-hidden"
             style={{
-                borderRadius: 'var(--radius, 8px)',
+                borderRadius: 'calc(var(--radius, 8px) * 1.5)',
                 border: '1px solid var(--color-border, #e5e5e5)',
+                backgroundColor: 'var(--color-card-bg, #ffffff)',
             }}
         >
-            {collections.map((collection, index) => {
-                const isOpen = openId === collection.id;
-                const isLast = index === collections.length - 1;
-
-                return (
-                    <div
-                        key={collection.id}
-                        style={{
-                            borderBottom: isLast ? 'none' : '1px solid var(--color-border, #e5e5e5)',
-                        }}
-                    >
-                        <button
-                            type="button"
-                            onClick={() => toggle(collection.id)}
-                            className="flex w-full items-center gap-4 p-4 text-left transition-colors sm:gap-6"
-                            style={{
-                                backgroundColor: isOpen
-                                    ? 'var(--color-surface, #f5f5f5)'
-                                    : 'var(--color-background, #ffffff)',
-                            }}
-                            aria-expanded={isOpen}
-                        >
-                            <div
-                                className="shrink-0 overflow-hidden"
-                                style={{
-                                    width: '48px',
-                                    height: '48px',
-                                    borderRadius: 'calc(var(--radius, 8px) * 0.75)',
-                                    backgroundColor: 'var(--color-surface, #f5f5f5)',
-                                }}
-                            >
-                                {collection.image ? (
-                                    <img
-                                        src={collection.image}
-                                        alt={collection.name}
-                                        className="h-full w-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="flex h-full w-full items-center justify-center">
-                                        <svg
-                                            width="20"
-                                            height="20"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="var(--color-text-muted, #ccc)"
-                                            strokeWidth="1"
-                                        >
-                                            <rect x="3" y="3" width="7" height="7" />
-                                            <rect x="14" y="3" width="7" height="7" />
-                                            <rect x="3" y="14" width="7" height="7" />
-                                            <rect x="14" y="14" width="7" height="7" />
-                                        </svg>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                                <h3
-                                    className="text-base font-semibold"
-                                    style={{
-                                        color: 'var(--color-text, #1a1a1a)',
-                                        fontFamily: 'var(--font-heading, sans-serif)',
-                                    }}
-                                >
-                                    {collection.name}
-                                </h3>
-                                <p
-                                    className="mt-0.5 text-xs"
-                                    style={{
-                                        color: 'var(--color-text-muted, #888)',
-                                        fontFamily: 'var(--font-body, sans-serif)',
-                                    }}
-                                >
-                                    {collection.product_count} {collection.product_count === 1 ? 'product' : 'products'}
-                                </p>
-                            </div>
-
-                            <div
-                                className="shrink-0 transition-transform duration-200"
-                                style={{
-                                    transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                                    color: 'var(--color-text-muted, #888)',
-                                }}
-                            >
-                                <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <polyline points="6 9 12 15 18 9" />
-                                </svg>
-                            </div>
-                        </button>
-
-                        {isOpen && (
-                            <div
-                                className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6"
-                                style={{
-                                    backgroundColor: 'var(--color-surface, #f5f5f5)',
-                                }}
-                            >
-                                <div className="ml-12 sm:ml-[72px]">
-                                    {collection.description && (
-                                        <p
-                                            className="mb-4 text-sm"
-                                            style={{
-                                                color: 'var(--color-text-muted, #666)',
-                                                fontFamily: 'var(--font-body, sans-serif)',
-                                            }}
-                                        >
-                                            {collection.description}
-                                        </p>
-                                    )}
-
-                                    <a
-                                        href={`/store/${shop_slug}/collections/${collection.slug}`}
-                                        className="inline-flex items-center text-sm font-medium transition-opacity hover:opacity-80"
-                                        style={{
-                                            color: 'var(--color-primary, #1a1a1a)',
-                                            fontFamily: 'var(--font-body, sans-serif)',
-                                        }}
-                                    >
-                                        View Collection
-                                        <svg
-                                            width="14"
-                                            height="14"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            className="ml-1"
-                                        >
-                                            <polyline points="9 18 15 12 9 6" />
-                                        </svg>
-                                    </a>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
-            })}
+            {collections.map((collection, index) => (
+                <AccordionRow
+                    key={collection.id}
+                    collection={collection}
+                    shopSlug={shop_slug}
+                    isOpen={openId === collection.id}
+                    isLast={index === collections.length - 1}
+                    onToggle={() => setOpenId((prev) => (prev === collection.id ? null : collection.id))}
+                />
+            ))}
         </div>
     );
 }

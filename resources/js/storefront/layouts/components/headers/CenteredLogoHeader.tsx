@@ -11,6 +11,71 @@ interface CenteredLogoHeaderProps {
     onCartOpen: () => void;
 }
 
+function NavLink({ href, label }: { href: string; label: string }) {
+    const [hovered, setHovered] = useState(false);
+    const isActive = typeof window !== 'undefined' && window.location.pathname === href;
+
+    return (
+        <a
+            href={href}
+            className="relative py-1 text-[13px] font-medium uppercase tracking-[0.06em]"
+            style={{
+                color: hovered || isActive ? 'var(--color-primary, #e94560)' : 'var(--color-text, #1a1a1a)',
+                fontFamily: 'var(--font-body, sans-serif)',
+                transition: 'color 0.25s ease',
+            }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+        >
+            {label}
+            <span
+                style={{
+                    position: 'absolute',
+                    bottom: -2,
+                    left: '50%',
+                    width: 4,
+                    height: 4,
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--color-primary, #e94560)',
+                    transform: hovered || isActive ? 'translateX(-50%) scale(1)' : 'translateX(-50%) scale(0)',
+                    transition: 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+                }}
+            />
+        </a>
+    );
+}
+
+function ActionButton({
+    onClick,
+    href,
+    label,
+    children,
+}: {
+    onClick?: () => void;
+    href?: string;
+    label: string;
+    children: React.ReactNode;
+}) {
+    const [hovered, setHovered] = useState(false);
+    const style: React.CSSProperties = {
+        color: 'var(--color-text, #1a1a1a)',
+        backgroundColor: hovered ? 'var(--color-border, rgba(0,0,0,0.05))' : 'transparent',
+        borderRadius: '50%',
+        transition: 'background-color 0.2s ease',
+    };
+    const className = 'flex h-9 w-9 items-center justify-center';
+    const props = {
+        style,
+        className,
+        'aria-label': label,
+        onMouseEnter: () => setHovered(true),
+        onMouseLeave: () => setHovered(false),
+    };
+
+    if (href) return <a href={href} {...props}>{children}</a>;
+    return <button onClick={onClick} {...props}>{children}</button>;
+}
+
 export function CenteredLogoHeader({
     shop,
     navigation,
@@ -22,6 +87,8 @@ export function CenteredLogoHeader({
 }: CenteredLogoHeaderProps) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [prevCount, setPrevCount] = useState(cart.item_count);
+    const [badgeBounce, setBadgeBounce] = useState(false);
     const isSticky = theme.header.position === 'sticky';
 
     const navItems = navigation.items;
@@ -47,103 +114,131 @@ export function CenteredLogoHeader({
         return () => { document.body.style.overflow = ''; };
     }, [mobileOpen]);
 
+    useEffect(() => {
+        if (cart.item_count > prevCount) {
+            setBadgeBounce(true);
+            const t = setTimeout(() => setBadgeBounce(false), 500);
+            return () => clearTimeout(t);
+        }
+        setPrevCount(cart.item_count);
+    }, [cart.item_count, prevCount]);
+
     const stickyClass = isSticky ? 'sticky top-0 z-50' : 'relative z-50';
 
     return (
         <header
-            className={`${stickyClass} transition-shadow duration-300`}
+            className={stickyClass}
             style={{
-                backgroundColor: 'var(--color-background, #fff)',
-                borderBottom: '1px solid var(--color-border, #e5e5e5)',
+                backgroundColor: scrolled
+                    ? 'color-mix(in srgb, var(--color-background, #fff) 85%, transparent)'
+                    : 'var(--color-background, #fff)',
+                backdropFilter: scrolled ? 'blur(20px) saturate(1.2)' : 'none',
+                WebkitBackdropFilter: scrolled ? 'blur(20px) saturate(1.2)' : 'none',
+                borderBottom: scrolled
+                    ? '1px solid color-mix(in srgb, var(--color-border, #e5e5e5) 60%, transparent)'
+                    : '1px solid var(--color-border, #e5e5e5)',
                 fontFamily: 'var(--font-body, sans-serif)',
-                boxShadow: scrolled ? '0 2px 16px rgba(0,0,0,0.06)' : 'none',
+                boxShadow: scrolled
+                    ? '0 4px 30px -4px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)'
+                    : 'none',
+                transition: 'background-color 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease, backdrop-filter 0.4s ease',
             }}
         >
-            <div className="mx-auto px-4 sm:px-6" style={{ maxWidth: 'var(--container-width, 1280px)' }}>
+            <div
+                className="mx-auto px-5 sm:px-8"
+                style={{ maxWidth: 'var(--container-width, 1280px)' }}
+            >
                 {/* Desktop: three-column layout */}
-                <div className="hidden h-16 items-center lg:grid" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
-                    <nav className="flex items-center justify-end gap-8 pr-8">
+                <div
+                    className="hidden h-[72px] items-center lg:grid"
+                    style={{ gridTemplateColumns: '1fr auto 1fr' }}
+                >
+                    {/* Left nav */}
+                    <nav className="flex items-center justify-end gap-7 pr-10">
                         {leftNav.map((item) => (
-                            <a
+                            <NavLink
                                 key={item.slug}
                                 href={`/store/${shop.slug}/${item.page_type === 'home' ? '' : item.slug}`}
-                                className="text-sm font-medium transition-colors"
-                                style={{ color: 'var(--color-text, #1a1a1a)' }}
-                                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-primary, #e94560)')}
-                                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text, #1a1a1a)')}
-                            >
-                                {item.label}
-                            </a>
+                                label={item.label}
+                            />
                         ))}
                     </nav>
 
+                    {/* Center logo */}
                     <a
                         href={`/store/${shop.slug}`}
                         className="shrink-0"
                         style={{ fontFamily: 'var(--font-heading, sans-serif)' }}
                     >
                         {shop.logo ? (
-                            <img src={shop.logo} alt={shop.name} className="h-8 w-auto" />
+                            <img src={shop.logo} alt={shop.name} className="h-9 w-auto" />
                         ) : (
-                            <span className="text-xl font-bold" style={{ color: 'var(--color-text, #1a1a1a)' }}>
+                            <span
+                                className="text-[22px]"
+                                style={{
+                                    color: 'var(--color-text, #1a1a1a)',
+                                    fontWeight: 800,
+                                    letterSpacing: '-0.03em',
+                                }}
+                            >
                                 {shop.name}
                             </span>
                         )}
                     </a>
 
-                    <div className="flex items-center gap-8 pl-8">
-                        <nav className="flex items-center gap-8">
+                    {/* Right nav + actions */}
+                    <div className="flex items-center gap-7 pl-10">
+                        <nav className="flex items-center gap-7">
                             {rightNav.map((item) => (
-                                <a
+                                <NavLink
                                     key={item.slug}
                                     href={`/store/${shop.slug}/${item.page_type === 'home' ? '' : item.slug}`}
-                                    className="text-sm font-medium transition-colors"
-                                    style={{ color: 'var(--color-text, #1a1a1a)' }}
-                                    onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-primary, #e94560)')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text, #1a1a1a)')}
-                                >
-                                    {item.label}
-                                </a>
+                                    label={item.label}
+                                />
                             ))}
                         </nav>
-                        <div className="ml-auto flex items-center gap-1">
-                            <button
-                                onClick={onSearchOpen}
-                                className="flex h-10 w-10 items-center justify-center"
-                                style={{ color: 'var(--color-text, #1a1a1a)' }}
-                                aria-label="Search"
-                            >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+
+                        {/* Action cluster */}
+                        <div className="ml-auto flex items-center gap-0.5">
+                            <ActionButton onClick={onSearchOpen} label="Search">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <circle cx="11" cy="11" r="8" />
                                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                                 </svg>
-                            </button>
-                            <a
+                            </ActionButton>
+                            <ActionButton
                                 href={customer ? `/store/${shop.slug}/account-dashboard` : `/store/${shop.slug}/login`}
-                                className="flex h-10 w-10 items-center justify-center"
-                                style={{ color: 'var(--color-text, #1a1a1a)' }}
-                                aria-label={customer ? 'Account' : 'Sign in'}
+                                label={customer ? 'Account' : 'Sign in'}
                             >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                                     <circle cx="12" cy="7" r="4" />
                                 </svg>
-                            </a>
+                            </ActionButton>
                             <button
                                 onClick={onCartOpen}
-                                className="relative flex h-10 w-10 items-center justify-center"
+                                className="relative flex h-9 w-9 items-center justify-center"
                                 style={{ color: 'var(--color-text, #1a1a1a)' }}
                                 aria-label="Cart"
                             >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                                     <line x1="3" y1="6" x2="21" y2="6" />
                                     <path d="M16 10a4 4 0 0 1-8 0" />
                                 </svg>
                                 {cart.item_count > 0 && (
                                     <span
-                                        className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center text-[10px] font-bold text-white"
-                                        style={{ backgroundColor: 'var(--color-primary, #e94560)', borderRadius: '50%' }}
+                                        className="absolute -top-0.5 -right-1 flex items-center justify-center text-[10px] font-bold text-white"
+                                        style={{
+                                            backgroundColor: 'var(--color-primary, #e94560)',
+                                            borderRadius: 10,
+                                            minWidth: 18,
+                                            height: 18,
+                                            padding: '0 4px',
+                                            boxShadow: '0 2px 8px -2px var(--color-primary, rgba(233,69,96,0.5))',
+                                            transform: badgeBounce ? 'scale(1.25)' : 'scale(1)',
+                                            transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                        }}
                                     >
                                         {cart.item_count > 99 ? '99+' : cart.item_count}
                                     </span>
@@ -154,7 +249,7 @@ export function CenteredLogoHeader({
                 </div>
 
                 {/* Mobile: simple row */}
-                <div className="flex h-16 items-center justify-between lg:hidden">
+                <div className="flex h-[64px] items-center justify-between lg:hidden">
                     <button
                         onClick={() => setMobileOpen(true)}
                         className="flex h-10 w-10 items-center justify-center"
@@ -162,9 +257,9 @@ export function CenteredLogoHeader({
                         aria-label="Menu"
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                            <line x1="3" y1="6" x2="21" y2="6" />
-                            <line x1="3" y1="12" x2="21" y2="12" />
-                            <line x1="3" y1="18" x2="21" y2="18" />
+                            <line x1="4" y1="7" x2="20" y2="7" />
+                            <line x1="4" y1="12" x2="16" y2="12" />
+                            <line x1="4" y1="17" x2="20" y2="17" />
                         </svg>
                     </button>
 
@@ -172,27 +267,51 @@ export function CenteredLogoHeader({
                         {shop.logo ? (
                             <img src={shop.logo} alt={shop.name} className="h-7 w-auto" />
                         ) : (
-                            <span className="text-lg font-bold" style={{ color: 'var(--color-text, #1a1a1a)' }}>
+                            <span
+                                className="text-lg"
+                                style={{
+                                    color: 'var(--color-text, #1a1a1a)',
+                                    fontWeight: 800,
+                                    letterSpacing: '-0.03em',
+                                }}
+                            >
                                 {shop.name}
                             </span>
                         )}
                     </a>
 
-                    <div className="flex items-center gap-1">
-                        <button onClick={onSearchOpen} className="flex h-10 w-10 items-center justify-center" style={{ color: 'var(--color-text, #1a1a1a)' }} aria-label="Search">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <div className="flex items-center gap-0.5">
+                        <ActionButton onClick={onSearchOpen} label="Search">
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="11" cy="11" r="8" />
                                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
                             </svg>
-                        </button>
-                        <button onClick={onCartOpen} className="relative flex h-10 w-10 items-center justify-center" style={{ color: 'var(--color-text, #1a1a1a)' }} aria-label="Cart">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        </ActionButton>
+                        <button
+                            onClick={onCartOpen}
+                            className="relative flex h-10 w-10 items-center justify-center"
+                            style={{ color: 'var(--color-text, #1a1a1a)' }}
+                            aria-label="Cart"
+                        >
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                                 <line x1="3" y1="6" x2="21" y2="6" />
                                 <path d="M16 10a4 4 0 0 1-8 0" />
                             </svg>
                             {cart.item_count > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: 'var(--color-primary, #e94560)', borderRadius: '50%' }}>
+                                <span
+                                    className="absolute -top-0.5 -right-0.5 flex items-center justify-center text-[10px] font-bold text-white"
+                                    style={{
+                                        backgroundColor: 'var(--color-primary, #e94560)',
+                                        borderRadius: 10,
+                                        minWidth: 18,
+                                        height: 18,
+                                        padding: '0 4px',
+                                        boxShadow: '0 2px 8px -2px var(--color-primary, rgba(233,69,96,0.5))',
+                                        transform: badgeBounce ? 'scale(1.25)' : 'scale(1)',
+                                        transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                    }}
+                                >
                                     {cart.item_count > 99 ? '99+' : cart.item_count}
                                 </span>
                             )}
@@ -201,58 +320,122 @@ export function CenteredLogoHeader({
                 </div>
             </div>
 
-            {/* Mobile drawer — same as StandardHeader */}
+            {/* Mobile overlay */}
             <div
-                className="fixed inset-0 z-[100] transition-opacity duration-300 lg:hidden"
+                className="fixed inset-0 z-[100] lg:hidden"
                 style={{
-                    backgroundColor: 'rgba(0,0,0,0.4)',
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    backdropFilter: mobileOpen ? 'blur(4px)' : 'none',
+                    WebkitBackdropFilter: mobileOpen ? 'blur(4px)' : 'none',
                     opacity: mobileOpen ? 1 : 0,
                     pointerEvents: mobileOpen ? 'auto' : 'none',
+                    transition: 'opacity 0.35s ease',
                 }}
                 onClick={() => setMobileOpen(false)}
             />
+
+            {/* Mobile drawer */}
             <div
-                className="fixed top-0 left-0 bottom-0 z-[110] w-72 flex-col lg:hidden"
+                className="fixed top-0 left-0 bottom-0 z-[110] w-[280px] lg:hidden"
                 style={{
                     backgroundColor: 'var(--color-background, #fff)',
                     transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)',
-                    transition: 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+                    transition: 'transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
                     display: 'flex',
+                    flexDirection: 'column',
+                    boxShadow: mobileOpen ? '8px 0 40px -8px rgba(0,0,0,0.15)' : 'none',
                 }}
             >
-                <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--color-border, #e5e5e5)' }}>
-                    <span className="text-base font-bold" style={{ color: 'var(--color-text, #1a1a1a)', fontFamily: 'var(--font-heading, sans-serif)' }}>
+                <div
+                    className="flex items-center justify-between px-6 py-5"
+                    style={{ borderBottom: '1px solid var(--color-border, #e5e5e5)' }}
+                >
+                    <span
+                        className="text-base"
+                        style={{
+                            color: 'var(--color-text, #1a1a1a)',
+                            fontFamily: 'var(--font-heading, sans-serif)',
+                            fontWeight: 800,
+                            letterSpacing: '-0.03em',
+                        }}
+                    >
                         {shop.name}
                     </span>
-                    <button onClick={() => setMobileOpen(false)} className="flex h-8 w-8 items-center justify-center" style={{ color: 'var(--color-text-muted, #888)' }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <button
+                        onClick={() => setMobileOpen(false)}
+                        className="flex h-9 w-9 items-center justify-center"
+                        style={{
+                            color: 'var(--color-text-muted, #888)',
+                            borderRadius: '50%',
+                            backgroundColor: 'var(--color-border, rgba(0,0,0,0.04))',
+                        }}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                             <line x1="18" y1="6" x2="6" y2="18" />
                             <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
                     </button>
                 </div>
-                <nav className="flex-1 overflow-y-auto px-5 py-4">
-                    {navItems.map((item) => (
-                        <a
-                            key={item.slug}
-                            href={`/store/${shop.slug}/${item.page_type === 'home' ? '' : item.slug}`}
-                            className="block py-3 text-base font-medium"
-                            style={{ color: 'var(--color-text, #1a1a1a)', borderBottom: '1px solid var(--color-border, #f0f0f0)' }}
-                        >
-                            {item.label}
-                        </a>
-                    ))}
+
+                <nav className="flex-1 overflow-y-auto px-3 py-3">
+                    {navItems.map((item, i) => {
+                        const isActive = typeof window !== 'undefined'
+                            && window.location.pathname === `/store/${shop.slug}/${item.page_type === 'home' ? '' : item.slug}`;
+                        return (
+                            <a
+                                key={item.slug}
+                                href={`/store/${shop.slug}/${item.page_type === 'home' ? '' : item.slug}`}
+                                className="flex items-center gap-3 px-3 py-3.5 text-[15px] font-medium"
+                                style={{
+                                    color: isActive ? 'var(--color-primary, #e94560)' : 'var(--color-text, #1a1a1a)',
+                                    borderRadius: 'calc(var(--radius, 8px) * 0.75)',
+                                    backgroundColor: isActive ? 'color-mix(in srgb, var(--color-primary, #e94560) 8%, transparent)' : 'transparent',
+                                    opacity: mobileOpen ? 1 : 0,
+                                    transform: mobileOpen ? 'translateX(0)' : 'translateX(-12px)',
+                                    transitionDelay: mobileOpen ? `${80 + i * 40}ms` : '0ms',
+                                    transitionProperty: 'opacity, transform, background-color',
+                                    transitionDuration: '0.35s',
+                                }}
+                            >
+                                {isActive && (
+                                    <span
+                                        style={{
+                                            width: 3,
+                                            height: 20,
+                                            borderRadius: 2,
+                                            backgroundColor: 'var(--color-primary, #e94560)',
+                                            flexShrink: 0,
+                                        }}
+                                    />
+                                )}
+                                {item.label}
+                            </a>
+                        );
+                    })}
                 </nav>
-                <div className="px-5 py-4" style={{ borderTop: '1px solid var(--color-border, #e5e5e5)' }}>
+
+                <div
+                    className="px-6 py-5"
+                    style={{ borderTop: '1px solid var(--color-border, #e5e5e5)' }}
+                >
                     <a
                         href={customer ? `/store/${shop.slug}/account-dashboard` : `/store/${shop.slug}/login`}
                         className="flex items-center gap-3 text-sm font-medium"
                         style={{ color: 'var(--color-text, #1a1a1a)' }}
                     >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                            <circle cx="12" cy="7" r="4" />
-                        </svg>
+                        <span
+                            className="flex h-9 w-9 items-center justify-center"
+                            style={{
+                                borderRadius: '50%',
+                                backgroundColor: 'color-mix(in srgb, var(--color-primary, #e94560) 10%, transparent)',
+                                color: 'var(--color-primary, #e94560)',
+                            }}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                        </span>
                         {customer ? customer.name : 'Sign In'}
                     </a>
                 </div>

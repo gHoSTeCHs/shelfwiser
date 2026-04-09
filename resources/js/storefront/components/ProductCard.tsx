@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { formatCurrency } from '../lib/formatters';
 import type { ShopData, ProductCardConfig, ProductCardData } from '../types/storefront';
 
@@ -44,15 +44,17 @@ interface CardVariantProps {
     onQuickAdd?: (productId: number) => void;
 }
 
-function SaleBadge({ comparePrice, price, shop }: { comparePrice: number; price: number; shop: ShopData }) {
+function SaleBadge({ comparePrice, price }: { comparePrice: number; price: number }) {
     const discount = Math.round(((comparePrice - price) / comparePrice) * 100);
     return (
         <span
-            className="absolute left-3 top-3 z-10 px-2 py-1 text-xs font-semibold"
+            className="absolute left-3 top-3 z-10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide"
             style={{
-                backgroundColor: 'var(--color-accent, #f59e0b)',
+                backgroundColor: 'var(--color-accent, #D97706)',
                 color: '#fff',
-                borderRadius: 'calc(var(--radius, 8px) * 0.5)',
+                borderRadius: '4px',
+                letterSpacing: '0.05em',
+                boxShadow: '0 2px 8px -2px rgba(0,0,0,0.25)',
             }}
         >
             -{discount}%
@@ -63,17 +65,17 @@ function SaleBadge({ comparePrice, price, shop }: { comparePrice: number; price:
 function PriceDisplay({ product, shop }: { product: ProductCardData; shop: ShopData }) {
     const hasDiscount = product.compare_at_price && product.compare_at_price > product.price;
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-baseline gap-2">
             <span
-                className="text-sm font-semibold"
-                style={{ color: hasDiscount ? 'var(--color-accent, #e94560)' : 'var(--color-text, #1a1a1a)' }}
+                className="text-[15px] font-bold tracking-tight"
+                style={{ color: hasDiscount ? 'var(--color-accent, #D97706)' : 'var(--color-text, #0C1713)' }}
             >
                 {formatCurrency(product.price, shop.currency_symbol, shop.currency_decimals)}
             </span>
             {hasDiscount && (
                 <span
-                    className="text-xs line-through"
-                    style={{ color: 'var(--color-text-muted, #999)' }}
+                    className="text-xs font-medium line-through"
+                    style={{ color: 'var(--color-text-muted, #9CA3AF)', textDecorationColor: 'var(--color-text-muted, #9CA3AF)' }}
                 >
                     {formatCurrency(product.compare_at_price!, shop.currency_symbol, shop.currency_decimals)}
                 </span>
@@ -82,96 +84,171 @@ function PriceDisplay({ product, shop }: { product: ProductCardData; shop: ShopD
     );
 }
 
+function ImagePlaceholder() {
+    return (
+        <div
+            className="flex h-full w-full flex-col items-center justify-center gap-3"
+            style={{ backgroundColor: 'var(--color-surface, #F0FDF4)' }}
+        >
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.25 }}>
+                <rect x="2" y="2" width="20" height="20" rx="3" stroke="var(--color-text-muted, #9CA3AF)" strokeWidth="1.5" />
+                <circle cx="8" cy="8" r="2" stroke="var(--color-text-muted, #9CA3AF)" strokeWidth="1.5" />
+                <path d="M2 17l5-5 3 3 4-4 8 8v1a2 2 0 01-2 2H4a2 2 0 01-2-2v-3z" fill="var(--color-text-muted, #9CA3AF)" fillOpacity="0.15" />
+            </svg>
+            <span className="text-[11px] font-medium tracking-wide" style={{ color: 'var(--color-text-muted, #9CA3AF)', opacity: 0.5 }}>
+                No image
+            </span>
+        </div>
+    );
+}
+
 function DefaultCard({ product, shop, onQuickAdd }: CardVariantProps) {
     const [isHovered, setIsHovered] = useState(false);
+    const cardRef = useRef<HTMLAnchorElement>(null);
+
     return (
         <a
+            ref={cardRef}
             href={`/store/${shop.slug}/products/${product.slug}`}
             className="group block"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
             <div
-                className="relative mb-3 overflow-hidden"
+                className="relative mb-4 overflow-hidden"
                 style={{
                     borderRadius: 'var(--radius, 8px)',
-                    backgroundColor: 'var(--color-surface, #f5f5f5)',
                     aspectRatio: '3/4',
+                    boxShadow: isHovered
+                        ? '0 12px 40px -8px rgba(0,0,0,0.15), 0 4px 12px -4px rgba(0,0,0,0.08)'
+                        : '0 1px 3px rgba(0,0,0,0.06)',
+                    transition: 'box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
             >
                 {product.compare_at_price && product.compare_at_price > product.price && (
-                    <SaleBadge comparePrice={product.compare_at_price} price={product.price} shop={shop} />
+                    <SaleBadge comparePrice={product.compare_at_price} price={product.price} />
                 )}
-                {product.image ? (
-                    <img
-                        src={product.image}
-                        alt={product.name}
-                        className="h-full w-full object-cover transition-transform duration-500"
-                        style={{ transform: isHovered ? 'scale(1.05)' : 'scale(1)' }}
-                    />
-                ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted, #ccc)" strokeWidth="1">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <polyline points="21 15 16 10 5 21" />
-                        </svg>
-                    </div>
+
+                {product.is_new && (
+                    <span
+                        className="absolute right-3 top-3 z-10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide"
+                        style={{
+                            backgroundColor: 'var(--color-primary, #047857)',
+                            color: '#fff',
+                            borderRadius: '4px',
+                            letterSpacing: '0.05em',
+                        }}
+                    >
+                        New
+                    </span>
                 )}
+
+                <div className="relative h-full w-full overflow-hidden" style={{ backgroundColor: 'var(--color-surface, #F0FDF4)' }}>
+                    {product.image ? (
+                        <img
+                            src={product.image}
+                            alt={product.name}
+                            className="h-full w-full object-cover"
+                            style={{
+                                transform: isHovered ? 'scale(1.06)' : 'scale(1)',
+                                transition: 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
+                            }}
+                        />
+                    ) : (
+                        <ImagePlaceholder />
+                    )}
+                </div>
+
                 {onQuickAdd && (
                     <button
                         onClick={(e) => { e.preventDefault(); onQuickAdd(product.id); }}
-                        className="absolute bottom-3 left-3 right-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider transition-all duration-300"
+                        className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-2 py-3.5 text-[13px] font-semibold uppercase tracking-wider"
                         style={{
-                            backgroundColor: 'var(--color-primary, #1a1a1a)',
+                            backgroundColor: 'var(--color-primary, #047857)',
                             color: '#fff',
-                            borderRadius: 'var(--radius, 8px)',
                             opacity: isHovered ? 1 : 0,
-                            transform: isHovered ? 'translateY(0)' : 'translateY(8px)',
+                            transform: isHovered ? 'translateY(0)' : 'translateY(100%)',
+                            transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                            backdropFilter: 'blur(8px)',
                         }}
                     >
-                        Quick Add
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Add to Cart
                     </button>
                 )}
             </div>
-            {product.category_name && (
-                <div
-                    className="mb-1 text-xs uppercase tracking-wider"
-                    style={{ color: 'var(--color-text-muted, #888)' }}
+
+            <div className="space-y-1.5 px-0.5">
+                {product.category_name && (
+                    <div
+                        className="text-[11px] font-semibold uppercase tracking-[0.08em]"
+                        style={{ color: 'var(--color-primary, #047857)' }}
+                    >
+                        {product.category_name}
+                    </div>
+                )}
+                <h3
+                    className="text-[15px] font-medium leading-snug"
+                    style={{
+                        color: 'var(--color-text, #0C1713)',
+                        fontFamily: 'var(--font-body, sans-serif)',
+                        transition: 'color 0.2s ease',
+                        ...(isHovered ? { color: 'var(--color-primary, #047857)' } : {}),
+                    }}
                 >
-                    {product.category_name}
-                </div>
-            )}
-            <h3
-                className="mb-1.5 text-sm font-medium leading-snug"
-                style={{ color: 'var(--color-text, #1a1a1a)', fontFamily: 'var(--font-body, sans-serif)' }}
-            >
-                {product.name}
-            </h3>
-            <PriceDisplay product={product} shop={shop} />
+                    {product.name}
+                </h3>
+                <PriceDisplay product={product} shop={shop} />
+            </div>
         </a>
     );
 }
 
 function MinimalCard({ product, shop }: CardVariantProps) {
+    const [isHovered, setIsHovered] = useState(false);
     return (
-        <a href={`/store/${shop.slug}/products/${product.slug}`} className="block">
+        <a
+            href={`/store/${shop.slug}/products/${product.slug}`}
+            className="block"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
             <div
                 className="relative mb-3 overflow-hidden"
-                style={{ backgroundColor: 'var(--color-surface, #f5f5f5)', aspectRatio: '1/1' }}
+                style={{
+                    aspectRatio: '1/1',
+                    borderRadius: 'var(--radius, 8px)',
+                }}
             >
-                {product.image ? (
-                    <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-                ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted, #ccc)" strokeWidth="1">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                        </svg>
-                    </div>
-                )}
+                <div className="h-full w-full" style={{ backgroundColor: 'var(--color-surface, #F0FDF4)' }}>
+                    {product.image ? (
+                        <img
+                            src={product.image}
+                            alt={product.name}
+                            className="h-full w-full object-cover"
+                            style={{
+                                transform: isHovered ? 'scale(1.04)' : 'scale(1)',
+                                transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                            }}
+                        />
+                    ) : (
+                        <ImagePlaceholder />
+                    )}
+                </div>
             </div>
-            <h3 className="text-sm" style={{ color: 'var(--color-text, #1a1a1a)' }}>{product.name}</h3>
-            <div className="mt-1 text-sm" style={{ color: 'var(--color-text-muted, #666)' }}>
+            <h3
+                className="text-sm font-medium"
+                style={{
+                    color: 'var(--color-text, #0C1713)',
+                    fontFamily: 'var(--font-body, sans-serif)',
+                }}
+            >
+                {product.name}
+            </h3>
+            <div className="mt-1 text-sm font-semibold" style={{ color: 'var(--color-text-muted, #4B5563)' }}>
                 {formatCurrency(product.price, shop.currency_symbol, shop.currency_decimals)}
             </div>
         </a>
@@ -184,47 +261,71 @@ function OverlayCard({ product, shop, onQuickAdd }: CardVariantProps) {
         <a
             href={`/store/${shop.slug}/products/${product.slug}`}
             className="group relative block overflow-hidden"
-            style={{ borderRadius: 'var(--radius, 8px)', aspectRatio: '3/4' }}
+            style={{
+                borderRadius: 'var(--radius, 8px)',
+                aspectRatio: '3/4',
+                boxShadow: isHovered
+                    ? '0 20px 50px -12px rgba(0,0,0,0.3)'
+                    : '0 4px 12px -2px rgba(0,0,0,0.1)',
+                transition: 'box-shadow 0.4s ease',
+            }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
             {product.compare_at_price && product.compare_at_price > product.price && (
-                <SaleBadge comparePrice={product.compare_at_price} price={product.price} shop={shop} />
+                <SaleBadge comparePrice={product.compare_at_price} price={product.price} />
             )}
-            <div className="absolute inset-0" style={{ backgroundColor: 'var(--color-surface, #f0f0f0)' }}>
-                {product.image && (
+            <div className="absolute inset-0" style={{ backgroundColor: 'var(--color-surface, #F0FDF4)' }}>
+                {product.image ? (
                     <img
                         src={product.image}
                         alt={product.name}
-                        className="h-full w-full object-cover transition-transform duration-500"
-                        style={{ transform: isHovered ? 'scale(1.08)' : 'scale(1)' }}
+                        className="h-full w-full object-cover"
+                        style={{
+                            transform: isHovered ? 'scale(1.08)' : 'scale(1)',
+                            transition: 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
                     />
+                ) : (
+                    <ImagePlaceholder />
                 )}
             </div>
             <div
-                className="absolute inset-0 transition-opacity duration-300"
+                className="absolute inset-0"
                 style={{
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 50%)',
-                    opacity: isHovered ? 1 : 0.7,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 40%, transparent 60%)',
+                    opacity: isHovered ? 1 : 0.85,
+                    transition: 'opacity 0.4s ease',
                 }}
             />
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-                <h3 className="text-sm font-medium text-white">{product.name}</h3>
-                <div className="mt-1 text-sm font-semibold text-white">
+            <div className="absolute bottom-0 left-0 right-0 p-5">
+                {product.category_name && (
+                    <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/70">
+                        {product.category_name}
+                    </div>
+                )}
+                <h3 className="text-[15px] font-semibold leading-snug text-white">{product.name}</h3>
+                <div className="mt-1.5 text-sm font-bold text-white">
                     {formatCurrency(product.price, shop.currency_symbol, shop.currency_decimals)}
                 </div>
                 {onQuickAdd && (
                     <button
                         onClick={(e) => { e.preventDefault(); onQuickAdd(product.id); }}
-                        className="mt-3 w-full py-2 text-center text-xs font-semibold uppercase tracking-wider text-white transition-all duration-300"
+                        className="mt-3 flex w-full items-center justify-center gap-2 py-2.5 text-center text-[12px] font-semibold uppercase tracking-wider text-white"
                         style={{
-                            backgroundColor: 'var(--color-primary, rgba(255,255,255,0.2))',
+                            backgroundColor: 'var(--color-primary, rgba(255,255,255,0.15))',
                             borderRadius: 'var(--radius, 8px)',
                             opacity: isHovered ? 1 : 0,
-                            transform: isHovered ? 'translateY(0)' : 'translateY(4px)',
+                            transform: isHovered ? 'translateY(0)' : 'translateY(8px)',
+                            transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                            backdropFilter: 'blur(4px)',
                         }}
                     >
-                        Quick Add
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Add to Cart
                     </button>
                 )}
             </div>
@@ -233,44 +334,57 @@ function OverlayCard({ product, shop, onQuickAdd }: CardVariantProps) {
 }
 
 function DetailedCard({ product, shop, onQuickAdd }: CardVariantProps) {
+    const [isHovered, setIsHovered] = useState(false);
     return (
         <a
             href={`/store/${shop.slug}/products/${product.slug}`}
-            className="block overflow-hidden transition-shadow duration-300 hover:shadow-lg"
+            className="block overflow-hidden"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             style={{
                 borderRadius: 'var(--radius, 8px)',
-                border: '1px solid var(--color-border, #e5e5e5)',
+                border: '1px solid var(--color-border, #e5e7eb)',
                 backgroundColor: 'var(--color-background, #fff)',
+                boxShadow: isHovered
+                    ? '0 12px 40px -8px rgba(0,0,0,0.12), 0 0 0 1px var(--color-primary, #047857)'
+                    : '0 1px 3px rgba(0,0,0,0.04)',
+                borderColor: isHovered ? 'var(--color-primary, #047857)' : 'var(--color-border, #e5e7eb)',
+                transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
         >
             <div
                 className="relative overflow-hidden"
-                style={{ backgroundColor: 'var(--color-surface, #f5f5f5)', aspectRatio: '4/3' }}
+                style={{ backgroundColor: 'var(--color-surface, #F0FDF4)', aspectRatio: '4/3' }}
             >
                 {product.compare_at_price && product.compare_at_price > product.price && (
-                    <SaleBadge comparePrice={product.compare_at_price} price={product.price} shop={shop} />
+                    <SaleBadge comparePrice={product.compare_at_price} price={product.price} />
                 )}
                 {product.image ? (
-                    <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                    <img
+                        src={product.image}
+                        alt={product.name}
+                        className="h-full w-full object-cover"
+                        style={{
+                            transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+                            transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
+                    />
                 ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted, #ccc)" strokeWidth="1">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <polyline points="21 15 16 10 5 21" />
-                        </svg>
-                    </div>
+                    <ImagePlaceholder />
                 )}
             </div>
             <div className="p-4">
                 {product.category_name && (
-                    <div className="mb-1 text-xs uppercase tracking-wider" style={{ color: 'var(--color-primary, #e94560)' }}>
+                    <div
+                        className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em]"
+                        style={{ color: 'var(--color-primary, #047857)' }}
+                    >
                         {product.category_name}
                     </div>
                 )}
                 <h3
-                    className="mb-2 text-sm font-medium leading-snug"
-                    style={{ color: 'var(--color-text, #1a1a1a)' }}
+                    className="mb-2 text-[15px] font-medium leading-snug"
+                    style={{ color: 'var(--color-text, #0C1713)' }}
                 >
                     {product.name}
                 </h3>
@@ -279,11 +393,12 @@ function DetailedCard({ product, shop, onQuickAdd }: CardVariantProps) {
                     {onQuickAdd && (
                         <button
                             onClick={(e) => { e.preventDefault(); onQuickAdd(product.id); }}
-                            className="flex h-8 w-8 items-center justify-center transition-colors"
+                            className="flex h-9 w-9 items-center justify-center transition-all duration-300"
                             style={{
-                                backgroundColor: 'var(--color-primary, #1a1a1a)',
-                                color: '#fff',
+                                backgroundColor: isHovered ? 'var(--color-primary, #047857)' : 'var(--color-surface, #F0FDF4)',
+                                color: isHovered ? '#fff' : 'var(--color-text, #0C1713)',
                                 borderRadius: 'calc(var(--radius, 8px) * 0.5)',
+                                boxShadow: isHovered ? '0 4px 12px -2px rgba(0,0,0,0.2)' : 'none',
                             }}
                         >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">

@@ -6,6 +6,7 @@ import { narrowConfig } from '../../lib/section-helpers';
 
 interface VideoConfig {
     heading?: string;
+    subheading?: string;
     video_url: string;
     poster_image?: string;
     autoplay?: boolean;
@@ -17,6 +18,7 @@ interface VideoConfig {
 export function VideoSection({ config, variant }: SectionProps) {
     const {
         heading,
+        subheading,
         video_url,
         poster_image,
         autoplay,
@@ -25,15 +27,14 @@ export function VideoSection({ config, variant }: SectionProps) {
         cta_link,
     } = narrowConfig<VideoConfig>(config);
 
-    if (!video_url) {
-        return null;
-    }
+    if (!video_url) return null;
 
     if (variant === 'background_loop') {
         return (
             <section style={{ padding: 'var(--section-spacing, 64px) 0' }}>
                 <Background
                     heading={heading}
+                    subheading={subheading}
                     video_url={video_url}
                     poster_image={poster_image}
                     autoplay={autoplay}
@@ -49,11 +50,12 @@ export function VideoSection({ config, variant }: SectionProps) {
         return (
             <section style={{ padding: 'var(--section-spacing, 64px) 0' }}>
                 <div
-                    className="mx-auto px-4 sm:px-6"
+                    className="mx-auto px-5 sm:px-8"
                     style={{ maxWidth: 'var(--container-width, 1280px)' }}
                 >
                     <Lightbox
                         heading={heading}
+                        subheading={subheading}
                         video_url={video_url}
                         poster_image={poster_image}
                         autoplay={autoplay}
@@ -67,11 +69,12 @@ export function VideoSection({ config, variant }: SectionProps) {
     return (
         <section style={{ padding: 'var(--section-spacing, 64px) 0' }}>
             <div
-                className="mx-auto px-4 sm:px-6"
+                className="mx-auto px-5 sm:px-8"
                 style={{ maxWidth: 'var(--container-width, 1280px)' }}
             >
                 <Inline
                     heading={heading}
+                    subheading={subheading}
                     video_url={video_url}
                     poster_image={poster_image}
                     autoplay={autoplay}
