@@ -195,6 +195,9 @@ class StorefrontRenderService
         return array_values(array_map(function (array $section, int $index) use ($shop) {
             $type = $section['type'] ?? '';
             $config = $section['config'] ?? [];
+            $config['shop_slug'] = $shop->slug;
+            $config['currency_symbol'] = $shop->currency_symbol ?? '₦';
+            $config['currency_decimals'] = $shop->currency_decimals ?? 2;
             $data = $this->registry->resolveData($type, $config, $shop);
 
             return [
