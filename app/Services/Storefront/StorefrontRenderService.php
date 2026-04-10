@@ -442,7 +442,7 @@ class StorefrontRenderService
         $customerId = $customer?->id;
         $cart = $this->cartService->getCart($shop, $customerId);
         $cart->load([
-            'items.productVariant.product',
+            'items.productVariant.product.images',
             'items.packagingType',
             'items.sellable',
         ]);
@@ -535,7 +535,7 @@ class StorefrontRenderService
             return ['order' => null];
         }
 
-        $order->load(['items.productVariant.product', 'payments']);
+        $order->load(['items.productVariant.product.images', 'payments']);
 
         return [
             'order' => $this->serializeOrder($order),
@@ -557,7 +557,7 @@ class StorefrontRenderService
             ->first();
 
         $recentOrders = (clone $orderQuery)
-            ->with('items')
+            ->with('items.productVariant.product.images')
             ->latest()
             ->limit(5)
             ->get();
@@ -580,7 +580,7 @@ class StorefrontRenderService
         $paginator = $customer->orders()
             ->where('shop_id', $shop->id)
             ->where('order_type', \App\Enums\OrderType::CUSTOMER->value)
-            ->with('items')
+            ->with('items.productVariant.product.images')
             ->latest()
             ->paginate(10);
 
@@ -605,7 +605,7 @@ class StorefrontRenderService
             return ['order' => null];
         }
 
-        $order->load(['items.productVariant.product', 'payments']);
+        $order->load(['items.productVariant.product.images', 'payments']);
 
         return [
             'order' => $this->serializeOrder($order),

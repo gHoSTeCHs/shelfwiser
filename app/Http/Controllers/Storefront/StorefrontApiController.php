@@ -43,7 +43,7 @@ class StorefrontApiController extends Controller
     public function getCart(Shop $shop): JsonResponse
     {
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
-        $cart->load(['items.productVariant.product', 'items.sellable']);
+        $cart->load(['items.productVariant.product.images', 'items.sellable']);
         $summary = $this->cartService->getCartSummary($cart);
 
         return response()->json([
@@ -155,8 +155,7 @@ class StorefrontApiController extends Controller
 
     private function cartDetailResponse(\App\Models\Cart $cart, string $message): JsonResponse
     {
-        $cart->refresh();
-        $cart->load(['items.productVariant.product', 'items.sellable']);
+        $cart->load(['items.productVariant.product.images', 'items.sellable']);
         $summary = $this->cartService->getCartSummary($cart);
 
         return response()->json([

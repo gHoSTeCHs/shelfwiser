@@ -61,6 +61,7 @@ class StorefrontService
                     ->where('is_active', true)
                     ->with('inventoryLocations'),
                 'category',
+                'images',
             ]);
 
         // Search filter
@@ -79,11 +80,11 @@ class StorefrontService
 
         // Sorting
         match ($sortBy) {
-            'price_low' => $query->join('product_variants', 'products.id', '=', 'product_variants.product_id')
+            'price_low' => $query->distinct()->join('product_variants', 'products.id', '=', 'product_variants.product_id')
                 ->where('product_variants.is_available_online', true)
                 ->orderBy('product_variants.price', 'asc')
                 ->select('products.*'),
-            'price_high' => $query->join('product_variants', 'products.id', '=', 'product_variants.product_id')
+            'price_high' => $query->distinct()->join('product_variants', 'products.id', '=', 'product_variants.product_id')
                 ->where('product_variants.is_available_online', true)
                 ->orderBy('product_variants.price', 'desc')
                 ->select('products.*'),
@@ -140,6 +141,7 @@ class StorefrontService
         return Cache::remember($cacheKey, now()->addMinutes(60), function () use ($shop) {
             return ProductCategory::query()->where('tenant_id', $shop->tenant_id)
                 ->whereNull('parent_id')
+                ->with('images')
                 ->withCount(['products' => fn ($q) => $q->where('shop_id', $shop->id)->where('is_active', true)])
                 ->orderBy('name')
                 ->get();
@@ -186,11 +188,11 @@ class StorefrontService
 
         // Sorting
         match ($sortBy) {
-            'price_low' => $query->join('service_variants', 'services.id', '=', 'service_variants.service_id')
+            'price_low' => $query->distinct()->join('service_variants', 'services.id', '=', 'service_variants.service_id')
                 ->where('service_variants.is_active', true)
                 ->orderBy('service_variants.base_price', 'asc')
                 ->select('services.*'),
-            'price_high' => $query->join('service_variants', 'services.id', '=', 'service_variants.service_id')
+            'price_high' => $query->distinct()->join('service_variants', 'services.id', '=', 'service_variants.service_id')
                 ->where('service_variants.is_active', true)
                 ->orderBy('service_variants.base_price', 'desc')
                 ->select('services.*'),

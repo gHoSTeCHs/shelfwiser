@@ -132,7 +132,7 @@ class FeaturedProductsSection implements StorefrontSectionInterface
                 ->where('tenant_id', $shop->tenant_id)
                 ->where('shop_id', $shop->id)
                 ->where('is_active', true)
-                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category'])
+                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category', 'images'])
                 ->latest()
                 ->limit($limit)
                 ->get(),
@@ -140,7 +140,7 @@ class FeaturedProductsSection implements StorefrontSectionInterface
                 ->where('tenant_id', $shop->tenant_id)
                 ->where('shop_id', $shop->id)
                 ->where('is_active', true)
-                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category'])
+                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category', 'images'])
                 ->withCount('orderItems')
                 ->orderByDesc('order_items_count')
                 ->limit($limit)
@@ -155,7 +155,7 @@ class FeaturedProductsSection implements StorefrontSectionInterface
                     ->whereNotNull('compare_at_price')
                     ->whereColumn('price', '<', 'compare_at_price')
                 )
-                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category'])
+                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category', 'images'])
                 ->limit($limit)
                 ->get(),
             'manual' => Product::query()
@@ -163,7 +163,7 @@ class FeaturedProductsSection implements StorefrontSectionInterface
                 ->where('shop_id', $shop->id)
                 ->whereIn('id', $config['manual_product_ids'] ?? [])
                 ->where('is_active', true)
-                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category'])
+                ->with(['variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true), 'category', 'images'])
                 ->limit($limit)
                 ->get(),
             default => $this->storefrontService->getFeaturedProducts($shop, $limit),

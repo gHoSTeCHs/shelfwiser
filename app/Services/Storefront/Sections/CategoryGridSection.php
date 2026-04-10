@@ -109,7 +109,6 @@ class CategoryGridSection implements StorefrontSectionInterface
 
         $categories = $this->storefrontService->getCategories($shop)
             ->take($config['max_items'] ?? 6)
-            ->each(fn ($c) => $c->loadMissing('images'))
             ->map(fn ($c) => $this->serializeCategory($c))
             ->all();
 
