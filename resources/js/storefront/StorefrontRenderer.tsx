@@ -21,9 +21,8 @@ export function StorefrontRenderer(props: StorefrontPageData) {
     const Layout = templateLayoutRegistry[template.slug];
     const { isDark, toggle } = useDarkMode();
 
-    const pageTheme = theme as unknown as Record<string, unknown>;
-    const darkColors = pageTheme.colors_dark as Record<string, string> | undefined;
-    const darkModeEnabled = Boolean(pageTheme.dark_mode_enabled);
+    const darkColors = theme.colors_dark;
+    const darkModeEnabled = Boolean(theme.dark_mode_enabled);
     const hasDarkSupport = darkModeEnabled && darkColors && Object.keys(darkColors).length > 0;
 
     if (!Layout) {

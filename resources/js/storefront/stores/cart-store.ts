@@ -14,6 +14,8 @@ export interface CartItem {
 export interface CartSummary {
     item_count: number;
     subtotal: number;
+    shipping_fee?: number;
+    tax?: number;
     total: number;
 }
 

@@ -50,6 +50,9 @@ export interface CustomerData {
 
 export interface ResolvedTheme {
     colors: Record<string, string>;
+    colors_dark?: Record<string, string>;
+    dark_mode_enabled?: boolean;
+    dark_mode_strategy?: string;
     typography: TypographyConfig;
     components: ComponentConfig;
     feel: FeelConfig;
@@ -191,7 +194,7 @@ export interface CategoryData {
     slug: string;
     image: string | null;
     description: string | null;
-    product_count?: number;
+    product_count: number;
 }
 
 export interface ProductCardData {
@@ -202,7 +205,7 @@ export interface ProductCardData {
     compare_at_price: number | null;
     image: string | null;
     category_name: string | null;
-    is_new?: boolean;
+    is_new: boolean;
 }
 
 export interface SlideData {

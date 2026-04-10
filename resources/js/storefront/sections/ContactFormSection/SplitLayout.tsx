@@ -23,7 +23,6 @@ interface ContactData {
     city?: string;
     state?: string;
     country?: string;
-    shop_slug?: string;
 }
 
 type FieldName = keyof FormState;
@@ -244,7 +243,7 @@ export function SplitLayout({ config, data }: SectionProps) {
 
         setIsSubmitting(true);
         try {
-            const slug = shopSlug || contactData.shop_slug || '';
+            const slug = shopSlug || '';
             const result = await storefrontFetch(`/store/${slug}/api/contact`, {
                 method: 'POST',
                 json: { name: formData.name, email: formData.email, message: formData.message },
