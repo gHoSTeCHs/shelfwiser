@@ -253,7 +253,7 @@ class CartService
             'shipping_fee' => round($shippingFee, 2),
             'tax' => round($tax, 2),
             'total' => round($total, 2),
-            'item_count' => $items->sum('quantity'),
+            'item_count' => $items->count(),
         ];
     }
 
