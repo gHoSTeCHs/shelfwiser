@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { formatCurrency } from '../lib/formatters';
 import { useCartStore } from '../stores/cart-store';
 import type { ShopData } from '../types/storefront';
@@ -9,7 +9,6 @@ interface CartDrawerProps {
 
 export function CartDrawer({ shop }: CartDrawerProps) {
     const { items, summary, isOpen, isLoading, closeDrawer, updateItem, removeItem } = useCartStore();
-    const [updatingItems, setUpdatingItems] = useState<Set<number>>(new Set());
 
     useEffect(() => {
         if (isOpen) {
@@ -19,26 +18,6 @@ export function CartDrawer({ shop }: CartDrawerProps) {
         }
         return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
-
-    async function handleUpdate(itemId: number, quantity: number) {
-        setUpdatingItems((prev) => new Set(prev).add(itemId));
-        await updateItem(itemId, quantity);
-        setUpdatingItems((prev) => {
-            const next = new Set(prev);
-            next.delete(itemId);
-            return next;
-        });
-    }
-
-    async function handleRemove(itemId: number) {
-        setUpdatingItems((prev) => new Set(prev).add(itemId));
-        await removeItem(itemId);
-        setUpdatingItems((prev) => {
-            const next = new Set(prev);
-            next.delete(itemId);
-            return next;
-        });
-    }
 
     return (
         <>
@@ -129,7 +108,7 @@ export function CartDrawer({ shop }: CartDrawerProps) {
                                 <div
                                     key={item.id}
                                     className="flex gap-4 transition-opacity"
-                                    style={{ opacity: updatingItems.has(item.id) ? 0.5 : 1 }}
+                                    style={{ opacity: 1 }}
                                 >
                                     <div
                                         className="h-20 w-20 shrink-0 overflow-hidden"
@@ -158,7 +137,7 @@ export function CartDrawer({ shop }: CartDrawerProps) {
                                                 )}
                                             </div>
                                             <button
-                                                onClick={() => handleRemove(item.id)}
+                                                onClick={() => removeItem(item.id)}
                                                 className="shrink-0 p-1"
                                                 style={{ color: 'var(--color-text-muted, #aaa)' }}
                                             >
@@ -177,7 +156,7 @@ export function CartDrawer({ shop }: CartDrawerProps) {
                                                 }}
                                             >
                                                 <button
-                                                    onClick={() => handleUpdate(item.id, Math.max(1, item.quantity - 1))}
+                                                    onClick={() => updateItem(item.id, Math.max(1, item.quantity - 1))}
                                                     className="flex h-7 w-7 items-center justify-center text-sm"
                                                     style={{ color: 'var(--color-foreground, #1a1a1a)' }}
                                                     disabled={item.quantity <= 1}
@@ -191,7 +170,7 @@ export function CartDrawer({ shop }: CartDrawerProps) {
                                                     {item.quantity}
                                                 </span>
                                                 <button
-                                                    onClick={() => handleUpdate(item.id, item.quantity + 1)}
+                                                    onClick={() => updateItem(item.id, item.quantity + 1)}
                                                     className="flex h-7 w-7 items-center justify-center text-sm"
                                                     style={{ color: 'var(--color-foreground, #1a1a1a)' }}
                                                     disabled={item.max_quantity !== null && item.quantity >= item.max_quantity}
