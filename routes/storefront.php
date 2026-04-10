@@ -64,6 +64,7 @@ Route::prefix('store/{shop:slug}')->middleware('storefront.enabled')->name('stor
 
     // === JSON API (for themed storefront pages via storefrontFetch) ===
     Route::prefix('api')->group(function () {
+        Route::get('/cart', [StorefrontApiController::class, 'getCart']);
         Route::post('/cart', [StorefrontApiController::class, 'addToCart']);
         Route::post('/cart/service', [StorefrontApiController::class, 'addServiceToCart']);
         Route::patch('/cart/{item}', [StorefrontApiController::class, 'updateCartItem'])->whereNumber('item');

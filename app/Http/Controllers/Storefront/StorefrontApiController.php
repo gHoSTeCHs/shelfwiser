@@ -40,6 +40,22 @@ class StorefrontApiController extends Controller
         private readonly CheckoutService $checkoutService,
     ) {}
 
+    public function getCart(Shop $shop): JsonResponse
+    {
+        $cart = $this->cartService->getCart($shop, auth('customer')->id());
+        $cart->load(['items.productVariant.product', 'items.sellable']);
+        $summary = $this->cartService->getCartSummary($cart);
+
+        return response()->json([
+            'items' => $cart->items->map(fn ($item) => $this->serializeCartItem($item))->all(),
+            'summary' => [
+                'item_count' => $summary['item_count'],
+                'subtotal' => $summary['subtotal'],
+                'total' => $summary['total'],
+            ],
+        ]);
+    }
+
     public function addToCart(AddToCartApiRequest $request, Shop $shop): JsonResponse
     {
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
@@ -54,8 +70,15 @@ class StorefrontApiController extends Controller
 
             $cartItem->load(['productVariant.product', 'sellable']);
 
+            $summary = $this->cartService->getCartSummary($cart);
+
             return response()->json([
                 'item' => $this->serializeCartItem($cartItem),
+                'summary' => [
+                    'item_count' => $summary['item_count'],
+                    'subtotal' => $summary['subtotal'],
+                    'total' => $summary['total'],
+                ],
                 'message' => 'Item added to cart',
             ]);
         } catch (\Exception $e) {
@@ -107,16 +130,9 @@ class StorefrontApiController extends Controller
         $cartItem = $cart->items()->findOrFail($item);
 
         try {
-            $updated = $this->cartService->updateQuantity($cartItem, $request->validated('quantity'));
+            $this->cartService->updateQuantity($cartItem, $request->validated('quantity'));
 
-            if ($updated === null) {
-                return response()->json(['message' => 'Item removed from cart']);
-            }
-
-            return response()->json([
-                'item' => $this->serializeCartItem($updated),
-                'message' => 'Cart updated',
-            ]);
+            return $this->cartDetailResponse($cart, 'Cart updated');
         } catch (\Exception $e) {
             Log::error('Cart update failed', [
                 'shop_id' => $shop->id,
@@ -134,7 +150,24 @@ class StorefrontApiController extends Controller
 
         $this->cartService->removeItem($cartItem);
 
-        return response()->json(['message' => 'Item removed']);
+        return $this->cartDetailResponse($cart, 'Item removed');
+    }
+
+    private function cartDetailResponse(\App\Models\Cart $cart, string $message): JsonResponse
+    {
+        $cart->refresh();
+        $cart->load(['items.productVariant.product', 'items.sellable']);
+        $summary = $this->cartService->getCartSummary($cart);
+
+        return response()->json([
+            'items' => $cart->items->map(fn ($item) => $this->serializeCartItem($item))->all(),
+            'summary' => [
+                'item_count' => $summary['item_count'],
+                'subtotal' => $summary['subtotal'],
+                'total' => $summary['total'],
+            ],
+            'message' => $message,
+        ]);
     }
 
     public function cartSummary(Shop $shop): JsonResponse

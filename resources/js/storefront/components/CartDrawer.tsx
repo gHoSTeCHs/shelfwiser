@@ -1,52 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
-import { storefrontFetch } from '../lib/fetch-client';
+import { useEffect, useState } from 'react';
 import { formatCurrency } from '../lib/formatters';
-import type { ShopData, CartSummary } from '../types/storefront';
-
-interface CartItem {
-    id: number;
-    name: string;
-    variant_name: string | null;
-    price: number;
-    quantity: number;
-    image: string | null;
-    max_quantity: number | null;
-}
-
-interface CartDetail {
-    items: CartItem[];
-    summary: CartSummary;
-}
+import { useCartStore } from '../stores/cart-store';
+import type { ShopData } from '../types/storefront';
 
 interface CartDrawerProps {
     shop: ShopData;
-    cart: CartSummary;
-    isOpen: boolean;
-    onClose: () => void;
-    onCartUpdate?: (summary: CartSummary) => void;
 }
 
-export function CartDrawer({ shop, cart, isOpen, onClose, onCartUpdate }: CartDrawerProps) {
-    const [detail, setDetail] = useState<CartDetail | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+export function CartDrawer({ shop }: CartDrawerProps) {
+    const { items, summary, isOpen, isLoading, closeDrawer, updateItem, removeItem } = useCartStore();
     const [updatingItems, setUpdatingItems] = useState<Set<number>>(new Set());
-
-    const fetchCart = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const res = await storefrontFetch<CartDetail>(`/store/${shop.slug}/api/cart`);
-            if (res.ok) {
-                setDetail(res.data);
-                onCartUpdate?.(res.data.summary);
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    }, [shop.slug, onCartUpdate]);
-
-    useEffect(() => {
-        if (isOpen && !detail) fetchCart();
-    }, [isOpen, detail, fetchCart]);
 
     useEffect(() => {
         if (isOpen) {
@@ -57,16 +20,9 @@ export function CartDrawer({ shop, cart, isOpen, onClose, onCartUpdate }: CartDr
         return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
 
-    async function updateQuantity(itemId: number, quantity: number) {
+    async function handleUpdate(itemId: number, quantity: number) {
         setUpdatingItems((prev) => new Set(prev).add(itemId));
-        const res = await storefrontFetch<CartDetail>(`/store/${shop.slug}/api/cart/items/${itemId}`, {
-            method: 'PATCH',
-            json: { quantity },
-        });
-        if (res.ok) {
-            setDetail(res.data);
-            onCartUpdate?.(res.data.summary);
-        }
+        await updateItem(itemId, quantity);
         setUpdatingItems((prev) => {
             const next = new Set(prev);
             next.delete(itemId);
@@ -74,24 +30,15 @@ export function CartDrawer({ shop, cart, isOpen, onClose, onCartUpdate }: CartDr
         });
     }
 
-    async function removeItem(itemId: number) {
+    async function handleRemove(itemId: number) {
         setUpdatingItems((prev) => new Set(prev).add(itemId));
-        const res = await storefrontFetch<CartDetail>(`/store/${shop.slug}/api/cart/items/${itemId}`, {
-            method: 'DELETE',
-        });
-        if (res.ok) {
-            setDetail(res.data);
-            onCartUpdate?.(res.data.summary);
-        }
+        await removeItem(itemId);
         setUpdatingItems((prev) => {
             const next = new Set(prev);
             next.delete(itemId);
             return next;
         });
     }
-
-    const summary = detail?.summary ?? cart;
-    const items = detail?.items ?? [];
 
     return (
         <>
@@ -102,7 +49,7 @@ export function CartDrawer({ shop, cart, isOpen, onClose, onCartUpdate }: CartDr
                     opacity: isOpen ? 1 : 0,
                     pointerEvents: isOpen ? 'auto' : 'none',
                 }}
-                onClick={onClose}
+                onClick={closeDrawer}
             />
 
             <div
@@ -121,13 +68,13 @@ export function CartDrawer({ shop, cart, isOpen, onClose, onCartUpdate }: CartDr
                 >
                     <h2
                         className="text-lg font-semibold"
-                        style={{ color: 'var(--color-text, #1a1a1a)', fontFamily: 'var(--font-heading, sans-serif)' }}
+                        style={{ color: 'var(--color-foreground, #1a1a1a)', fontFamily: 'var(--font-heading, sans-serif)' }}
                     >
                         Cart ({summary.item_count})
                     </h2>
                     <button
-                        onClick={onClose}
-                        className="flex h-8 w-8 items-center justify-center transition-colors"
+                        onClick={closeDrawer}
+                        className="flex h-8 w-8 items-center justify-center"
                         style={{ color: 'var(--color-text-muted, #888)' }}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -138,7 +85,7 @@ export function CartDrawer({ shop, cart, isOpen, onClose, onCartUpdate }: CartDr
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-6 py-4">
-                    {isLoading && (
+                    {isLoading && items.length === 0 && (
                         <div className="space-y-4">
                             {[1, 2, 3].map((i) => (
                                 <div key={i} className="flex gap-4 animate-pulse">
@@ -167,16 +114,16 @@ export function CartDrawer({ shop, cart, isOpen, onClose, onCartUpdate }: CartDr
                                 className="mt-4 px-6 py-2 text-sm font-medium text-white"
                                 style={{
                                     backgroundColor: 'var(--color-primary, #1a1a1a)',
-                                    borderRadius: 'var(--radius, 8px)',
+                                    borderRadius: 'var(--btn-radius, var(--radius, 8px))',
                                 }}
-                                onClick={onClose}
+                                onClick={closeDrawer}
                             >
                                 Continue Shopping
                             </a>
                         </div>
                     )}
 
-                    {!isLoading && items.length > 0 && (
+                    {items.length > 0 && (
                         <div className="space-y-4">
                             {items.map((item) => (
                                 <div
@@ -200,7 +147,7 @@ export function CartDrawer({ shop, cart, isOpen, onClose, onCartUpdate }: CartDr
                                             <div>
                                                 <h4
                                                     className="text-sm font-medium leading-snug"
-                                                    style={{ color: 'var(--color-text, #1a1a1a)' }}
+                                                    style={{ color: 'var(--color-foreground, #1a1a1a)' }}
                                                 >
                                                     {item.name}
                                                 </h4>
@@ -211,7 +158,7 @@ export function CartDrawer({ shop, cart, isOpen, onClose, onCartUpdate }: CartDr
                                                 )}
                                             </div>
                                             <button
-                                                onClick={() => removeItem(item.id)}
+                                                onClick={() => handleRemove(item.id)}
                                                 className="shrink-0 p-1"
                                                 style={{ color: 'var(--color-text-muted, #aaa)' }}
                                             >
@@ -230,23 +177,23 @@ export function CartDrawer({ shop, cart, isOpen, onClose, onCartUpdate }: CartDr
                                                 }}
                                             >
                                                 <button
-                                                    onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                                                    onClick={() => handleUpdate(item.id, Math.max(1, item.quantity - 1))}
                                                     className="flex h-7 w-7 items-center justify-center text-sm"
-                                                    style={{ color: 'var(--color-text, #1a1a1a)' }}
+                                                    style={{ color: 'var(--color-foreground, #1a1a1a)' }}
                                                     disabled={item.quantity <= 1}
                                                 >
                                                     &minus;
                                                 </button>
                                                 <span
                                                     className="flex h-7 w-8 items-center justify-center text-xs font-medium"
-                                                    style={{ color: 'var(--color-text, #1a1a1a)' }}
+                                                    style={{ color: 'var(--color-foreground, #1a1a1a)' }}
                                                 >
                                                     {item.quantity}
                                                 </span>
                                                 <button
-                                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                                    onClick={() => handleUpdate(item.id, item.quantity + 1)}
                                                     className="flex h-7 w-7 items-center justify-center text-sm"
-                                                    style={{ color: 'var(--color-text, #1a1a1a)' }}
+                                                    style={{ color: 'var(--color-foreground, #1a1a1a)' }}
                                                     disabled={item.max_quantity !== null && item.quantity >= item.max_quantity}
                                                 >
                                                     +
@@ -254,7 +201,7 @@ export function CartDrawer({ shop, cart, isOpen, onClose, onCartUpdate }: CartDr
                                             </div>
                                             <span
                                                 className="text-sm font-semibold"
-                                                style={{ color: 'var(--color-text, #1a1a1a)' }}
+                                                style={{ color: 'var(--color-foreground, #1a1a1a)' }}
                                             >
                                                 {formatCurrency(item.price * item.quantity, shop.currency_symbol, shop.currency_decimals)}
                                             </span>
@@ -272,24 +219,24 @@ export function CartDrawer({ shop, cart, isOpen, onClose, onCartUpdate }: CartDr
                             <span className="text-sm" style={{ color: 'var(--color-text-muted, #666)' }}>Subtotal</span>
                             <span
                                 className="text-base font-semibold"
-                                style={{ color: 'var(--color-text, #1a1a1a)' }}
+                                style={{ color: 'var(--color-foreground, #1a1a1a)' }}
                             >
                                 {formatCurrency(summary.subtotal, shop.currency_symbol, shop.currency_decimals)}
                             </span>
                         </div>
                         <a
                             href={`/store/${shop.slug}/checkout`}
-                            className="block w-full py-3 text-center text-sm font-semibold uppercase tracking-wider text-white transition-opacity hover:opacity-90"
+                            className="block w-full py-3 text-center text-sm font-semibold uppercase tracking-wider text-white"
                             style={{
                                 backgroundColor: 'var(--color-primary, #1a1a1a)',
-                                borderRadius: 'var(--radius, 8px)',
+                                borderRadius: 'var(--btn-radius, var(--radius, 8px))',
                             }}
                         >
                             Checkout
                         </a>
                         <button
-                            onClick={onClose}
-                            className="mt-2 block w-full py-2 text-center text-sm transition-colors"
+                            onClick={closeDrawer}
+                            className="mt-2 block w-full py-2 text-center text-sm"
                             style={{ color: 'var(--color-text-muted, #666)' }}
                         >
                             Continue Shopping

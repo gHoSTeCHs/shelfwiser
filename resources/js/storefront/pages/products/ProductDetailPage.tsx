@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { storefrontFetch } from '../../lib/fetch-client';
 import { formatCurrency } from '../../lib/formatters';
+import { useCartStore } from '../../stores/cart-store';
 import type {
     FixedPageProps,
     ProductDetailPageData,
@@ -72,28 +72,21 @@ export function ProductDetailPage({ data, shop }: FixedPageProps) {
     const images = product.images.filter((img) => img.url);
     const activeImage = images[activeImageIndex] ?? images[0] ?? null;
 
+    const cartStore = useCartStore();
+
     async function handleAddToCart() {
         if (!selectedVariant) return;
         setAdding(true);
         setError('');
         setMessage('');
 
-        const result = await storefrontFetch<{ message: string }>(
-            `/store/${shop.slug}/api/cart`,
-            {
-                method: 'POST',
-                json: {
-                    variant_id: selectedVariant.id,
-                    quantity,
-                },
-            },
-        );
+        const result = await cartStore.addItem(selectedVariant.id, quantity);
 
         if (result.ok) {
-            setMessage('Added to cart!');
+            setMessage(result.message ?? 'Added to cart!');
             setTimeout(() => setMessage(''), 3000);
         } else {
-            setError(result.data?.message ?? 'Failed to add to cart.');
+            setError(result.message ?? 'Failed to add to cart.');
         }
         setAdding(false);
     }

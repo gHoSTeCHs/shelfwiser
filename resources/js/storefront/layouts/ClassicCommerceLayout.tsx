@@ -1,4 +1,4 @@
-import React, { useState, useCallback, Children } from 'react';
+import React, { useState, useEffect, Children } from 'react';
 import { StandardHeader } from './components/headers/StandardHeader';
 import { CenteredLogoHeader } from './components/headers/CenteredLogoHeader';
 import { MultiColumnFooter } from './components/footers/MultiColumnFooter';
@@ -6,7 +6,8 @@ import { MinimalFooter } from './components/footers/MinimalFooter';
 import { CenteredFooter } from './components/footers/CenteredFooter';
 import { SearchBar } from '../components/SearchBar';
 import { CartDrawer } from '../components/CartDrawer';
-import type { LayoutProps, CartSummary, ResolvedTheme } from '../types/storefront';
+import { useCartStore } from '../stores/cart-store';
+import type { LayoutProps, ResolvedTheme } from '../types/storefront';
 
 type FooterComponent = React.FC<{ shop: LayoutProps['shop']; navigation: LayoutProps['navigation']; theme: ResolvedTheme }>;
 
@@ -27,23 +28,22 @@ export function ClassicCommerceLayout({
     children,
 }: LayoutProps) {
     const [searchOpen, setSearchOpen] = useState(false);
-    const [cartOpen, setCartOpen] = useState(false);
-    const [cart, setCart] = useState<CartSummary>(initialCart);
+    const cartStore = useCartStore();
 
-    const handleCartUpdate = useCallback((summary: CartSummary) => {
-        setCart(summary);
-    }, []);
+    useEffect(() => {
+        cartStore.initialize(shop.slug, initialCart);
+    }, [shop.slug]);
 
     const headerProps = {
         shop,
         navigation,
-        cart,
+        cart: cartStore.summary,
         customer,
         theme,
         isDark: isDark ?? false,
         onToggleDark,
         onSearchOpen: () => setSearchOpen(true),
-        onCartOpen: () => setCartOpen(true),
+        onCartOpen: () => cartStore.openDrawer(),
     };
 
     const Header = theme.header.variant === 'centered_logo' ? CenteredLogoHeader : StandardHeader;
@@ -92,13 +92,7 @@ export function ClassicCommerceLayout({
                 onClose={() => setSearchOpen(false)}
             />
 
-            <CartDrawer
-                shop={shop}
-                cart={cart}
-                isOpen={cartOpen}
-                onClose={() => setCartOpen(false)}
-                onCartUpdate={handleCartUpdate}
-            />
+            <CartDrawer shop={shop} />
         </div>
     );
 }
