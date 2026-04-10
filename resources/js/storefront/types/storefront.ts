@@ -395,3 +395,34 @@ export interface ServicesPageData {
 export interface ServiceDetailPageData {
     service: ServiceItemData | null;
 }
+
+export interface ProductImageData {
+    id: number;
+    url: string | null;
+    alt: string | null;
+}
+
+export interface ProductVariantDetailData {
+    id: number;
+    name: string;
+    sku: string | null;
+    price: number;
+    compare_at_price: number | null;
+    stock_quantity: number | null;
+    is_active: boolean;
+}
+
+export interface ProductDetailData {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    category_name: string | null;
+    is_new: boolean;
+    images: ProductImageData[];
+    variants: ProductVariantDetailData[];
+}
+
+export interface ProductDetailPageData {
+    product: ProductDetailData | null;
+}

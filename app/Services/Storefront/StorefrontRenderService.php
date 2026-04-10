@@ -359,6 +359,7 @@ class StorefrontRenderService
             'account-profile' => 'My Profile',
             'services' => 'Services',
             'service-detail' => 'Service Details',
+            'product-detail' => 'Product Details',
             'checkout-success' => 'Order Confirmed',
             'checkout-pending' => 'Payment Pending',
         ];
@@ -388,6 +389,7 @@ class StorefrontRenderService
             'account-profile' => $this->loadAccountProfileData($customer),
             'services' => $this->loadServicesData($shop),
             'service-detail' => $this->loadServiceDetailData($shop, $params),
+            'product-detail' => $this->loadProductDetailData($shop, $params),
             default => [],
         };
     }
@@ -616,6 +618,61 @@ class StorefrontRenderService
 
         return [
             'service' => $this->serializeService($service),
+        ];
+    }
+
+    private function loadProductDetailData(Shop $shop, array $params): array
+    {
+        $slug = $params['slug'] ?? null;
+
+        if (! $slug) {
+            return ['product' => null];
+        }
+
+        $product = \App\Models\Product::query()
+            ->where('tenant_id', $shop->tenant_id)
+            ->where('shop_id', $shop->id)
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->with([
+                'variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true),
+                'category',
+                'images',
+            ])
+            ->firstOrFail();
+
+        return [
+            'product' => $this->serializeProductDetail($product),
+        ];
+    }
+
+    private function serializeProductDetail(\App\Models\Product $product): array
+    {
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'slug' => $product->slug,
+            'description' => $product->description,
+            'category_name' => $product->category?->name,
+            'is_new' => $product->created_at?->isAfter(now()->subDays(14)) ?? false,
+            'images' => $product->relationLoaded('images')
+                ? $product->images->map(fn ($image) => [
+                    'id' => $image->id,
+                    'url' => $image->url ?? null,
+                    'alt' => $image->alt_text ?? null,
+                ])->all()
+                : [],
+            'variants' => $product->relationLoaded('variants')
+                ? $product->variants->map(fn ($variant) => [
+                    'id' => $variant->id,
+                    'name' => $variant->name,
+                    'sku' => $variant->sku,
+                    'price' => (float) $variant->price,
+                    'compare_at_price' => $variant->compare_at_price ? (float) $variant->compare_at_price : null,
+                    'stock_quantity' => $variant->available_stock ?? null,
+                    'is_active' => $variant->is_active,
+                ])->all()
+                : [],
         ];
     }
 

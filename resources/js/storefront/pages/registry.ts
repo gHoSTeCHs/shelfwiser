@@ -13,6 +13,7 @@ import { LoginPage } from './auth/Login';
 import { RegisterPage } from './auth/Register';
 import { ResetPasswordPage } from './auth/ResetPassword';
 import { VerifyEmailPage } from './auth/VerifyEmail';
+import { ProductDetailPage } from './products/ProductDetailPage';
 import { ServiceDetailPage } from './services/ServiceDetailPage';
 import { ServiceListingPage } from './services/ServiceListingPage';
 
@@ -32,4 +33,5 @@ export const fixedPageRegistry: Record<string, FC<FixedPageProps>> = {
     'account-profile': ProfilePage,
     services: ServiceListingPage,
     'service-detail': ServiceDetailPage,
+    'product-detail': ProductDetailPage,
 };

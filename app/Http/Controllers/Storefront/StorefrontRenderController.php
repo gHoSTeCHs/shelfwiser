@@ -27,7 +27,7 @@ class StorefrontRenderController extends Controller
 
     public function productDetail(Shop $shop, string $slug): View
     {
-        return $this->renderPage($shop, StorefrontPageType::PRODUCT_DETAIL, $slug);
+        return $this->renderFixedPage($shop, 'product-detail', ['slug' => $slug]);
     }
 
     public function about(Shop $shop): View
