@@ -30,6 +30,20 @@
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    {{-- Prevent dark mode flash: set bg/color before any paint --}}
+    <script>
+        (function() {
+            var m = localStorage.getItem('storefront-color-mode');
+            var d = m === 'dark' || (!m && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.style.colorScheme = d ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-mode', d ? 'dark' : 'light');
+        })();
+    </script>
+    <style>
+        html[data-mode="dark"] body { background: {{ $pageData['theme']['colors_dark']['background'] ?? '#0f1117' }}; color: {{ $pageData['theme']['colors_dark']['foreground'] ?? '#f0f0f2' }}; }
+        html[data-mode="light"] body { background: {{ $pageData['theme']['colors']['background'] ?? '#ffffff' }}; color: {{ $pageData['theme']['colors']['foreground'] ?? '#111827' }}; }
+    </style>
+
     @viteReactRefresh
     @vite(['resources/css/storefront.css', 'resources/js/storefront/app.tsx'])
 </head>
