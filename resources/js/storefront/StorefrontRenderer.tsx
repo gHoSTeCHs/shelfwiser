@@ -21,11 +21,16 @@ export function StorefrontRenderer(props: StorefrontPageData) {
     const Layout = templateLayoutRegistry[template.slug];
     const { isDark, toggle } = useDarkMode();
 
-    const darkColors = (theme as unknown as Record<string, unknown>).colors_dark as Record<string, string> | undefined;
+    const pageTheme = theme as unknown as Record<string, unknown>;
+    const darkColors = pageTheme.colors_dark as Record<string, string> | undefined;
+    const darkModeEnabled = Boolean(pageTheme.dark_mode_enabled);
+    const hasDarkSupport = darkModeEnabled && darkColors && Object.keys(darkColors).length > 0;
 
     if (!Layout) {
         return <div>Template not found: {template.slug}</div>;
     }
+
+    const activeDark = hasDarkSupport && isDark;
 
     const layoutProps = {
         shop,
@@ -33,15 +38,15 @@ export function StorefrontRenderer(props: StorefrontPageData) {
         cart,
         theme,
         customer,
-        isDark,
-        onToggleDark: toggle,
+        isDark: activeDark,
+        onToggleDark: hasDarkSupport ? toggle : undefined,
     };
 
     if (fixedPage) {
         const FixedPage = fixedPageRegistry[fixedPage];
         if (!FixedPage) return <div>Page not found: {fixedPage}</div>;
         return (
-            <ThemeProvider theme={theme} template={template} darkMode={isDark} darkColors={darkColors}>
+            <ThemeProvider theme={theme} template={template} darkMode={activeDark} darkColors={darkColors}>
                 <AnimationProvider template={template} animation={theme.animation}>
                     <Layout {...layoutProps}>
                         <FixedPage
@@ -57,7 +62,7 @@ export function StorefrontRenderer(props: StorefrontPageData) {
     }
 
     return (
-        <ThemeProvider theme={theme} template={template} darkMode={isDark} darkColors={darkColors}>
+        <ThemeProvider theme={theme} template={template} darkMode={activeDark} darkColors={darkColors}>
             <AnimationProvider template={template} animation={theme.animation}>
                 <Layout {...layoutProps}>
                     {(sections ?? [])

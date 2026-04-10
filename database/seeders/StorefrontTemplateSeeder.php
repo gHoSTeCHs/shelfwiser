@@ -87,6 +87,13 @@ class StorefrontTemplateSeeder extends Seeder
                         ['name' => 'Oshodi Night', 'primary' => '#10B981', 'secondary' => '#059669', 'accent' => '#F59E0B', 'background' => '#0F172A', 'surface' => '#1E293B', 'text' => '#F1F5F9', 'text_muted' => '#94A3B8'],
                     ],
                 ],
+                'colors_dark' => [
+                    'primary' => '#ff6b81', 'primary-foreground' => '#ffffff', 'accent' => '#fbbf24',
+                    'background' => '#0c0c14', 'foreground' => '#f5f5f7', 'card-bg' => '#161621',
+                    'surface' => '#111119', 'border' => '#2a2a3a', 'text' => '#d1d1d9',
+                    'text-muted' => '#8888a0', 'muted-foreground' => '#8888a0',
+                    'footer-bg' => '#060609', 'footer-text' => '#d1d1d9',
+                ],
                 'typography' => [
                     'heading_font' => 'DM Sans',
                     'body_font' => 'DM Sans',
@@ -203,6 +210,13 @@ class StorefrontTemplateSeeder extends Seeder
                         ['name' => 'Sunday Rice', 'primary' => '#A16207', 'secondary' => '#713F12', 'accent' => '#16A34A', 'background' => '#FEFCE8', 'surface' => '#FEF9C3', 'text' => '#1C1917', 'text_muted' => '#78716C'],
                     ],
                 ],
+                'colors_dark' => [
+                    'primary' => '#fb923c', 'accent' => '#ef4444',
+                    'background' => '#141110', 'foreground' => '#fef3c7', 'card-bg' => '#1f1b17',
+                    'surface' => '#1a1611', 'border' => '#3d3428', 'text' => '#e8d5b8',
+                    'text-muted' => '#a08968', 'muted-foreground' => '#a08968',
+                    'footer-bg' => '#0a0908', 'footer-text' => '#e8d5b8',
+                ],
                 'typography' => [
                     'heading_font' => 'Nunito',
                     'body_font' => 'Nunito Sans',
@@ -285,6 +299,13 @@ class StorefrontTemplateSeeder extends Seeder
                         ['name' => 'Gwarimpa Rose', 'primary' => '#BE185D', 'secondary' => '#9D174D', 'accent' => '#0D9488', 'background' => '#FFF1F2', 'surface' => '#FFE4E6', 'text' => '#1C1917', 'text_muted' => '#78716C'],
                         ['name' => 'FCT Trust', 'primary' => '#1D4ED8', 'secondary' => '#1E3A8A', 'accent' => '#059669', 'background' => '#FFFFFF', 'surface' => '#EFF6FF', 'text' => '#0F172A', 'text_muted' => '#64748B'],
                     ],
+                ],
+                'colors_dark' => [
+                    'primary' => '#22c55e', 'accent' => '#10b981',
+                    'background' => '#0a120e', 'foreground' => '#ecfdf5', 'card-bg' => '#0f1f17',
+                    'surface' => '#0c1a12', 'border' => '#1a3a28', 'text' => '#b8e0cc',
+                    'text-muted' => '#6da888', 'muted-foreground' => '#6da888',
+                    'footer-bg' => '#060e09', 'footer-text' => '#b8e0cc',
                 ],
                 'typography' => [
                     'heading_font' => 'Plus Jakarta Sans',
@@ -378,6 +399,13 @@ class StorefrontTemplateSeeder extends Seeder
                         ['name' => 'Slot Clean', 'primary' => '#0F172A', 'secondary' => '#1E293B', 'accent' => '#3B82F6', 'background' => '#FFFFFF', 'surface' => '#F1F5F9', 'text' => '#0F172A', 'text_muted' => '#64748B'],
                     ],
                 ],
+                'colors_dark' => [
+                    'primary' => '#38bdf8', 'accent' => '#0ea5e9',
+                    'background' => '#0b1120', 'foreground' => '#e2e8f0', 'card-bg' => '#111a2e',
+                    'surface' => '#0e1526', 'border' => '#1e293b', 'text' => '#b0bfd0',
+                    'text-muted' => '#64748b', 'muted-foreground' => '#64748b',
+                    'footer-bg' => '#060c18', 'footer-text' => '#94a3b8',
+                ],
                 'typography' => [
                     'heading_font' => 'Outfit',
                     'body_font' => 'Source Sans 3',
@@ -464,6 +492,13 @@ class StorefrontTemplateSeeder extends Seeder
                         ['name' => 'Coral Island', 'primary' => '#BE123C', 'secondary' => '#9F1239', 'accent' => '#0D9488', 'background' => '#FFF1F2', 'surface' => '#FFE4E6', 'text' => '#1C1917', 'text_muted' => '#78716C'],
                         ['name' => 'Midnight Glam', 'primary' => '#D4A574', 'secondary' => '#A67C52', 'accent' => '#F59E0B', 'background' => '#0C0A09', 'surface' => '#1C1917', 'text' => '#FAFAF9', 'text_muted' => '#A8A29E'],
                     ],
+                ],
+                'colors_dark' => [
+                    'primary' => '#14b8a6', 'secondary' => '#fb7185', 'accent' => '#fb7185',
+                    'background' => '#0a1210', 'foreground' => '#f0fdfa', 'card-bg' => '#0f1e1a',
+                    'surface' => '#0c1915', 'border' => '#1a3830', 'text' => '#b0d8cc',
+                    'text-muted' => '#6aaa96', 'muted-foreground' => '#6aaa96',
+                    'footer-bg' => '#060e0b', 'footer-text' => '#b0d8cc',
                 ],
                 'typography' => [
                     'heading_font' => 'Cormorant Garamond',
@@ -557,6 +592,13 @@ class StorefrontTemplateSeeder extends Seeder
                         ['name' => 'Apapa Industrial', 'primary' => '#0F766E', 'secondary' => '#115E59', 'accent' => '#B45309', 'background' => '#FFFFFF', 'surface' => '#F0FDFA', 'text' => '#0F172A', 'text_muted' => '#64748B'],
                         ['name' => 'Idumota Market', 'primary' => '#B91C1C', 'secondary' => '#991B1B', 'accent' => '#1D4ED8', 'background' => '#FFFFFF', 'surface' => '#FEF2F2', 'text' => '#0F172A', 'text_muted' => '#64748B'],
                     ],
+                ],
+                'colors_dark' => [
+                    'primary' => '#3b82f6', 'accent' => '#0ea5e9',
+                    'background' => '#0c1017', 'foreground' => '#e2e8f0', 'card-bg' => '#121824',
+                    'surface' => '#0f141e', 'border' => '#1e293b', 'text' => '#94a3b8',
+                    'text-muted' => '#64748b', 'muted-foreground' => '#64748b',
+                    'footer-bg' => '#070a10', 'footer-text' => '#94a3b8',
                 ],
                 'typography' => [
                     'heading_font' => 'Manrope',

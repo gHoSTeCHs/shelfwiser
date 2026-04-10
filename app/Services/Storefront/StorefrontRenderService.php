@@ -103,6 +103,7 @@ class StorefrontRenderService
         $themeConfig = $config->theme?->theme_config ?? [];
 
         $colors = $this->resolveColors($themeConfig, $config);
+        $colorsDark = $this->resolveColorsDark($themeConfig, $config);
         $typography = $this->resolveTypography($themeConfig, $config);
         $components = array_merge($themeConfig['components'] ?? [], $config->component_overrides ?? []);
         $feel = array_merge($themeConfig['feel'] ?? [], $config->feel_overrides ?? []);
@@ -112,6 +113,9 @@ class StorefrontRenderService
 
         return [
             'colors' => $colors,
+            'colors_dark' => $colorsDark,
+            'dark_mode_enabled' => (bool) $config->dark_mode_enabled,
+            'dark_mode_strategy' => $config->dark_mode_strategy ?? 'system',
             'typography' => $typography,
             'components' => $components,
             'feel' => $feel,
@@ -232,6 +236,42 @@ class StorefrontRenderService
 
         if (! empty($config->color_overrides)) {
             $colors = array_merge($colors, $config->color_overrides);
+        }
+
+        return $colors;
+    }
+
+    private function resolveColorsDark(array $themeConfig, StorefrontConfig $config): array
+    {
+        if (! $config->dark_mode_enabled) {
+            return [];
+        }
+
+        $presets = $themeConfig['palette_dark']['presets'] ?? [];
+        $presetName = $config->color_preset_dark;
+
+        $colors = [];
+
+        if ($presetName && ! empty($presets)) {
+            foreach ($presets as $preset) {
+                if (($preset['name'] ?? '') === $presetName) {
+                    $colors = collect($preset)->except('name')->all();
+                    break;
+                }
+            }
+        }
+
+        if (empty($colors) && ! empty($presets)) {
+            $first = $presets[0] ?? [];
+            $colors = collect($first)->except('name')->all();
+        }
+
+        if (empty($colors)) {
+            $colors = $themeConfig['colors_dark'] ?? [];
+        }
+
+        if (! empty($config->color_overrides_dark)) {
+            $colors = array_merge($colors, $config->color_overrides_dark);
         }
 
         return $colors;

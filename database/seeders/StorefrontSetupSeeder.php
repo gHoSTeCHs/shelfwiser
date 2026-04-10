@@ -50,6 +50,8 @@ class StorefrontSetupSeeder extends Seeder
                     'theme_id' => $theme->id,
                     'is_published' => true,
                     'published_at' => now(),
+                    'dark_mode_enabled' => true,
+                    'dark_mode_strategy' => 'system',
                     'global_announcement' => ['text' => 'Free delivery on orders over ₦10,000!', 'enabled' => true],
                     'seo_defaults' => [
                         'title' => $shop->name.' — Online Store',

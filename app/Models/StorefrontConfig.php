@@ -18,6 +18,10 @@ class StorefrontConfig extends Model
         'theme_id',
         'color_preset',
         'color_overrides',
+        'color_preset_dark',
+        'color_overrides_dark',
+        'dark_mode_enabled',
+        'dark_mode_strategy',
         'typography_preset',
         'typography_overrides',
         'component_overrides',
@@ -39,6 +43,8 @@ class StorefrontConfig extends Model
     {
         return [
             'color_overrides' => 'array',
+            'color_overrides_dark' => 'array',
+            'dark_mode_enabled' => 'boolean',
             'typography_overrides' => 'array',
             'component_overrides' => 'array',
             'feel_overrides' => 'array',
