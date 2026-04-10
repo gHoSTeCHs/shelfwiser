@@ -1,5 +1,4 @@
-import type React from 'react';
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback, Children } from 'react';
 import { StandardHeader } from './components/headers/StandardHeader';
 import { CenteredLogoHeader } from './components/headers/CenteredLogoHeader';
 import { MultiColumnFooter } from './components/footers/MultiColumnFooter';
@@ -23,6 +22,8 @@ export function ClassicCommerceLayout({
     cart: initialCart,
     theme,
     customer,
+    isDark,
+    onToggleDark,
     children,
 }: LayoutProps) {
     const [searchOpen, setSearchOpen] = useState(false);
@@ -39,6 +40,8 @@ export function ClassicCommerceLayout({
         cart,
         customer,
         theme,
+        isDark: isDark ?? false,
+        onToggleDark,
         onSearchOpen: () => setSearchOpen(true),
         onCartOpen: () => setCartOpen(true),
     };
@@ -75,7 +78,11 @@ export function ClassicCommerceLayout({
 
             <Header {...headerProps} />
 
-            <main className="flex-1">{children}</main>
+            <main className="flex-1">
+                <SectionDividerWrapper dividerStyle={theme.feel.divider_style as string | undefined}>
+                    {children}
+                </SectionDividerWrapper>
+            </main>
 
             <Footer shop={shop} navigation={navigation} theme={theme} />
 
@@ -93,5 +100,52 @@ export function ClassicCommerceLayout({
                 onCartUpdate={handleCartUpdate}
             />
         </div>
+    );
+}
+
+function SectionDividerWrapper({
+    dividerStyle,
+    children,
+}: {
+    dividerStyle?: string;
+    children: React.ReactNode;
+}) {
+    if (!dividerStyle || dividerStyle === 'none') {
+        return <>{children}</>;
+    }
+
+    const childArray = Children.toArray(children).filter(Boolean);
+
+    const divider = dividerStyle === 'dots' ? (
+        <div
+            className="mx-auto px-5 sm:px-8"
+            style={{ maxWidth: 'var(--container-width, 1280px)' }}
+        >
+            <div
+                style={{
+                    height: 2,
+                    backgroundImage: 'radial-gradient(circle, var(--color-border, #d1d5db) 1px, transparent 1px)',
+                    backgroundSize: '12px 2px',
+                }}
+            />
+        </div>
+    ) : (
+        <div
+            className="mx-auto px-5 sm:px-8"
+            style={{ maxWidth: 'var(--container-width, 1280px)' }}
+        >
+            <div style={{ height: 1, backgroundColor: 'var(--color-border, #e5e7eb)' }} />
+        </div>
+    );
+
+    return (
+        <>
+            {childArray.map((child, i) => (
+                <React.Fragment key={i}>
+                    {child}
+                    {i < childArray.length - 1 && divider}
+                </React.Fragment>
+            ))}
+        </>
     );
 }

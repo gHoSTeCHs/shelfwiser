@@ -229,6 +229,7 @@ export function Standard({ config, data }: SectionProps) {
                                             fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)',
                                             fontWeight: 800,
                                             letterSpacing: '-0.03em',
+                                            textTransform: 'var(--heading-transform, none)' as React.CSSProperties['textTransform'],
                                             lineHeight: 1.15,
                                             fontFamily: 'var(--font-heading, sans-serif)',
                                             color: 'var(--color-foreground, #1a1a1a)',
@@ -309,7 +310,7 @@ export function Standard({ config, data }: SectionProps) {
                                             ? 'var(--color-foreground, #111)'
                                             : 'var(--color-primary, #e94560)',
                                         color: '#fff',
-                                        borderRadius: 'var(--radius, 8px)',
+                                        borderRadius: 'var(--btn-radius, var(--radius, 8px))',
                                         fontFamily: 'var(--font-body, sans-serif)',
                                         letterSpacing: '0.02em',
                                         border: 'none',

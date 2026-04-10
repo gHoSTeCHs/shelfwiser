@@ -7,6 +7,8 @@ interface StandardHeaderProps {
     cart: CartSummary;
     customer: CustomerData | null;
     theme: ResolvedTheme;
+    isDark?: boolean;
+    onToggleDark?: () => void;
     onSearchOpen: () => void;
     onCartOpen: () => void;
 }
@@ -85,6 +87,8 @@ export function StandardHeader({
     cart,
     customer,
     theme,
+    isDark,
+    onToggleDark,
     onSearchOpen,
     onCartOpen,
 }: StandardHeaderProps) {
@@ -189,6 +193,21 @@ export function StandardHeader({
 
                 {/* Action buttons */}
                 <div className="flex items-center gap-0.5">
+                    {onToggleDark && (
+                        <ActionButton onClick={onToggleDark} label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
+                            {isDark ? (
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                    <circle cx="12" cy="12" r="5" />
+                                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+                                </svg>
+                            ) : (
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                    <path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                                </svg>
+                            )}
+                        </ActionButton>
+                    )}
+
                     <ActionButton onClick={onSearchOpen} label="Search">
                         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="11" cy="11" r="8" />

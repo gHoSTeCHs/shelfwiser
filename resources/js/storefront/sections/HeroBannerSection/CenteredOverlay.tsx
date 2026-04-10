@@ -136,7 +136,7 @@ export function CenteredOverlay({ config }: SectionProps) {
                                         letterSpacing: '0.02em',
                                         color: 'var(--color-button-foreground, #ffffff)',
                                         backgroundColor: 'var(--color-primary, #047857)',
-                                        borderRadius: 'var(--radius, 8px)',
+                                        borderRadius: 'var(--btn-radius, var(--radius, 8px))',
                                         textDecoration: 'none',
                                         fontFamily: 'var(--font-body, inherit)',
                                         boxShadow: isCtaHovered
@@ -169,7 +169,7 @@ export function CenteredOverlay({ config }: SectionProps) {
                                         color: '#ffffff',
                                         backgroundColor: isSecondaryHovered ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)',
                                         border: '1px solid rgba(255,255,255,0.25)',
-                                        borderRadius: 'var(--radius, 8px)',
+                                        borderRadius: 'var(--btn-radius, var(--radius, 8px))',
                                         textDecoration: 'none',
                                         fontFamily: 'var(--font-body, inherit)',
                                         backdropFilter: 'blur(8px)',

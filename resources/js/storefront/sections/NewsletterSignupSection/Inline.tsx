@@ -135,7 +135,7 @@ export function Inline({ heading, subheading, placeholder, button_text, shop_slu
                                         ? 'var(--color-foreground, #111)'
                                         : 'var(--color-primary, #e94560)',
                                     color: '#fff',
-                                    borderRadius: 'calc(var(--radius, 8px) - 2px)',
+                                    borderRadius: 'var(--btn-radius, var(--radius, 8px))',
                                     fontFamily: 'var(--font-body, sans-serif)',
                                     opacity: status === 'loading' ? 0.7 : 1,
                                     transition: 'background-color 0.2s ease, opacity 0.2s ease',

@@ -508,3 +508,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+
+if (app()->environment('local')) {
+    Route::get('/dev/theme-catalog', function () {
+        $templates = require resource_path('data/theme-catalog.php');
+
+        return view('dev.theme-catalog', ['templates' => $templates]);
+    })->name('dev.theme-catalog');
+
+    Route::get('/dev/catalog', fn () => view('dev.catalog-app'))->name('dev.catalog');
+}

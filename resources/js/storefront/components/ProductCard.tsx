@@ -117,11 +117,12 @@ function DefaultCard({ product, shop, onQuickAdd }: CardVariantProps) {
             <div
                 className="relative mb-4 overflow-hidden"
                 style={{
-                    borderRadius: 'var(--radius, 8px)',
+                    borderRadius: 'var(--img-radius, var(--radius, 8px))',
+                    border: 'var(--card-border, 1px solid transparent)',
                     aspectRatio: '3/4',
                     boxShadow: isHovered
                         ? '0 12px 40px -8px rgba(0,0,0,0.15), 0 4px 12px -4px rgba(0,0,0,0.08)'
-                        : '0 1px 3px rgba(0,0,0,0.06)',
+                        : 'var(--shadow-depth, 0 1px 3px rgba(0,0,0,0.06))',
                     transition: 'box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
             >
@@ -342,13 +343,13 @@ function DetailedCard({ product, shop, onQuickAdd }: CardVariantProps) {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             style={{
-                borderRadius: 'var(--radius, 8px)',
-                border: '1px solid var(--color-border, #e5e7eb)',
+                borderRadius: 'var(--img-radius, var(--radius, 8px))',
+                border: 'var(--card-border, 1px solid var(--color-border, #e5e7eb))',
                 backgroundColor: 'var(--color-background, #fff)',
                 boxShadow: isHovered
                     ? '0 12px 40px -8px rgba(0,0,0,0.12), 0 0 0 1px var(--color-primary, #047857)'
-                    : '0 1px 3px rgba(0,0,0,0.04)',
-                borderColor: isHovered ? 'var(--color-primary, #047857)' : 'var(--color-border, #e5e7eb)',
+                    : 'var(--shadow-depth, 0 1px 3px rgba(0,0,0,0.04))',
+                borderColor: isHovered ? 'var(--color-primary, #047857)' : undefined,
                 transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
         >

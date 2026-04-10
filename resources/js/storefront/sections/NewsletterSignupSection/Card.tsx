@@ -128,7 +128,7 @@ export function Card({ heading, subheading, placeholder, button_text, shop_slug 
                                     ? 'var(--color-foreground, #000)'
                                     : 'rgba(0,0,0,0.85)',
                                 color: '#fff',
-                                borderRadius: 'var(--radius, 8px)',
+                                borderRadius: 'var(--btn-radius, var(--radius, 8px))',
                                 fontFamily: 'var(--font-body, sans-serif)',
                                 letterSpacing: '0.01em',
                                 opacity: status === 'loading' ? 0.7 : 1,

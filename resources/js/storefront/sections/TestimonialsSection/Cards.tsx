@@ -160,6 +160,7 @@ export function Cards({ config }: SectionProps) {
                                         fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)',
                                         fontWeight: 800,
                                         letterSpacing: '-0.03em',
+                                        textTransform: 'var(--heading-transform, none)' as React.CSSProperties['textTransform'],
                                         fontFamily: 'var(--font-heading, sans-serif)',
                                         color: 'var(--color-foreground, #1a1a1a)',
                                     }}

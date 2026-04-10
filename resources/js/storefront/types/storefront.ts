@@ -219,6 +219,8 @@ export interface LayoutProps {
     cart: CartSummary;
     theme: ResolvedTheme;
     customer: CustomerData | null;
+    isDark?: boolean;
+    onToggleDark?: () => void;
     children: ReactNode;
 }
 

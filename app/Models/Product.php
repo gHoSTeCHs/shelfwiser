@@ -142,6 +142,15 @@ class Product extends Model
         return $this->morphMany(Image::class, 'imageable');
     }
 
+    public function getPrimaryImageUrlAttribute(): ?string
+    {
+        $primary = $this->relationLoaded('images')
+            ? $this->images->firstWhere('is_primary', true) ?? $this->images->first()
+            : $this->images()->where('is_primary', true)->first() ?? $this->images()->first();
+
+        return $primary?->url;
+    }
+
     public function supplierCatalogItem(): HasOne
     {
         return $this->hasOne(SupplierCatalogItem::class);

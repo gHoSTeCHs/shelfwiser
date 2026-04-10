@@ -99,17 +99,33 @@ class CategoryGridSection implements StorefrontSectionInterface
                 ->where('tenant_id', $shop->tenant_id)
                 ->whereIn('id', $config['manual_category_ids'])
                 ->withCount(['products' => fn ($q) => $q->where('shop_id', $shop->id)->where('is_active', true)])
+                ->with('images')
                 ->get()
-                ->toArray();
+                ->map(fn ($c) => $this->serializeCategory($c))
+                ->all();
 
             return ['categories' => $categories];
         }
 
         $categories = $this->storefrontService->getCategories($shop)
             ->take($config['max_items'] ?? 6)
-            ->toArray();
+            ->each(fn ($c) => $c->loadMissing('images'))
+            ->map(fn ($c) => $this->serializeCategory($c))
+            ->all();
 
         return ['categories' => $categories];
+    }
+
+    private function serializeCategory(ProductCategory $category): array
+    {
+        return [
+            'id' => $category->id,
+            'name' => $category->name,
+            'slug' => $category->slug,
+            'description' => $category->description,
+            'image' => $category->image_url,
+            'product_count' => $category->products_count ?? 0,
+        ];
     }
 
     public function allowedPageTypes(): array

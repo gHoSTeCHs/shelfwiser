@@ -3,6 +3,7 @@ import { AnimationProvider } from './AnimationProvider';
 import { templateLayoutRegistry } from './layouts/registry';
 import { sectionRegistry } from './sections/registry';
 import { fixedPageRegistry } from './pages/registry';
+import { useDarkMode } from './hooks/useDarkMode';
 import type { StorefrontPageData, SectionData } from './types/storefront';
 
 export function StorefrontRenderer(props: StorefrontPageData) {
@@ -18,18 +19,29 @@ export function StorefrontRenderer(props: StorefrontPageData) {
         fixedPageData,
     } = props;
     const Layout = templateLayoutRegistry[template.slug];
+    const { isDark, toggle } = useDarkMode();
+
+    const darkColors = (theme as unknown as Record<string, unknown>).colors_dark as Record<string, string> | undefined;
 
     if (!Layout) {
         return <div>Template not found: {template.slug}</div>;
     }
 
-    const layoutProps = { shop, navigation, cart, theme, customer };
+    const layoutProps = {
+        shop,
+        navigation,
+        cart,
+        theme,
+        customer,
+        isDark,
+        onToggleDark: toggle,
+    };
 
     if (fixedPage) {
         const FixedPage = fixedPageRegistry[fixedPage];
         if (!FixedPage) return <div>Page not found: {fixedPage}</div>;
         return (
-            <ThemeProvider theme={theme} template={template}>
+            <ThemeProvider theme={theme} template={template} darkMode={isDark} darkColors={darkColors}>
                 <AnimationProvider template={template} animation={theme.animation}>
                     <Layout {...layoutProps}>
                         <FixedPage
@@ -45,7 +57,7 @@ export function StorefrontRenderer(props: StorefrontPageData) {
     }
 
     return (
-        <ThemeProvider theme={theme} template={template}>
+        <ThemeProvider theme={theme} template={template} darkMode={isDark} darkColors={darkColors}>
             <AnimationProvider template={template} animation={theme.animation}>
                 <Layout {...layoutProps}>
                     {(sections ?? [])

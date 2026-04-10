@@ -245,6 +245,7 @@ export function GallerySection({ config, variant }: SectionProps) {
                                     fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)',
                                     fontWeight: 800,
                                     letterSpacing: '-0.03em',
+                                        textTransform: 'var(--heading-transform, none)' as React.CSSProperties['textTransform'],
                                     color: 'var(--color-foreground, #1a1a1a)',
                                     fontFamily: 'var(--font-heading, sans-serif)',
                                 }}

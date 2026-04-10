@@ -139,7 +139,7 @@ export function Slideshow({ config }: SectionProps) {
                                         letterSpacing: '0.02em',
                                         color: 'var(--color-button-foreground, #ffffff)',
                                         backgroundColor: 'var(--color-primary, #047857)',
-                                        borderRadius: 'var(--radius, 8px)',
+                                        borderRadius: 'var(--btn-radius, var(--radius, 8px))',
                                         textDecoration: 'none',
                                         fontFamily: 'var(--font-body, inherit)',
                                         boxShadow: '0 4px 15px -2px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
