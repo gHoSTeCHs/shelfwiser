@@ -60,13 +60,13 @@ class StorefrontSetupSeeder extends Seeder
                 ]
             );
 
-            $this->createPages($config, $shop);
+            $this->createPages($config, $shop, $theme->slug);
 
             $this->command->info("Storefront enabled for '{$shop->name}' with theme '{$theme->name}'.");
         }
     }
 
-    private function createPages(StorefrontConfig $config, Shop $shop): void
+    private function createPages(StorefrontConfig $config, Shop $shop, string $themeSlug): void
     {
         $pages = [
             [
@@ -74,7 +74,7 @@ class StorefrontSetupSeeder extends Seeder
                 'slug' => 'home',
                 'title' => 'Home',
                 'sort_order' => 1,
-                'sections' => $this->homeSections($shop),
+                'sections' => $this->homeSections($shop, $themeSlug),
             ],
             [
                 'page_type' => StorefrontPageType::PRODUCTS,
@@ -102,14 +102,14 @@ class StorefrontSetupSeeder extends Seeder
                 'slug' => 'about',
                 'title' => 'About Us',
                 'sort_order' => 3,
-                'sections' => $this->aboutSections($shop),
+                'sections' => $this->aboutSections($shop, $themeSlug),
             ],
             [
                 'page_type' => StorefrontPageType::CONTACT,
                 'slug' => 'contact',
                 'title' => 'Contact',
                 'sort_order' => 4,
-                'sections' => $this->contactSections($shop),
+                'sections' => $this->contactSections($shop, $themeSlug),
             ],
         ];
 
@@ -132,13 +132,55 @@ class StorefrontSetupSeeder extends Seeder
         }
     }
 
-    private function homeSections(Shop $shop): array
+    private function themeVariants(string $themeSlug): array
     {
+        return match ($themeSlug) {
+            'lagos-express' => [
+                'hero' => 'centered_overlay', 'featured' => 'standard_grid', 'categories' => 'image_above',
+                'testimonials' => 'grid', 'newsletter' => 'inline', 'image_text' => 'side_by_side',
+                'contact' => 'side_by_side', 'faq' => 'accordion',
+            ],
+            'sunshine-market' => [
+                'hero' => 'slideshow', 'featured' => 'carousel', 'categories' => 'chips',
+                'testimonials' => 'carousel', 'newsletter' => 'stacked', 'image_text' => 'stacked',
+                'contact' => 'stacked', 'faq' => 'accordion',
+            ],
+            'abuja-fresh' => [
+                'hero' => 'split_image', 'featured' => 'spotlight_plus_grid', 'categories' => 'icon_grid',
+                'testimonials' => 'single_spotlight', 'newsletter' => 'inline', 'image_text' => 'side_by_side',
+                'contact' => 'side_by_side', 'faq' => 'accordion',
+            ],
+            'crystal-clear' => [
+                'hero' => 'minimal_text', 'featured' => 'horizontal_scroll', 'categories' => 'image_overlay',
+                'testimonials' => 'single_spotlight', 'newsletter' => 'stacked', 'image_text' => 'side_by_side',
+                'contact' => 'stacked', 'faq' => 'accordion',
+            ],
+            'naija-vibrant' => [
+                'hero' => 'asymmetric', 'featured' => 'masonry', 'categories' => 'carousel',
+                'testimonials' => 'grid', 'newsletter' => 'inline', 'image_text' => 'side_by_side',
+                'contact' => 'side_by_side', 'faq' => 'accordion',
+            ],
+            'metro-professional' => [
+                'hero' => 'centered_overlay', 'featured' => 'standard_grid', 'categories' => 'image_above',
+                'testimonials' => 'carousel', 'newsletter' => 'stacked', 'image_text' => 'side_by_side',
+                'contact' => 'side_by_side', 'faq' => 'accordion',
+            ],
+            default => [
+                'hero' => 'centered_overlay', 'featured' => 'standard_grid', 'categories' => 'image_above',
+                'testimonials' => 'grid', 'newsletter' => 'inline', 'image_text' => 'side_by_side',
+                'contact' => 'side_by_side', 'faq' => 'accordion',
+            ],
+        };
+    }
+
+    private function homeSections(Shop $shop, string $themeSlug = 'lagos-express'): array
+    {
+        $v = $this->themeVariants($themeSlug);
         return [
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'hero_banner',
-                'variant' => 'centered_overlay',
+                'variant' => $v['hero'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => "Welcome to {$shop->name}",
@@ -154,7 +196,7 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'featured_products',
-                'variant' => 'standard_grid',
+                'variant' => $v['featured'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Featured Products',
@@ -169,7 +211,7 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'category_grid',
-                'variant' => 'image_above',
+                'variant' => $v['categories'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Shop by Category',
@@ -181,7 +223,7 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'image_with_text',
-                'variant' => 'side_by_side',
+                'variant' => $v['image_text'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Our Story',
@@ -194,7 +236,7 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'testimonials',
-                'variant' => 'grid',
+                'variant' => $v['testimonials'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'What Our Customers Say',
@@ -204,7 +246,7 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'newsletter_signup',
-                'variant' => 'inline',
+                'variant' => $v['newsletter'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Stay Updated',
@@ -216,13 +258,15 @@ class StorefrontSetupSeeder extends Seeder
         ];
     }
 
-    private function aboutSections(Shop $shop): array
+    private function aboutSections(Shop $shop, string $themeSlug = 'lagos-express'): array
     {
+        $v = $this->themeVariants($themeSlug);
+
         return [
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'hero_banner',
-                'variant' => 'centered_overlay',
+                'variant' => $v['hero'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Our Story',
@@ -234,7 +278,7 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'image_with_text',
-                'variant' => 'side_by_side',
+                'variant' => $v['image_text'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Built for Nigerian Shoppers',
@@ -247,7 +291,7 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'image_with_text',
-                'variant' => 'side_by_side',
+                'variant' => $v['image_text'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Quality You Can See',
@@ -259,7 +303,7 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'testimonials',
-                'variant' => 'single_spotlight',
+                'variant' => $v['testimonials'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Don\'t Take Our Word For It',
@@ -270,7 +314,7 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'faq',
-                'variant' => 'accordion',
+                'variant' => $v['faq'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Common Questions',
@@ -285,7 +329,7 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'newsletter_signup',
-                'variant' => 'inline',
+                'variant' => $v['newsletter'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Join the Family',
@@ -297,15 +341,16 @@ class StorefrontSetupSeeder extends Seeder
         ];
     }
 
-    private function contactSections(Shop $shop): array
+    private function contactSections(Shop $shop, string $themeSlug = 'lagos-express'): array
     {
+        $v = $this->themeVariants($themeSlug);
         $address = implode(', ', array_filter([$shop->address, $shop->city, $shop->state, $shop->country]));
 
         return [
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'hero_banner',
-                'variant' => 'centered_overlay',
+                'variant' => $v['hero'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => "Let's Talk",
@@ -317,7 +362,7 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'contact_form',
-                'variant' => 'side_by_side',
+                'variant' => $v['contact'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Send Us a Message',
@@ -331,7 +376,7 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'faq',
-                'variant' => 'accordion',
+                'variant' => $v['faq'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Frequently Asked Questions',
@@ -348,7 +393,7 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'image_with_text',
-                'variant' => 'side_by_side',
+                'variant' => $v['image_text'],
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Visit Our Store',
