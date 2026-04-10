@@ -222,13 +222,13 @@ class StorefrontSetupSeeder extends Seeder
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'hero_banner',
-                'variant' => 'minimal_text',
+                'variant' => 'centered_overlay',
                 'is_visible' => true,
                 'config' => [
-                    'heading' => "About {$shop->name}",
-                    'subheading' => 'Our mission is to bring quality products to every Nigerian home',
+                    'heading' => 'Our Story',
+                    'subheading' => "How {$shop->name} became a name you can trust",
                     'image' => self::ABOUT_HERO_IMAGES[array_rand(self::ABOUT_HERO_IMAGES)],
-                    'overlay_opacity' => 0.5,
+                    'overlay_opacity' => 0.55,
                 ],
             ],
             [
@@ -237,19 +237,21 @@ class StorefrontSetupSeeder extends Seeder
                 'variant' => 'side_by_side',
                 'is_visible' => true,
                 'config' => [
-                    'heading' => 'Who We Are',
-                    'text' => "Founded with a passion for quality and service, {$shop->name} has grown from a small local shop to a trusted name in Nigerian retail. We believe every customer deserves an exceptional shopping experience — from browsing to unboxing.",
+                    'heading' => 'Built for Nigerian Shoppers',
+                    'text' => "We started {$shop->name} because we were tired of the same story — products that don't match their photos, deliveries that never arrive, customer service that doesn't care. So we built something different.\n\nEvery product in our store is hand-selected by our team. We test it, we photograph it honestly, and we stand behind it. If something goes wrong, we fix it. No runarounds, no excuses.",
                     'image' => 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=600&fit=crop&q=80',
+                    'cta_text' => 'Shop Our Collection',
+                    'cta_link' => "/store/{$shop->slug}/products",
                 ],
             ],
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'image_with_text',
-                'variant' => 'overlap',
+                'variant' => 'side_by_side',
                 'is_visible' => true,
                 'config' => [
-                    'heading' => 'Our Promise',
-                    'text' => 'Every product we sell is quality-checked, fairly priced, and backed by our customer satisfaction guarantee. If you are not happy, we will make it right. No exceptions.',
+                    'heading' => 'Quality You Can See',
+                    'text' => "We don't bulk-import and hope for the best. Our buying team visits suppliers, inspects production lines, and rejects anything that doesn't meet our standards. When a product reaches your door, it's been through at least three quality checks.\n\nAnd if we got it wrong? Free returns, no questions asked. That's how confident we are.",
                     'image' => 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&h=600&fit=crop&q=80',
                     'image_position' => 'right',
                 ],
@@ -260,8 +262,36 @@ class StorefrontSetupSeeder extends Seeder
                 'variant' => 'single_spotlight',
                 'is_visible' => true,
                 'config' => [
-                    'heading' => 'Trusted by Thousands',
+                    'heading' => 'Don\'t Take Our Word For It',
+                    'subheading' => 'Hear from real customers across Nigeria',
                     'testimonials' => self::TESTIMONIALS,
+                ],
+            ],
+            [
+                'id' => 'sec_'.Str::random(12),
+                'type' => 'faq',
+                'variant' => 'accordion',
+                'is_visible' => true,
+                'config' => [
+                    'heading' => 'Common Questions',
+                    'items' => [
+                        ['question' => 'Where are you located?', 'answer' => "Our main office is in {$shop->city}, {$shop->state}. But we deliver nationwide across Nigeria through our logistics partners."],
+                        ['question' => 'How long does delivery take?', 'answer' => 'Lagos orders typically arrive within 1-3 business days. Other states take 3-7 business days depending on location. We provide tracking for every order.'],
+                        ['question' => 'Do you have a physical store?', 'answer' => "Yes! Visit us at {$shop->address}, {$shop->city}. We're open Monday to Saturday, 9am to 7pm."],
+                        ['question' => 'What makes you different from other online stores?', 'answer' => 'Every product is quality-checked before listing. We offer free returns within 7 days, and our customer support team responds within 2 hours during business hours. We\'re not just selling products — we\'re building trust.'],
+                    ],
+                ],
+            ],
+            [
+                'id' => 'sec_'.Str::random(12),
+                'type' => 'newsletter_signup',
+                'variant' => 'inline',
+                'is_visible' => true,
+                'config' => [
+                    'heading' => 'Join the Family',
+                    'subheading' => 'Be the first to know about new arrivals and exclusive offers.',
+                    'placeholder' => 'Enter your email',
+                    'button_text' => 'Subscribe',
                 ],
             ],
         ];
@@ -269,15 +299,19 @@ class StorefrontSetupSeeder extends Seeder
 
     private function contactSections(Shop $shop): array
     {
+        $address = implode(', ', array_filter([$shop->address, $shop->city, $shop->state, $shop->country]));
+
         return [
             [
                 'id' => 'sec_'.Str::random(12),
                 'type' => 'hero_banner',
-                'variant' => 'minimal_text',
+                'variant' => 'centered_overlay',
                 'is_visible' => true,
                 'config' => [
-                    'heading' => 'Get In Touch',
-                    'subheading' => "We'd love to hear from you. Reach out anytime.",
+                    'heading' => "Let's Talk",
+                    'subheading' => "Have a question, feedback, or just want to say hello? We're here for you.",
+                    'image' => 'https://images.unsplash.com/photo-1423666639041-f56000c27a9a?w=1600&h=900&fit=crop&q=80',
+                    'overlay_opacity' => 0.6,
                 ],
             ],
             [
@@ -287,8 +321,39 @@ class StorefrontSetupSeeder extends Seeder
                 'is_visible' => true,
                 'config' => [
                     'heading' => 'Send Us a Message',
-                    'subheading' => 'Our team typically responds within 24 hours.',
-                    'success_message' => "Thanks for reaching out! We'll get back to you soon.",
+                    'subheading' => 'Our team typically responds within a few hours during business hours.',
+                    'show_phone' => true,
+                    'show_email' => true,
+                    'show_address' => true,
+                    'success_message' => "Thanks for reaching out! We'll get back to you within 24 hours.",
+                ],
+            ],
+            [
+                'id' => 'sec_'.Str::random(12),
+                'type' => 'faq',
+                'variant' => 'accordion',
+                'is_visible' => true,
+                'config' => [
+                    'heading' => 'Frequently Asked Questions',
+                    'items' => [
+                        ['question' => 'What are your business hours?', 'answer' => 'We\'re open Monday to Friday, 9am to 6pm, and Saturday 10am to 4pm (WAT). Closed on Sundays and public holidays.'],
+                        ['question' => 'How can I track my order?', 'answer' => 'Once your order ships, you\'ll receive a tracking link via email and SMS. You can also check your order status in your account dashboard.'],
+                        ['question' => 'What payment methods do you accept?', 'answer' => 'We accept bank transfers, debit cards (Visa, Mastercard, Verve), USSD payments, and pay-on-delivery for select locations in Lagos.'],
+                        ['question' => 'What is your return policy?', 'answer' => 'We offer a 7-day return window for most products. Items must be unused and in original packaging. Refunds are processed within 3-5 business days after we receive the return.'],
+                        ['question' => 'Do you offer bulk or wholesale pricing?', 'answer' => 'Yes! For orders of 10+ units, contact us directly for wholesale pricing. We offer tiered discounts for larger quantities.'],
+                        ['question' => 'How do I report a problem with my order?', 'answer' => "Email us at {$shop->email} or call {$shop->phone}. Include your order number and we'll resolve it within 24 hours."],
+                    ],
+                ],
+            ],
+            [
+                'id' => 'sec_'.Str::random(12),
+                'type' => 'image_with_text',
+                'variant' => 'side_by_side',
+                'is_visible' => true,
+                'config' => [
+                    'heading' => 'Visit Our Store',
+                    'text' => "Prefer to shop in person? Come see our full collection at our physical location. Our friendly staff are always ready to help you find exactly what you need.\n\n{$address}\n\nMonday – Friday: 9am – 6pm\nSaturday: 10am – 4pm\nSunday: Closed",
+                    'image' => 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=800&h=600&fit=crop&q=80',
                 ],
             ],
         ];
