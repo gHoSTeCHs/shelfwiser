@@ -37,11 +37,13 @@ interface CartState {
     addItem: (variantId: number, quantity?: number) => Promise<{ ok: boolean; message?: string }>;
     updateItem: (itemId: number, quantity: number) => void;
     removeItem: (itemId: number) => void;
+    flushPendingUpdates: () => void;
     openDrawer: () => void;
     closeDrawer: () => void;
 }
 
 const pendingUpdates = new Map<number, ReturnType<typeof setTimeout>>();
+const pendingValues = new Map<number, number>();
 
 function recomputeSummary(items: CartItem[]): CartSummary {
     return {
@@ -49,6 +51,21 @@ function recomputeSummary(items: CartItem[]): CartSummary {
         subtotal: items.reduce((sum, i) => sum + i.price * i.quantity, 0),
         total: items.reduce((sum, i) => sum + i.price * i.quantity, 0),
     };
+}
+
+function flushAll(shopSlug: string) {
+    pendingUpdates.forEach((timer, itemId) => {
+        clearTimeout(timer);
+        const quantity = pendingValues.get(itemId);
+        if (quantity !== undefined) {
+            storefrontFetch(`/store/${shopSlug}/api/cart/${itemId}`, {
+                method: 'PATCH',
+                json: { quantity },
+            });
+        }
+    });
+    pendingUpdates.clear();
+    pendingValues.clear();
 }
 
 export const useCartStore = create<CartState>((set, get) => ({
@@ -61,6 +78,12 @@ export const useCartStore = create<CartState>((set, get) => ({
 
     initialize: (shopSlug, summary) => {
         set({ shopSlug, summary });
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('beforeunload', () => {
+                flushAll(shopSlug);
+            });
+        }
     },
 
     fetchCart: async (force = false) => {
@@ -111,6 +134,8 @@ export const useCartStore = create<CartState>((set, get) => ({
         );
         set({ items: updated, summary: recomputeSummary(updated) });
 
+        pendingValues.set(itemId, quantity);
+
         const existing = pendingUpdates.get(itemId);
         if (existing) clearTimeout(existing);
 
@@ -118,6 +143,7 @@ export const useCartStore = create<CartState>((set, get) => ({
             itemId,
             setTimeout(async () => {
                 pendingUpdates.delete(itemId);
+                pendingValues.delete(itemId);
                 const res = await storefrontFetch<CartResponse>(
                     `/store/${shopSlug}/api/cart/${itemId}`,
                     { method: 'PATCH', json: { quantity } },
@@ -136,8 +162,10 @@ export const useCartStore = create<CartState>((set, get) => ({
         if (existing) {
             clearTimeout(existing);
             pendingUpdates.delete(itemId);
+            pendingValues.delete(itemId);
         }
 
+        const removedItem = items.find((i) => i.id === itemId);
         const filtered = items.filter((i) => i.id !== itemId);
         set({ items: filtered, summary: recomputeSummary(filtered) });
 
@@ -147,8 +175,19 @@ export const useCartStore = create<CartState>((set, get) => ({
         ).then((res) => {
             if (res.ok && res.data) {
                 set({ items: res.data.items, summary: res.data.summary });
+            } else if (removedItem) {
+                const current = get().items;
+                set({
+                    items: [...current, removedItem],
+                    summary: recomputeSummary([...current, removedItem]),
+                });
             }
         });
+    },
+
+    flushPendingUpdates: () => {
+        const { shopSlug } = get();
+        flushAll(shopSlug);
     },
 
     openDrawer: () => {
