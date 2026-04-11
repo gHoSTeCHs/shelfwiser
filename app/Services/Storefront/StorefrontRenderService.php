@@ -18,7 +18,7 @@ class StorefrontRenderService
         private readonly StorefrontBuilderCache $cache
     ) {}
 
-    public function buildPage(Shop $shop, StorefrontPageType $pageType, ?string $slug = null, ?Customer $customer = null): array
+    public function buildPage(Shop $shop, StorefrontPageType $pageType, ?string $slug = null, ?Customer $customer = null, ?string $csrfToken = null): array
     {
         $cached = $this->cache->page($shop, $pageType, $slug, function () use ($shop, $pageType, $slug) {
             $config = $this->loadConfig($shop);
@@ -54,13 +54,13 @@ class StorefrontRenderService
         return array_merge($cached, [
             'cart' => $this->resolveCartSummary($shop, $customer),
             'customer' => $this->serializeCustomer($customer),
-            'csrfToken' => csrf_token(),
+            'csrfToken' => $csrfToken ?? '',
         ]);
     }
 
     private const UNPUBLISH_SAFE_PAGES = ['login', 'register', 'forgot-password', 'reset-password', 'verify-email', 'cart', 'checkout'];
 
-    public function buildFixedPage(Shop $shop, string $page, array $params = [], ?Customer $customer = null): array
+    public function buildFixedPage(Shop $shop, string $page, array $params = [], ?Customer $customer = null, ?string $csrfToken = null): array
     {
         $requirePublished = ! in_array($page, self::UNPUBLISH_SAFE_PAGES, true);
         $config = $this->loadConfig($shop, $requirePublished);
@@ -83,7 +83,7 @@ class StorefrontRenderService
             'cart' => $this->resolveCartSummary($shop, $customer),
             'navigation' => $navigation,
             'customer' => $this->serializeCustomer($customer),
-            'csrfToken' => csrf_token(),
+            'csrfToken' => $csrfToken ?? '',
         ];
     }
 
@@ -495,7 +495,7 @@ class StorefrontRenderService
         return [
             'shop_name' => $shop->name,
             'token' => $params['token'] ?? '',
-            'email' => request('email', ''),
+            'email' => $params['email'] ?? '',
         ];
     }
 

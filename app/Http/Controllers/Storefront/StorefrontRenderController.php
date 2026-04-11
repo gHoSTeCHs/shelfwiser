@@ -96,7 +96,10 @@ class StorefrontRenderController extends Controller
 
     public function resetPassword(Shop $shop, string $token): View
     {
-        return $this->renderFixedPage($shop, 'reset-password', ['token' => $token]);
+        return $this->renderFixedPage($shop, 'reset-password', [
+            'token' => $token,
+            'email' => request('email', ''),
+        ]);
     }
 
     public function verifyEmail(Shop $shop): View
@@ -129,7 +132,7 @@ class StorefrontRenderController extends Controller
     private function renderPage(Shop $shop, StorefrontPageType $pageType, ?string $slug = null): View
     {
         $customer = auth('customer')->user();
-        $pageData = $this->renderService->buildPage($shop, $pageType, $slug, $customer);
+        $pageData = $this->renderService->buildPage($shop, $pageType, $slug, $customer, csrf_token());
 
         return view('storefront.builder-app', [
             'pageData' => $pageData,
@@ -141,7 +144,7 @@ class StorefrontRenderController extends Controller
     private function renderFixedPage(Shop $shop, string $page, array $params = []): View
     {
         $customer = auth('customer')->user();
-        $pageData = $this->renderService->buildFixedPage($shop, $page, $params, $customer);
+        $pageData = $this->renderService->buildFixedPage($shop, $page, $params, $customer, csrf_token());
 
         return view('storefront.builder-app', [
             'pageData' => $pageData,

@@ -301,7 +301,7 @@ class StorefrontApiController extends Controller
             return response()->json(['message' => 'Email already verified.']);
         }
 
-        $customer->sendEmailVerificationNotification();
+        dispatch(fn () => $customer->sendEmailVerificationNotification());
 
         return response()->json(['message' => 'Verification link sent.']);
     }

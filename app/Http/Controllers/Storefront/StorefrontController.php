@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Storefront\ProductsFilterRequest;
+use App\Http\Requests\Storefront\ServicesFilterRequest;
 use App\Models\Product;
 use App\Models\Service;
 use App\Models\Shop;
 use App\Services\CartService;
 use App\Services\StorefrontService;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,14 +28,7 @@ class StorefrontController extends Controller
         $featuredProducts = $this->storefrontService->getFeaturedProducts($shop);
         $categories = $this->storefrontService->getCategories($shop);
 
-        // Get featured services (limit to 4 for homepage)
-        $featuredServices = \App\Models\Service::where('shop_id', $shop->id)
-            ->where('is_active', true)
-            ->where('is_available_online', true)
-            ->with(['variants' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
-            ->orderBy('name')
-            ->limit(4)
-            ->get();
+        $featuredServices = $this->storefrontService->getFeaturedServices($shop, 4);
 
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
         $cartSummary = $this->cartService->getCartSummary($cart);
@@ -51,14 +45,9 @@ class StorefrontController extends Controller
     /**
      * Display product listing page.
      */
-    public function products(Request $request, Shop $shop): Response
+    public function products(ProductsFilterRequest $request, Shop $shop): Response
     {
-        $validated = $request->validate([
-            'search' => ['nullable', 'string', 'max:255'],
-            'category' => ['nullable', 'integer', 'exists:product_categories,id'],
-            'sort' => ['nullable', 'string', 'in:name,price_low,price_high,newest,featured'],
-            'per_page' => ['nullable', 'integer', 'min:6', 'max:24'],
-        ]);
+        $validated = $request->validated();
 
         $products = $this->storefrontService->getProducts(
             $shop,
@@ -116,14 +105,9 @@ class StorefrontController extends Controller
     /**
      * Display service listing page.
      */
-    public function services(Request $request, Shop $shop): Response
+    public function services(ServicesFilterRequest $request, Shop $shop): Response
     {
-        $validated = $request->validate([
-            'search' => ['nullable', 'string', 'max:255'],
-            'category' => ['nullable', 'integer', 'exists:service_categories,id'],
-            'sort' => ['nullable', 'string', 'in:name,price_low,price_high,newest'],
-            'per_page' => ['nullable', 'integer', 'min:6', 'max:24'],
-        ]);
+        $validated = $request->validated();
 
         $services = $this->storefrontService->getServices(
             $shop,
@@ -164,15 +148,7 @@ class StorefrontController extends Controller
             'addons' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
         ]);
 
-        // Get category-wide addons if service has a category
-        $categoryAddons = [];
-        if ($service->service_category_id) {
-            $categoryAddons = \App\Models\ServiceAddon::where('service_category_id', $service->service_category_id)
-                ->whereNull('service_id')
-                ->where('is_active', true)
-                ->orderBy('sort_order')
-                ->get();
-        }
+        $categoryAddons = $this->storefrontService->getCategoryAddons($service);
 
         $relatedServices = $this->storefrontService->getRelatedServices($service);
 

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Service;
+use App\Models\ServiceAddon;
 use App\Models\ServiceCategory;
 use App\Models\Shop;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -146,6 +147,32 @@ class StorefrontService
                 ->orderBy('name')
                 ->get();
         });
+    }
+
+    public function getFeaturedServices(Shop $shop, int $limit = 4): Collection
+    {
+        return Service::query()
+            ->where('shop_id', $shop->id)
+            ->where('is_active', true)
+            ->where('is_available_online', true)
+            ->with(['variants' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
+            ->orderBy('name')
+            ->limit($limit)
+            ->get();
+    }
+
+    public function getCategoryAddons(Service $service): Collection
+    {
+        if (! $service->service_category_id) {
+            return collect();
+        }
+
+        return ServiceAddon::query()
+            ->where('service_category_id', $service->service_category_id)
+            ->whereNull('service_id')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
     }
 
     public function getProductsByCategory(
