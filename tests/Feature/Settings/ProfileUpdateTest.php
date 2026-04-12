@@ -5,6 +5,7 @@ use App\Models\User;
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 test('profile page is displayed', function () {
+    $this->withoutVite();
     $user = User::factory()->create();
 
     $response = $this
@@ -70,7 +71,7 @@ test('user can delete their account', function () {
         ->assertRedirect(route('home'));
 
     $this->assertGuest();
-    expect($user->fresh())->toBeNull();
+    $this->assertSoftDeleted($user);
 });
 
 test('correct password must be provided to delete account', function () {

@@ -226,7 +226,8 @@ class CheckoutService
                 $this->updatePaymentStatus(
                     $reference,
                     PaymentStatus::PAID,
-                    $data['data']['id'] ?? null
+                    $data['data']['id'] ?? null,
+                    ($data['data']['amount'] ?? 0) / 100
                 );
                 $order->refresh();
             }
@@ -249,35 +250,55 @@ class CheckoutService
     public function updatePaymentStatus(
         string $paymentReference,
         PaymentStatus $status,
-        ?string $transactionId = null
+        ?string $transactionId = null,
+        ?float $verifiedAmount = null
     ): bool {
-        $order = Order::where('payment_reference', $paymentReference)->first();
+        return DB::transaction(function () use ($paymentReference, $status, $transactionId, $verifiedAmount) {
+            $order = Order::query()
+                ->where('payment_reference', $paymentReference)
+                ->lockForUpdate()
+                ->first();
 
-        if (! $order) {
-            Log::warning('Order not found for payment update', [
-                'reference' => $paymentReference,
-            ]);
+            if (! $order) {
+                Log::warning('Order not found for payment update', [
+                    'reference' => $paymentReference,
+                ]);
 
-            return false;
-        }
+                return false;
+            }
 
-        return DB::transaction(function () use ($order, $status, $transactionId, $paymentReference) {
             $order->update([
                 'payment_status' => $status->value,
             ]);
 
             if ($status === PaymentStatus::PAID) {
+                $refNumber = $transactionId ?? $paymentReference;
+
+                if (OrderPayment::query()->where('reference_number', $refNumber)->exists()) {
+                    return true;
+                }
+
                 $order->update([
                     'status' => OrderStatus::CONFIRMED->value,
                     'confirmed_at' => now(),
                 ]);
 
+                $paymentAmount = $verifiedAmount ?? $order->total_amount;
+
+                if ($verifiedAmount !== null && $verifiedAmount < $order->remainingBalance() * 0.99) {
+                    Log::warning('Payment amount less than expected', [
+                        'order_id' => $order->id,
+                        'expected' => $order->remainingBalance(),
+                        'received' => $verifiedAmount,
+                    ]);
+                }
+
                 OrderPayment::create([
                     'tenant_id' => $order->tenant_id,
                     'order_id' => $order->id,
-                    'amount' => $order->total_amount,
+                    'amount' => $paymentAmount,
                     'payment_method' => $order->payment_method,
-                    'reference_number' => $transactionId ?? $paymentReference,
+                    'reference_number' => $refNumber,
                     'status' => 'completed',
                     'paid_at' => now(),
                     'notes' => 'Payment verified via Paystack',

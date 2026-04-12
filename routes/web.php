@@ -49,12 +49,6 @@ use App\Http\Controllers\Web\StaffManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/_debug_login', function () {
-    $user = \App\Models\User::where('email', 'test@test.com')->first();
-    auth()->login($user);
-    return redirect('/dashboard');
-});
-
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
@@ -95,6 +89,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->name('admin.')->gro
 });
 
 Route::get('/payment/callback/{gateway}/{order}', [PaymentController::class, 'callback'])
+    ->middleware('auth')
     ->name('payment.callback');
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -306,6 +301,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/', [ShopController::class, 'updateStorefrontSettings'])->name('update');
     });
 
+    Route::prefix('shops/{shop}/storefront-builder')->name('shops.storefront-builder.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\StorefrontBuilderController::class, 'index'])->name('index');
+        Route::get('/data', [\App\Http\Controllers\StorefrontBuilderController::class, 'getBuilderData'])->name('data');
+        Route::post('/theme', [\App\Http\Controllers\StorefrontBuilderController::class, 'selectTheme'])->name('theme');
+        Route::put('/config', [\App\Http\Controllers\StorefrontBuilderController::class, 'updateConfig'])->name('config');
+        Route::get('/pages/{pageType}', [\App\Http\Controllers\StorefrontBuilderController::class, 'getPage'])->name('page');
+        Route::post('/pages/{pageType}/sections', [\App\Http\Controllers\StorefrontBuilderController::class, 'addSection'])->name('section.add');
+        Route::put('/pages/{pageType}/sections/{sectionId}', [\App\Http\Controllers\StorefrontBuilderController::class, 'updateSection'])->name('section.update');
+        Route::delete('/pages/{pageType}/sections/{sectionId}', [\App\Http\Controllers\StorefrontBuilderController::class, 'removeSection'])->name('section.remove');
+        Route::put('/pages/{pageType}/reorder', [\App\Http\Controllers\StorefrontBuilderController::class, 'reorderSections'])->name('section.reorder');
+        Route::patch('/pages/{pageType}/sections/{sectionId}/visibility', [\App\Http\Controllers\StorefrontBuilderController::class, 'toggleVisibility'])->name('section.visibility');
+        Route::post('/publish', [\App\Http\Controllers\StorefrontBuilderController::class, 'publish'])->name('publish');
+        Route::post('/unpublish', [\App\Http\Controllers\StorefrontBuilderController::class, 'unpublish'])->name('unpublish');
+        Route::post('/reset', [\App\Http\Controllers\StorefrontBuilderController::class, 'resetToDefaults'])->name('reset');
+    });
+
     Route::prefix('shops/{shop}/tax-settings')->name('shops.tax-settings.')->group(function () {
         Route::get('/', [ShopSettingsController::class, 'show'])->name('show');
         Route::patch('/', [ShopSettingsController::class, 'update'])->name('update');
@@ -495,6 +506,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 });
 
-require __DIR__.'/storefront.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+
+if (app()->environment('local')) {
+    Route::get('/dev/theme-catalog', function () {
+        $templates = require resource_path('data/theme-catalog.php');
+
+        return view('dev.theme-catalog', ['templates' => $templates]);
+    })->name('dev.theme-catalog');
+
+    Route::get('/dev/catalog', fn () => view('dev.catalog-app'))->name('dev.catalog');
+}

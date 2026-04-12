@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Enums\OrderStatus;
 use App\Enums\OrderType;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\CancelOrderRequest;
+use App\Http\Requests\Storefront\CancelOrderApiRequest;
+use App\Http\Requests\Storefront\UpdateCustomerProfileRequest;
 use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,9 +23,7 @@ class CustomerPortalController extends Controller
     {
         $customer = auth('customer')->user();
 
-        if ($customer->tenant_id !== $shop->tenant_id) {
-            abort(403, 'Unauthorized');
-        }
+        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
 
         $stats = [
             'total_orders' => $customer->orders()
@@ -33,12 +33,12 @@ class CustomerPortalController extends Controller
             'pending_orders' => $customer->orders()
                 ->where('shop_id', $shop->id)
                 ->where('order_type', OrderType::CUSTOMER->value)
-                ->where('status', 'pending')
+                ->where('status', OrderStatus::PENDING)
                 ->count(),
             'total_spent' => $customer->orders()
                 ->where('shop_id', $shop->id)
                 ->where('order_type', OrderType::CUSTOMER->value)
-                ->where('payment_status', 'paid')
+                ->where('payment_status', PaymentStatus::PAID)
                 ->sum('total_amount'),
         ];
 
@@ -64,9 +64,7 @@ class CustomerPortalController extends Controller
     {
         $customer = auth('customer')->user();
 
-        if ($customer->tenant_id !== $shop->tenant_id) {
-            abort(403, 'Unauthorized');
-        }
+        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
 
         $orders = $customer->orders()
             ->where('shop_id', $shop->id)
@@ -88,9 +86,7 @@ class CustomerPortalController extends Controller
     {
         $customer = auth('customer')->user();
 
-        if ($customer->tenant_id !== $shop->tenant_id) {
-            abort(403, 'Unauthorized');
-        }
+        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
 
         $order = $customer->orders()
             ->where('id', $orderId)
@@ -112,9 +108,7 @@ class CustomerPortalController extends Controller
     {
         $customer = auth('customer')->user();
 
-        if ($customer->tenant_id !== $shop->tenant_id) {
-            abort(403, 'Unauthorized');
-        }
+        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
 
         $addresses = $customer->addresses;
 
@@ -128,22 +122,12 @@ class CustomerPortalController extends Controller
     /**
      * Update customer profile information.
      */
-    public function updateProfile(Request $request, Shop $shop): RedirectResponse
+    public function updateProfile(UpdateCustomerProfileRequest $request, Shop $shop): RedirectResponse
     {
         $customer = auth('customer')->user();
+        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
 
-        if ($customer->tenant_id !== $shop->tenant_id) {
-            abort(403, 'Unauthorized');
-        }
-
-        $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'marketing_opt_in' => ['boolean'],
-        ]);
-
-        $customer->update($validated);
+        $customer->update($request->validated());
 
         return back()->with('success', 'Profile updated successfully');
     }
@@ -151,13 +135,10 @@ class CustomerPortalController extends Controller
     /**
      * Cancel a customer order.
      */
-    public function cancelOrder(CancelOrderRequest $request, Shop $shop, $orderId): RedirectResponse
+    public function cancelOrder(CancelOrderApiRequest $request, Shop $shop, $orderId): RedirectResponse
     {
         $customer = auth('customer')->user();
-
-        if ($customer->tenant_id !== $shop->tenant_id) {
-            abort(403, 'Unauthorized');
-        }
+        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
 
         $order = $customer->orders()
             ->where('id', $orderId)
@@ -173,7 +154,6 @@ class CustomerPortalController extends Controller
             'status' => OrderStatus::CANCELLED,
             'cancellation_reason' => $request->validated('cancellation_reason'),
             'cancelled_at' => now(),
-            'cancelled_by' => $customer->id,
         ]);
 
         return back()->with('success', 'Order cancelled successfully.');

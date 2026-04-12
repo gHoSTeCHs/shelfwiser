@@ -62,6 +62,9 @@ class DatabaseSeeder extends Seeder
 
             // Approval System
             ApprovalChainSeeder::class,
+
+            // Storefront Builder
+            StorefrontSetupSeeder::class,
         ]);
     }
 }

@@ -8,6 +8,7 @@ use App\Models\OrderPayment;
 use App\Services\Payment\PaymentGatewayManager;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PaymentWebhookController extends Controller
@@ -45,6 +46,15 @@ class PaymentWebhookController extends Controller
         ]);
 
         if ($event->isSuccessfulCharge()) {
+            $verifyResult = $paymentGateway->verifyPayment($event->reference);
+            if (! $verifyResult->isSuccessful()) {
+                Log::warning('Webhook payment verification failed', [
+                    'gateway' => $gateway,
+                    'reference' => $event->reference,
+                ]);
+
+                return response('Payment verification failed', 400);
+            }
             $this->handleSuccessfulPayment($gateway, $event);
         } elseif ($event->isFailedCharge()) {
             $this->handleFailedPayment($gateway, $event);
@@ -58,49 +68,64 @@ class PaymentWebhookController extends Controller
      */
     protected function handleSuccessfulPayment(string $gateway, $event): void
     {
-        $existingPayment = OrderPayment::where('reference_number', $event->reference)->first();
+        DB::transaction(function () use ($gateway, $event) {
+            $existingPayment = OrderPayment::query()
+                ->where('reference_number', $event->reference)
+                ->lockForUpdate()
+                ->first();
 
-        if ($existingPayment) {
-            if ($existingPayment->gateway_status !== 'success') {
-                $existingPayment->update([
-                    'gateway_status' => 'success',
-                    'gateway_response' => $event->rawPayload,
-                    'verified_at' => now(),
+            if ($existingPayment) {
+                if ($existingPayment->gateway_status !== 'success') {
+                    $existingPayment->update([
+                        'gateway_status' => 'success',
+                        'gateway_response' => $this->buildSafeGatewayResponse($gateway, $event),
+                        'verified_at' => now(),
+                    ]);
+                }
+
+                return;
+            }
+
+            $order = $this->findOrderByReference($event->reference);
+
+            if (! $order) {
+                Log::warning('Order not found for webhook', [
+                    'gateway' => $gateway,
+                    'reference' => $event->reference,
+                ]);
+
+                return;
+            }
+
+            $lockedOrder = Order::query()->where('id', $order->id)->lockForUpdate()->first();
+
+            if ($event->amount < $lockedOrder->remainingBalance() * 0.99) {
+                Log::warning('Payment amount less than expected', [
+                    'order_id' => $lockedOrder->id,
+                    'expected' => $lockedOrder->remainingBalance(),
+                    'received' => $event->amount,
                 ]);
             }
 
-            return;
-        }
-
-        $order = $this->findOrderByReference($event->reference);
-
-        if (! $order) {
-            Log::warning('Order not found for webhook', [
+            OrderPayment::create([
+                'order_id' => $lockedOrder->id,
+                'tenant_id' => $lockedOrder->tenant_id,
+                'shop_id' => $lockedOrder->shop_id,
+                'amount' => $event->amount,
+                'currency' => $event->currency ?? 'NGN',
+                'gateway_fee' => $event->gatewayFee ?? 0,
+                'payment_method' => $gateway,
                 'gateway' => $gateway,
-                'reference' => $event->reference,
+                'gateway_reference' => $event->gatewayReference,
+                'gateway_status' => 'success',
+                'gateway_response' => $this->buildSafeGatewayResponse($gateway, $event),
+                'verified_at' => now(),
+                'payment_date' => $event->paidAt ? date('Y-m-d', strtotime($event->paidAt)) : now(),
+                'reference_number' => $event->reference,
+                'notes' => 'Webhook payment confirmation',
+                'recorded_by' => null,
             ]);
-
-            return;
-        }
-
-        OrderPayment::create([
-            'order_id' => $order->id,
-            'tenant_id' => $order->tenant_id,
-            'shop_id' => $order->shop_id,
-            'amount' => $event->amount,
-            'currency' => $event->currency ?? 'NGN',
-            'gateway_fee' => $event->gatewayFee ?? 0,
-            'payment_method' => $gateway,
-            'gateway' => $gateway,
-            'gateway_reference' => $event->gatewayReference,
-            'gateway_status' => 'success',
-            'gateway_response' => $event->rawPayload,
-            'verified_at' => now(),
-            'payment_date' => $event->paidAt ? date('Y-m-d', strtotime($event->paidAt)) : now(),
-            'reference_number' => $event->reference,
-            'notes' => 'Webhook payment confirmation',
-            'recorded_by' => null,
-        ]);
+        });
     }
 
     /**
@@ -113,7 +138,7 @@ class PaymentWebhookController extends Controller
         if ($existingPayment) {
             $existingPayment->update([
                 'gateway_status' => 'failed',
-                'gateway_response' => $event->rawPayload,
+                'gateway_response' => $this->buildSafeGatewayResponse($gateway, $event),
             ]);
         }
 
@@ -125,6 +150,21 @@ class PaymentWebhookController extends Controller
                 'reference' => $event->reference,
             ]);
         }
+    }
+
+    private function buildSafeGatewayResponse(string $gateway, $event): array
+    {
+        return [
+            'gateway' => $gateway,
+            'type' => $event->type,
+            'reference' => $event->reference,
+            'status' => $event->status,
+            'amount' => $event->amount,
+            'currency' => $event->currency,
+            'gateway_reference' => $event->gatewayReference,
+            'paid_at' => $event->paidAt,
+            'gateway_fee' => $event->gatewayFee,
+        ];
     }
 
     /**

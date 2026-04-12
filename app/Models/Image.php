@@ -62,6 +62,10 @@ class Image extends Model
      */
     public function getUrlAttribute(): string
     {
+        if (str_starts_with($this->path, 'http://') || str_starts_with($this->path, 'https://')) {
+            return $this->path;
+        }
+
         return Storage::disk($this->disk)->url($this->path);
     }
 
@@ -88,7 +92,7 @@ class Image extends Model
     /**
      * Scope to only primary images
      */
-    public function scopePrimary($query)
+    public function scopePrimary(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('is_primary', true);
     }
@@ -96,7 +100,7 @@ class Image extends Model
     /**
      * Scope to order by sort order
      */
-    public function scopeOrdered($query)
+    public function scopeOrdered(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->orderBy('sort_order')->orderBy('id');
     }

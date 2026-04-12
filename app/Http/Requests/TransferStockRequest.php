@@ -9,7 +9,7 @@ class TransferStockRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('transferStock', \App\Models\StockMovement::class);
+        return true;
     }
 
     public function rules(): array

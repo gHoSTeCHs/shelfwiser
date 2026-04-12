@@ -13,10 +13,12 @@ test('new users can register', function () {
         'fname' => 'Test',
         'lname' => 'User',
         'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'P@ssw0rd!',
+        'password_confirmation' => 'P@ssw0rd!',
+        'company_name' => 'Test Company',
     ]);
 
+    $response->assertSessionHasNoErrors();
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
 });

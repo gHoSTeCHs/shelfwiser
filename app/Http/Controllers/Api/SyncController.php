@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class SyncController extends Controller
 {
@@ -227,11 +228,16 @@ class SyncController extends Controller
                     'stock_issues' => $stockIssues,
                 ];
             } catch (\Exception $e) {
+                Log::error('Sync order failed', [
+                    'offline_id' => $offlineOrder['offline_id'],
+                    'error' => $e->getMessage(),
+                ]);
+
                 $results[] = [
                     'offline_id' => $offlineOrder['offline_id'],
                     'success' => false,
                     'reason' => 'error',
-                    'message' => $e->getMessage(),
+                    'message' => 'Failed to sync order. Please try again or contact support.',
                 ];
             }
         }

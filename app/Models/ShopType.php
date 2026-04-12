@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,7 +9,7 @@ use Illuminate\Support\Facades\Cache;
 
 class ShopType extends Model
 {
-    use BelongsToTenant, HasFactory;
+    use HasFactory;
 
     protected $fillable = [
         'tenant_id',
@@ -28,6 +27,28 @@ class ShopType extends Model
 
     protected static function booted(): void
     {
+        static::addGlobalScope('accessible_tenant', function ($builder) {
+            if (auth('web')->hasUser() && auth('web')->user()->tenant_id) {
+                $builder->where(fn ($q) => $q
+                    ->whereNull('shop_types.tenant_id')
+                    ->orWhere('shop_types.tenant_id', auth('web')->user()->tenant_id)
+                );
+            } elseif (auth('customer')->hasUser() && auth('customer')->user()->tenant_id) {
+                $builder->where(fn ($q) => $q
+                    ->whereNull('shop_types.tenant_id')
+                    ->orWhere('shop_types.tenant_id', auth('customer')->user()->tenant_id)
+                );
+            }
+        });
+
+        static::creating(function ($model) {
+            if (auth('web')->hasUser() && ! $model->tenant_id) {
+                $model->tenant_id = auth('web')->user()->tenant_id;
+            } elseif (auth('customer')->hasUser() && ! $model->tenant_id) {
+                $model->tenant_id = auth('customer')->user()->tenant_id;
+            }
+        });
+
         static::saved(fn ($type) => static::clearCache($type->tenant_id));
         static::deleted(fn ($type) => static::clearCache($type->tenant_id));
     }

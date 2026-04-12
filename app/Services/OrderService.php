@@ -221,6 +221,7 @@ class OrderService
                         $location = $variant->inventoryLocations()
                             ->where('location_type', 'App\\Models\\Shop')
                             ->where('location_id', $order->shop_id)
+                            ->lockForUpdate()
                             ->first();
 
                         if (! $location) {
@@ -482,7 +483,7 @@ class OrderService
                 $packagingType = null;
                 $packagingDescription = null;
                 $quantity = $item['quantity'];
-                $unitPrice = $item['unit_price'] ?? $variant->price;
+                $unitPrice = $variant->price;
 
                 if (isset($item['product_packaging_type_id'])) {
                     $packagingType = ProductPackagingType::find($item['product_packaging_type_id']);
@@ -506,14 +507,14 @@ class OrderService
                     'packaging_description' => $packagingDescription,
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
-                    'discount_amount' => $item['discount_amount'] ?? 0,
+                    'discount_amount' => max(0, min($item['discount_amount'] ?? 0, $unitPrice * $quantity)),
                     'tax_amount' => $item['tax_amount'] ?? 0,
                 ]);
             } elseif ($sellableType === ServiceVariant::class) {
                 $variant = ServiceVariant::findOrFail($sellableId);
 
                 $quantity = $item['quantity'] ?? 1;
-                $unitPrice = $item['unit_price'] ?? $variant->base_price;
+                $unitPrice = $variant->base_price;
 
                 $metadata = [
                     'material_option' => $item['material_option'] ?? null,
@@ -527,7 +528,7 @@ class OrderService
                     'sellable_id' => $sellableId,
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
-                    'discount_amount' => $item['discount_amount'] ?? 0,
+                    'discount_amount' => max(0, min($item['discount_amount'] ?? 0, $unitPrice * $quantity)),
                     'tax_amount' => $item['tax_amount'] ?? 0,
                     'metadata' => $metadata,
                 ]);

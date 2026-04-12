@@ -21,9 +21,7 @@ use Throwable;
 
 class ShopController extends Controller
 {
-    public function __construct(private readonly ShopCreationService $creationService)
-    {
-    }
+    public function __construct(private readonly ShopCreationService $creationService) {}
 
     /**
      * Show list of shops (Inertia page)
@@ -158,6 +156,8 @@ class ShopController extends Controller
      */
     public function updateStorefrontSettings(UpdateStorefrontSettingsRequest $request, Shop $shop): RedirectResponse
     {
+        Gate::authorize('manage', $shop);
+
         $validated = $request->validated();
 
         $storefrontSettings = [

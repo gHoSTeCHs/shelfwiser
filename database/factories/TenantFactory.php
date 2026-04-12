@@ -9,15 +9,19 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class TenantFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-            //
+            'name' => fake()->company(),
+            'slug' => fake()->unique()->slug(),
+            'owner_email' => fake()->unique()->safeEmail(),
+            'business_type' => fake()->randomElement(['retail', 'wholesale', 'services']),
+            'phone' => fake()->phoneNumber(),
+            'is_active' => true,
+            'subscription_plan' => 'standard',
+            'max_shops' => 5,
+            'max_users' => 20,
+            'max_products' => 500,
         ];
     }
 }

@@ -149,7 +149,7 @@ class PayRun extends Model
 
     public function canBeCalculated(): bool
     {
-        return in_array($this->status, [PayRunStatus::DRAFT, PayRunStatus::PENDING_REVIEW]);
+        return $this->status === PayRunStatus::DRAFT;
     }
 
     public function canBeApproved(): bool

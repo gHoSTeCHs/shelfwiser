@@ -14,6 +14,7 @@ import {
     ClipboardList,
     Code,
     Edit,
+    LayoutTemplate,
     Mail,
     MapPin,
     Package,
@@ -112,7 +113,7 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                                             Business Type
                                         </label>
                                         <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            {shop.type.label || 'Not specified'}
+                                            {shop.type?.label ?? 'Not specified'}
                                         </p>
                                     </div>
 
@@ -317,6 +318,17 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                                             Shop Settings
                                         </Button>
                                     </Link>
+
+                                    {shop.storefront_enabled && (
+                                        <Link
+                                            href={`/shops/${shop.id}/storefront-builder`}
+                                        >
+                                            <Button className="w-full gap-2">
+                                                <LayoutTemplate className="h-4 w-4" />
+                                                Storefront Builder
+                                            </Button>
+                                        </Link>
+                                    )}
 
                                     <Link
                                         href={`/shops/${shop.id}/storefront-settings`}

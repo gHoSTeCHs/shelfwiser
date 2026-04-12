@@ -10,6 +10,7 @@ import { Shop } from '@/types/shop';
 import { Head, Link } from '@inertiajs/react';
 import {
     Building2,
+    LayoutTemplate,
     Mail,
     MapPin,
     Package,
@@ -46,7 +47,7 @@ export default function Index({ shops, shopTypes }: Props) {
             shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             shop.slug.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType =
-            !selectedShopType || shop.type.slug === selectedShopType;
+            !selectedShopType || shop.type?.slug === selectedShopType;
 
         return matchesSearch && matchesType;
     });
@@ -165,7 +166,7 @@ export default function Index({ shops, shopTypes }: Props) {
                                     <div className="space-y-2">
                                         <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                                             <Building2 className="mr-2 h-4 w-4" />
-                                            {shop.type.label}
+                                            {shop.type?.label ?? 'Unknown Type'}
                                         </div>
 
                                         {/* Show address if available */}
@@ -235,18 +236,33 @@ export default function Index({ shops, shopTypes }: Props) {
                                                 </Button>
                                             </Link>
                                         </div>
-                                        <Link
-                                            href={`/shops/${shop.id}/storefront-settings`}
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <Button
-                                                variant="outline"
-                                                className="w-full"
-                                            >
-                                                <Store className="mr-2 h-4 w-4" />
-                                                Storefront Settings
-                                            </Button>
-                                        </Link>
+                                        {shop.storefront_enabled && (
+                                            <div className="flex gap-2">
+                                                <Link
+                                                    href={`/shops/${shop.id}/storefront-builder`}
+                                                    className="flex-1"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <Button className="w-full">
+                                                        <LayoutTemplate className="mr-2 h-4 w-4" />
+                                                        Builder
+                                                    </Button>
+                                                </Link>
+                                                <Link
+                                                    href={`/shops/${shop.id}/storefront-settings`}
+                                                    className="flex-1"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <Button
+                                                        variant="outline"
+                                                        className="w-full"
+                                                    >
+                                                        <Store className="mr-2 h-4 w-4" />
+                                                        Settings
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </Card>

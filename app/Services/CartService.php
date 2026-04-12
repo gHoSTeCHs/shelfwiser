@@ -91,23 +91,24 @@ class CartService
     ): CartItem {
         $variant = ProductVariant::findOrFail($variantId);
 
-        $this->validateStockAvailabilityForStorefront($variant, $quantity, $cart->shop_id);
-
         return DB::transaction(function () use ($cart, $variant, $quantity, $packagingTypeId) {
-            $cartItem = CartItem::where([
-                'cart_id' => $cart->id,
-                'product_variant_id' => $variant->id,
-                'product_packaging_type_id' => $packagingTypeId,
-            ])->first();
+            $cartItem = CartItem::query()
+                ->where([
+                    'cart_id' => $cart->id,
+                    'product_variant_id' => $variant->id,
+                    'product_packaging_type_id' => $packagingTypeId,
+                ])
+                ->lockForUpdate()
+                ->first();
+
+            $totalQuantity = $cartItem ? $cartItem->quantity + $quantity : $quantity;
+
+            $this->validateStockAvailabilityForStorefront($variant, $totalQuantity, $cart->shop_id);
 
             if ($cartItem) {
-                $newQuantity = $cartItem->quantity + $quantity;
-
-                $this->validateStockAvailabilityForStorefront($variant, $newQuantity, $cart->shop_id);
-
-                $cartItem->update(['quantity' => $newQuantity]);
+                $cartItem->update(['quantity' => $totalQuantity]);
             } else {
-                $cartItem = CartItem::create([
+                $cartItem = CartItem::query()->create([
                     'cart_id' => $cart->id,
                     'tenant_id' => $cart->tenant_id,
                     'product_variant_id' => $variant->id,
@@ -253,7 +254,7 @@ class CartService
             'shipping_fee' => round($shippingFee, 2),
             'tax' => round($tax, 2),
             'total' => round($total, 2),
-            'item_count' => $items->sum('quantity'),
+            'item_count' => $items->count(),
         ];
     }
 
@@ -283,11 +284,14 @@ class CartService
 
             foreach ($guestCart->items as $guestItem) {
                 if ($guestItem->isProduct()) {
-                    $existingItem = CartItem::where([
-                        'cart_id' => $customerCart->id,
-                        'product_variant_id' => $guestItem->product_variant_id,
-                        'product_packaging_type_id' => $guestItem->product_packaging_type_id,
-                    ])->first();
+                    $existingItem = CartItem::query()
+                        ->where([
+                            'cart_id' => $customerCart->id,
+                            'product_variant_id' => $guestItem->product_variant_id,
+                            'product_packaging_type_id' => $guestItem->product_packaging_type_id,
+                        ])
+                        ->lockForUpdate()
+                        ->first();
 
                     if ($existingItem) {
                         $newQuantity = $existingItem->quantity + $guestItem->quantity;
@@ -404,7 +408,7 @@ class CartService
         $taxAmount = 0;
 
         foreach ($items as $item) {
-            if ($item->isProduct() && ($item->productVariant->product->is_taxable ?? false)) {
+            if ($item->isProduct() && ($item->productVariant?->product?->is_taxable ?? false)) {
                 $itemTotal = $item->price * $item->quantity;
                 $taxAmount += $itemTotal * ($vatRate / 100);
             }
