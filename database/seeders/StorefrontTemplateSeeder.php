@@ -94,6 +94,26 @@ class StorefrontTemplateSeeder extends Seeder
                     'text-muted' => '#8888a0', 'muted-foreground' => '#8888a0',
                     'footer-bg' => '#060609', 'footer-text' => '#d1d1d9',
                 ],
+                'palette_dark' => [
+                    'presets' => [
+                        [
+                            'name' => 'Lagos Express Dark',
+                            'primary' => '#ff6b81', 'primary-foreground' => '#ffffff', 'accent' => '#fbbf24',
+                            'background' => '#0c0c14', 'foreground' => '#f5f5f7', 'card-bg' => '#161621',
+                            'surface' => '#111119', 'border' => '#2a2a3a', 'text' => '#d1d1d9',
+                            'text-muted' => '#8888a0', 'muted-foreground' => '#8888a0',
+                            'footer-bg' => '#060609', 'footer-text' => '#d1d1d9',
+                        ],
+                        [
+                            'name' => 'Lagos Express Warm',
+                            'primary' => '#ff6b81', 'primary-foreground' => '#ffffff', 'accent' => '#fbbf24',
+                            'background' => '#1c1917', 'foreground' => '#fafaf9', 'card-bg' => '#292524',
+                            'surface' => '#1c1917', 'border' => '#44403c', 'text' => '#d6d3d1',
+                            'text-muted' => '#a8a29e', 'muted-foreground' => '#a8a29e',
+                            'footer-bg' => '#0c0a09', 'footer-text' => '#d6d3d1',
+                        ],
+                    ],
+                ],
                 'typography' => [
                     'heading_font' => 'DM Sans',
                     'body_font' => 'DM Sans',
@@ -217,6 +237,26 @@ class StorefrontTemplateSeeder extends Seeder
                     'text-muted' => '#a08968', 'muted-foreground' => '#a08968',
                     'footer-bg' => '#0a0908', 'footer-text' => '#e8d5b8',
                 ],
+                'palette_dark' => [
+                    'presets' => [
+                        [
+                            'name' => 'Sunshine Market Dark',
+                            'primary' => '#fb923c', 'primary-foreground' => '#ffffff', 'accent' => '#ef4444',
+                            'background' => '#141110', 'foreground' => '#fef3c7', 'card-bg' => '#1f1b17',
+                            'surface' => '#1a1611', 'border' => '#3d3428', 'text' => '#e8d5b8',
+                            'text-muted' => '#a08968', 'muted-foreground' => '#a08968',
+                            'footer-bg' => '#0a0908', 'footer-text' => '#e8d5b8',
+                        ],
+                        [
+                            'name' => 'Sunshine Market Midnight',
+                            'primary' => '#f97316', 'primary-foreground' => '#ffffff', 'accent' => '#dc2626',
+                            'background' => '#0f0f0f', 'foreground' => '#f5f5f4', 'card-bg' => '#1a1a1a',
+                            'surface' => '#141414', 'border' => '#333333', 'text' => '#d4d4d4',
+                            'text-muted' => '#8a8a8a', 'muted-foreground' => '#8a8a8a',
+                            'footer-bg' => '#0a0a0a', 'footer-text' => '#d4d4d4',
+                        ],
+                    ],
+                ],
                 'typography' => [
                     'heading_font' => 'Nunito',
                     'body_font' => 'Nunito Sans',
@@ -306,6 +346,26 @@ class StorefrontTemplateSeeder extends Seeder
                     'surface' => '#0c1a12', 'border' => '#1a3a28', 'text' => '#b8e0cc',
                     'text-muted' => '#6da888', 'muted-foreground' => '#6da888',
                     'footer-bg' => '#060e09', 'footer-text' => '#b8e0cc',
+                ],
+                'palette_dark' => [
+                    'presets' => [
+                        [
+                            'name' => 'Abuja Fresh Dark',
+                            'primary' => '#34d399', 'primary-foreground' => '#ffffff', 'accent' => '#f59e0b',
+                            'background' => '#0a120e', 'foreground' => '#ecfdf5', 'card-bg' => '#132a1f',
+                            'surface' => '#0f1f17', 'border' => '#1e4035', 'text' => '#a7d8c4',
+                            'text-muted' => '#5c9a82', 'muted-foreground' => '#5c9a82',
+                            'footer-bg' => '#050a07', 'footer-text' => '#a7d8c4',
+                        ],
+                        [
+                            'name' => 'Abuja Fresh Slate',
+                            'primary' => '#34d399', 'primary-foreground' => '#ffffff', 'accent' => '#f59e0b',
+                            'background' => '#0f172a', 'foreground' => '#f1f5f9', 'card-bg' => '#1e293b',
+                            'surface' => '#1e293b', 'border' => '#334155', 'text' => '#cbd5e1',
+                            'text-muted' => '#64748b', 'muted-foreground' => '#64748b',
+                            'footer-bg' => '#020617', 'footer-text' => '#cbd5e1',
+                        ],
+                    ],
                 ],
                 'typography' => [
                     'heading_font' => 'Plus Jakarta Sans',
@@ -406,6 +466,26 @@ class StorefrontTemplateSeeder extends Seeder
                     'text-muted' => '#64748b', 'muted-foreground' => '#64748b',
                     'footer-bg' => '#060c18', 'footer-text' => '#94a3b8',
                 ],
+                'palette_dark' => [
+                    'presets' => [
+                        [
+                            'name' => 'Crystal Clear Dark',
+                            'primary' => '#60a5fa', 'primary-foreground' => '#ffffff', 'accent' => '#c084fc',
+                            'background' => '#0b1120', 'foreground' => '#f0f4ff', 'card-bg' => '#151d30',
+                            'surface' => '#111827', 'border' => '#1e3050', 'text' => '#b0c4de',
+                            'text-muted' => '#6880a0', 'muted-foreground' => '#6880a0',
+                            'footer-bg' => '#060a14', 'footer-text' => '#b0c4de',
+                        ],
+                        [
+                            'name' => 'Crystal Clear Obsidian',
+                            'primary' => '#60a5fa', 'primary-foreground' => '#ffffff', 'accent' => '#c084fc',
+                            'background' => '#09090b', 'foreground' => '#fafafa', 'card-bg' => '#18181b',
+                            'surface' => '#18181b', 'border' => '#27272a', 'text' => '#d4d4d8',
+                            'text-muted' => '#71717a', 'muted-foreground' => '#71717a',
+                            'footer-bg' => '#030304', 'footer-text' => '#d4d4d8',
+                        ],
+                    ],
+                ],
                 'typography' => [
                     'heading_font' => 'Outfit',
                     'body_font' => 'Source Sans 3',
@@ -499,6 +579,26 @@ class StorefrontTemplateSeeder extends Seeder
                     'surface' => '#0c1915', 'border' => '#1a3830', 'text' => '#b0d8cc',
                     'text-muted' => '#6aaa96', 'muted-foreground' => '#6aaa96',
                     'footer-bg' => '#060e0b', 'footer-text' => '#b0d8cc',
+                ],
+                'palette_dark' => [
+                    'presets' => [
+                        [
+                            'name' => 'Naija Vibrant Dark',
+                            'primary' => '#a78bfa', 'primary-foreground' => '#ffffff', 'accent' => '#fb923c',
+                            'background' => '#0a1210', 'foreground' => '#f5f3ff', 'card-bg' => '#161f1c',
+                            'surface' => '#111a17', 'border' => '#2a3a35', 'text' => '#c8d5d0',
+                            'text-muted' => '#7a9088', 'muted-foreground' => '#7a9088',
+                            'footer-bg' => '#050908', 'footer-text' => '#c8d5d0',
+                        ],
+                        [
+                            'name' => 'Naija Vibrant Neon',
+                            'primary' => '#c084fc', 'primary-foreground' => '#ffffff', 'accent' => '#fb923c',
+                            'background' => '#0a0a0a', 'foreground' => '#f5f5f5', 'card-bg' => '#171717',
+                            'surface' => '#141414', 'border' => '#2e2e2e', 'text' => '#d4d4d4',
+                            'text-muted' => '#858585', 'muted-foreground' => '#858585',
+                            'footer-bg' => '#050505', 'footer-text' => '#d4d4d4',
+                        ],
+                    ],
                 ],
                 'typography' => [
                     'heading_font' => 'Cormorant Garamond',
@@ -599,6 +699,26 @@ class StorefrontTemplateSeeder extends Seeder
                     'surface' => '#0f141e', 'border' => '#1e293b', 'text' => '#94a3b8',
                     'text-muted' => '#64748b', 'muted-foreground' => '#64748b',
                     'footer-bg' => '#070a10', 'footer-text' => '#94a3b8',
+                ],
+                'palette_dark' => [
+                    'presets' => [
+                        [
+                            'name' => 'Metro Professional Dark',
+                            'primary' => '#93c5fd', 'primary-foreground' => '#1e3a5f', 'accent' => '#fbbf24',
+                            'background' => '#0c1017', 'foreground' => '#eef2f7', 'card-bg' => '#141c28',
+                            'surface' => '#111820', 'border' => '#243040', 'text' => '#b0bec5',
+                            'text-muted' => '#607890', 'muted-foreground' => '#607890',
+                            'footer-bg' => '#060810', 'footer-text' => '#b0bec5',
+                        ],
+                        [
+                            'name' => 'Metro Professional Carbon',
+                            'primary' => '#93c5fd', 'primary-foreground' => '#1e3a5f', 'accent' => '#fbbf24',
+                            'background' => '#111111', 'foreground' => '#eeeeee', 'card-bg' => '#1a1a1a',
+                            'surface' => '#161616', 'border' => '#2a2a2a', 'text' => '#cccccc',
+                            'text-muted' => '#777777', 'muted-foreground' => '#777777',
+                            'footer-bg' => '#0a0a0a', 'footer-text' => '#cccccc',
+                        ],
+                    ],
                 ],
                 'typography' => [
                     'heading_font' => 'Manrope',

@@ -36,9 +36,13 @@ export function PreviewFrame({ shopSlug }: PreviewFrameProps) {
     const setPreviewMode = useBuilderStore((s) => s.setPreviewMode);
     const togglePreview = useBuilderStore((s) => s.togglePreview);
     const lastSaveAt = useBuilderStore((s) => s.lastSaveAt);
+    const previewDarkMode = useBuilderStore((s) => s.previewDarkMode);
 
-    const previewUrl = `/store/${shopSlug}`;
+    const previewUrl = previewDarkMode
+        ? `/store/${shopSlug}?force_dark=1`
+        : `/store/${shopSlug}`;
     const lastSaveRef = useRef(lastSaveAt);
+    const previewDarkModeRef = useRef(previewDarkMode);
 
     useEffect(() => {
         if (lastSaveRef.current !== lastSaveAt && lastSaveRef.current !== 0) {
@@ -46,6 +50,22 @@ export function PreviewFrame({ shopSlug }: PreviewFrameProps) {
         }
         lastSaveRef.current = lastSaveAt;
     }, [lastSaveAt]);
+
+    useEffect(() => {
+        if (previewDarkModeRef.current === previewDarkMode) {
+            previewDarkModeRef.current = previewDarkMode;
+            return;
+        }
+        previewDarkModeRef.current = previewDarkMode;
+        if (!iframeRef.current) return;
+        setIsLoading(true);
+        setHasError(false);
+        try {
+            iframeRef.current.src = previewUrl;
+        } catch {
+            setHasError(true);
+        }
+    }, [previewDarkMode, shopSlug]);
 
     function handleReload() {
         if (!iframeRef.current) return;

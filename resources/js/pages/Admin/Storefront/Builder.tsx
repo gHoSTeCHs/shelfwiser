@@ -35,6 +35,8 @@ import {
     Layers,
     PanelRight,
     Settings,
+    Sun,
+    Moon,
 } from 'lucide-react';
 
 type MobileTab = 'sections' | 'canvas' | 'settings';
@@ -73,6 +75,8 @@ export default function Builder({ shop, config: initialConfig, themes: rawThemes
     const togglePreview = useBuilderStore((s) => s.togglePreview);
     const isPreviewOpen = useBuilderStore((s) => s.isPreviewOpen);
     const updateConfigFromResponse = useBuilderStore((s) => s.updateConfigFromResponse);
+    const previewDarkMode = useBuilderStore((s) => s.previewDarkMode);
+    const togglePreviewDarkMode = useBuilderStore((s) => s.togglePreviewDarkMode);
 
     useEffect(() => {
         initialize({ shop, config: initialConfigUnwrapped, themes });
@@ -210,6 +214,21 @@ export default function Builder({ shop, config: initialConfig, themes: rawThemes
                             >
                                 Theme
                             </Button>
+                            {storeConfig.dark_mode_enabled && (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    startIcon={
+                                        previewDarkMode
+                                            ? <Moon className="h-4 w-4" />
+                                            : <Sun className="h-4 w-4" />
+                                    }
+                                    className="hidden sm:inline-flex"
+                                    onClick={togglePreviewDarkMode}
+                                >
+                                    {previewDarkMode ? 'Dark' : 'Light'}
+                                </Button>
+                            )}
                             <Button
                                 size="sm"
                                 variant="outline"

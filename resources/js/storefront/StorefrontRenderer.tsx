@@ -19,7 +19,9 @@ export function StorefrontRenderer(props: StorefrontPageData) {
         fixedPageData,
     } = props;
     const Layout = templateLayoutRegistry[template.slug];
-    const { isDark, toggle } = useDarkMode();
+    const { isDark, toggle } = useDarkMode(
+        (theme.dark_mode_strategy as 'system' | 'toggle' | 'light' | 'dark') ?? 'system',
+    );
 
     const darkColors = theme.colors_dark;
     const darkModeEnabled = Boolean(theme.dark_mode_enabled);

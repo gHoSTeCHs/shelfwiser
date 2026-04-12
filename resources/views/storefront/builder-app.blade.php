@@ -33,8 +33,23 @@
     {{-- Prevent dark mode flash: set bg/color before any paint --}}
     <script>
         (function() {
-            var m = localStorage.getItem('storefront-color-mode');
-            var d = m === 'dark' || (!m && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            var params = new URLSearchParams(window.location.search);
+            var strategy = {!! Js::from($pageData['theme']['dark_mode_strategy'] ?? 'system') !!};
+            var d = false;
+
+            if (params.get('force_dark') === '1') {
+                d = true;
+            } else if (strategy === 'dark') {
+                d = true;
+            } else if (strategy === 'light') {
+                d = false;
+            } else if (strategy === 'toggle') {
+                var m = localStorage.getItem('storefront-color-mode');
+                d = m === 'dark' || (!m && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            } else {
+                d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+
             document.documentElement.style.colorScheme = d ? 'dark' : 'light';
             document.documentElement.setAttribute('data-mode', d ? 'dark' : 'light');
         })();

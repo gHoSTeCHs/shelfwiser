@@ -28,6 +28,7 @@ import {
     Search,
     Loader2,
     RotateCcw,
+    Moon,
 } from 'lucide-react';
 
 const DEBOUNCE_MS = 500;
@@ -45,6 +46,10 @@ interface ThemeConfigDraft {
     global_announcement: { text?: string; enabled?: boolean } | null;
     social_links: Record<string, string> | null;
     seo_defaults: { title?: string; description?: string } | null;
+    dark_mode_enabled: boolean;
+    dark_mode_strategy: string;
+    color_preset_dark: string | null;
+    color_overrides_dark: Record<string, string> | null;
 }
 
 function configToDraft(config: BuilderConfig): ThemeConfigDraft {
@@ -61,10 +66,79 @@ function configToDraft(config: BuilderConfig): ThemeConfigDraft {
         global_announcement: config.global_announcement,
         social_links: config.social_links,
         seo_defaults: config.seo_defaults,
+        dark_mode_enabled: config.dark_mode_enabled ?? false,
+        dark_mode_strategy: config.dark_mode_strategy ?? 'system',
+        color_preset_dark: config.color_preset_dark ?? null,
+        color_overrides_dark: config.color_overrides_dark ?? null,
     };
 }
 
 const SOCIAL_PLATFORMS = ['facebook', 'instagram', 'twitter', 'tiktok', 'youtube', 'whatsapp'];
+
+function DarkColorOverrides({
+    presets,
+    activePresetName,
+    overrides,
+    onOverride,
+}: {
+    presets: Array<Record<string, string>>;
+    activePresetName: string | null;
+    overrides: Record<string, string> | null;
+    onOverride: (key: string, value: string) => void;
+}) {
+    const [expanded, setExpanded] = useState(false);
+
+    const activePreset = presets.find((p) => p.name === activePresetName) ?? presets[0];
+    if (!activePreset) return null;
+
+    const channels = Object.keys(activePreset).filter((k) => k !== 'name');
+
+    return (
+        <div>
+            <button
+                type="button"
+                onClick={() => setExpanded(!expanded)}
+                className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+            >
+                {expanded ? '▾' : '▸'} Customize Colors
+            </button>
+
+            {expanded && (
+                <div className="mt-2 space-y-2">
+                    {channels.map((channel) => {
+                        const presetValue = activePreset[channel] ?? '#888888';
+                        const currentValue = overrides?.[channel] ?? presetValue;
+                        return (
+                            <div key={channel} className="flex items-center gap-2">
+                                <label className="w-28 shrink-0 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                                    {formatFieldName(channel)}
+                                </label>
+                                <label
+                                    className="relative h-6 w-6 shrink-0 cursor-pointer overflow-hidden rounded border border-gray-300 dark:border-gray-600"
+                                    style={{ backgroundColor: currentValue }}
+                                >
+                                    <input
+                                        type="color"
+                                        value={currentValue}
+                                        onChange={(e) => onOverride(channel, e.target.value)}
+                                        className="absolute inset-0 cursor-pointer opacity-0"
+                                    />
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={currentValue}
+                                    placeholder={presetValue}
+                                    onChange={(e) => onOverride(channel, e.target.value)}
+                                    className="!h-7 !text-xs"
+                                />
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+}
 
 export function ThemeConfigPanel() {
     const { error: showError, success: showSuccess } = useToast();
@@ -177,6 +251,7 @@ export function ThemeConfigPanel() {
     const animationDefaults = (tc.animation ?? {}) as Record<string, unknown>;
     const headerDefaults = (tc.header ?? {}) as Record<string, unknown>;
     const footerDefaults = (tc.footer ?? {}) as Record<string, unknown>;
+    const darkPalettePresets = ((tc.palette_dark as Record<string, unknown>)?.presets ?? []) as Array<Record<string, string>>;
 
     return (
         <div className="flex h-full flex-col">
@@ -245,6 +320,91 @@ export function ThemeConfigPanel() {
                             No predefined palettes for this theme.
                         </p>
                     )}
+                </CollapsibleSection>
+
+                <CollapsibleSection title="Dark Mode" icon={Moon}>
+                    <div className="space-y-3">
+                        <Toggle
+                            label="Enable Dark Mode"
+                            checked={draft.dark_mode_enabled}
+                            onChange={(checked) =>
+                                updateDraftImmediate({ dark_mode_enabled: checked })
+                            }
+                            size="sm"
+                        />
+
+                        {draft.dark_mode_enabled && (
+                            <>
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                                        Dark Mode Strategy
+                                    </label>
+                                    <Select
+                                        options={[
+                                            { value: 'system', label: 'Follow System' },
+                                            { value: 'toggle', label: 'Visitor Toggle' },
+                                            { value: 'light', label: 'Always Light' },
+                                            { value: 'dark', label: 'Always Dark' },
+                                        ]}
+                                        value={draft.dark_mode_strategy}
+                                        onChange={(val) =>
+                                            updateDraftImmediate({ dark_mode_strategy: val })
+                                        }
+                                    />
+                                </div>
+
+                                {darkPalettePresets.length > 0 && (
+                                    <div className="space-y-2">
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
+                                            Dark Palette
+                                        </label>
+                                        {darkPalettePresets.map((preset) => {
+                                            const isActive = draft.color_preset_dark === preset.name;
+                                            return (
+                                                <button
+                                                    key={preset.name}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        updateDraftImmediate({
+                                                            color_preset_dark: preset.name,
+                                                            color_overrides_dark: null,
+                                                        })
+                                                    }
+                                                    className={`flex w-full items-center gap-3 rounded-lg border p-2.5 text-left transition-all ${
+                                                        isActive
+                                                            ? 'border-brand-500 bg-brand-50/50 ring-1 ring-brand-500/20 dark:border-brand-400 dark:bg-brand-500/5'
+                                                            : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                                                    }`}
+                                                >
+                                                    <div className="flex gap-0.5">
+                                                        {['primary', 'background', 'card-bg', 'text'].map((key) => (
+                                                            <div
+                                                                key={key}
+                                                                className="h-6 w-6 rounded-sm first:rounded-l-md last:rounded-r-md"
+                                                                style={{ backgroundColor: preset[key] ?? '#888' }}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                                        {preset.name}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
+                                <DarkColorOverrides
+                                    presets={darkPalettePresets}
+                                    activePresetName={draft.color_preset_dark}
+                                    overrides={draft.color_overrides_dark}
+                                    onOverride={(key, value) =>
+                                        updateOverride('color_overrides_dark', key, value)
+                                    }
+                                />
+                            </>
+                        )}
+                    </div>
                 </CollapsibleSection>
 
                 <CollapsibleSection title="Typography" icon={Type} defaultOpen>

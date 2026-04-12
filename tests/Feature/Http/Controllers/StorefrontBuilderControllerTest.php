@@ -230,3 +230,41 @@ it('resets to theme defaults', function () {
 
     expect($this->shop->fresh()->storefrontConfig->color_overrides)->toBeNull();
 });
+
+it('saves dark mode config fields', function () {
+    StorefrontConfig::factory()->create([
+        'tenant_id' => $this->tenant->id,
+        'shop_id' => $this->shop->id,
+        'theme_id' => $this->theme->id,
+    ]);
+
+    $this->actingAs($this->owner)
+        ->putJson(route('shops.storefront-builder.config', $this->shop), [
+            'dark_mode_enabled' => true,
+            'dark_mode_strategy' => 'toggle',
+            'color_preset_dark' => 'Lagos Express Dark',
+            'color_overrides_dark' => ['primary' => '#ff6b81', 'background' => '#0c0c14'],
+        ])
+        ->assertOk();
+
+    $config = $this->shop->fresh()->storefrontConfig;
+    expect($config->dark_mode_enabled)->toBeTrue();
+    expect($config->dark_mode_strategy)->toBe('toggle');
+    expect($config->color_preset_dark)->toBe('Lagos Express Dark');
+    expect($config->color_overrides_dark['primary'])->toBe('#ff6b81');
+});
+
+it('rejects invalid dark mode strategy', function () {
+    StorefrontConfig::factory()->create([
+        'tenant_id' => $this->tenant->id,
+        'shop_id' => $this->shop->id,
+        'theme_id' => $this->theme->id,
+    ]);
+
+    $this->actingAs($this->owner)
+        ->putJson(route('shops.storefront-builder.config', $this->shop), [
+            'dark_mode_strategy' => 'invalid_strategy',
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['dark_mode_strategy']);
+});

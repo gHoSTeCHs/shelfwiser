@@ -26,6 +26,7 @@ interface BuilderState {
     previewMode: PreviewMode;
     isSaving: boolean;
     lastSaveAt: number | null;
+    previewDarkMode: boolean;
 
     initialize: (data: { shop: Shop; config: BuilderConfig | null; themes: BuilderTheme[] }) => void;
     loadBuilderData: (data: BuilderDataResponse) => void;
@@ -40,6 +41,7 @@ interface BuilderState {
     updatePageFromResponse: (page: BuilderPage) => void;
     currentPageSections: () => BuilderSection[];
     reset: () => void;
+    togglePreviewDarkMode: () => void;
 }
 
 const initialState = {
@@ -55,6 +57,7 @@ const initialState = {
     previewMode: 'desktop' as PreviewMode,
     isSaving: false,
     lastSaveAt: null,
+    previewDarkMode: false,
 };
 
 export const useBuilderStore = create<BuilderState>((set, get) => ({
@@ -111,7 +114,10 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     },
 
     updateConfigFromResponse(config) {
-        set({ config });
+        set((s) => ({
+            config,
+            previewDarkMode: config.dark_mode_enabled ? s.previewDarkMode : false,
+        }));
     },
 
     updatePageFromResponse(page) {
@@ -128,5 +134,9 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
 
     reset() {
         set(initialState);
+    },
+
+    togglePreviewDarkMode() {
+        set((s) => ({ previewDarkMode: !s.previewDarkMode }));
     },
 }));

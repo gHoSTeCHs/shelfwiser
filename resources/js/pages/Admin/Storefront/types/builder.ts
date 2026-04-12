@@ -18,6 +18,10 @@ export interface BuilderConfig {
     social_links: Record<string, string> | null;
     global_announcement: GlobalAnnouncement | null;
     seo_defaults: SeoDefaults | null;
+    dark_mode_enabled: boolean;
+    dark_mode_strategy: string;
+    color_preset_dark: string | null;
+    color_overrides_dark: Record<string, string> | null;
     is_published: boolean;
     published_at: string | null;
     theme?: BuilderTheme;
@@ -156,6 +160,9 @@ export interface ThemeConfig {
     header_options?: Record<string, string[]>;
     footer_defaults?: Record<string, string>;
     footer_options?: Record<string, string[]>;
+    palette_dark?: {
+        presets: Array<Record<string, string>>;
+    };
     [key: string]: unknown;
 }
 

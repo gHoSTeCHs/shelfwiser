@@ -1417,6 +1417,7 @@ Long-scroll narrative. The page IS the story. Each section reveals the next chap
 Food-first layout. Menu organized by categories with food photography, dietary tags (halal, vegetarian, spicy), portion sizes, and add-to-order flow. Not a product grid — a menu. Category tabs stick to the top as you scroll. Cart shows order summary with delivery/pickup toggle.
 
 **Structural config:**
+
 - Container stack, max-width 1280px
 - Header: standard with location/delivery toggle
 - Footer: minimal with hours, location, contact
@@ -1427,20 +1428,21 @@ Food-first layout. Menu organized by categories with food photography, dietary t
 - Order type toggle: pickup vs delivery
 
 **Unique section types required:**
+
 - `menu_category` — Category header with items listed below (not a grid, a vertical list with images)
 - `order_type_selector` — Pickup/delivery/dine-in toggle with address input for delivery
 - `hours_and_location` — Operating hours table + map
 
 **Themes (6):**
 
-| Theme | Mood | Colors | Typography | Card Style | Best For |
-|-------|------|--------|-----------|------------|----------|
-| **Suya Spot** | Vibrant, smoky, street food | Dark charcoal (#1c1917) bg, flame orange (#ea580c) accent | Outfit 700/400 | Bold menu items, fire emoji badges, large food photos | Street food, suya joints, grills |
-| **Fresh Kitchen** | Clean, healthy, modern | White bg, leaf green (#16a34a) accent | DM Sans 500/400 | Clean cards, dietary tags, calorie counts | Healthy food, salad bars, juice bars |
-| **Mama's Table** | Warm, homestyle, comforting | Cream (#faf5ef) bg, warm brown (#92400e) accent | Merriweather / Open Sans | Large photos, story descriptions, family-style portions | Home cooking, local restaurants, family joints |
-| **Pastry Box** | Sweet, pastel, delightful | Soft pink (#fdf2f8) bg, rose (#e11d48) accent | Poppins 600/400 | Rounded cards, pastel badges, whimsical | Bakeries, cake shops, dessert bars |
-| **Quick Bites** | Fast, efficient, no-frills | White bg, red (#dc2626) + yellow (#eab308) | DM Sans 700/400 | Compact menu rows, prominent prices, fast-add buttons | Fast food, shawarma, quick service |
-| **Fine Dine** | Elegant, understated, premium | Near-black (#0a0a0a) bg, gold (#c9a84c) accent, white text | Cormorant Garamond / Lato | Minimal imagery, typography-focused, prix fixe layout | Upscale restaurants, wine bars, lounges |
+| Theme             | Mood                          | Colors                                                     | Typography                | Card Style                                              | Best For                                       |
+| ----------------- | ----------------------------- | ---------------------------------------------------------- | ------------------------- | ------------------------------------------------------- | ---------------------------------------------- |
+| **Suya Spot**     | Vibrant, smoky, street food   | Dark charcoal (#1c1917) bg, flame orange (#ea580c) accent  | Outfit 700/400            | Bold menu items, fire emoji badges, large food photos   | Street food, suya joints, grills               |
+| **Fresh Kitchen** | Clean, healthy, modern        | White bg, leaf green (#16a34a) accent                      | DM Sans 500/400           | Clean cards, dietary tags, calorie counts               | Healthy food, salad bars, juice bars           |
+| **Mama's Table**  | Warm, homestyle, comforting   | Cream (#faf5ef) bg, warm brown (#92400e) accent            | Merriweather / Open Sans  | Large photos, story descriptions, family-style portions | Home cooking, local restaurants, family joints |
+| **Pastry Box**    | Sweet, pastel, delightful     | Soft pink (#fdf2f8) bg, rose (#e11d48) accent              | Poppins 600/400           | Rounded cards, pastel badges, whimsical                 | Bakeries, cake shops, dessert bars             |
+| **Quick Bites**   | Fast, efficient, no-frills    | White bg, red (#dc2626) + yellow (#eab308)                 | DM Sans 700/400           | Compact menu rows, prominent prices, fast-add buttons   | Fast food, shawarma, quick service             |
+| **Fine Dine**     | Elegant, understated, premium | Near-black (#0a0a0a) bg, gold (#c9a84c) accent, white text | Cormorant Garamond / Lato | Minimal imagery, typography-focused, prix fixe layout   | Upscale restaurants, wine bars, lounges        |
 
 ---
 
@@ -1455,6 +1457,7 @@ Food-first layout. Menu organized by categories with food photography, dietary t
 Service cards with duration, price, and "Book Now" CTA. Staff profiles with photo, bio, specialties, and availability. Calendar integration for time slot selection. Before/after galleries. Loyalty/membership section.
 
 **Structural config:**
+
 - Container stack, max-width 1280px
 - Header: standard, centered_logo
 - Footer: multi_column with hours, location, booking CTA
@@ -1464,6 +1467,7 @@ Service cards with duration, price, and "Book Now" CTA. Staff profiles with phot
 - No sidebar, no mega menu
 
 **Unique section types required:**
+
 - `service_list` — Service cards with name, description, duration, price, "Book" CTA
 - `staff_profiles` — Staff cards with photo, name, role, specialties, availability indicator
 - `booking_calendar` — Embedded calendar with time slot picker (integrates with booking service)
@@ -1472,14 +1476,14 @@ Service cards with duration, price, and "Book Now" CTA. Staff profiles with phot
 
 **Themes (6):**
 
-| Theme | Mood | Colors | Typography | Card Style | Best For |
-|-------|------|--------|-----------|------------|----------|
-| **Glow Studio** | Bright, clean, beauty | White bg, hot pink (#ec4899) accent | Poppins 600/400 | Rounded service cards, staff photo circles, gradient CTA buttons | Beauty salons, nail studios, lash bars |
-| **Sharp Edge** | Bold, masculine, precise | Dark gray (#18181b) bg, electric blue (#3b82f6) accent | Space Grotesk / Inter | Sharp edges, minimal cards, bold typography | Barbershops, men's grooming |
-| **Zen Retreat** | Calm, natural, restorative | Soft sage (#f5f7f2) bg, forest green (#365314) accent | Cormorant Garamond / Nunito | Soft shadows, organic shapes, generous whitespace | Spas, wellness centers, massage |
-| **Pro Clinic** | Medical, trustworthy, sterile | White bg, blue (#2563eb) accent, green highlights | DM Sans 500/400 | Clean borders, credential badges, professional layout | Clinics, dental, physiotherapy |
-| **Fit Zone** | Energetic, bold, motivating | Near-black (#0f0f0f) bg, neon lime (#84cc16) accent | Outfit 800/400 | High-contrast cards, progress indicators, bold CTAs | Gyms, personal trainers, fitness studios |
-| **Creative Suite** | Artistic, portfolio-adjacent | Light warm gray (#fafaf9) bg, indigo (#6366f1) accent | Inter 400/400 | Image-heavy service cards, portfolio grid, clean | Photographers, designers, freelancers |
+| Theme              | Mood                          | Colors                                                 | Typography                  | Card Style                                                       | Best For                                 |
+| ------------------ | ----------------------------- | ------------------------------------------------------ | --------------------------- | ---------------------------------------------------------------- | ---------------------------------------- |
+| **Glow Studio**    | Bright, clean, beauty         | White bg, hot pink (#ec4899) accent                    | Poppins 600/400             | Rounded service cards, staff photo circles, gradient CTA buttons | Beauty salons, nail studios, lash bars   |
+| **Sharp Edge**     | Bold, masculine, precise      | Dark gray (#18181b) bg, electric blue (#3b82f6) accent | Space Grotesk / Inter       | Sharp edges, minimal cards, bold typography                      | Barbershops, men's grooming              |
+| **Zen Retreat**    | Calm, natural, restorative    | Soft sage (#f5f7f2) bg, forest green (#365314) accent  | Cormorant Garamond / Nunito | Soft shadows, organic shapes, generous whitespace                | Spas, wellness centers, massage          |
+| **Pro Clinic**     | Medical, trustworthy, sterile | White bg, blue (#2563eb) accent, green highlights      | DM Sans 500/400             | Clean borders, credential badges, professional layout            | Clinics, dental, physiotherapy           |
+| **Fit Zone**       | Energetic, bold, motivating   | Near-black (#0f0f0f) bg, neon lime (#84cc16) accent    | Outfit 800/400              | High-contrast cards, progress indicators, bold CTAs              | Gyms, personal trainers, fitness studios |
+| **Creative Suite** | Artistic, portfolio-adjacent  | Light warm gray (#fafaf9) bg, indigo (#6366f1) accent  | Inter 400/400               | Image-heavy service cards, portfolio grid, clean                 | Photographers, designers, freelancers    |
 
 ---
 
@@ -1494,6 +1498,7 @@ Service cards with duration, price, and "Book Now" CTA. Staff profiles with phot
 Everything on one scroll. Hero → Products (1-10 max) → About → Testimonials → Buy. No separate pages. No product detail page — clicking a product opens a modal or expands inline. Designed to be set up in under 5 minutes. The lowest barrier to entry for first-time sellers.
 
 **Structural config:**
+
 - Single page, full-width sections, narrative flow
 - Header: minimal (logo + WhatsApp/cart only), sticky
 - Footer: minimal (contact + social links)
@@ -1504,20 +1509,21 @@ Everything on one scroll. Hero → Products (1-10 max) → About → Testimonial
 - Anchor-link navigation (hero, products, about, contact)
 
 **Unique section types required:**
+
 - `product_showcase_inline` — Product cards that expand inline with full details, gallery, and add-to-cart (no navigation to separate page)
 - `whatsapp_order` — WhatsApp CTA button that pre-fills an order message
 - `social_proof_compact` — Combined Instagram feed + testimonials in one section
 
 **Themes (6):**
 
-| Theme | Mood | Colors | Typography | Card Style | Best For |
-|-------|------|--------|-----------|------------|----------|
-| **Market Fresh** | Approachable, bright, casual | White bg, vibrant green (#22c55e) accent | Outfit 600/400 | Simple product cards, WhatsApp green CTA | Market vendors, fresh produce sellers |
-| **Insta Shop** | Trendy, social-first, visual | White bg, gradient accent (pink→orange) | Poppins 500/400 | Instagram-style image cards, story-like sections | Instagram sellers, small fashion |
-| **Hustle** | Bold, direct, no-nonsense | Black (#111111) bg, yellow (#eab308) accent, white text | DM Sans 700/400 | High-contrast cards, bold prices, urgency | Side hustlers, deal sellers |
-| **Craft Corner** | Handmade, warm, personal | Cream (#faf5f0) bg, terracotta (#c2410c) accent | Bitter / Karla | Hand-drawn borders, personal touch, story-first | Handmade crafts, artisan goods |
-| **Pop-Up** | Playful, temporary, energetic | Bright white bg, electric violet (#7c3aed) accent | Space Grotesk / Inter | Bubble shapes, playful layout, countdown | Pop-up shops, limited drops |
-| **Essentials** | Ultra-clean, minimal, fast | White bg, slate gray (#475569) only | Inter 400/400 | Barely-there design, just product + price + buy | Essentials sellers, utilitarian |
+| Theme            | Mood                          | Colors                                                  | Typography            | Card Style                                       | Best For                              |
+| ---------------- | ----------------------------- | ------------------------------------------------------- | --------------------- | ------------------------------------------------ | ------------------------------------- |
+| **Market Fresh** | Approachable, bright, casual  | White bg, vibrant green (#22c55e) accent                | Outfit 600/400        | Simple product cards, WhatsApp green CTA         | Market vendors, fresh produce sellers |
+| **Insta Shop**   | Trendy, social-first, visual  | White bg, gradient accent (pink→orange)                 | Poppins 500/400       | Instagram-style image cards, story-like sections | Instagram sellers, small fashion      |
+| **Hustle**       | Bold, direct, no-nonsense     | Black (#111111) bg, yellow (#eab308) accent, white text | DM Sans 700/400       | High-contrast cards, bold prices, urgency        | Side hustlers, deal sellers           |
+| **Craft Corner** | Handmade, warm, personal      | Cream (#faf5f0) bg, terracotta (#c2410c) accent         | Bitter / Karla        | Hand-drawn borders, personal touch, story-first  | Handmade crafts, artisan goods        |
+| **Pop-Up**       | Playful, temporary, energetic | Bright white bg, electric violet (#7c3aed) accent       | Space Grotesk / Inter | Bubble shapes, playful layout, countdown         | Pop-up shops, limited drops           |
+| **Essentials**   | Ultra-clean, minimal, fast    | White bg, slate gray (#475569) only                     | Inter 400/400         | Barely-there design, just product + price + buy  | Essentials sellers, utilitarian       |
 
 ---
 
@@ -1532,6 +1538,7 @@ Everything on one scroll. Hero → Products (1-10 max) → About → Testimonial
 Time-bound, urgency-driven. Countdown timer dominates. Email capture for early access. Pricing tiers (early bird, standard, VIP). Progress/goal bar ("42 of 100 claimed"). Social proof ticker. Designed to convert within one session. Can be repurposed for seasonal campaigns by swapping theme.
 
 **Structural config:**
+
 - Single page or minimal multi-page, narrative flow
 - Header: minimal (logo + countdown)
 - Footer: minimal
@@ -1543,6 +1550,7 @@ Time-bound, urgency-driven. Countdown timer dominates. Email capture for early a
 - Parallax on images, staggered reveals
 
 **Unique section types required:**
+
 - `pricing_tiers` — Side-by-side tier cards (Early Bird ₦X, Standard ₦Y, VIP ₦Z) with feature comparison
 - `progress_goal` — Progress bar with "42 of 100 claimed" or "₦2.3M of ₦5M goal"
 - `social_proof_ticker` — Live-updating ticker: "Adebayo from Lagos just ordered 2 minutes ago"
@@ -1551,14 +1559,14 @@ Time-bound, urgency-driven. Countdown timer dominates. Email capture for early a
 
 **Themes (6):**
 
-| Theme | Mood | Colors | Typography | Card Style | Best For |
-|-------|------|--------|-----------|------------|----------|
-| **Hype Drop** | Urgent, exclusive, streetwear | Black bg, neon green (#22c55e) + white | Space Grotesk 700/400 | Bold countdown, ticker, limited-edition badges | Limited drops, streetwear, sneakers |
-| **Early Bird** | Friendly, deal-focused, warm | Cream bg, coral (#f43f5e) accent | Outfit 600/400 | Tier cards, early-bird badges, progress bar | Preorder campaigns, early-bird pricing |
-| **Black Friday** | Red-hot, urgent, deal-driven | Near-black bg, red (#dc2626) + yellow (#eab308) | DM Sans 800/400 | Flash deal cards, countdown prominently, price slashes | Black Friday, seasonal mega-sales |
-| **Ramadan Special** | Warm, elegant, respectful | Deep green (#064e3b) bg, gold (#d4af37) accent, white text | Playfair Display / DM Sans | Elegant tier cards, crescent motifs, generous spacing | Ramadan campaigns, Eid sales |
-| **Christmas Market** | Festive, warm, joyful | Deep red (#7f1d1d) bg, gold (#fbbf24) accent, cream text | Merriweather / Poppins | Gift-themed cards, ribbon decorations, snow texture | Christmas, holiday campaigns, gift boxes |
-| **Product Reveal** | Clean, Apple-style, focused | White bg, minimal black text, product imagery drives color | SF Pro / Inter | Clean countdown, single-product focus, cinematic | Tech launches, premium product reveals |
+| Theme                | Mood                          | Colors                                                     | Typography                 | Card Style                                             | Best For                                 |
+| -------------------- | ----------------------------- | ---------------------------------------------------------- | -------------------------- | ------------------------------------------------------ | ---------------------------------------- |
+| **Hype Drop**        | Urgent, exclusive, streetwear | Black bg, neon green (#22c55e) + white                     | Space Grotesk 700/400      | Bold countdown, ticker, limited-edition badges         | Limited drops, streetwear, sneakers      |
+| **Early Bird**       | Friendly, deal-focused, warm  | Cream bg, coral (#f43f5e) accent                           | Outfit 600/400             | Tier cards, early-bird badges, progress bar            | Preorder campaigns, early-bird pricing   |
+| **Black Friday**     | Red-hot, urgent, deal-driven  | Near-black bg, red (#dc2626) + yellow (#eab308)            | DM Sans 800/400            | Flash deal cards, countdown prominently, price slashes | Black Friday, seasonal mega-sales        |
+| **Ramadan Special**  | Warm, elegant, respectful     | Deep green (#064e3b) bg, gold (#d4af37) accent, white text | Playfair Display / DM Sans | Elegant tier cards, crescent motifs, generous spacing  | Ramadan campaigns, Eid sales             |
+| **Christmas Market** | Festive, warm, joyful         | Deep red (#7f1d1d) bg, gold (#fbbf24) accent, cream text   | Merriweather / Poppins     | Gift-themed cards, ribbon decorations, snow texture    | Christmas, holiday campaigns, gift boxes |
+| **Product Reveal**   | Clean, Apple-style, focused   | White bg, minimal black text, product imagery drives color | SF Pro / Inter             | Clean countdown, single-product focus, cinematic       | Tech launches, premium product reveals   |
 
 ---
 
@@ -1573,6 +1581,7 @@ Time-bound, urgency-driven. Countdown timer dominates. Email capture for early a
 Social-first e-commerce. User-generated content grid (customer photos wearing/using products). Shoppable posts — tap an image, see tagged products, add to cart. Influencer/ambassador spotlight sections. Review-heavy product pages with photo reviews. Instagram feed integration.
 
 **Structural config:**
+
 - Container stack, max-width 1440px
 - Header: standard with "Shop the Look" navigation tab
 - Footer: multi_column with social feed
@@ -1583,6 +1592,7 @@ Social-first e-commerce. User-generated content grid (customer photos wearing/us
 - Parallax on lifestyle imagery
 
 **Unique section types required:**
+
 - `shoppable_gallery` — Grid of lifestyle images with product hotspots (tap image → see tagged products → add to cart)
 - `ugc_grid` — User-generated content grid (customer submitted photos with their purchase)
 - `influencer_spotlight` — Ambassador/influencer profile card with their curated product picks
@@ -1591,14 +1601,14 @@ Social-first e-commerce. User-generated content grid (customer photos wearing/us
 
 **Themes (6):**
 
-| Theme | Mood | Colors | Typography | Card Style | Best For |
-|-------|------|--------|-----------|------------|----------|
-| **Feed** | Instagram-native, grid-first, visual | White bg, gradient pink→purple accent | Poppins 500/400 | Square image cards, minimal chrome, double-tap heart | Instagram-first brands, fashion |
-| **Curator** | Editorial social, magazine-meets-gram | Light gray (#fafafa) bg, black accent | Archivo / Source Sans 3 | Magazine-style layout, editorial captions | Fashion editorial, curated lifestyle |
-| **Glow Up** | Beauty, luminous, aspirational | Soft pink (#fef2f8) bg, hot pink (#ec4899) accent | DM Sans 500/400 | Before/after cards, review highlights, star ratings | Beauty, skincare, cosmetics |
-| **Street Style** | Urban, bold, youth | White bg, neon yellow (#facc15) + black | Outfit 700/400 | Polaroid-style cards, bold text overlays | Streetwear, sneaker culture, youth fashion |
-| **Community** | Warm, inclusive, user-focused | Warm cream (#faf7f2) bg, warm coral (#f97316) accent | Nunito 600/400 | Rounded cards, user avatars prominent, testimonial-heavy | Community-driven brands, handmade |
-| **Luxe Social** | Premium social, curated | Black (#0a0a0a) bg, gold (#d4af37) accent | Playfair Display / DM Sans | Dark cards, gold borders, exclusive feel | Luxury with social presence |
+| Theme            | Mood                                  | Colors                                               | Typography                 | Card Style                                               | Best For                                   |
+| ---------------- | ------------------------------------- | ---------------------------------------------------- | -------------------------- | -------------------------------------------------------- | ------------------------------------------ |
+| **Feed**         | Instagram-native, grid-first, visual  | White bg, gradient pink→purple accent                | Poppins 500/400            | Square image cards, minimal chrome, double-tap heart     | Instagram-first brands, fashion            |
+| **Curator**      | Editorial social, magazine-meets-gram | Light gray (#fafafa) bg, black accent                | Archivo / Source Sans 3    | Magazine-style layout, editorial captions                | Fashion editorial, curated lifestyle       |
+| **Glow Up**      | Beauty, luminous, aspirational        | Soft pink (#fef2f8) bg, hot pink (#ec4899) accent    | DM Sans 500/400            | Before/after cards, review highlights, star ratings      | Beauty, skincare, cosmetics                |
+| **Street Style** | Urban, bold, youth                    | White bg, neon yellow (#facc15) + black              | Outfit 700/400             | Polaroid-style cards, bold text overlays                 | Streetwear, sneaker culture, youth fashion |
+| **Community**    | Warm, inclusive, user-focused         | Warm cream (#faf7f2) bg, warm coral (#f97316) accent | Nunito 600/400             | Rounded cards, user avatars prominent, testimonial-heavy | Community-driven brands, handmade          |
+| **Luxe Social**  | Premium social, curated               | Black (#0a0a0a) bg, gold (#d4af37) accent            | Playfair Display / DM Sans | Dark cards, gold borders, exclusive feel                 | Luxury with social presence                |
 
 ---
 
@@ -1613,6 +1623,7 @@ Social-first e-commerce. User-generated content grid (customer photos wearing/us
 Content-commerce hybrid. Blog posts alongside product collections. Articles can link to featured products ("As seen in this post"). Author profiles. Category-based content organization. The blog drives traffic and trust, the shop converts.
 
 **Structural config:**
+
 - Container stack, max-width 1280px
 - Header: standard with Blog/Shop split navigation
 - Footer: multi_column with recent posts + newsletter
@@ -1623,6 +1634,7 @@ Content-commerce hybrid. Blog posts alongside product collections. Articles can 
 - No sidebar on mobile, optional sidebar on desktop for blog categories
 
 **Unique section types required:**
+
 - `blog_feed` — Latest/featured blog posts as cards (title, excerpt, image, date, author)
 - `blog_post_products` — Inline product recommendations within blog content ("Products mentioned in this post")
 - `author_profile` — Author card with photo, bio, post count, social links
@@ -1630,14 +1642,14 @@ Content-commerce hybrid. Blog posts alongside product collections. Articles can 
 
 **Themes (6):**
 
-| Theme | Mood | Colors | Typography | Card Style | Best For |
-|-------|------|--------|-----------|------------|----------|
-| **Lifestyle Journal** | Editorial, content-first | White bg, muted sage (#6b7280) accent | Libre Baskerville / Source Sans 3 | Magazine-style post cards, generous typography | Lifestyle blogs, wellness |
-| **Beauty Diary** | Soft, feminine, tutorial-focused | Blush (#fdf2f4) bg, rose (#be185d) accent | Poppins / Nunito | Rounded cards, step-by-step tutorial layouts | Beauty blogs, skincare routines |
-| **Fit Life** | Energetic, motivating, health | White bg, lime green (#65a30d) accent | Outfit 600/400 | Bold headers, workout-style cards, progress indicators | Fitness blogs, health products |
-| **Recipe Box** | Warm, appetizing, culinary | Cream (#fffbf0) bg, tomato red (#dc2626) accent | Merriweather / Open Sans | Recipe cards with cook time badges, ingredient lists | Food blogs, ingredient shops |
-| **Tech Review** | Clean, informative, analytical | Light gray (#f9fafb) bg, blue (#2563eb) accent | Inter 500/400 | Spec comparison cards, rating scores, pros/cons | Tech review sites, gadget shops |
-| **Creator Hub** | Modern, creator-economy | White bg, violet (#7c3aed) accent | DM Sans 500/400 | Content cards with view counts, merch integration | Content creators selling merch |
+| Theme                 | Mood                             | Colors                                          | Typography                        | Card Style                                             | Best For                        |
+| --------------------- | -------------------------------- | ----------------------------------------------- | --------------------------------- | ------------------------------------------------------ | ------------------------------- |
+| **Lifestyle Journal** | Editorial, content-first         | White bg, muted sage (#6b7280) accent           | Libre Baskerville / Source Sans 3 | Magazine-style post cards, generous typography         | Lifestyle blogs, wellness       |
+| **Beauty Diary**      | Soft, feminine, tutorial-focused | Blush (#fdf2f4) bg, rose (#be185d) accent       | Poppins / Nunito                  | Rounded cards, step-by-step tutorial layouts           | Beauty blogs, skincare routines |
+| **Fit Life**          | Energetic, motivating, health    | White bg, lime green (#65a30d) accent           | Outfit 600/400                    | Bold headers, workout-style cards, progress indicators | Fitness blogs, health products  |
+| **Recipe Box**        | Warm, appetizing, culinary       | Cream (#fffbf0) bg, tomato red (#dc2626) accent | Merriweather / Open Sans          | Recipe cards with cook time badges, ingredient lists   | Food blogs, ingredient shops    |
+| **Tech Review**       | Clean, informative, analytical   | Light gray (#f9fafb) bg, blue (#2563eb) accent  | Inter 500/400                     | Spec comparison cards, rating scores, pros/cons        | Tech review sites, gadget shops |
+| **Creator Hub**       | Modern, creator-economy          | White bg, violet (#7c3aed) accent               | DM Sans 500/400                   | Content cards with view counts, merch integration      | Content creators selling merch  |
 
 ---
 
@@ -1652,6 +1664,7 @@ Content-commerce hybrid. Blog posts alongside product collections. Articles can 
 Account-gated storefront. Tiered pricing visible after login. Bulk order forms (quantity tables, not single add-to-cart). Quote request flow for large orders. Order history and reorder. Minimum order quantities and badges. Invoice/statement download. Not consumer-facing — this is business-to-business.
 
 **Structural config:**
+
 - Sidebar + content layout (when logged in), max-width 1440px
 - Header: standard with account menu, prominent search
 - Footer: minimal with company info, terms
@@ -1662,6 +1675,7 @@ Account-gated storefront. Tiered pricing visible after login. Bulk order forms (
 - Login-gated sections (pricing visible only to approved accounts)
 
 **Unique section types required:**
+
 - `bulk_order_form` — Table-style form: product rows with quantity inputs, running total, MOQ indicators
 - `pricing_tiers_table` — Tiered pricing table (1-9 units: ₦X, 10-49: ₦Y, 50+: ₦Z)
 - `quote_request` — Form for requesting quotes on large/custom orders
@@ -1670,14 +1684,14 @@ Account-gated storefront. Tiered pricing visible after login. Bulk order forms (
 
 **Themes (6):**
 
-| Theme | Mood | Colors | Typography | Card Style | Best For |
-|-------|------|--------|-----------|------------|----------|
-| **Trade Direct** | Corporate, efficient, trustworthy | White bg, navy (#1e3a5f) accent | Inter 500/400 | Clean tables, corporate cards, professional | General B2B, distributors |
-| **Warehouse** | Industrial, utilitarian, dense | Light gray (#f5f5f4) bg, orange (#ea580c) accent | Roboto Condensed / Roboto | Compact rows, specification-heavy, no imagery | Warehouse, industrial supply |
-| **Agro Supply** | Agricultural, earthy, practical | Cream bg, green (#15803d) accent | DM Sans 500/400 | Product cards with pack sizes, seasonal badges | Agricultural supply, farm inputs |
-| **Pharma Trade** | Medical, regulated, sterile | White bg, blue (#2563eb) + green (#16a34a) | DM Sans 400/400 | Regulatory badges, batch numbers, expiry indicators | Pharmaceutical wholesale |
-| **Tech Distributor** | Modern, spec-driven, dark | Dark gray (#18181b) bg, cyan (#06b6d4) accent | Space Grotesk / Inter | Spec tables, compatibility badges, bulk pricing | Electronics, IT equipment wholesale |
-| **Fashion Wholesale** | Visual, catalog-style, seasonal | White bg, warm accent (seasonal rotation) | Poppins 500/400 | Lookbook-style with MOQ badges, collection grouping | Fashion wholesale, textiles |
+| Theme                 | Mood                              | Colors                                           | Typography                | Card Style                                          | Best For                            |
+| --------------------- | --------------------------------- | ------------------------------------------------ | ------------------------- | --------------------------------------------------- | ----------------------------------- |
+| **Trade Direct**      | Corporate, efficient, trustworthy | White bg, navy (#1e3a5f) accent                  | Inter 500/400             | Clean tables, corporate cards, professional         | General B2B, distributors           |
+| **Warehouse**         | Industrial, utilitarian, dense    | Light gray (#f5f5f4) bg, orange (#ea580c) accent | Roboto Condensed / Roboto | Compact rows, specification-heavy, no imagery       | Warehouse, industrial supply        |
+| **Agro Supply**       | Agricultural, earthy, practical   | Cream bg, green (#15803d) accent                 | DM Sans 500/400           | Product cards with pack sizes, seasonal badges      | Agricultural supply, farm inputs    |
+| **Pharma Trade**      | Medical, regulated, sterile       | White bg, blue (#2563eb) + green (#16a34a)       | DM Sans 400/400           | Regulatory badges, batch numbers, expiry indicators | Pharmaceutical wholesale            |
+| **Tech Distributor**  | Modern, spec-driven, dark         | Dark gray (#18181b) bg, cyan (#06b6d4) accent    | Space Grotesk / Inter     | Spec tables, compatibility badges, bulk pricing     | Electronics, IT equipment wholesale |
+| **Fashion Wholesale** | Visual, catalog-style, seasonal   | White bg, warm accent (seasonal rotation)        | Poppins 500/400           | Lookbook-style with MOQ badges, collection grouping | Fashion wholesale, textiles         |
 
 ---
 
@@ -1692,6 +1706,7 @@ Account-gated storefront. Tiered pricing visible after login. Bulk order forms (
 Portfolio-first with service packages. Project gallery with case studies. Service cards with tiered pricing (Basic, Standard, Premium). Client testimonials with project photos. Inquiry/consultation booking form. Less about selling products, more about selling expertise.
 
 **Structural config:**
+
 - Full-bleed images + container text, max-width 1280px
 - Header: centered_logo, standard
 - Footer: minimal with contact CTA
@@ -1702,6 +1717,7 @@ Portfolio-first with service packages. Project gallery with case studies. Servic
 - Parallax on portfolio images, staggered reveals
 
 **Unique section types required:**
+
 - `portfolio_grid` — Project gallery with filterable categories, lightbox, and optional case study overlay
 - `service_packages` — Tiered service comparison (Basic/Standard/Premium) with feature lists and CTA per tier
 - `client_logos_and_testimonials` — Combined logo cloud + testimonials (social proof for service businesses)
@@ -1710,14 +1726,14 @@ Portfolio-first with service packages. Project gallery with case studies. Servic
 
 **Themes (6):**
 
-| Theme | Mood | Colors | Typography | Card Style | Best For |
-|-------|------|--------|-----------|------------|----------|
-| **Studio** | Clean, modern, portfolio-focused | White bg, charcoal (#1c1917) + gold (#c9a84c) accent | Inter 400/400 | Full-bleed images, minimal text, gallery-first | Photographers, videographers |
-| **Blueprint Pro** | Professional, structured, corporate | Light gray (#f8fafc) bg, navy (#1e3a5f) accent | DM Sans 600/400 | Service tier cards, structured layout, professional | Agencies, consulting firms |
-| **Atelier** | Artistic, elegant, creative | Off-white (#faf9f7) bg, deep purple (#581c87) accent | Cormorant Garamond / Nunito | Asymmetric gallery, large imagery, artistic | Interior designers, artists, architects |
-| **Maker Pro** | Craft-focused, warm, skilled | Warm cream (#f5f0e8) bg, amber (#d97706) accent | Bitter / Work Sans | Process-focused, behind-the-scenes, handcrafted | Custom furniture, bespoke crafts |
-| **Digital Agency** | Modern, tech-savvy, dynamic | Dark (#111827) bg, gradient accent (blue→purple) | Space Grotesk / Inter | Animated cards, gradient borders, case study cards | Digital agencies, tech freelancers |
-| **Event Planner** | Elegant, celebratory, visual | Blush (#fef2f8) bg, gold (#b8860b) accent | Playfair Display / Lato | Gallery-heavy, mood boards, event type categories | Event planners, wedding vendors |
+| Theme              | Mood                                | Colors                                               | Typography                  | Card Style                                          | Best For                                |
+| ------------------ | ----------------------------------- | ---------------------------------------------------- | --------------------------- | --------------------------------------------------- | --------------------------------------- |
+| **Studio**         | Clean, modern, portfolio-focused    | White bg, charcoal (#1c1917) + gold (#c9a84c) accent | Inter 400/400               | Full-bleed images, minimal text, gallery-first      | Photographers, videographers            |
+| **Blueprint Pro**  | Professional, structured, corporate | Light gray (#f8fafc) bg, navy (#1e3a5f) accent       | DM Sans 600/400             | Service tier cards, structured layout, professional | Agencies, consulting firms              |
+| **Atelier**        | Artistic, elegant, creative         | Off-white (#faf9f7) bg, deep purple (#581c87) accent | Cormorant Garamond / Nunito | Asymmetric gallery, large imagery, artistic         | Interior designers, artists, architects |
+| **Maker Pro**      | Craft-focused, warm, skilled        | Warm cream (#f5f0e8) bg, amber (#d97706) accent      | Bitter / Work Sans          | Process-focused, behind-the-scenes, handcrafted     | Custom furniture, bespoke crafts        |
+| **Digital Agency** | Modern, tech-savvy, dynamic         | Dark (#111827) bg, gradient accent (blue→purple)     | Space Grotesk / Inter       | Animated cards, gradient borders, case study cards  | Digital agencies, tech freelancers      |
+| **Event Planner**  | Elegant, celebratory, visual        | Blush (#fef2f8) bg, gold (#b8860b) accent            | Playfair Display / Lato     | Gallery-heavy, mood boards, event type categories   | Event planners, wedding vendors         |
 
 ---
 
@@ -1732,6 +1748,7 @@ Portfolio-first with service packages. Project gallery with case studies. Servic
 Subscription-first layout. Plan comparison as the primary conversion point. "What's in the box" reveal section. Delivery schedule visualization. Subscriber testimonials. Gifting option. Past box gallery showing previous months.
 
 **Structural config:**
+
 - Container stack, max-width 1280px
 - Header: standard, centered_logo
 - Footer: multi_column with subscription CTA
@@ -1742,6 +1759,7 @@ Subscription-first layout. Plan comparison as the primary conversion point. "Wha
 - Parallax on lifestyle imagery, staggered reveals
 
 **Unique section types required:**
+
 - `subscription_plans` — Plan comparison cards with billing cycle, included items, price per delivery, "Subscribe" CTA
 - `whats_in_the_box` — Reveal section showing current/sample box contents with product details
 - `how_it_works_steps` — 3-4 step visual process (Choose Plan → We Curate → Receive Monthly)
@@ -1750,36 +1768,36 @@ Subscription-first layout. Plan comparison as the primary conversion point. "Wha
 
 **Themes (6):**
 
-| Theme | Mood | Colors | Typography | Card Style | Best For |
-|-------|------|--------|-----------|------------|----------|
-| **Unbox Joy** | Playful, surprise, colorful | White bg, multicolor accents (rotating per section) | Poppins 600/400 | Colorful plan cards, surprise/unbox animations | General subscription boxes |
-| **Curated** | Premium, selective, editorial | Cream (#faf7f2) bg, muted gold (#a3842c) accent | Cormorant Garamond / Lato | Elegant plan comparison, editorial product reveals | Premium curated boxes, luxury |
-| **Fresh Box** | Healthy, clean, green | White bg, green (#22c55e) accent | DM Sans 500/400 | Clean cards, freshness badges, delivery schedule | Food boxes, health boxes, organic |
-| **Beauty Box** | Feminine, delightful, luxe | Soft pink (#fef2f8) bg, rose gold (#b76e79) accent | Poppins / Nunito | Pink plan cards, product swatches, before/after | Beauty, skincare subscription |
-| **Mystery Crate** | Dark, exciting, gaming | Dark (#111111) bg, neon cyan (#06b6d4) accent | Space Grotesk / Inter | Glowing reveal cards, mystery/surprise language | Gaming loot boxes, mystery boxes |
-| **Essentials Refill** | Minimal, practical, recurring | White bg, slate (#64748b) accent | Inter 400/400 | No-frills plan cards, delivery calendar, reorder | Essentials, household refills |
+| Theme                 | Mood                          | Colors                                              | Typography                | Card Style                                         | Best For                          |
+| --------------------- | ----------------------------- | --------------------------------------------------- | ------------------------- | -------------------------------------------------- | --------------------------------- |
+| **Unbox Joy**         | Playful, surprise, colorful   | White bg, multicolor accents (rotating per section) | Poppins 600/400           | Colorful plan cards, surprise/unbox animations     | General subscription boxes        |
+| **Curated**           | Premium, selective, editorial | Cream (#faf7f2) bg, muted gold (#a3842c) accent     | Cormorant Garamond / Lato | Elegant plan comparison, editorial product reveals | Premium curated boxes, luxury     |
+| **Fresh Box**         | Healthy, clean, green         | White bg, green (#22c55e) accent                    | DM Sans 500/400           | Clean cards, freshness badges, delivery schedule   | Food boxes, health boxes, organic |
+| **Beauty Box**        | Feminine, delightful, luxe    | Soft pink (#fef2f8) bg, rose gold (#b76e79) accent  | Poppins / Nunito          | Pink plan cards, product swatches, before/after    | Beauty, skincare subscription     |
+| **Mystery Crate**     | Dark, exciting, gaming        | Dark (#111111) bg, neon cyan (#06b6d4) accent       | Space Grotesk / Inter     | Glowing reveal cards, mystery/surprise language    | Gaming loot boxes, mystery boxes  |
+| **Essentials Refill** | Minimal, practical, recurring | White bg, slate (#64748b) accent                    | Inter 400/400             | No-frills plan cards, delivery calendar, reorder   | Essentials, household refills     |
 
 ---
 
 ### Template Roadmap Summary
 
-| Priority | Template | Category | Stage | Reason |
-|----------|----------|----------|-------|--------|
-| P0 | Classic Commerce | Commerce | Stage 1 | 60%+ of shops, broadest use case |
-| P0 | Editorial Showcase | Editorial | Stage 2 | Fashion/luxury is a major Nigerian market |
-| P0 | Marketplace Hub | Marketplace | Stage 3 | Electronics/wholesale — high-volume shops |
-| P1 | Catalog Pro | Catalog | Stage 4 | Large inventories, B2B-adjacent |
-| P1 | Storyteller | Storyteller | Stage 5 | DTC brands, artisan makers |
-| P1 | Immersive Experience | Immersive | Stage 6 | Premium upsell, brand differentiator |
-| P2 | Menu & Ordering | Service | Stage 7 | Huge restaurant/food market in Nigeria |
-| P2 | Booking & Appointments | Service | Stage 8 | Salons/barbershops are everywhere |
-| P2 | One-Page Micro Shop | Specialty | Stage 9 | Lowest barrier to entry, Instagram sellers |
-| P2 | Launch & Preorder | Campaign | Stage 10 | Any shop can use for product drops |
-| P3 | Social Commerce | Social | Stage 11 | Growing Instagram-commerce market |
-| P3 | Blog + Shop | Content | Stage 12 | Content-driven brands |
-| P3 | Wholesale & B2B Portal | Social | Stage 13 | Already a ShelfWiser use case |
-| P3 | Portfolio & Services | Service | Stage 14 | Service-based businesses |
-| P3 | Subscription Box | Specialty | Stage 15 | Emerging market, recurring revenue |
+| Priority | Template               | Category    | Stage    | Reason                                     |
+| -------- | ---------------------- | ----------- | -------- | ------------------------------------------ |
+| P0       | Classic Commerce       | Commerce    | Stage 1  | 60%+ of shops, broadest use case           |
+| P0       | Editorial Showcase     | Editorial   | Stage 2  | Fashion/luxury is a major Nigerian market  |
+| P0       | Marketplace Hub        | Marketplace | Stage 3  | Electronics/wholesale — high-volume shops  |
+| P1       | Catalog Pro            | Catalog     | Stage 4  | Large inventories, B2B-adjacent            |
+| P1       | Storyteller            | Storyteller | Stage 5  | DTC brands, artisan makers                 |
+| P1       | Immersive Experience   | Immersive   | Stage 6  | Premium upsell, brand differentiator       |
+| P2       | Menu & Ordering        | Service     | Stage 7  | Huge restaurant/food market in Nigeria     |
+| P2       | Booking & Appointments | Service     | Stage 8  | Salons/barbershops are everywhere          |
+| P2       | One-Page Micro Shop    | Specialty   | Stage 9  | Lowest barrier to entry, Instagram sellers |
+| P2       | Launch & Preorder      | Campaign    | Stage 10 | Any shop can use for product drops         |
+| P3       | Social Commerce        | Social      | Stage 11 | Growing Instagram-commerce market          |
+| P3       | Blog + Shop            | Content     | Stage 12 | Content-driven brands                      |
+| P3       | Wholesale & B2B Portal | Social      | Stage 13 | Already a ShelfWiser use case              |
+| P3       | Portfolio & Services   | Service     | Stage 14 | Service-based businesses                   |
+| P3       | Subscription Box       | Specialty   | Stage 15 | Emerging market, recurring revenue         |
 
 **15 templates × 6 themes each = 90 base presets.** With guardrailed customization, section composition, and variant selection on top, the combinatorial space is effectively infinite. No two shops need look alike.
 
@@ -1990,11 +2008,13 @@ Monthly boxes, recurring deliveries, curated selections.
 The storefront has two fundamentally different page categories, both fully themed:
 
 **1. Composable pages** — shop owner drags sections, reorders, configures via the builder.
+
 - Home, Products listing, Product detail, About, Contact, Custom pages
 - Rendered from `StorefrontPage.sections` JSON
 - Each section is a React component driven by config + variant + theme
 
 **2. Fixed themed pages** — layout is predetermined (a cart IS a cart), but every visual element respects the theme: colors, fonts, button styles, card styles, spacing, header/footer, animations.
+
 - Cart, Checkout, Checkout Success/Pending
 - Auth: Login, Register, Forgot Password, Reset Password, Verify Email
 - Account: Dashboard, Orders, Order Detail, Profile
@@ -2528,8 +2548,8 @@ resources/
 
 1. **Shop model** gets a `storefrontConfig()` HasOne relationship
 2. **All 5 existing storefront controllers** (`StorefrontController`, `CartController`, `CheckoutController`, `CustomerAuthController`, `CustomerPortalController`) are replaced by two new controllers:
-   - `StorefrontRenderController` — ALL page rendering (composable + fixed themed), returns Blade→React
-   - `StorefrontApiController` — ALL mutations (cart CRUD, checkout processing, auth, account updates), returns JSON
+    - `StorefrontRenderController` — ALL page rendering (composable + fixed themed), returns Blade→React
+    - `StorefrontApiController` — ALL mutations (cart CRUD, checkout processing, auth, account updates), returns JSON
 3. **Existing `StorefrontService`** methods become data sources called by section resolvers and fixed page data loaders
 4. **Existing services are reused as-is:** `CartService`, `CheckoutService`, `CustomerService` business logic is unchanged — only the controller layer changes from Inertia responses to Blade views / JSON
 5. **Existing `storefront_settings` JSON** superseded by `StorefrontConfig`. Migration copies existing settings.
