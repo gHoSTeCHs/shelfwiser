@@ -5,6 +5,7 @@ import type {
     FixedPageProps,
     ProductDetailPageData,
     ProductVariantDetailData,
+    StorefrontOptionData,
 } from '../../types/storefront';
 
 export function ProductDetailPage({ data, shop }: FixedPageProps) {
@@ -12,7 +13,32 @@ export function ProductDetailPage({ data, shop }: FixedPageProps) {
     const product = pageData.product;
 
     const activeVariants = product?.variants.filter((v) => v.is_active) ?? [];
-    const [selectedVariantId, setSelectedVariantId] = useState<number>(activeVariants[0]?.id ?? 0);
+    const hasOptionAxes = !!(
+        product?.has_variants &&
+        product.options &&
+        product.options.length > 0
+    );
+
+    const initOptionSelections = (): Record<number, number> => {
+        if (!hasOptionAxes || !product?.options) return {};
+        const first = activeVariants[0];
+        if (!first?.option_value_ids?.length) return {};
+        const result: Record<number, number> = {};
+        product.options.forEach((opt) => {
+            const match = opt.values.find((v) =>
+                first.option_value_ids.includes(v.id),
+            );
+            if (match) result[opt.id] = match.id;
+        });
+        return result;
+    };
+
+    const [selectedOptionValues, setSelectedOptionValues] = useState<
+        Record<number, number>
+    >(initOptionSelections);
+    const [selectedVariantId, setSelectedVariantId] = useState<number>(
+        activeVariants[0]?.id ?? 0,
+    );
     const [quantity, setQuantity] = useState(1);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [adding, setAdding] = useState(false);
@@ -60,7 +86,22 @@ export function ProductDetailPage({ data, shop }: FixedPageProps) {
         );
     }
 
-    const selectedVariant = activeVariants.find((v) => v.id === selectedVariantId) ?? activeVariants[0];
+    const optionMatchedVariant = hasOptionAxes
+        ? (activeVariants.find((v) => {
+              const selectedIds = Object.values(selectedOptionValues);
+              return (
+                  selectedIds.length > 0 &&
+                  selectedIds.every((id) =>
+                      v.option_value_ids.includes(id),
+                  )
+              );
+          }) ?? null)
+        : null;
+
+    const selectedVariant =
+        optionMatchedVariant ??
+        activeVariants.find((v) => v.id === selectedVariantId) ??
+        activeVariants[0];
     const basePrice = selectedVariant?.price ?? 0;
     const compareAtPrice = selectedVariant?.compare_at_price ?? null;
     const hasDiscount = compareAtPrice !== null && compareAtPrice > basePrice;
@@ -281,32 +322,50 @@ export function ProductDetailPage({ data, shop }: FixedPageProps) {
                         </div>
                     )}
 
-                    {/* Variants */}
-                    {activeVariants.length > 1 && (
-                        <div style={{ marginTop: 28 }}>
-                            <p
-                                style={{
-                                    margin: '0 0 10px',
-                                    fontSize: 12,
-                                    fontWeight: 700,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.06em',
-                                    color: 'var(--color-muted-foreground, #6b7280)',
-                                }}
-                            >
-                                Options
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                                {activeVariants.map((variant) => (
-                                    <VariantChip
-                                        key={variant.id}
-                                        variant={variant}
-                                        selected={selectedVariantId === variant.id}
-                                        onSelect={() => setSelectedVariantId(variant.id)}
-                                    />
-                                ))}
+                    {/* Variant / Option selector */}
+                    {hasOptionAxes && product?.options ? (
+                        <OptionAxisSelector
+                            options={product.options}
+                            activeVariants={activeVariants}
+                            selectedOptionValues={selectedOptionValues}
+                            onSelect={(optionId, valueId) =>
+                                setSelectedOptionValues((prev) => ({
+                                    ...prev,
+                                    [optionId]: valueId,
+                                }))
+                            }
+                        />
+                    ) : (
+                        activeVariants.length > 1 && (
+                            <div style={{ marginTop: 28 }}>
+                                <p
+                                    style={{
+                                        margin: '0 0 10px',
+                                        fontSize: 12,
+                                        fontWeight: 700,
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.06em',
+                                        color: 'var(--color-muted-foreground, #6b7280)',
+                                    }}
+                                >
+                                    Options
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {activeVariants.map((variant) => (
+                                        <VariantChip
+                                            key={variant.id}
+                                            variant={variant}
+                                            selected={
+                                                selectedVariantId === variant.id
+                                            }
+                                            onSelect={() =>
+                                                setSelectedVariantId(variant.id)
+                                            }
+                                        />
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )
                     )}
 
                     {/* Quantity + add to cart */}
@@ -424,6 +483,244 @@ export function ProductDetailPage({ data, shop }: FixedPageProps) {
                     </button>
                 </div>
             </div>
+        </div>
+    );
+}
+
+function OptionAxisSelector({
+    options,
+    activeVariants,
+    selectedOptionValues,
+    onSelect,
+}: {
+    options: StorefrontOptionData[];
+    activeVariants: ProductVariantDetailData[];
+    selectedOptionValues: Record<number, number>;
+    onSelect: (optionId: number, valueId: number) => void;
+}) {
+    const isValueAvailable = (optionId: number, valueId: number): boolean => {
+        const hypothetical = { ...selectedOptionValues, [optionId]: valueId };
+        const selectedIds = Object.values(hypothetical);
+        return activeVariants.some((v) =>
+            selectedIds.every((id) => v.option_value_ids.includes(id)),
+        );
+    };
+
+    return (
+        <div style={{ marginTop: 28 }} className="space-y-5">
+            {options.map((option) => (
+                <div key={option.id}>
+                    <p
+                        style={{
+                            margin: '0 0 10px',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.06em',
+                            color: 'var(--color-muted-foreground, #6b7280)',
+                        }}
+                    >
+                        {option.display_name}
+                        {selectedOptionValues[option.id] !== undefined && (
+                            <span
+                                style={{
+                                    marginLeft: 8,
+                                    fontWeight: 400,
+                                    textTransform: 'none',
+                                    letterSpacing: 0,
+                                    color: 'var(--color-foreground, #1a1a1a)',
+                                    fontSize: 13,
+                                }}
+                            >
+                                {option.values.find(
+                                    (v) =>
+                                        v.id === selectedOptionValues[option.id],
+                                )?.label ?? ''}
+                            </span>
+                        )}
+                    </p>
+                    {option.visual_type === 'dropdown' ? (
+                        <select
+                            value={
+                                selectedOptionValues[option.id] !== undefined
+                                    ? String(selectedOptionValues[option.id])
+                                    : ''
+                            }
+                            onChange={(e) => {
+                                const id = parseInt(e.target.value, 10);
+                                if (!isNaN(id)) {
+                                    onSelect(option.id, id);
+                                }
+                            }}
+                            style={{
+                                padding: '9px 12px',
+                                fontSize: 13,
+                                fontWeight: 500,
+                                border: '1.5px solid var(--color-border, #e5e7eb)',
+                                borderRadius: 'var(--radius, 8px)',
+                                backgroundColor: 'var(--color-card-bg, #fff)',
+                                color: 'var(--color-foreground, #1a1a1a)',
+                                fontFamily: 'var(--font-body, sans-serif)',
+                                minWidth: 160,
+                                cursor: 'pointer',
+                            }}
+                        >
+                            <option value="" disabled>
+                                Select {option.display_name}
+                            </option>
+                            {option.values.map((val) => {
+                                const available = isValueAvailable(option.id, val.id);
+                                return (
+                                    <option
+                                        key={val.id}
+                                        value={String(val.id)}
+                                        disabled={!available}
+                                    >
+                                        {val.label}
+                                        {!available ? ' (out of stock)' : ''}
+                                    </option>
+                                );
+                            })}
+                        </select>
+                    ) : (
+                        <div className="flex flex-wrap gap-2">
+                            {option.values.map((val) => {
+                                const isSelected =
+                                    selectedOptionValues[option.id] === val.id;
+                                const available = isValueAvailable(option.id, val.id);
+
+                                if (option.visual_type === 'color_swatch') {
+                                    const hex = val.visual_data?.['hex'] as
+                                        | string
+                                        | undefined;
+                                    return (
+                                        <button
+                                            key={val.id}
+                                            type="button"
+                                            title={val.label}
+                                            disabled={!available}
+                                            onClick={() => onSelect(option.id, val.id)}
+                                            style={{
+                                                width: 32,
+                                                height: 32,
+                                                borderRadius: '50%',
+                                                backgroundColor: hex ?? '#cccccc',
+                                                border: isSelected
+                                                    ? '2.5px solid var(--color-primary, #e94560)'
+                                                    : '2px solid var(--color-border, #e5e7eb)',
+                                                outline: isSelected
+                                                    ? '2px solid color-mix(in srgb, var(--color-primary, #e94560) 30%, transparent)'
+                                                    : 'none',
+                                                outlineOffset: 1,
+                                                cursor: available ? 'pointer' : 'not-allowed',
+                                                opacity: !available ? 0.35 : 1,
+                                                transition:
+                                                    'border-color 0.15s ease, outline 0.15s ease, opacity 0.15s ease',
+                                                flexShrink: 0,
+                                            }}
+                                            aria-label={val.label}
+                                            aria-pressed={isSelected}
+                                        />
+                                    );
+                                }
+
+                                if (option.visual_type === 'image_swatch') {
+                                    const imageUrl = val.visual_data?.['image_url'] as
+                                        | string
+                                        | undefined;
+                                    return (
+                                        <button
+                                            key={val.id}
+                                            type="button"
+                                            title={val.label}
+                                            disabled={!available}
+                                            onClick={() => onSelect(option.id, val.id)}
+                                            style={{
+                                                width: 40,
+                                                height: 40,
+                                                borderRadius: 'var(--radius-sm, 4px)',
+                                                border: isSelected
+                                                    ? '2.5px solid var(--color-primary, #e94560)'
+                                                    : '1.5px solid var(--color-border, #e5e7eb)',
+                                                padding: 2,
+                                                cursor: available ? 'pointer' : 'not-allowed',
+                                                opacity: !available ? 0.35 : 1,
+                                                overflow: 'hidden',
+                                                backgroundColor: 'var(--color-card-bg, #fff)',
+                                                transition:
+                                                    'border-color 0.15s ease, opacity 0.15s ease',
+                                                flexShrink: 0,
+                                            }}
+                                            aria-label={val.label}
+                                            aria-pressed={isSelected}
+                                        >
+                                            {imageUrl ? (
+                                                <img
+                                                    src={imageUrl}
+                                                    alt={val.label}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover',
+                                                        borderRadius: 2,
+                                                        display: 'block',
+                                                    }}
+                                                />
+                                            ) : (
+                                                <span
+                                                    style={{
+                                                        fontSize: 9,
+                                                        color: 'var(--color-muted-foreground, #9ca3af)',
+                                                    }}
+                                                >
+                                                    {val.label}
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                }
+
+                                return (
+                                    <button
+                                        key={val.id}
+                                        type="button"
+                                        disabled={!available}
+                                        onClick={() => onSelect(option.id, val.id)}
+                                        style={{
+                                            padding: '10px 18px',
+                                            fontSize: 13,
+                                            fontWeight: 600,
+                                            border: isSelected
+                                                ? '1.5px solid var(--color-primary, #e94560)'
+                                                : '1.5px solid var(--color-border, #e5e7eb)',
+                                            borderRadius: 'var(--radius, 8px)',
+                                            backgroundColor: isSelected
+                                                ? 'color-mix(in srgb, var(--color-primary, #e94560) 8%, transparent)'
+                                                : 'var(--color-card-bg, #fff)',
+                                            color: isSelected
+                                                ? 'var(--color-primary, #e94560)'
+                                                : !available
+                                                  ? 'var(--color-muted-foreground, #9ca3af)'
+                                                  : 'var(--color-foreground, #1a1a1a)',
+                                            cursor: available ? 'pointer' : 'not-allowed',
+                                            opacity: !available ? 0.5 : 1,
+                                            fontFamily: 'var(--font-body, sans-serif)',
+                                            transition:
+                                                'border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease',
+                                            textDecoration:
+                                                !available && !isSelected
+                                                    ? 'line-through'
+                                                    : 'none',
+                                        }}
+                                    >
+                                        {val.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            ))}
         </div>
     );
 }

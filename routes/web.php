@@ -24,6 +24,7 @@ use App\Http\Controllers\PayRunController;
 use App\Http\Controllers\POSController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductOptionController;
 use App\Http\Controllers\ProductTemplateController;
 use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\PurchaseOrderController;
@@ -326,6 +327,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('products', ProductController::class);
 
+    // Product Option Routes
+    Route::prefix('products/{product}/options')->name('product-options.')->middleware('throttle:60,1')->group(function () {
+        Route::post('/', [ProductOptionController::class, 'store'])->name('store');
+        Route::put('/{option}', [ProductOptionController::class, 'update'])->name('update');
+        Route::delete('/{option}', [ProductOptionController::class, 'destroy'])->name('destroy');
+        Route::post('/{option}/values', [ProductOptionController::class, 'storeValue'])->name('values.store');
+        Route::delete('/{option}/values/{value}', [ProductOptionController::class, 'destroyValue'])->name('values.destroy');
+    });
+
+    // Variant Matrix Generation
+    Route::post('/products/{product}/variants/matrix', [ProductOptionController::class, 'generateMatrix'])
+        ->name('products.variants.matrix')
+        ->middleware('throttle:20,1');
+
     // Product Variant Routes
     Route::prefix('variants')->name('variants.')->group(function () {
         Route::get('/{variant}/edit', [ProductVariantController::class, 'edit'])->name('edit');
@@ -335,7 +350,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Batch barcode generation
     Route::post('/variants/batch-generate-barcodes', [ProductVariantController::class, 'batchGenerateBarcodes'])
-        ->name('variants.batch-generate-barcodes');
+        ->name('variants.batch-generate-barcodes')
+        ->middleware('throttle:30,1');
 
     // Product Templates (for tenants)
     Route::prefix('product-templates')->name('product-templates.')->group(function () {

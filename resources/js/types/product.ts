@@ -5,6 +5,38 @@ import { ProductVariant } from '@/types/stockMovement';
 
 export type { ProductVariant } from '@/types/stockMovement';
 
+export type OptionVisualType = 'dropdown' | 'color_swatch' | 'button_group' | 'image_swatch';
+
+export interface OptionTemplateEntry {
+    name: string;
+    visual_type: OptionVisualType;
+    common_values: string[];
+}
+
+export interface OptionTemplates {
+    max_options: number;
+    suggested_options: OptionTemplateEntry[];
+}
+
+export interface ProductOptionValue {
+    id: number;
+    product_option_id: number;
+    label: string;
+    value: string;
+    visual_data: Record<string, unknown> | null;
+    position: number;
+}
+
+export interface ProductOption {
+    id: number;
+    product_id: number;
+    name: string;
+    display_name: string | null;
+    position: number;
+    visual_type: OptionVisualType;
+    values: ProductOptionValue[];
+}
+
 export interface ProductType {
     id: number;
     slug: string;
@@ -15,6 +47,7 @@ export interface ProductType {
         properties: Record<string, SchemaProperty>;
         required: string[];
     } | null;
+    option_templates: OptionTemplates | null;
     supports_variants: boolean;
     requires_batch_tracking: boolean;
     requires_serial_tracking: boolean;
@@ -40,6 +73,7 @@ export interface Product {
     description: string | null;
     custom_attributes: Record<string, unknown> | null;
     has_variants: boolean;
+    size_guide: string | null;
     is_active: boolean;
     track_stock: boolean;
     is_taxable: boolean;
@@ -53,6 +87,7 @@ export interface Product {
     shop: Shop;
     variants: ProductVariant[];
     variants_count: number;
+    options?: ProductOption[];
     images?: Image[];
     created_at: string;
     updated_at: string;

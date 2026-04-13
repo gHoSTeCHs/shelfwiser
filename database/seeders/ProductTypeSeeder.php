@@ -18,6 +18,21 @@ class ProductTypeSeeder extends Seeder
                 'requires_batch_tracking' => true,
                 'requires_serial_tracking' => false,
                 'config_schema' => $this->pharmaceuticalSchema(),
+                'option_templates' => [
+                    'max_options' => 2,
+                    'suggested_options' => [
+                        [
+                            'name' => 'Strength',
+                            'visual_type' => 'button_group',
+                            'common_values' => ['250mg', '500mg', '1000mg'],
+                        ],
+                        [
+                            'name' => 'Form',
+                            'visual_type' => 'dropdown',
+                            'common_values' => ['Tablet', 'Capsule', 'Syrup', 'Injection'],
+                        ],
+                    ],
+                ],
             ],
             [
                 'slug' => 'clothing_apparel',
@@ -27,6 +42,26 @@ class ProductTypeSeeder extends Seeder
                 'requires_batch_tracking' => false,
                 'requires_serial_tracking' => false,
                 'config_schema' => $this->clothingApparelSchema(),
+                'option_templates' => [
+                    'max_options' => 3,
+                    'suggested_options' => [
+                        [
+                            'name' => 'Size',
+                            'visual_type' => 'button_group',
+                            'common_values' => ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+                        ],
+                        [
+                            'name' => 'Color',
+                            'visual_type' => 'color_swatch',
+                            'common_values' => ['Black', 'White', 'Red', 'Blue', 'Green', 'Navy', 'Grey'],
+                        ],
+                        [
+                            'name' => 'Material',
+                            'visual_type' => 'dropdown',
+                            'common_values' => ['Cotton', 'Polyester', 'Linen', 'Wool', 'Silk', 'Denim'],
+                        ],
+                    ],
+                ],
             ],
             [
                 'slug' => 'electronics',
@@ -36,6 +71,26 @@ class ProductTypeSeeder extends Seeder
                 'requires_batch_tracking' => false,
                 'requires_serial_tracking' => true,
                 'config_schema' => $this->electronicsSchema(),
+                'option_templates' => [
+                    'max_options' => 5,
+                    'suggested_options' => [
+                        [
+                            'name' => 'Storage',
+                            'visual_type' => 'button_group',
+                            'common_values' => ['64GB', '128GB', '256GB', '512GB', '1TB'],
+                        ],
+                        [
+                            'name' => 'Color',
+                            'visual_type' => 'color_swatch',
+                            'common_values' => ['Black', 'White', 'Silver', 'Gold', 'Space Grey'],
+                        ],
+                        [
+                            'name' => 'RAM',
+                            'visual_type' => 'button_group',
+                            'common_values' => ['4GB', '8GB', '16GB', '32GB'],
+                        ],
+                    ],
+                ],
             ],
             [
                 'slug' => 'food_beverage',
@@ -45,6 +100,21 @@ class ProductTypeSeeder extends Seeder
                 'requires_batch_tracking' => true,
                 'requires_serial_tracking' => false,
                 'config_schema' => $this->foodBeverageSchema(),
+                'option_templates' => [
+                    'max_options' => 2,
+                    'suggested_options' => [
+                        [
+                            'name' => 'Size',
+                            'visual_type' => 'button_group',
+                            'common_values' => ['Small', 'Medium', 'Large', 'Family Size'],
+                        ],
+                        [
+                            'name' => 'Flavor',
+                            'visual_type' => 'button_group',
+                            'common_values' => ['Original', 'Spicy', 'Sweet', 'Sour', 'Mild'],
+                        ],
+                    ],
+                ],
             ],
             [
                 'slug' => 'cosmetics_beauty',
@@ -54,6 +124,21 @@ class ProductTypeSeeder extends Seeder
                 'requires_batch_tracking' => true,
                 'requires_serial_tracking' => false,
                 'config_schema' => $this->cosmeticsBeautySchema(),
+                'option_templates' => [
+                    'max_options' => 2,
+                    'suggested_options' => [
+                        [
+                            'name' => 'Shade',
+                            'visual_type' => 'color_swatch',
+                            'common_values' => ['Fair', 'Light', 'Medium', 'Tan', 'Dark', 'Deep'],
+                        ],
+                        [
+                            'name' => 'Size',
+                            'visual_type' => 'button_group',
+                            'common_values' => ['30ml', '50ml', '100ml', '200ml'],
+                        ],
+                    ],
+                ],
             ],
             [
                 'slug' => 'books_media',
@@ -63,6 +148,16 @@ class ProductTypeSeeder extends Seeder
                 'requires_batch_tracking' => false,
                 'requires_serial_tracking' => false,
                 'config_schema' => $this->booksMediaSchema(),
+                'option_templates' => [
+                    'max_options' => 2,
+                    'suggested_options' => [
+                        [
+                            'name' => 'Format',
+                            'visual_type' => 'button_group',
+                            'common_values' => ['Hardcover', 'Paperback', 'eBook', 'Audiobook'],
+                        ],
+                    ],
+                ],
             ],
             [
                 'slug' => 'furniture_home',
@@ -72,6 +167,26 @@ class ProductTypeSeeder extends Seeder
                 'requires_batch_tracking' => false,
                 'requires_serial_tracking' => false,
                 'config_schema' => $this->furnitureHomeSchema(),
+                'option_templates' => [
+                    'max_options' => 3,
+                    'suggested_options' => [
+                        [
+                            'name' => 'Finish',
+                            'visual_type' => 'color_swatch',
+                            'common_values' => ['Natural', 'White', 'Black', 'Brown', 'Grey', 'Walnut'],
+                        ],
+                        [
+                            'name' => 'Size',
+                            'visual_type' => 'button_group',
+                            'common_values' => ['Small', 'Medium', 'Large', 'Extra Large'],
+                        ],
+                        [
+                            'name' => 'Material',
+                            'visual_type' => 'dropdown',
+                            'common_values' => ['Wood', 'Metal', 'Fabric', 'Leather', 'Glass'],
+                        ],
+                    ],
+                ],
             ],
             [
                 'slug' => 'automotive_parts',
@@ -81,6 +196,16 @@ class ProductTypeSeeder extends Seeder
                 'requires_batch_tracking' => false,
                 'requires_serial_tracking' => true,
                 'config_schema' => $this->automotivePartsSchema(),
+                'option_templates' => [
+                    'max_options' => 2,
+                    'suggested_options' => [
+                        [
+                            'name' => 'Compatibility',
+                            'visual_type' => 'dropdown',
+                            'common_values' => ['Universal', 'Toyota', 'Honda', 'Ford', 'Hyundai'],
+                        ],
+                    ],
+                ],
             ],
             [
                 'slug' => 'agricultural_supplies',
@@ -90,6 +215,21 @@ class ProductTypeSeeder extends Seeder
                 'requires_batch_tracking' => true,
                 'requires_serial_tracking' => false,
                 'config_schema' => $this->agriculturalSuppliesSchema(),
+                'option_templates' => [
+                    'max_options' => 2,
+                    'suggested_options' => [
+                        [
+                            'name' => 'Size',
+                            'visual_type' => 'button_group',
+                            'common_values' => ['1kg', '5kg', '10kg', '25kg', '50kg'],
+                        ],
+                        [
+                            'name' => 'Grade',
+                            'visual_type' => 'dropdown',
+                            'common_values' => ['Standard', 'Premium', 'Certified Organic'],
+                        ],
+                    ],
+                ],
             ],
             [
                 'slug' => 'building_materials',
@@ -99,11 +239,26 @@ class ProductTypeSeeder extends Seeder
                 'requires_batch_tracking' => false,
                 'requires_serial_tracking' => false,
                 'config_schema' => $this->buildingMaterialsSchema(),
+                'option_templates' => [
+                    'max_options' => 2,
+                    'suggested_options' => [
+                        [
+                            'name' => 'Size',
+                            'visual_type' => 'button_group',
+                            'common_values' => ['Standard', 'Large', 'Extra Large'],
+                        ],
+                        [
+                            'name' => 'Grade',
+                            'visual_type' => 'dropdown',
+                            'common_values' => ['Grade A', 'Grade B', 'Premium'],
+                        ],
+                    ],
+                ],
             ],
         ];
 
         foreach ($types as $type) {
-            ProductType::query()->firstOrCreate(
+            ProductType::query()->updateOrCreate(
                 ['slug' => $type['slug'], 'tenant_id' => null],
                 $type
             );
