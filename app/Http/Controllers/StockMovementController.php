@@ -3,17 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Enums\StockMovementType;
-use App\Enums\UserRole;
 use App\Http\Requests\AdjustStockRequest;
 use App\Http\Requests\RecordPurchaseRequest;
 use App\Http\Requests\SetupInventoryLocationsRequest;
+use App\Http\Requests\StockMovementIndexRequest;
 use App\Http\Requests\StockTakeRequest;
 use App\Http\Requests\TransferStockRequest;
 use App\Models\InventoryLocation;
 use App\Models\ProductPackagingType;
 use App\Models\ProductVariant;
-use App\Models\Shop;
 use App\Models\StockMovement;
+use App\Services\ExportService;
 use App\Services\StockMovementService;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -24,58 +24,30 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 class StockMovementController extends Controller
 {
-    public function __construct(private readonly StockMovementService $stockMovementService) {}
+    public function __construct(
+        private readonly StockMovementService $stockMovementService,
+        private readonly ExportService $exportService,
+    ) {}
 
     /**
      * @throws AuthorizationException
      */
-    public function index(Request $request): Response
+    public function index(StockMovementIndexRequest $request): Response
     {
         Gate::authorize('viewAny', StockMovement::class);
 
         $user = $request->user();
-        $tenantId = $user->tenant_id;
-
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-        ]);
-
-        $shopId = $validated['shop'] ?? null;
-
-        $query = StockMovement::query()
-            ->where('tenant_id', $tenantId)
-            ->with([
-                'shop:id,name',
-                'productVariant.product',
-                'packagingType',
-                'fromLocation.location',
-                'toLocation.location',
-                'createdBy:id,first_name',
-            ]);
-
-        if ($user->isTenantOwner() || $user->role->value === UserRole::GENERAL_MANAGER->value) {
-            if ($shopId) {
-                $query->forShop($shopId);
-            }
-            $shops = Shop::query()->where('tenant_id', $tenantId)->get(['id', 'name']);
-        } else {
-            $userShops = $user->shops()->pluck('shops.id');
-            $query->whereIn('shop_id', $userShops);
-
-            if ($shopId && $userShops->contains($shopId)) {
-                $query->forShop($shopId);
-            }
-            $shops = $user->shops()->get(['shops.id as id', 'shops.name as name']);
-        }
+        $shopId = $request->validated('shop');
 
         return Inertia::render('StockMovements/Index', [
-            'movements' => $query->latest()->paginate(50),
+            'movements' => $this->stockMovementService->getMovements($user, $shopId),
             'movementTypes' => StockMovementType::forSelect(),
-            'shops' => $shops,
+            'shops' => $user->accessibleShops(),
             'selectedShop' => $shopId,
         ]);
     }
@@ -340,78 +312,17 @@ class StockMovementController extends Controller
         }
     }
 
-    public function export(Request $request)
+    public function export(Request $request): StreamedResponse
     {
         Gate::authorize('viewAny', StockMovement::class);
 
-        $tenantId = auth()->user()->tenant_id;
         $variantId = $request->query('variant_id');
+        $variantId = $variantId !== null ? (int) $variantId : null;
 
-        $query = StockMovement::query()
-            ->where('tenant_id', $tenantId)
-            ->with([
-                'productVariant.product',
-                'fromLocation.location',
-                'toLocation.location',
-                'createdBy:id,first_name',
-            ])
-            ->latest();
-
-        if ($variantId) {
-            $query->where('product_variant_id', $variantId);
-        }
-
-        $movements = $query->get();
-
+        $movements = $this->stockMovementService->getMovementsForExport($variantId);
+        $formatted = $this->stockMovementService->formatMovementsExport($movements);
         $filename = 'stock-movements-'.now()->format('Y-m-d-His').'.csv';
 
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"$filename\"",
-        ];
-
-        $callback = function () use ($movements) {
-            $file = fopen('php://output', 'w');
-
-            fputcsv($file, [
-                'Date',
-                'Reference',
-                'Product',
-                'SKU',
-                'Variant',
-                'Type',
-                'Quantity',
-                'Before',
-                'After',
-                'From Location',
-                'To Location',
-                'Reason',
-                'Notes',
-                'Created By',
-            ]);
-
-            foreach ($movements as $movement) {
-                fputcsv($file, [
-                    $movement->created_at->format('Y-m-d H:i:s'),
-                    $movement->reference_number ?? 'N/A',
-                    $movement->productVariant->product->name ?? 'N/A',
-                    $movement->productVariant->sku ?? 'N/A',
-                    $movement->productVariant->name ?? 'Default',
-                    $movement->type->label(),
-                    $movement->quantity,
-                    $movement->quantity_before ?? 'N/A',
-                    $movement->quantity_after ?? 'N/A',
-                    $movement->fromLocation?->location?->name ?? 'N/A',
-                    $movement->toLocation?->location?->name ?? 'N/A',
-                    $movement->reason ?? 'N/A',
-                    $movement->notes ?? 'N/A',
-                    $movement->createdBy->name ?? 'N/A',
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], $filename);
     }
 }

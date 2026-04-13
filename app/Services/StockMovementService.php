@@ -9,6 +9,8 @@ use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Models\User;
 use Exception;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -20,6 +22,102 @@ class StockMovementService
      * Constructor
      */
     public function __construct(private ReorderAlertService $reorderAlertService) {}
+
+    /**
+     * Get paginated stock movements for the index page, scoped to the user's accessible shops.
+     */
+    public function getMovements(User $user, ?int $shopId): LengthAwarePaginator
+    {
+        $query = StockMovement::query()
+            ->with([
+                'shop:id,name',
+                'productVariant.product',
+                'packagingType',
+                'fromLocation.location',
+                'toLocation.location',
+                'createdBy:id,first_name',
+            ]);
+
+        if ($user->isTenantOwner() || $user->role->canAccessMultipleStores()) {
+            if ($shopId) {
+                $query->forShop($shopId);
+            }
+        } else {
+            $userShops = $user->shops()->pluck('shops.id');
+            $query->whereIn('shop_id', $userShops);
+
+            if ($shopId && $userShops->contains($shopId)) {
+                $query->forShop($shopId);
+            }
+        }
+
+        return $query->latest()->paginate(50);
+    }
+
+    /**
+     * Get stock movements for export, optionally filtered by variant.
+     */
+    public function getMovementsForExport(?int $variantId): Collection
+    {
+        $query = StockMovement::query()
+            ->with([
+                'productVariant.product',
+                'fromLocation.location',
+                'toLocation.location',
+                'createdBy:id,first_name',
+            ])
+            ->latest();
+
+        if ($variantId) {
+            $query->where('product_variant_id', $variantId);
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * Format a collection of stock movements into headers and rows for export.
+     *
+     * @return array{headers: array<int, string>, rows: Collection}
+     */
+    public function formatMovementsExport(Collection $movements): array
+    {
+        $headers = [
+            'Date',
+            'Reference',
+            'Product',
+            'SKU',
+            'Variant',
+            'Type',
+            'Quantity',
+            'Before',
+            'After',
+            'From Location',
+            'To Location',
+            'Reason',
+            'Notes',
+            'Created By',
+        ];
+
+        $rows = $movements->map(fn (StockMovement $movement) => [
+            $movement->created_at->format('Y-m-d H:i:s'),
+            $movement->reference_number ?? 'N/A',
+            $movement->productVariant->product->name ?? 'N/A',
+            $movement->productVariant->sku ?? 'N/A',
+            $movement->productVariant->name ?? 'Default',
+            $movement->type->label(),
+            $movement->quantity,
+            $movement->quantity_before ?? 'N/A',
+            $movement->quantity_after ?? 'N/A',
+            $movement->fromLocation?->location?->name ?? 'N/A',
+            $movement->toLocation?->location?->name ?? 'N/A',
+            $movement->reason ?? 'N/A',
+            $movement->notes ?? 'N/A',
+            $movement->createdBy->name ?? 'N/A',
+        ]);
+
+        return ['headers' => $headers, 'rows' => $rows];
+    }
 
     /**
      * @throws Throwable

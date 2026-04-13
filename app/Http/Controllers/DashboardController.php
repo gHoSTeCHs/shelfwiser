@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Shop;
+use App\Http\Requests\DashboardIndexRequest;
 use App\Services\DashboardService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
@@ -18,19 +18,12 @@ class DashboardController extends Controller
         protected DashboardService $dashboardService
     ) {}
 
-    public function index(Request $request): Response
+    public function index(DashboardIndexRequest $request): Response
     {
         Gate::authorize('dashboard.view');
 
         $user = $request->user();
-
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'period' => ['nullable', 'in:today,week,month,custom'],
-            'from' => ['nullable', 'date', 'required_if:period,custom'],
-            'to' => ['nullable', 'date', 'required_if:period,custom', 'after_or_equal:from'],
-            'tab' => ['nullable', 'in:overview,sales,inventory,suppliers,financials'],
-        ]);
+        $validated = $request->validated();
 
         $shopId = $validated['shop'] ?? null;
         $period = $validated['period'] ?? 'today';
@@ -38,8 +31,7 @@ class DashboardController extends Controller
         $endDate = $validated['to'] ?? null;
         $activeTab = $validated['tab'] ?? 'overview';
 
-        $accessibleShops = $this->getAccessibleShops($user);
-        $shopIds = $this->getShopIdsForMetrics($user, $shopId);
+        $shopIds = $user->accessibleShopIds($shopId);
         $dateRange = $this->dashboardService->getDateRange($period, $startDate, $endDate);
 
         $data = match ($activeTab) {
@@ -47,13 +39,13 @@ class DashboardController extends Controller
             'inventory' => $this->getInventoryTabData($user, $shopIds),
             'suppliers' => $this->getSuppliersTabData($user, $shopIds, $dateRange),
             'financials' => $this->getFinancialsTabData($user, $shopIds, $dateRange),
-            default => $this->getOverviewData($user, $shopId, $shopIds, $period, $dateRange, $startDate, $endDate),
+            default => $this->getOverviewData($user, $shopIds, $dateRange),
         };
 
         return Inertia::render('dashboard', [
             'activeTab' => $activeTab,
             'data' => $data,
-            'shops' => $accessibleShops->toArray(),
+            'shops' => $user->accessibleShops()->toArray(),
             'selectedShop' => $shopId,
             'period' => $period,
             'startDate' => $startDate,
@@ -62,17 +54,11 @@ class DashboardController extends Controller
         ]);
     }
 
-    protected function getOverviewData($user, $shopId, Collection $shopIds, string $period, array $dateRange, $startDate, $endDate): array
+    protected function getOverviewData($user, Collection $shopIds, array $dateRange): array
     {
-        $metrics = $this->dashboardService->getDashboardMetrics(
-            $user,
-            $shopId,
-            $period,
-            $startDate,
-            $endDate
-        );
+        $metrics = $this->dashboardService->getDashboardMetrics($shopIds, $dateRange);
 
-        if ($user->can('viewFinancials')) {
+        if ($user->can('dashboard.view_financials')) {
             $metrics['inventory_valuation'] = $this->dashboardService->getInventoryValuation($shopIds);
             $metrics['profit'] = $this->dashboardService->getProfitMetrics(
                 $shopIds,
@@ -81,28 +67,28 @@ class DashboardController extends Controller
             );
         }
 
-        return $this->filterMetricsByPermissions($metrics, $user);
+        return $this->filterMetrics($metrics, $user);
     }
 
     protected function getSalesTabData($user, Collection $shopIds, array $dateRange): array
     {
         $data = $this->dashboardService->getSalesData($user, $shopIds, $dateRange['start'], $dateRange['end']);
 
-        return $this->filterMetricsByPermissions($data, $user);
+        return $this->filterMetrics($data, $user);
     }
 
     protected function getInventoryTabData($user, Collection $shopIds): array
     {
         $data = $this->dashboardService->getInventoryData($user, $shopIds);
 
-        return $this->filterMetricsByPermissions($data, $user);
+        return $this->filterMetrics($data, $user);
     }
 
     protected function getSuppliersTabData($user, Collection $shopIds, array $dateRange): array
     {
         $data = $this->dashboardService->getSupplierData($user, $shopIds, $dateRange['start'], $dateRange['end']);
 
-        return $this->filterMetricsByPermissions($data, $user);
+        return $this->filterMetrics($data, $user);
     }
 
     protected function getFinancialsTabData($user, Collection $shopIds, array $dateRange): array
@@ -113,7 +99,17 @@ class DashboardController extends Controller
 
         $data = $this->dashboardService->getFinancialsData($user, $shopIds, $dateRange['start'], $dateRange['end']);
 
-        return $this->filterMetricsByPermissions($data, $user);
+        return $this->filterMetrics($data, $user);
+    }
+
+    protected function filterMetrics(array $metrics, $user): array
+    {
+        return $this->dashboardService->filterMetricsByPermissions(
+            $metrics,
+            canViewProfits: $user->can('dashboard.view_profits'),
+            canViewCosts: $user->can('dashboard.view_costs'),
+            canViewFinancials: $user->can('dashboard.view_financials'),
+        );
     }
 
     /**
@@ -123,84 +119,13 @@ class DashboardController extends Controller
     {
         Gate::authorize('dashboard.refresh_cache');
 
-        $user = $request->user();
         $shopId = $request->query('shop');
-
-        $shopIds = $this->getShopIdsForMetrics($user, $shopId);
+        $shopIds = $request->user()->accessibleShopIds($shopId ? (int) $shopId : null);
 
         $this->dashboardService->clearCache($shopIds);
 
         return redirect()
             ->route('dashboard', $request->query())
             ->with('success', 'Dashboard data refreshed successfully');
-    }
-
-    protected function getAccessibleShops($user): Collection
-    {
-        if ($user->is_tenant_owner) {
-            return Shop::query()->where('tenant_id', $user->tenant_id)
-                ->where('is_active', true)
-                ->select('id', 'name')
-                ->orderBy('name')
-                ->get();
-        }
-
-        return $user->shops()
-            ->where('is_active', true)
-            ->select('shops.id', 'shops.name')
-            ->orderBy('name')
-            ->get();
-    }
-
-    protected function getShopIdsForMetrics($user, ?int $shopId): Collection
-    {
-        if ($user->is_tenant_owner) {
-            $query = Shop::query()->where('tenant_id', $user->tenant_id);
-
-            if ($shopId) {
-                $query->where('id', $shopId);
-            }
-
-            return $query->pluck('id');
-        }
-
-        $assignedShopIds = $user->shops()->pluck('shops.id');
-
-        if ($shopId) {
-            if (! $assignedShopIds->contains($shopId)) {
-                abort(403, 'You do not have access to this shop');
-            }
-
-            return collect([$shopId]);
-        }
-
-        return $assignedShopIds;
-    }
-
-    protected function filterMetricsByPermissions(array $metrics, $user): array
-    {
-        $filtered = $metrics;
-
-        if (! $user->role->hasPermission('view_profits')) {
-            if (isset($filtered['top_products'])) {
-                $filtered['top_products'] = array_map(function ($product) {
-                    unset($product['profit'], $product['margin_percentage']);
-
-                    return $product;
-                }, $filtered['top_products']);
-            }
-
-            unset($filtered['profit']);
-        }
-
-        if (! $user->role->hasPermission('view_costs') && isset($filtered['profit'])) {
-            unset($filtered['profit']['cogs']);
-        }
-
-        if (! $user->role->hasPermission('view_financials')) {
-            unset($filtered['inventory_valuation']);
-        }
-
-        return $filtered;
     }
 }

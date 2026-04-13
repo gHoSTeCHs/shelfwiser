@@ -16,6 +16,16 @@ class DashboardPolicy
         return $user->role->hasPermission('view_financials');
     }
 
+    public function viewProfits(User $user): bool
+    {
+        return $user->role->hasPermission('view_profits');
+    }
+
+    public function viewCosts(User $user): bool
+    {
+        return $user->role->hasPermission('view_costs');
+    }
+
     public function refreshCache(User $user): bool
     {
         return $user->role->canAccessMultipleStores();
