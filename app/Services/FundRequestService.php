@@ -47,6 +47,8 @@ class FundRequestService
 
     /**
      * Approve a fund request
+     *
+     * @throws \Throwable
      */
     public function approve(FundRequest $fundRequest, User $approver, ?string $notes = null): FundRequest
     {
@@ -75,6 +77,8 @@ class FundRequestService
 
     /**
      * Reject a fund request
+     *
+     * @throws \Throwable
      */
     public function reject(FundRequest $fundRequest, User $rejector, string $reason): FundRequest
     {
@@ -129,6 +133,8 @@ class FundRequestService
 
     /**
      * Cancel a fund request
+     *
+     * @throws \Throwable
      */
     public function cancel(FundRequest $fundRequest, User $user, string $reason): FundRequest
     {
@@ -141,7 +147,7 @@ class FundRequestService
                 'status' => FundRequestStatus::CANCELLED,
                 'rejection_reason' => $reason,
                 'notes' => ($fundRequest->notes ? $fundRequest->notes."\n\n" : '').
-                          "Cancelled by {$user->name}: {$reason}",
+                    "Cancelled by {$user->name}: {$reason}",
             ]);
 
             $this->clearCache($fundRequest->tenant_id);

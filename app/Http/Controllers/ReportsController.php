@@ -2,20 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\DTOs\DateRange;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PurchaseOrderPaymentStatus;
 use App\Enums\PurchaseOrderStatus;
-use App\Models\ProductCategory;
-use App\Models\Shop;
-use App\Policies\DashboardPolicy;
-use App\Services\DashboardService;
+use App\Http\Requests\Reports\CustomerAnalyticsReportRequest;
+use App\Http\Requests\Reports\FinancialReportRequest;
+use App\Http\Requests\Reports\InventoryReportRequest;
+use App\Http\Requests\Reports\ProductProfitabilityReportRequest;
+use App\Http\Requests\Reports\SalesReportRequest;
+use App\Http\Requests\Reports\SupplierReportRequest;
 use App\Services\ExportService;
 use App\Services\ReportService;
-use Carbon\Carbon;
-use Gate;
-use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
+use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -24,67 +25,42 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ReportsController extends Controller
 {
     public function __construct(
-        protected ReportService    $reportService,
-        protected DashboardService $dashboardService,
-        protected ExportService    $exportService
-    )
-    {
-    }
+        protected ReportService $reportService,
+        protected ExportService $exportService,
+    ) {}
 
     /**
      * Sales Report
      */
-    public function sales(Request $request): Response
+    public function sales(SalesReportRequest $request): Response
     {
-        $user = $request->user();
-
-        // Check permission
         Gate::authorize('reports.view');
 
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'category' => ['nullable', 'integer', 'exists:product_categories,id'],
-            'product' => ['nullable', 'integer', 'exists:products,id'],
-            'customer' => ['nullable', 'integer', 'exists:users,id'],
-            'status' => ['nullable', 'in:' . implode(',', array_column(OrderStatus::cases(), 'value'))],
-            'payment_status' => ['nullable', 'in:' . implode(',', array_column(PaymentStatus::cases(), 'value'))],
-            'group_by' => ['nullable', 'in:order,product,customer,shop,day'],
-            'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
-        ]);
-
-        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
-        $shops = $this->getAccessibleShops($user);
-        $categories = ProductCategory::where('tenant_id', $user->tenant_id)->get(['id', 'name']);
-
-        $startDate = isset($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : now()->startOfMonth();
-        $endDate = isset($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : now()->endOfMonth();
-
-        $summary = $this->reportService->getSalesSummary($shopIds, $startDate, $endDate);
-
-        $salesData = $this->reportService->getSalesReport(
-            $shopIds,
-            $startDate,
-            $endDate,
-            $validated['category'] ?? null,
-            $validated['product'] ?? null,
-            $validated['customer'] ?? null,
-            $validated['status'] ?? null,
-            $validated['payment_status'] ?? null,
-            $validated['group_by'] ?? 'order',
-            $validated['per_page'] ?? 25
-        );
+        $user = $request->user();
+        $validated = $request->validated();
+        $shopIds = $user->accessibleShopIds($validated['shop'] ?? null);
+        $dateRange = DateRange::fromRequest($validated);
 
         return Inertia::render('reports/sales', [
-            'summary' => $summary,
-            'salesData' => $salesData,
-            'shops' => $shops,
-            'categories' => $categories,
+            'summary' => $this->reportService->getSalesSummary($shopIds, $dateRange->start, $dateRange->end),
+            'salesData' => $this->reportService->getSalesReport(
+                $shopIds,
+                $dateRange->start,
+                $dateRange->end,
+                $validated['category'] ?? null,
+                $validated['product'] ?? null,
+                $validated['customer'] ?? null,
+                $validated['status'] ?? null,
+                $validated['payment_status'] ?? null,
+                $validated['group_by'] ?? 'order',
+                $validated['per_page'] ?? 25,
+            ),
+            'shops' => $user->accessibleShops(),
+            'categories' => $this->reportService->getProductCategories(),
             'filters' => [
                 'shop' => $validated['shop'] ?? null,
-                'from' => $validated['from'] ?? $startDate->format('Y-m-d'),
-                'to' => $validated['to'] ?? $endDate->format('Y-m-d'),
+                'from' => $dateRange->start->format('Y-m-d'),
+                'to' => $dateRange->end->format('Y-m-d'),
                 'category' => $validated['category'] ?? null,
                 'product' => $validated['product'] ?? null,
                 'customer' => $validated['customer'] ?? null,
@@ -102,95 +78,55 @@ class ReportsController extends Controller
     /**
      * Export Sales Report
      */
-    public function exportSales(Request $request): StreamedResponse|BinaryFileResponse|\Illuminate\Http\Response
+    public function exportSales(SalesReportRequest $request): StreamedResponse|BinaryFileResponse|HttpResponse
     {
-        $user = $request->user();
+        Gate::authorize('reports.view');
 
-        if (!$user->role->hasPermission('view_reports')) {
-            abort(403, 'You do not have permission to view reports');
-        }
-
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'category' => ['nullable', 'integer', 'exists:product_categories,id'],
-            'product' => ['nullable', 'integer', 'exists:products,id'],
-            'customer' => ['nullable', 'integer', 'exists:users,id'],
-            'status' => ['nullable', 'in:' . implode(',', array_column(OrderStatus::cases(), 'value'))],
-            'payment_status' => ['nullable', 'in:' . implode(',', array_column(PaymentStatus::cases(), 'value'))],
-            'group_by' => ['nullable', 'in:order,product,customer,shop,day'],
-            'format' => ['nullable', 'in:csv,excel,pdf'],
-        ]);
-
-        $format = $validated['format'] ?? 'csv';
-        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
-
-        $startDate = isset($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : now()->startOfMonth();
-        $endDate = isset($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : now()->endOfMonth();
+        $validated = $request->validated();
+        $shopIds = $request->user()->accessibleShopIds($validated['shop'] ?? null);
+        $dateRange = DateRange::fromRequest($validated);
+        $groupBy = $validated['group_by'] ?? 'order';
 
         $salesData = $this->reportService->getSalesReport(
             $shopIds,
-            $startDate,
-            $endDate,
+            $dateRange->start,
+            $dateRange->end,
             $validated['category'] ?? null,
             $validated['product'] ?? null,
             $validated['customer'] ?? null,
             $validated['status'] ?? null,
             $validated['payment_status'] ?? null,
-            $validated['group_by'] ?? 'order',
-            1000 // Get more records for export
+            $groupBy,
+            1000,
         );
 
-        $formatted = $this->exportService->formatSalesExport(collect($salesData->items()), $validated['group_by'] ?? 'order');
+        $formatted = $this->exportService->formatSalesExport(collect($salesData->items()), $groupBy);
 
-        $timestamp = now()->format('Y-m-d-His');
-
-        return match ($format) {
-            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "sales-report-$timestamp.xlsx"),
-            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "sales-report-$timestamp.pdf", 'Sales Report'),
-            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "sales-report-$timestamp.csv"),
-        };
+        return $this->exportService->exportReport($formatted, $validated['format'] ?? 'csv', 'sales');
     }
 
     /**
      * Inventory Report
      */
-    public function inventory(Request $request): Response
+    public function inventory(InventoryReportRequest $request): Response
     {
+        Gate::authorize('reports.view');
+
         $user = $request->user();
-
-        if (!$user->role->hasPermission('view_reports')) {
-            abort(403, 'You do not have permission to view reports');
-        }
-
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'category' => ['nullable', 'integer', 'exists:product_categories,id'],
-            'product' => ['nullable', 'integer', 'exists:products,id'],
-            'stock_status' => ['nullable', 'in:low,adequate,overstocked'],
-            'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
-        ]);
-
-        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
-        $shops = $this->getAccessibleShops($user);
-        $categories = ProductCategory::where('tenant_id', $user->tenant_id)->get(['id', 'name']);
-
-        $summary = $this->reportService->getInventorySummary($shopIds);
-
-        $inventoryData = $this->reportService->getInventoryReport(
-            $shopIds,
-            $validated['category'] ?? null,
-            $validated['product'] ?? null,
-            $validated['stock_status'] ?? null,
-            $validated['per_page'] ?? 25
-        );
+        $validated = $request->validated();
+        $shopIds = $user->accessibleShopIds($validated['shop'] ?? null);
 
         return Inertia::render('reports/inventory', [
-            'summary' => $summary,
-            'inventoryData' => $inventoryData,
-            'shops' => $shops,
-            'categories' => $categories,
+            'summary' => $this->reportService->getInventorySummary($shopIds),
+            'inventoryData' => $this->reportService->getInventoryReport(
+                $shopIds,
+                $validated['category'] ?? null,
+                $validated['product'] ?? null,
+                $validated['stock_status'] ?? null,
+                $validated['per_page'] ?? 25,
+            ),
+            'shops' => $user->accessibleShops(),
+            'categories' => $this->reportService->getProductCategories(),
             'filters' => [
                 'shop' => $validated['shop'] ?? null,
                 'category' => $validated['category'] ?? null,
@@ -204,97 +140,60 @@ class ReportsController extends Controller
     /**
      * Export Inventory Report
      */
-    public function exportInventory(Request $request): StreamedResponse|BinaryFileResponse|\Illuminate\Http\Response
+    public function exportInventory(InventoryReportRequest $request): StreamedResponse|BinaryFileResponse|HttpResponse
     {
-        $user = $request->user();
+        Gate::authorize('reports.view');
 
-        if (!$user->role->hasPermission('reports.view')) {
-            abort(403, 'You do not have permission to view reports');
-        }
-
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'category' => ['nullable', 'integer', 'exists:product_categories,id'],
-            'product' => ['nullable', 'integer', 'exists:products,id'],
-            'stock_status' => ['nullable', 'in:low,adequate,overstocked'],
-            'format' => ['nullable', 'in:csv,excel,pdf'],
-        ]);
-
-        $format = $validated['format'] ?? 'csv';
-        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
+        $validated = $request->validated();
+        $shopIds = $request->user()->accessibleShopIds($validated['shop'] ?? null);
 
         $inventoryData = $this->reportService->getInventoryReport(
             $shopIds,
             $validated['category'] ?? null,
             $validated['product'] ?? null,
             $validated['stock_status'] ?? null,
-            1000 // Get more records for export
+            1000,
         );
 
         $formatted = $this->exportService->formatInventoryExport(collect($inventoryData->items()));
 
-        $timestamp = now()->format('Y-m-d-His');
-
-        return match ($format) {
-            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "inventory-report-$timestamp.xlsx"),
-            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "inventory-report-$timestamp.pdf", 'Inventory Report'),
-            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "inventory-report-$timestamp.csv"),
-        };
+        return $this->exportService->exportReport($formatted, $validated['format'] ?? 'csv', 'inventory');
     }
 
     /**
      * Supplier Report
      */
-    public function suppliers(Request $request): Response
+    public function suppliers(SupplierReportRequest $request): Response
     {
+        Gate::authorize('reports.view');
+
         $user = $request->user();
-
-        if (!$user->role->hasPermission('view_reports')) {
-            abort(403, 'You do not have permission to view reports');
-        }
-
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'supplier' => ['nullable', 'integer', 'exists:tenants,id'],
-            'status' => ['nullable', 'in:' . implode(',', array_column(PurchaseOrderStatus::cases(), 'value'))],
-            'payment_status' => ['nullable', 'in:' . implode(',', array_column(PurchaseOrderPaymentStatus::cases(), 'value'))],
-            'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
-        ]);
-
-        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
-        $shops = $this->getAccessibleShops($user);
-
-        $startDate = isset($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : now()->startOfMonth();
-        $endDate = isset($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : now()->endOfMonth();
-
-        $performanceSummary = $this->reportService->getSupplierPerformanceSummary(
-            $user->tenant_id,
-            $shopIds,
-            $startDate,
-            $endDate
-        );
-
-        $supplierData = $this->reportService->getSupplierReport(
-            $user->tenant_id,
-            $shopIds,
-            $startDate,
-            $endDate,
-            $validated['supplier'] ?? null,
-            $validated['status'] ?? null,
-            $validated['payment_status'] ?? null,
-            $validated['per_page'] ?? 25
-        );
+        $validated = $request->validated();
+        $shopIds = $user->accessibleShopIds($validated['shop'] ?? null);
+        $dateRange = DateRange::fromRequest($validated);
 
         return Inertia::render('reports/suppliers', [
-            'performanceSummary' => $performanceSummary,
-            'supplierData' => $supplierData,
-            'shops' => $shops,
+            'performanceSummary' => $this->reportService->getSupplierPerformanceSummary(
+                $user->tenant_id,
+                $shopIds,
+                $dateRange->start,
+                $dateRange->end,
+            ),
+            'supplierData' => $this->reportService->getSupplierReport(
+                $user->tenant_id,
+                $shopIds,
+                $dateRange->start,
+                $dateRange->end,
+                $validated['supplier'] ?? null,
+                $validated['status'] ?? null,
+                $validated['payment_status'] ?? null,
+                $validated['per_page'] ?? 25,
+            ),
+            'shops' => $user->accessibleShops(),
             'filters' => [
                 'shop' => $validated['shop'] ?? null,
-                'from' => $validated['from'] ?? $startDate->format('Y-m-d'),
-                'to' => $validated['to'] ?? $endDate->format('Y-m-d'),
+                'from' => $dateRange->start->format('Y-m-d'),
+                'to' => $dateRange->end->format('Y-m-d'),
                 'supplier' => $validated['supplier'] ?? null,
                 'status' => $validated['status'] ?? null,
                 'payment_status' => $validated['payment_status'] ?? null,
@@ -308,84 +207,50 @@ class ReportsController extends Controller
     /**
      * Export Supplier Report
      */
-    public function exportSuppliers(Request $request): StreamedResponse|BinaryFileResponse|\Illuminate\Http\Response
+    public function exportSuppliers(SupplierReportRequest $request): StreamedResponse|BinaryFileResponse|HttpResponse
     {
+        Gate::authorize('reports.view');
+
         $user = $request->user();
-
-        if (!$user->role->hasPermission('view_reports')) {
-            abort(403, 'You do not have permission to view reports');
-        }
-
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'supplier' => ['nullable', 'integer', 'exists:tenants,id'],
-            'status' => ['nullable', 'in:' . implode(',', array_column(PurchaseOrderStatus::cases(), 'value'))],
-            'payment_status' => ['nullable', 'in:' . implode(',', array_column(PurchaseOrderPaymentStatus::cases(), 'value'))],
-            'format' => ['nullable', 'in:csv,excel,pdf'],
-        ]);
-
-        $format = $validated['format'] ?? 'csv';
-        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
-
-        $startDate = isset($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : now()->startOfMonth();
-        $endDate = isset($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : now()->endOfMonth();
+        $validated = $request->validated();
+        $shopIds = $user->accessibleShopIds($validated['shop'] ?? null);
+        $dateRange = DateRange::fromRequest($validated);
 
         $supplierData = $this->reportService->getSupplierReport(
             $user->tenant_id,
             $shopIds,
-            $startDate,
-            $endDate,
+            $dateRange->start,
+            $dateRange->end,
             $validated['supplier'] ?? null,
             $validated['status'] ?? null,
             $validated['payment_status'] ?? null,
-            1000 // Get more records for export
+            1000,
         );
 
         $formatted = $this->exportService->formatSupplierExport(collect($supplierData->items()));
 
-        $timestamp = now()->format('Y-m-d-His');
-
-        return match ($format) {
-            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "supplier-report-$timestamp.xlsx"),
-            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "supplier-report-$timestamp.pdf", 'Supplier Report'),
-            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "supplier-report-$timestamp.csv"),
-        };
+        return $this->exportService->exportReport($formatted, $validated['format'] ?? 'csv', 'supplier');
     }
 
     /**
      * Financial Report
      */
-    public function financials(Request $request): Response
+    public function financials(FinancialReportRequest $request): Response
     {
+        Gate::authorize('dashboard.view_financials');
+
         $user = $request->user();
-
-        if (!$user->can('dashboard.view_financials', DashboardPolicy::class)) {
-            abort(403, 'You do not have permission to view financial reports');
-        }
-
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
-        ]);
-
-        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
-        $shops = $this->getAccessibleShops($user);
-
-        $startDate = isset($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : now()->startOfMonth();
-        $endDate = isset($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : now()->endOfMonth();
-
-        $financialData = $this->reportService->getFinancialReport($shopIds, $startDate, $endDate);
+        $validated = $request->validated();
+        $shopIds = $user->accessibleShopIds($validated['shop'] ?? null);
+        $dateRange = DateRange::fromRequest($validated);
 
         return Inertia::render('reports/financials', [
-            'financialData' => $financialData,
-            'shops' => $shops,
+            'financialData' => $this->reportService->getFinancialReport($shopIds, $dateRange->start, $dateRange->end),
+            'shops' => $user->accessibleShops(),
             'filters' => [
                 'shop' => $validated['shop'] ?? null,
-                'from' => $validated['from'] ?? $startDate->format('Y-m-d'),
-                'to' => $validated['to'] ?? $endDate->format('Y-m-d'),
+                'from' => $dateRange->start->format('Y-m-d'),
+                'to' => $dateRange->end->format('Y-m-d'),
             ],
         ]);
     }
@@ -393,89 +258,52 @@ class ReportsController extends Controller
     /**
      * Export Financial Report
      */
-    public function exportFinancials(Request $request): StreamedResponse|BinaryFileResponse|\Illuminate\Http\Response
+    public function exportFinancials(FinancialReportRequest $request): StreamedResponse|BinaryFileResponse|HttpResponse
     {
-        $user = $request->user();
+        Gate::authorize('dashboard.view_financials');
 
-        if (!$user->can('dashboard.view_financials', DashboardPolicy::class)) {
-            abort(403, 'You do not have permission to view financial reports');
-        }
+        $validated = $request->validated();
+        $shopIds = $request->user()->accessibleShopIds($validated['shop'] ?? null);
+        $dateRange = DateRange::fromRequest($validated);
 
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'format' => ['nullable', 'in:csv,excel,pdf'],
-        ]);
-
-        $format = $validated['format'] ?? 'csv';
-        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
-
-        $startDate = isset($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : now()->startOfMonth();
-        $endDate = isset($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : now()->endOfMonth();
-
-        $financialData = $this->reportService->getFinancialReport($shopIds, $startDate, $endDate);
+        $financialData = $this->reportService->getFinancialReport($shopIds, $dateRange->start, $dateRange->end);
 
         $formatted = $this->exportService->formatFinancialExport(
             $financialData,
-            $validated['from'] ?? $startDate->format('Y-m-d'),
-            $validated['to'] ?? $endDate->format('Y-m-d')
+            $dateRange->start->format('Y-m-d'),
+            $dateRange->end->format('Y-m-d'),
         );
 
-        $timestamp = now()->format('Y-m-d-His');
-
-        return match ($format) {
-            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "financial-report-$timestamp.xlsx"),
-            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "financial-report-$timestamp.pdf", 'Financial Report'),
-            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "financial-report-$timestamp.csv"),
-        };
+        return $this->exportService->exportReport($formatted, $validated['format'] ?? 'csv', 'financial');
     }
 
     /**
      * Customer Analytics Report
      */
-    public function customerAnalytics(Request $request): Response
+    public function customerAnalytics(CustomerAnalyticsReportRequest $request): Response
     {
+        Gate::authorize('reports.view');
+
         $user = $request->user();
-
-        if (!$user->role->hasPermission('view_reports')) {
-            abort(403, 'You do not have permission to view reports');
-        }
-
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'customer' => ['nullable', 'integer', 'exists:users,id'],
-            'segment' => ['nullable', 'in:all,high_value,at_risk,inactive'],
-            'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
-        ]);
-
-        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
-        $shops = $this->getAccessibleShops($user);
-
-        $startDate = isset($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : now()->startOfMonth();
-        $endDate = isset($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : now()->endOfMonth();
-
-        $summary = $this->reportService->getCustomerAnalyticsSummary($shopIds, $startDate, $endDate);
-
-        $customerData = $this->reportService->getCustomerAnalytics(
-            $shopIds,
-            $startDate,
-            $endDate,
-            $validated['customer'] ?? null,
-            $validated['segment'] ?? 'all',
-            $validated['per_page'] ?? 25
-        );
+        $validated = $request->validated();
+        $shopIds = $user->accessibleShopIds($validated['shop'] ?? null);
+        $dateRange = DateRange::fromRequest($validated);
 
         return Inertia::render('reports/customer-analytics', [
-            'summary' => $summary,
-            'customerData' => $customerData,
-            'shops' => $shops,
+            'summary' => $this->reportService->getCustomerAnalyticsSummary($shopIds, $dateRange->start, $dateRange->end),
+            'customerData' => $this->reportService->getCustomerAnalytics(
+                $shopIds,
+                $dateRange->start,
+                $dateRange->end,
+                $validated['customer'] ?? null,
+                $validated['segment'] ?? 'all',
+                $validated['per_page'] ?? 25,
+            ),
+            'shops' => $user->accessibleShops(),
             'filters' => [
                 'shop' => $validated['shop'] ?? null,
-                'from' => $validated['from'] ?? $startDate->format('Y-m-d'),
-                'to' => $validated['to'] ?? $endDate->format('Y-m-d'),
+                'from' => $dateRange->start->format('Y-m-d'),
+                'to' => $dateRange->end->format('Y-m-d'),
                 'customer' => $validated['customer'] ?? null,
                 'segment' => $validated['segment'] ?? 'all',
             ],
@@ -485,98 +313,57 @@ class ReportsController extends Controller
     /**
      * Export Customer Analytics
      */
-    public function exportCustomerAnalytics(Request $request): StreamedResponse|BinaryFileResponse|\Illuminate\Http\Response
+    public function exportCustomerAnalytics(CustomerAnalyticsReportRequest $request): StreamedResponse|BinaryFileResponse|HttpResponse
     {
-        $user = $request->user();
+        Gate::authorize('reports.view');
 
-        if (!$user->role->hasPermission('view_reports')) {
-            abort(403, 'You do not have permission to view reports');
-        }
-
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'customer' => ['nullable', 'integer', 'exists:users,id'],
-            'segment' => ['nullable', 'in:all,high_value,at_risk,inactive'],
-            'format' => ['nullable', 'in:csv,excel,pdf'],
-        ]);
-
-        $format = $validated['format'] ?? 'csv';
-        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
-
-        $startDate = isset($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : now()->startOfMonth();
-        $endDate = isset($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : now()->endOfMonth();
+        $validated = $request->validated();
+        $shopIds = $request->user()->accessibleShopIds($validated['shop'] ?? null);
+        $dateRange = DateRange::fromRequest($validated);
 
         $customerData = $this->reportService->getCustomerAnalytics(
             $shopIds,
-            $startDate,
-            $endDate,
+            $dateRange->start,
+            $dateRange->end,
             $validated['customer'] ?? null,
             $validated['segment'] ?? 'all',
-            1000
+            1000,
         );
 
         $formatted = $this->exportService->formatCustomerAnalyticsExport(collect($customerData->items()));
 
-        $timestamp = now()->format('Y-m-d-His');
-
-        return match ($format) {
-            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "customer-analytics-$timestamp.xlsx"),
-            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "customer-analytics-$timestamp.pdf", 'Customer Analytics'),
-            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "customer-analytics-$timestamp.csv"),
-        };
+        return $this->exportService->exportReport($formatted, $validated['format'] ?? 'csv', 'customer-analytics');
     }
 
     /**
      * Product Profitability Report
      */
-    public function productProfitability(Request $request): Response
+    public function productProfitability(ProductProfitabilityReportRequest $request): Response
     {
+        Gate::authorize('dashboard.view_financials');
+
         $user = $request->user();
-
-        if (!$user->can('dashboard.view_financials', DashboardPolicy::class)) {
-            abort(403, 'You do not have permission to view product profitability');
-        }
-
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'category' => ['nullable', 'integer', 'exists:product_categories,id'],
-            'product' => ['nullable', 'integer', 'exists:products,id'],
-            'sort_by' => ['nullable', 'in:profit,margin,revenue,quantity'],
-            'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
-        ]);
-
-        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
-        $shops = $this->getAccessibleShops($user);
-        $categories = ProductCategory::where('tenant_id', $user->tenant_id)->get(['id', 'name']);
-
-        $startDate = isset($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : now()->startOfMonth();
-        $endDate = isset($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : now()->endOfMonth();
-
-        $summary = $this->reportService->getProductProfitabilitySummary($shopIds, $startDate, $endDate);
-
-        $productData = $this->reportService->getProductProfitability(
-            $shopIds,
-            $startDate,
-            $endDate,
-            $validated['category'] ?? null,
-            $validated['product'] ?? null,
-            $validated['sort_by'] ?? 'profit',
-            $validated['per_page'] ?? 25
-        );
+        $validated = $request->validated();
+        $shopIds = $user->accessibleShopIds($validated['shop'] ?? null);
+        $dateRange = DateRange::fromRequest($validated);
 
         return Inertia::render('reports/product-profitability', [
-            'summary' => $summary,
-            'productData' => $productData,
-            'shops' => $shops,
-            'categories' => $categories,
+            'summary' => $this->reportService->getProductProfitabilitySummary($shopIds, $dateRange->start, $dateRange->end),
+            'productData' => $this->reportService->getProductProfitability(
+                $shopIds,
+                $dateRange->start,
+                $dateRange->end,
+                $validated['category'] ?? null,
+                $validated['product'] ?? null,
+                $validated['sort_by'] ?? 'profit',
+                $validated['per_page'] ?? 25,
+            ),
+            'shops' => $user->accessibleShops(),
+            'categories' => $this->reportService->getProductCategories(),
             'filters' => [
                 'shop' => $validated['shop'] ?? null,
-                'from' => $validated['from'] ?? $startDate->format('Y-m-d'),
-                'to' => $validated['to'] ?? $endDate->format('Y-m-d'),
+                'from' => $dateRange->start->format('Y-m-d'),
+                'to' => $dateRange->end->format('Y-m-d'),
                 'category' => $validated['category'] ?? null,
                 'product' => $validated['product'] ?? null,
                 'sort_by' => $validated['sort_by'] ?? 'profit',
@@ -587,96 +374,26 @@ class ReportsController extends Controller
     /**
      * Export Product Profitability
      */
-    public function exportProductProfitability(Request $request): StreamedResponse|BinaryFileResponse|\Illuminate\Http\Response
+    public function exportProductProfitability(ProductProfitabilityReportRequest $request): StreamedResponse|BinaryFileResponse|HttpResponse
     {
-        $user = $request->user();
+        Gate::authorize('dashboard.view_financials');
 
-        if (!$user->can('dashboard.view_financials', DashboardPolicy::class)) {
-            abort(403, 'You do not have permission to view product profitability');
-        }
-
-        $validated = $request->validate([
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'category' => ['nullable', 'integer', 'exists:product_categories,id'],
-            'product' => ['nullable', 'integer', 'exists:products,id'],
-            'sort_by' => ['nullable', 'in:profit,margin,revenue,quantity'],
-            'format' => ['nullable', 'in:csv,excel,pdf'],
-        ]);
-
-        $format = $validated['format'] ?? 'csv';
-        $shopIds = $this->getAccessibleShopIds($user, $validated['shop'] ?? null);
-
-        $startDate = isset($validated['from']) ? Carbon::parse($validated['from'])->startOfDay() : now()->startOfMonth();
-        $endDate = isset($validated['to']) ? Carbon::parse($validated['to'])->endOfDay() : now()->endOfMonth();
+        $validated = $request->validated();
+        $shopIds = $request->user()->accessibleShopIds($validated['shop'] ?? null);
+        $dateRange = DateRange::fromRequest($validated);
 
         $productData = $this->reportService->getProductProfitability(
             $shopIds,
-            $startDate,
-            $endDate,
+            $dateRange->start,
+            $dateRange->end,
             $validated['category'] ?? null,
             $validated['product'] ?? null,
             $validated['sort_by'] ?? 'profit',
-            1000
+            1000,
         );
 
         $formatted = $this->exportService->formatProductProfitabilityExport(collect($productData->items()));
 
-        $timestamp = now()->format('Y-m-d-His');
-
-        return match ($format) {
-            'excel' => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], "product-profitability-$timestamp.xlsx"),
-            'pdf' => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], "product-profitability-$timestamp.pdf", 'Product Profitability'),
-            default => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], "product-profitability-$timestamp.csv"),
-        };
-    }
-
-    /**
-     * Get accessible shops for the user
-     */
-    protected function getAccessibleShops($user): Collection
-    {
-        if ($user->is_tenant_owner) {
-            return Shop::query()->where('tenant_id', $user->tenant_id)
-                ->where('is_active', true)
-                ->select('id', 'name')
-                ->orderBy('name')
-                ->get();
-        }
-
-        return $user->shops()
-            ->where('is_active', true)
-            ->select('shops.id', 'shops.name')
-            ->orderBy('name')
-            ->get();
-    }
-
-    /**
-     * Get accessible shop IDs for metrics
-     */
-    protected function getAccessibleShopIds($user, ?int $shopId): Collection
-    {
-        if ($user->is_tenant_owner) {
-            $query = Shop::query()->where('tenant_id', $user->tenant_id);
-
-            if ($shopId) {
-                $query->where('id', $shopId);
-            }
-
-            return $query->pluck('id');
-        }
-
-        $assignedShopIds = $user->shops()->pluck('shops.id');
-
-        if ($shopId) {
-            if (!$assignedShopIds->contains($shopId)) {
-                abort(403, 'You do not have access to this shop');
-            }
-
-            return collect([$shopId]);
-        }
-
-        return $assignedShopIds;
+        return $this->exportService->exportReport($formatted, $validated['format'] ?? 'csv', 'product-profitability');
     }
 }

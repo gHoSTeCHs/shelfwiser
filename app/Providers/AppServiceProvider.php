@@ -19,6 +19,7 @@ use App\Models\ProductVariant;
 use App\Models\Receipt;
 use App\Models\Service;
 use App\Models\Shop;
+use App\Models\StockMovement;
 use App\Models\Timesheet;
 use App\Models\User;
 use App\Models\WageAdvance;
@@ -26,6 +27,7 @@ use App\Policies\CustomerPolicy;
 use App\Policies\DashboardPolicy;
 use App\Policies\EmployeeDeductionPolicy;
 use App\Policies\EmployeeEarningPolicy;
+use App\Policies\EmployeePayrollPolicy;
 use App\Policies\FundRequestPolicy;
 use App\Policies\HeldSalePolicy;
 use App\Policies\NotificationPolicy;
@@ -43,8 +45,10 @@ use App\Policies\ReportPolicy;
 use App\Policies\ServicePolicy;
 use App\Policies\ShopPolicy;
 use App\Policies\StaffPolicy;
+use App\Policies\StockMovementPolicy;
 use App\Policies\StorefrontPolicy;
 use App\Policies\SupplierPolicy;
+use App\Policies\SyncPolicy;
 use App\Policies\TimesheetPolicy;
 use App\Policies\WageAdvancePolicy;
 use App\Support\Cache\TaggableDatabaseStore;
@@ -112,6 +116,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(EmployeeDeduction::class, EmployeeDeductionPolicy::class);
         Gate::policy(EmployeeEarning::class, EmployeeEarningPolicy::class);
         Gate::policy(Notification::class, NotificationPolicy::class);
+        Gate::policy(StockMovement::class, StockMovementPolicy::class);
 
         Gate::define('payRun.viewAny', [PayRunPolicy::class, 'viewAny']);
         Gate::define('payRun.create', [PayRunPolicy::class, 'create']);
@@ -156,6 +161,24 @@ class AppServiceProvider extends ServiceProvider
 
         // TimeSheet
         Gate::define('timesheet.viewAny', [TimesheetPolicy::class, 'viewAny']);
+
+        // Payroll settings — view_payroll permission covers read access
+        Gate::define('view_payroll_settings', fn (User $user) => $user->role->hasPermission('view_payroll'));
+        Gate::define('manage_payroll_settings', fn (User $user) => $user->role->hasPermission('manage_payroll_settings'));
+
+        // Payroll reports
+        Gate::define('view_payroll_reports', fn (User $user) => $user->role->hasPermission('view_payroll_reports'));
+        Gate::define('export_payroll_reports', fn (User $user) => $user->role->hasPermission('export_payroll_reports'));
+
+        // Employee payroll detail access (User model bound to StaffPolicy, so use named gates)
+        Gate::define('viewPayrollDetails', [EmployeePayrollPolicy::class, 'viewPayrollDetails']);
+        Gate::define('updatePayrollDetails', [EmployeePayrollPolicy::class, 'updatePayrollDetails']);
+
+        // Sync (POS offline) — controller passes [Shop::class, $shop] so handle the class hint arg
+        Gate::define('syncProducts', function (User $user, $_, Shop $shop) {
+            return (new SyncPolicy)->syncProducts($user, $shop);
+        });
+        Gate::define('syncCustomers', fn (User $user) => (new SyncPolicy)->syncCustomers($user));
 
         // Admin gates - super admin only actions
         Gate::define('admin.tenants.viewAny', fn (User $user) => $user->isSuperAdmin());

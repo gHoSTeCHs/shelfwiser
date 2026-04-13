@@ -68,4 +68,17 @@ class Cart extends Model
     {
         return $query->where('session_id', $sessionId);
     }
+
+    public function loadOrderRelations(): static
+    {
+        return $this->load([
+            'items.productVariant.product',
+            'items.packagingType',
+            'items.sellable' => function ($morphTo) {
+                $morphTo->morphWith([
+                    \App\Models\ServiceVariant::class => ['service'],
+                ]);
+            },
+        ]);
+    }
 }

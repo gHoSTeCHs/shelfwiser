@@ -3,11 +3,32 @@
 namespace App\Services;
 
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportService
 {
+    /**
+     * Dispatch a formatted report to the requested file format.
+     *
+     * @param  array{headers: array<int, string>, rows: Collection}  $formatted
+     */
+    public function exportReport(array $formatted, string $format, string $reportType): StreamedResponse|BinaryFileResponse|Response
+    {
+        $timestamp = now()->format('Y-m-d-His');
+        $filename = "{$reportType}-report-{$timestamp}";
+        $title = ucwords(str_replace('-', ' ', $reportType)).' Report';
+
+        return match ($format) {
+            'excel' => $this->exportToExcel($formatted['headers'], $formatted['rows'], "{$filename}.xlsx"),
+            'pdf' => $this->exportToPdf($formatted['headers'], $formatted['rows'], "{$filename}.pdf", $title),
+            default => $this->exportToCsv($formatted['headers'], $formatted['rows'], "{$filename}.csv"),
+        };
+    }
+
     /**
      * Export data to CSV format
      */

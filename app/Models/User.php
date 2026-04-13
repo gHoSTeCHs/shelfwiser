@@ -189,4 +189,51 @@ class User extends Authenticatable
     {
         return $this->hasMany(Notification::class);
     }
+
+    /**
+     * Get IDs of shops the user can access, optionally filtered to a specific shop.
+     * Throws 403 if the user requests a shop they don't have access to.
+     */
+    public function accessibleShopIds(?int $shopId = null): \Illuminate\Support\Collection
+    {
+        if ($this->isTenantOwner() || $this->role->canAccessMultipleStores()) {
+            $query = Shop::query()->where('is_active', true);
+
+            if ($shopId) {
+                $query->where('id', $shopId);
+            }
+
+            return $query->pluck('id');
+        }
+
+        $assignedShopIds = $this->shops()->pluck('shops.id');
+
+        if ($shopId) {
+            abort_unless($assignedShopIds->contains($shopId), 403, 'You do not have access to this shop');
+
+            return collect([$shopId]);
+        }
+
+        return $assignedShopIds;
+    }
+
+    /**
+     * Get shop models the user can access (for dropdown/filter UI).
+     */
+    public function accessibleShops(): \Illuminate\Support\Collection
+    {
+        if ($this->isTenantOwner() || $this->role->canAccessMultipleStores()) {
+            return Shop::query()
+                ->where('is_active', true)
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get();
+        }
+
+        return $this->shops()
+            ->where('is_active', true)
+            ->select('shops.id', 'shops.name')
+            ->orderBy('name')
+            ->get();
+    }
 }

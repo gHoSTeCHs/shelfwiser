@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
 use App\Models\Shop;
@@ -54,21 +55,31 @@ class ReportService
     }
 
     /**
+     * Get product categories for report filter dropdowns.
+     * Tenant scoping handled automatically by TenantScope.
+     */
+    public function getProductCategories(): Collection
+    {
+        return ProductCategory::query()->get(['id', 'name']);
+    }
+
+    /**
      * Get detailed sales report with pagination and filters.
      * Note: Pagination results are not cached due to varying page requests.
      */
     public function getSalesReport(
         Collection $shopIds,
-        ?Carbon $startDate = null,
-        ?Carbon $endDate = null,
-        ?int $categoryId = null,
-        ?int $productId = null,
-        ?int $customerId = null,
-        ?string $status = null,
-        ?string $paymentStatus = null,
-        string $groupBy = 'order', // order, product, customer, shop, day
-        int $perPage = 25
-    ): LengthAwarePaginator {
+        ?Carbon    $startDate = null,
+        ?Carbon    $endDate = null,
+        ?int       $categoryId = null,
+        ?int       $productId = null,
+        ?int       $customerId = null,
+        ?string    $status = null,
+        ?string    $paymentStatus = null,
+        string     $groupBy = 'order', // order, product, customer, shop, day
+        int        $perPage = 25
+    ): LengthAwarePaginator
+    {
         $startDate = $startDate ?? now()->startOfMonth();
         $endDate = $endDate ?? now()->endOfMonth();
 
@@ -89,15 +100,16 @@ class ReportService
 
     protected function getSalesByOrder(
         Collection $shopIds,
-        Carbon $startDate,
-        Carbon $endDate,
-        ?int $categoryId,
-        ?int $productId,
-        ?int $customerId,
-        ?string $status,
-        ?string $paymentStatus,
-        int $perPage
-    ): LengthAwarePaginator {
+        Carbon     $startDate,
+        Carbon     $endDate,
+        ?int       $categoryId,
+        ?int       $productId,
+        ?int       $customerId,
+        ?string    $status,
+        ?string    $paymentStatus,
+        int        $perPage
+    ): LengthAwarePaginator
+    {
         $query = Order::query()
             ->with(['customer:id,first_name,last_name,email', 'shop:id,name', 'items.productVariant.product'])
             ->whereIn('shop_id', $shopIds)
@@ -131,12 +143,13 @@ class ReportService
 
     protected function getSalesByProduct(
         Collection $shopIds,
-        Carbon $startDate,
-        Carbon $endDate,
-        ?int $categoryId,
-        ?int $productId,
-        int $perPage
-    ): LengthAwarePaginator {
+        Carbon     $startDate,
+        Carbon     $endDate,
+        ?int       $categoryId,
+        ?int       $productId,
+        int        $perPage
+    ): LengthAwarePaginator
+    {
         $query = OrderItem::query()
             ->select('product_variant_id')
             ->selectRaw('COUNT(DISTINCT order_id) as order_count')
@@ -168,11 +181,12 @@ class ReportService
 
     protected function getSalesByCustomer(
         Collection $shopIds,
-        Carbon $startDate,
-        Carbon $endDate,
-        ?int $customerId,
-        int $perPage
-    ): LengthAwarePaginator {
+        Carbon     $startDate,
+        Carbon     $endDate,
+        ?int       $customerId,
+        int        $perPage
+    ): LengthAwarePaginator
+    {
         $query = Order::query()
             ->select('customer_id')
             ->selectRaw('COUNT(*) as order_count')
@@ -196,10 +210,11 @@ class ReportService
 
     protected function getSalesByShop(
         Collection $shopIds,
-        Carbon $startDate,
-        Carbon $endDate,
-        int $perPage
-    ): LengthAwarePaginator {
+        Carbon     $startDate,
+        Carbon     $endDate,
+        int        $perPage
+    ): LengthAwarePaginator
+    {
         return Order::query()
             ->select('shop_id')
             ->selectRaw('COUNT(*) as order_count')
@@ -217,10 +232,11 @@ class ReportService
 
     protected function getSalesByDay(
         Collection $shopIds,
-        Carbon $startDate,
-        Carbon $endDate,
-        int $perPage
-    ): LengthAwarePaginator {
+        Carbon     $startDate,
+        Carbon     $endDate,
+        int        $perPage
+    ): LengthAwarePaginator
+    {
         return Order::query()
             ->selectRaw('DATE(created_at) as sale_date')
             ->selectRaw('COUNT(*) as order_count')
@@ -240,11 +256,12 @@ class ReportService
      */
     public function getInventoryReport(
         Collection $shopIds,
-        ?int $categoryId = null,
-        ?int $productId = null,
-        ?string $stockStatus = null, // low, adequate, overstocked
-        int $perPage = 25
-    ): LengthAwarePaginator {
+        ?int       $categoryId = null,
+        ?int       $productId = null,
+        ?string    $stockStatus = null, // low, adequate, overstocked
+        int        $perPage = 25
+    ): LengthAwarePaginator
+    {
         $query = ProductVariant::query()
             ->with(['product.category', 'product.shop', 'inventoryLocations' => function ($q) use ($shopIds) {
                 $q->whereIn('location_id', $shopIds)
@@ -281,12 +298,13 @@ class ReportService
      */
     public function getStockMovementReport(
         Collection $shopIds,
-        ?Carbon $startDate = null,
-        ?Carbon $endDate = null,
-        ?int $productId = null,
-        ?string $movementType = null,
-        int $perPage = 25
-    ): LengthAwarePaginator {
+        ?Carbon    $startDate = null,
+        ?Carbon    $endDate = null,
+        ?int       $productId = null,
+        ?string    $movementType = null,
+        int        $perPage = 25
+    ): LengthAwarePaginator
+    {
         $startDate = $startDate ?? now()->startOfMonth();
         $endDate = $endDate ?? now()->endOfMonth();
 
@@ -312,15 +330,16 @@ class ReportService
      * Get supplier performance report
      */
     public function getSupplierReport(
-        int $tenantId,
+        int        $tenantId,
         Collection $shopIds,
-        ?Carbon $startDate = null,
-        ?Carbon $endDate = null,
-        ?int $supplierId = null,
-        ?string $status = null,
-        ?string $paymentStatus = null,
-        int $perPage = 25
-    ): LengthAwarePaginator {
+        ?Carbon    $startDate = null,
+        ?Carbon    $endDate = null,
+        ?int       $supplierId = null,
+        ?string    $status = null,
+        ?string    $paymentStatus = null,
+        int        $perPage = 25
+    ): LengthAwarePaginator
+    {
         $startDate = $startDate ?? now()->startOfMonth();
         $endDate = $endDate ?? now()->endOfMonth();
 
@@ -349,11 +368,12 @@ class ReportService
      * Get supplier performance summary
      */
     public function getSupplierPerformanceSummary(
-        int $tenantId,
+        int        $tenantId,
         Collection $shopIds,
-        Carbon $startDate,
-        Carbon $endDate
-    ): Collection {
+        Carbon     $startDate,
+        Carbon     $endDate
+    ): Collection
+    {
         $cacheKey = $this->getCacheKey($tenantId, 'supplier_performance', $shopIds, $startDate, $endDate);
 
         return Cache::remember($cacheKey, now()->addMinutes(60), function () use ($tenantId, $shopIds, $startDate, $endDate) {
@@ -368,7 +388,7 @@ class ReportService
                 ->selectRaw('AVG(total_amount) as avg_po_value')
                 ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed_count', [PurchaseOrderStatus::COMPLETED->value])
                 ->selectRaw('SUM(CASE WHEN payment_status = ? THEN 1 ELSE 0 END) as paid_count', [PurchaseOrderPaymentStatus::PAID->value])
-                ->selectRaw('AVG('.$this->dateDiff('COALESCE(expected_delivery_date, '.$this->now().')', 'created_at').') as avg_lead_time')
+                ->selectRaw('AVG(' . $this->dateDiff('COALESCE(expected_delivery_date, ' . $this->now() . ')', 'created_at') . ') as avg_lead_time')
                 ->groupBy('supplier_tenant_id')
                 ->with('supplierTenant:id,name')
                 ->orderByDesc('total_spend')
@@ -381,11 +401,12 @@ class ReportService
      */
     public function getFinancialReport(
         Collection $shopIds,
-        Carbon $startDate,
-        Carbon $endDate
-    ): array {
+        Carbon     $startDate,
+        Carbon     $endDate
+    ): array
+    {
         $tenantId = $shopIds->first() ? Shop::find($shopIds->first())?->tenant_id : null;
-        if (! $tenantId) {
+        if (!$tenantId) {
             throw new \InvalidArgumentException('Invalid shop IDs provided');
         }
 
@@ -404,16 +425,14 @@ class ReportService
                 ')
                 ->first();
 
-            $cogs = OrderItem::whereHas('order', function ($q) use ($shopIds, $startDate, $endDate) {
-                $q->whereIn('shop_id', $shopIds)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->whereNotIn('status', [OrderStatus::CANCELLED]);
-            })
-                ->with('productVariant:id,cost_price')
-                ->get()
-                ->sum(function ($item) {
-                    return $item->quantity * ($item->productVariant?->cost_price ?? 0);
-                });
+            $cogs = DB::table('order_items')
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->join('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
+                ->whereIn('orders.shop_id', $shopIds)
+                ->whereBetween('orders.created_at', [$startDate, $endDate])
+                ->whereNotIn('orders.status', [OrderStatus::CANCELLED->value])
+                ->whereNotNull('product_variants.cost_price')
+                ->sum(DB::raw('order_items.quantity * product_variants.cost_price'));
 
             $expenses = PurchaseOrder::whereIn('shop_id', $shopIds)
                 ->whereBetween('created_at', [$startDate, $endDate])
@@ -430,14 +449,14 @@ class ReportService
 
             return [
                 'profit_loss' => [
-                    'gross_sales' => (float) ($revenue->gross_sales ?? 0),
-                    'discounts' => (float) ($revenue->total_discounts ?? 0),
-                    'net_sales' => (float) ($revenue->net_sales ?? 0),
-                    'cogs' => (float) $cogs,
-                    'gross_profit' => (float) $grossProfit,
+                    'gross_sales' => (float)($revenue->gross_sales ?? 0),
+                    'discounts' => (float)($revenue->total_discounts ?? 0),
+                    'net_sales' => (float)($revenue->net_sales ?? 0),
+                    'cogs' => (float)$cogs,
+                    'gross_profit' => (float)$grossProfit,
                     'gross_margin' => $revenue->net_sales > 0 ? round(($grossProfit / $revenue->net_sales) * 100, 2) : 0,
-                    'operating_expenses' => (float) ($expenses->paid_expenses ?? 0),
-                    'net_profit' => (float) $netProfit,
+                    'operating_expenses' => (float)($expenses->paid_expenses ?? 0),
+                    'net_profit' => (float)$netProfit,
                     'net_margin' => $revenue->net_sales > 0 ? round(($netProfit / $revenue->net_sales) * 100, 2) : 0,
                 ],
                 'cash_flow' => $this->getCashFlowStatement($shopIds, $startDate, $endDate),
@@ -458,29 +477,16 @@ class ReportService
             ->sum('paid_amount');
 
         return [
-            'cash_inflow' => (float) $cashInflow,
-            'cash_outflow' => (float) $cashOutflow,
-            'net_cash_flow' => (float) ($cashInflow - $cashOutflow),
+            'cash_inflow' => (float)$cashInflow,
+            'cash_outflow' => (float)$cashOutflow,
+            'net_cash_flow' => (float)($cashInflow - $cashOutflow),
         ];
     }
 
     protected function getBalanceSheetData(Collection $shopIds): array
     {
         // Current Assets
-        $inventory = ProductVariant::whereHas('product', function ($q) use ($shopIds) {
-            $q->whereIn('shop_id', $shopIds);
-        })
-            ->whereNotNull('cost_price')
-            ->with(['inventoryLocations' => function ($q) use ($shopIds) {
-                $q->whereIn('location_id', $shopIds)
-                    ->where('location_type', Shop::class);
-            }])
-            ->get()
-            ->sum(function ($variant) {
-                $totalStock = $variant->inventoryLocations->sum('quantity');
-
-                return $totalStock * ($variant->cost_price ?? 0);
-            });
+        $inventory = $this->getInventoryValue($shopIds);
 
         $accountsReceivable = Order::whereIn('shop_id', $shopIds)
             ->where('payment_status', PaymentStatus::UNPAID)
@@ -498,15 +504,15 @@ class ReportService
 
         return [
             'assets' => [
-                'inventory' => (float) $inventory,
-                'accounts_receivable' => (float) $accountsReceivable,
-                'total_current_assets' => (float) $currentAssets,
+                'inventory' => (float)$inventory,
+                'accounts_receivable' => (float)$accountsReceivable,
+                'total_current_assets' => (float)$currentAssets,
             ],
             'liabilities' => [
-                'accounts_payable' => (float) $accountsPayable,
-                'total_current_liabilities' => (float) $currentLiabilities,
+                'accounts_payable' => (float)$accountsPayable,
+                'total_current_liabilities' => (float)$currentLiabilities,
             ],
-            'working_capital' => (float) ($currentAssets - $currentLiabilities),
+            'working_capital' => (float)($currentAssets - $currentLiabilities),
         ];
     }
 
@@ -516,7 +522,7 @@ class ReportService
     public function getSalesSummary(Collection $shopIds, Carbon $startDate, Carbon $endDate): array
     {
         $tenantId = $shopIds->first() ? Shop::find($shopIds->first())?->tenant_id : null;
-        if (! $tenantId) {
+        if (!$tenantId) {
             throw new \InvalidArgumentException('Invalid shop IDs provided');
         }
 
@@ -537,12 +543,12 @@ class ReportService
                 ->first();
 
             return [
-                'total_orders' => (int) ($summary->total_orders ?? 0),
-                'total_revenue' => (float) ($summary->total_revenue ?? 0),
-                'avg_order_value' => (float) ($summary->avg_order_value ?? 0),
-                'total_discounts' => (float) ($summary->total_discounts ?? 0),
-                'total_tax' => (float) ($summary->total_tax ?? 0),
-                'paid_orders' => (int) ($summary->paid_orders ?? 0),
+                'total_orders' => (int)($summary->total_orders ?? 0),
+                'total_revenue' => (float)($summary->total_revenue ?? 0),
+                'avg_order_value' => (float)($summary->avg_order_value ?? 0),
+                'total_discounts' => (float)($summary->total_discounts ?? 0),
+                'total_tax' => (float)($summary->total_tax ?? 0),
+                'paid_orders' => (int)($summary->paid_orders ?? 0),
                 'payment_rate' => $summary->total_orders > 0
                     ? round(($summary->paid_orders / $summary->total_orders) * 100, 2)
                     : 0,
@@ -556,7 +562,7 @@ class ReportService
     public function getInventorySummary(Collection $shopIds): array
     {
         $tenantId = $shopIds->first() ? Shop::find($shopIds->first())?->tenant_id : null;
-        if (! $tenantId) {
+        if (!$tenantId) {
             throw new \InvalidArgumentException('Invalid shop IDs provided');
         }
 
@@ -571,20 +577,7 @@ class ReportService
                 $q->whereIn('shop_id', $shopIds)->where('is_active', true);
             })->count();
 
-            $totalValue = ProductVariant::whereHas('product', function ($q) use ($shopIds) {
-                $q->whereIn('shop_id', $shopIds);
-            })
-                ->whereNotNull('cost_price')
-                ->with(['inventoryLocations' => function ($q) use ($shopIds) {
-                    $q->whereIn('location_id', $shopIds)
-                        ->where('location_type', Shop::class);
-                }])
-                ->get()
-                ->sum(function ($variant) {
-                    $totalStock = $variant->inventoryLocations->sum('quantity');
-
-                    return $totalStock * ($variant->cost_price ?? 0);
-                });
+            $totalValue = $this->getInventoryValue($shopIds);
 
             $lowStockCount = ProductVariant::whereHas('product', function ($q) use ($shopIds) {
                 $q->whereIn('shop_id', $shopIds);
@@ -596,7 +589,7 @@ class ReportService
             return [
                 'total_products' => $totalProducts,
                 'total_variants' => $totalVariants,
-                'total_value' => (float) $totalValue,
+                'total_value' => (float)$totalValue,
                 'low_stock_count' => $lowStockCount,
             ];
         });
@@ -607,12 +600,13 @@ class ReportService
      */
     public function getCustomerAnalytics(
         Collection $shopIds,
-        ?Carbon $startDate = null,
-        ?Carbon $endDate = null,
-        ?int $customerId = null,
-        string $segment = 'all', // all, high_value, at_risk, inactive
-        int $perPage = 25
-    ): LengthAwarePaginator {
+        ?Carbon    $startDate = null,
+        ?Carbon    $endDate = null,
+        ?int       $customerId = null,
+        string     $segment = 'all', // all, high_value, at_risk, inactive
+        int        $perPage = 25
+    ): LengthAwarePaginator
+    {
         $startDate = $startDate ?? now()->startOfMonth();
         $endDate = $endDate ?? now()->endOfMonth();
 
@@ -624,7 +618,7 @@ class ReportService
                 DB::raw('AVG(total_amount) as avg_order_value'),
                 DB::raw('MAX(created_at) as last_order_date'),
                 DB::raw('MIN(created_at) as first_order_date'),
-                DB::raw($this->dateDiff($this->now(), 'MAX(created_at)').' as days_since_last_order'),
+                DB::raw($this->dateDiff($this->now(), 'MAX(created_at)') . ' as days_since_last_order'),
             ])
             ->whereIn('shop_id', $shopIds)
             ->whereBetween('created_at', [$startDate, $endDate])
@@ -639,22 +633,25 @@ class ReportService
         if ($segment === 'high_value') {
             $query->havingRaw('SUM(total_amount) > ?', [10000]); // Customers with >10k revenue
         } elseif ($segment === 'at_risk') {
-            $query->havingRaw($this->dateDiff($this->now(), 'MAX(created_at)').' BETWEEN 30 AND 90'); // No orders in 30-90 days
+            $query->havingRaw($this->dateDiff($this->now(), 'MAX(created_at)') . ' BETWEEN 30 AND 90'); // No orders in 30-90 days
         } elseif ($segment === 'inactive') {
-            $query->havingRaw($this->dateDiff($this->now(), 'MAX(created_at)').' > 90'); // No orders in >90 days
+            $query->havingRaw($this->dateDiff($this->now(), 'MAX(created_at)') . ' > 90'); // No orders in >90 days
         }
 
         $query->orderByDesc('total_revenue');
 
-        return $query->paginate($perPage)
-            ->through(function ($item) {
-                $customer = Customer::find($item->customer_id);
-                $item->customer = $customer;
-                $item->customer_status = $this->getCustomerStatus($item->days_since_last_order);
-                $item->lifetime_value = (float) $item->total_revenue;
+        $paginator = $query->paginate($perPage);
 
-                return $item;
-            });
+        $customerIds = collect($paginator->items())->pluck('customer_id')->filter()->unique();
+        $customers = Customer::query()->whereIn('id', $customerIds)->get()->keyBy('id');
+
+        return $paginator->through(function ($item) use ($customers) {
+            $item->customer = $customers->get($item->customer_id);
+            $item->customer_status = $this->getCustomerStatus($item->days_since_last_order);
+            $item->lifetime_value = (float)$item->total_revenue;
+
+            return $item;
+        });
     }
 
     /**
@@ -663,7 +660,7 @@ class ReportService
     public function getCustomerAnalyticsSummary(Collection $shopIds, Carbon $startDate, Carbon $endDate): array
     {
         $tenantId = $shopIds->first() ? Shop::find($shopIds->first())?->tenant_id : null;
-        if (! $tenantId) {
+        if (!$tenantId) {
             throw new \InvalidArgumentException('Invalid shop IDs provided');
         }
 
@@ -698,7 +695,7 @@ class ReportService
                 ->whereIn('shop_id', $shopIds)
                 ->whereNotNull('customer_id')
                 ->groupBy('customer_id')
-                ->havingRaw($this->dateDiff($this->now(), 'MAX(created_at)').' BETWEEN 30 AND 90')
+                ->havingRaw($this->dateDiff($this->now(), 'MAX(created_at)') . ' BETWEEN 30 AND 90')
                 ->count();
 
             $inactiveCustomers = DB::table('orders')
@@ -707,14 +704,14 @@ class ReportService
                 ->whereIn('shop_id', $shopIds)
                 ->whereNotNull('customer_id')
                 ->groupBy('customer_id')
-                ->havingRaw($this->dateDiff($this->now(), 'MAX(created_at)').' > 90')
+                ->havingRaw($this->dateDiff($this->now(), 'MAX(created_at)') . ' > 90')
                 ->count();
 
             return [
                 'total_customers' => $stats->total_customers ?? 0,
                 'total_orders' => $stats->total_orders ?? 0,
-                'total_revenue' => (float) ($stats->total_revenue ?? 0),
-                'avg_order_value' => (float) ($stats->avg_order_value ?? 0),
+                'total_revenue' => (float)($stats->total_revenue ?? 0),
+                'avg_order_value' => (float)($stats->avg_order_value ?? 0),
                 'high_value_customers' => $highValueCustomers,
                 'at_risk_customers' => $atRiskCustomers,
                 'inactive_customers' => $inactiveCustomers,
@@ -727,13 +724,14 @@ class ReportService
      */
     public function getProductProfitability(
         Collection $shopIds,
-        ?Carbon $startDate = null,
-        ?Carbon $endDate = null,
-        ?int $categoryId = null,
-        ?int $productId = null,
-        string $sortBy = 'profit', // profit, margin, revenue, quantity
-        int $perPage = 25
-    ): LengthAwarePaginator {
+        ?Carbon    $startDate = null,
+        ?Carbon    $endDate = null,
+        ?int       $categoryId = null,
+        ?int       $productId = null,
+        string     $sortBy = 'profit', // profit, margin, revenue, quantity
+        int        $perPage = 25
+    ): LengthAwarePaginator
+    {
         $startDate = $startDate ?? now()->startOfMonth();
         $endDate = $endDate ?? now()->endOfMonth();
 
@@ -772,16 +770,23 @@ class ReportService
             default => 'gross_profit',
         });
 
-        return $query->paginate($perPage)
-            ->through(function ($item) {
-                $variant = ProductVariant::with(['product.category'])->find($item->product_variant_id);
-                $item->productVariant = $variant;
-                $item->profit_margin = $item->total_revenue > 0
-                    ? (($item->gross_profit / $item->total_revenue) * 100)
-                    : 0;
+        $paginator = $query->paginate($perPage);
 
-                return $item;
-            });
+        $variantIds = collect($paginator->items())->pluck('product_variant_id')->filter()->unique();
+        $variants = ProductVariant::query()
+            ->with(['product.category'])
+            ->whereIn('id', $variantIds)
+            ->get()
+            ->keyBy('id');
+
+        return $paginator->through(function ($item) use ($variants) {
+            $item->productVariant = $variants->get($item->product_variant_id);
+            $item->profit_margin = $item->total_revenue > 0
+                ? round(($item->gross_profit / $item->total_revenue) * 100, 2)
+                : 0;
+
+            return $item;
+        });
     }
 
     /**
@@ -790,7 +795,7 @@ class ReportService
     public function getProductProfitabilitySummary(Collection $shopIds, Carbon $startDate, Carbon $endDate): array
     {
         $tenantId = $shopIds->first() ? Shop::find($shopIds->first())?->tenant_id : null;
-        if (! $tenantId) {
+        if (!$tenantId) {
             throw new \InvalidArgumentException('Invalid shop IDs provided');
         }
 
@@ -830,13 +835,29 @@ class ReportService
 
             return [
                 'total_units_sold' => $stats->total_units_sold ?? 0,
-                'total_revenue' => (float) ($stats->total_revenue ?? 0),
-                'total_cogs' => (float) ($stats->total_cogs ?? 0),
-                'gross_profit' => (float) ($stats->gross_profit ?? 0),
-                'avg_margin' => (float) $avgMargin,
+                'total_revenue' => (float)($stats->total_revenue ?? 0),
+                'total_cogs' => (float)($stats->total_cogs ?? 0),
+                'gross_profit' => (float)($stats->gross_profit ?? 0),
+                'avg_margin' => (float)$avgMargin,
                 'top_products' => $topProducts,
             ];
         });
+    }
+
+    /**
+     * Compute total inventory value (stock × cost_price) for the given shops via a single SQL aggregate.
+     * Replaces the previous pattern of loading all ProductVariant rows into PHP memory.
+     */
+    private function getInventoryValue(Collection $shopIds): float
+    {
+        return (float)DB::table('product_variants')
+            ->join('products', 'product_variants.product_id', '=', 'products.id')
+            ->join('inventory_locations', 'inventory_locations.product_variant_id', '=', 'product_variants.id')
+            ->whereIn('products.shop_id', $shopIds)
+            ->whereIn('inventory_locations.location_id', $shopIds)
+            ->where('inventory_locations.location_type', Shop::class)
+            ->whereNotNull('product_variants.cost_price')
+            ->sum(DB::raw('inventory_locations.quantity * product_variants.cost_price'));
     }
 
     /**
@@ -856,7 +877,7 @@ class ReportService
      */
     protected function getCacheKey(int $tenantId, string $type, mixed ...$params): string
     {
-        $paramsKey = empty($params) ? '' : ':'.md5(serialize($params));
+        $paramsKey = empty($params) ? '' : ':' . md5(serialize($params));
 
         return "tenant:{$tenantId}:reports:{$type}{$paramsKey}";
     }
