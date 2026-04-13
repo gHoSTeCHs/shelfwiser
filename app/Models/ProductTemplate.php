@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\TemplateStructureCast;
+use App\Scopes\TenantScope;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -116,7 +117,8 @@ class ProductTemplate extends Model
 
     public function productType(): BelongsTo
     {
-        return $this->belongsTo(ProductType::class);
+        return $this->belongsTo(ProductType::class)
+            ->withoutGlobalScope(TenantScope::class);
     }
 
     public function category(): BelongsTo

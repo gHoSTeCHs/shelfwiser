@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Scopes\TenantScope;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -65,6 +66,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $seo_title
  * @property string|null $seo_description
  * @property string|null $seo_keywords
+ * @property string|null $size_guide
  * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
@@ -92,6 +94,7 @@ class Product extends Model
         'seo_title',
         'seo_description',
         'seo_keywords',
+        'size_guide',
     ];
 
     protected $casts = [
@@ -121,7 +124,8 @@ class Product extends Model
 
     public function type(): BelongsTo
     {
-        return $this->belongsTo(ProductType::class, 'product_type_id');
+        return $this->belongsTo(ProductType::class, 'product_type_id')
+            ->withoutGlobalScope(TenantScope::class);
     }
 
     public function category(): BelongsTo
@@ -132,6 +136,11 @@ class Product extends Model
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    public function options(): HasMany
+    {
+        return $this->hasMany(ProductOption::class)->orderBy('position');
     }
 
     /**

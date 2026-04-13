@@ -23,6 +23,7 @@ class ProductTypeFactory extends Factory
             'label' => fake()->words(2, true),
             'description' => fake()->sentence(),
             'config_schema' => null,
+            'option_templates' => null,
             'supports_variants' => false,
             'requires_batch_tracking' => false,
             'requires_serial_tracking' => false,

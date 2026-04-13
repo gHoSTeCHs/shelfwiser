@@ -9,10 +9,10 @@ import ImageUploader from '@/components/images/ImageUploader';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
-import { Product } from '@/types/product';
+import { Product, ProductOption } from '@/types/product';
 import { ProductVariant } from '@/types/stockMovement';
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Image as ImageIcon, Package, Save } from 'lucide-react';
+import { ArrowLeft, GitBranch, Image as ImageIcon, Package, Save } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -54,6 +54,22 @@ export default function Edit({ variant, product }: Props) {
     const [maxOrderQuantity, setMaxOrderQuantity] = useState<string>(
         variant.max_order_quantity?.toString() || '',
     );
+    const [selectedOptionValueIds, setSelectedOptionValueIds] = useState<
+        number[]
+    >(variant.option_value_ids || []);
+
+    const handleOptionValueToggle = (option: ProductOption, valueId: number) => {
+        setSelectedOptionValueIds((prev) => {
+            const optionValueIds = option.values.map((v) => v.id);
+            const withoutThisOption = prev.filter(
+                (id) => !optionValueIds.includes(id),
+            );
+            if (prev.includes(valueId)) {
+                return withoutThisOption;
+            }
+            return [...withoutThisOption, valueId];
+        });
+    };
 
     return (
         <>
@@ -431,6 +447,86 @@ export default function Edit({ variant, product }: Props) {
                                     </div>
                                 </div>
                             </Card>
+
+                            {/* Option Assignments */}
+                            {product.options && product.options.length > 0 && (
+                                <Card>
+                                    <div className="mb-6 flex items-center gap-3 border-b border-gray-200 pb-4 dark:border-gray-700">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/20">
+                                            <GitBranch className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                Option Assignments
+                                            </h2>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                Select one value per option axis
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-5">
+                                        {product.options.map((option) => (
+                                            <div key={option.id}>
+                                                <Label>
+                                                    {option.display_name}
+                                                </Label>
+                                                <div className="mt-2 flex flex-wrap gap-2">
+                                                    {option.values.map(
+                                                        (val) => {
+                                                            const isSelected =
+                                                                selectedOptionValueIds.includes(
+                                                                    val.id,
+                                                                );
+                                                            return (
+                                                                <button
+                                                                    key={val.id}
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        handleOptionValueToggle(
+                                                                            option,
+                                                                            val.id,
+                                                                        )
+                                                                    }
+                                                                    className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
+                                                                        isSelected
+                                                                            ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-400 dark:bg-brand-900/20 dark:text-brand-300'
+                                                                            : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-500'
+                                                                    }`}
+                                                                >
+                                                                    {val.label}
+                                                                </button>
+                                                            );
+                                                        },
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-4">
+                                        {selectedOptionValueIds.map((id) => (
+                                            <input
+                                                key={id}
+                                                type="hidden"
+                                                name="option_value_ids[]"
+                                                value={id}
+                                            />
+                                        ))}
+                                        {selectedOptionValueIds.length ===
+                                            0 && (
+                                            <input
+                                                type="hidden"
+                                                name="option_value_ids"
+                                                value=""
+                                            />
+                                        )}
+                                        <InputError
+                                            message={errors.option_value_ids as string | undefined}
+                                        />
+                                    </div>
+                                </Card>
+                            )}
 
                             {/* Variant Images */}
                             <Card>

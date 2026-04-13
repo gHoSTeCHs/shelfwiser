@@ -1,5 +1,5 @@
 import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { home } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
@@ -62,9 +62,9 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
                     items={[
                         {
                             label: 'Home',
-                            href: StorefrontController.index.url({
+                            href: home({
                                 shop: shop.slug,
-                            }),
+                            }).url,
                         },
                         { label: 'Order Confirmation' },
                     ]}
@@ -274,9 +274,9 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
                         </Button>
                     </Link>
                     <Link
-                        href={StorefrontController.index.url({
+                        href={home({
                             shop: shop.slug,
-                        })}
+                        }).url}
                     >
                         <Button
                             variant="primary"

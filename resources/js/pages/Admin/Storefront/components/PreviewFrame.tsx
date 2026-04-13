@@ -198,7 +198,7 @@ export function PreviewFrame({ shopSlug }: PreviewFrameProps) {
                                 className="h-full w-full border-0 bg-white"
                                 onLoad={handleIframeLoad}
                                 onError={handleIframeError}
-                                sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                                sandbox="allow-same-origin allow-scripts allow-forms"
                             />
                         )}
                     </div>

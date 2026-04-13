@@ -1,4 +1,4 @@
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { home, products } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import ProductCard from '@/components/storefront/ProductCard';
 import ProductFilter from '@/components/storefront/ProductFilter';
@@ -62,7 +62,7 @@ const Products: React.FC<StorefrontProductsProps> = ({
         if (filters.sort) params.sort = filters.sort;
 
         router.get(
-            StorefrontController.products.url({ shop: shop.slug }),
+            products({ shop: shop.slug }).url,
             params,
             { preserveState: true },
         );
@@ -70,7 +70,7 @@ const Products: React.FC<StorefrontProductsProps> = ({
 
     const handlePageChange = (page: number) => {
         router.get(
-            StorefrontController.products.url({ shop: shop.slug }),
+            products({ shop: shop.slug }).url,
             { ...filters, page },
             { preserveState: true, preserveScroll: true },
         );
@@ -92,9 +92,9 @@ const Products: React.FC<StorefrontProductsProps> = ({
                     items={[
                         {
                             label: 'Home',
-                            href: StorefrontController.index.url({
+                            href: home({
                                 shop: shop.slug,
-                            }),
+                            }).url,
                         },
                         { label: 'Products' },
                         ...(selectedCategory

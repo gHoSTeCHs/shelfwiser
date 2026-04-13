@@ -1,5 +1,5 @@
 import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { products } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Badge from '@/components/ui/badge/Badge';
 import { Card } from '@/components/ui/card';
 import useCurrency from '@/hooks/useCurrency';
@@ -97,9 +97,9 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                             <Package className="mx-auto mb-4 h-16 w-16 text-gray-300" />
                             <p className="mb-4 text-gray-600">No orders yet</p>
                             <Link
-                                href={StorefrontController.products.url({
+                                href={products({
                                     shop: shop.slug,
-                                })}
+                                }).url}
                                 className="font-medium text-brand-600 hover:text-brand-700"
                             >
                                 Start Shopping

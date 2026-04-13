@@ -9,7 +9,7 @@ class UpdateProductRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('manage', $this->route('product'));
+        return true;
     }
 
     public function rules(): array
@@ -23,11 +23,13 @@ class UpdateProductRequest extends FormRequest
                 'nullable',
                 Rule::exists('product_categories', 'id')->where('tenant_id', $tenantId),
             ],
-            'product_type_slug' => ['prohibited'],
+            'product_type_slug' => ['sometimes', 'nullable', 'string'],
             'is_active' => ['sometimes', 'boolean'],
+            'has_variants' => ['sometimes', 'boolean'],
+            'size_guide' => ['nullable', 'string'],
         ];
 
-        if ($this->has('custom_attributes') && $this->has('product_type_slug')) {
+        if ($this->has('custom_attributes') && $this->route('product')->type !== null) {
             $productType = $this->getProductType();
             $rules['custom_attributes'] = ['nullable', 'array', function ($attribute, $value, $fail) use ($productType) {
                 if (empty($value)) {
@@ -49,22 +51,11 @@ class UpdateProductRequest extends FormRequest
             'name.required' => 'Please provide a name for this product.',
             'name.max' => 'Product name cannot exceed 255 characters.',
             'category_id.exists' => 'The selected category does not exist in your organization.',
-            'product_type_slug.prohibited' => 'Product type cannot be changed after creation.',
         ];
     }
 
     protected function getProductType(): \App\Models\ProductType
     {
-        $tenantId = $this->user()->tenant_id;
-        $slug = $this->input('product_type_slug');
-
-        $cacheKey = "tenant:{$tenantId}:product_type:slug:{$slug}";
-
-        return \Illuminate\Support\Facades\Cache::tags(["tenant:{$tenantId}:product_types"])
-            ->remember($cacheKey, 3600, function () use ($tenantId, $slug) {
-                return \App\Models\ProductType::accessibleTo($tenantId)
-                    ->where('slug', $slug)
-                    ->firstOrFail();
-            });
+        return $this->route('product')->type;
     }
 }

@@ -1,3 +1,6 @@
+import { generateMatrix } from '@/actions/App/Http/Controllers/ProductOptionController';
+import { edit, index } from '@/actions/App/Http/Controllers/ProductController';
+import { show as showShop } from '@/actions/App/Http/Controllers/ShopController';
 import ProductVariantController from '@/actions/App/Http/Controllers/ProductVariantController';
 import StockMovementController from '@/actions/App/Http/Controllers/StockMovementController';
 import SetupInventoryModal from '@/components/stock/SetupInventoryModal';
@@ -11,10 +14,10 @@ import Card from '@/components/ui/card/Card';
 import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
 import { formatCurrency, formatDateShort } from '@/lib/formatters';
-import { ProductCategory, ProductType } from '@/types/product.ts';
+import { ProductCategory, ProductOption, ProductType } from '@/types/product.ts';
 import { Shop } from '@/types/shop.ts';
 import { ProductVariant, StockMovement } from '@/types/stockMovement';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowRightLeft,
     Barcode,
@@ -25,6 +28,7 @@ import {
     ClipboardList,
     DollarSign,
     Edit,
+    GitBranch,
     Package,
     Plus,
     Tag,
@@ -38,6 +42,7 @@ interface Product {
     name: string;
     slug: string;
     description: string | null;
+    size_guide: string | null;
     custom_attributes: Record<string, unknown> | null;
     has_variants: boolean;
     is_active: boolean;
@@ -45,6 +50,7 @@ interface Product {
     category: ProductCategory | null;
     shop: Shop;
     variants: ProductVariant[];
+    options?: ProductOption[];
     created_at: string;
     updated_at: string;
 }
@@ -66,9 +72,26 @@ export default function Show({
         useState<ProductVariant | null>(
             product.variants.length > 0 ? product.variants[0] : null,
         );
+    const [generatingMatrix, setGeneratingMatrix] = useState(false);
     const adjustStockModal = useModal();
     const transferStockModal = useModal();
     const setupInventoryModal = useModal();
+
+    const handleGenerateMatrix = () => {
+        if (!product.options || product.options.length === 0) return;
+        const optionAxes = product.options.map((opt) =>
+            opt.values.map((v) => v.id),
+        );
+        setGeneratingMatrix(true);
+        router.post(
+            generateMatrix(product).url,
+            { option_axes: optionAxes },
+            {
+                preserveScroll: true,
+                onFinish: () => setGeneratingMatrix(false),
+            },
+        );
+    };
 
     const getTotalStock = (variant: ProductVariant): number => {
         return (
@@ -115,7 +138,7 @@ export default function Show({
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link
-                            href={'/products'}
+                            href={index().url}
                             className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ChevronLeft className="mr-1 h-4 w-4" />
@@ -124,7 +147,7 @@ export default function Show({
                     </div>
 
                     {can_manage && (
-                        <Link href={`/products/${product.id}/edit`}>
+                        <Link href={edit(product).url}>
                             <Button size="sm" className="gap-2">
                                 <Edit className="h-4 w-4" />
                                 Edit Product
@@ -167,6 +190,17 @@ export default function Show({
                                     </div>
                                 )}
 
+                                {product.size_guide && (
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                            Size Guide
+                                        </p>
+                                        <p className="mt-1 whitespace-pre-line text-gray-900 dark:text-white">
+                                            {product.size_guide}
+                                        </p>
+                                    </div>
+                                )}
+
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <div>
                                         <p className="flex items-center text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -196,7 +230,7 @@ export default function Show({
                                             Shop
                                         </p>
                                         <Link
-                                            href={`/shops/${product.shop.id}`}
+                                            href={showShop(product.shop).url}
                                             className="mt-1 text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                                         >
                                             {product.shop.name}
@@ -251,6 +285,81 @@ export default function Show({
                                 </Card>
                             )}
 
+                        {product.has_variants &&
+                            product.options !== undefined && (
+                                <Card title="Product Options">
+                                    <div className="space-y-4">
+                                        {product.options.length === 0 ? (
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                No options defined. Add options
+                                                via the API to enable the
+                                                variant matrix.
+                                            </p>
+                                        ) : (
+                                            <>
+                                                <div className="space-y-4">
+                                                    {product.options.map(
+                                                        (option) => (
+                                                            <div key={option.id}>
+                                                                <p className="mb-2 flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                                                    <GitBranch className="mr-2 h-4 w-4" />
+                                                                    {
+                                                                        option.display_name
+                                                                    }
+                                                                </p>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {option.values.map(
+                                                                        (
+                                                                            val,
+                                                                        ) => (
+                                                                            <Badge
+                                                                                key={
+                                                                                    val.id
+                                                                                }
+                                                                                variant="light"
+                                                                            >
+                                                                                {
+                                                                                    val.label
+                                                                                }
+                                                                            </Badge>
+                                                                        ),
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ),
+                                                    )}
+                                                </div>
+
+                                                {can_manage && (
+                                                    <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={
+                                                                handleGenerateMatrix
+                                                            }
+                                                            disabled={
+                                                                generatingMatrix
+                                                            }
+                                                        >
+                                                            <GitBranch className="mr-2 h-4 w-4" />
+                                                            {generatingMatrix
+                                                                ? 'Generating...'
+                                                                : 'Generate Variant Matrix'}
+                                                        </Button>
+                                                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                            Creates all variant
+                                                            combinations from
+                                                            the option axes
+                                                            above.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                </Card>
+                            )}
+
                         <Card title="Variants & Pricing">
                             <div className="space-y-4">
                                 {product.variants.map((variant) => {
@@ -276,7 +385,7 @@ export default function Show({
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2">
                                                         <h3 className="font-semibold text-gray-900 dark:text-white">
-                                                            {variant.name ||
+                                                            {variant.display_name || variant.name ||
                                                                 'Default Variant'}
                                                         </h3>
                                                         {isSelected && (

@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ProductOptionValue;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateProductVariantRequest extends FormRequest
 {
@@ -56,6 +58,8 @@ class UpdateProductVariantRequest extends FormRequest
             'is_active' => ['boolean'],
             'is_available_online' => ['boolean'],
             'max_order_quantity' => ['nullable', 'integer', 'min:0'],
+            'option_value_ids' => ['sometimes', 'array'],
+            'option_value_ids.*' => ['integer', Rule::exists('product_option_values', 'id')],
         ];
     }
 
@@ -76,6 +80,31 @@ class UpdateProductVariantRequest extends FormRequest
             'expiry_date.date' => 'Please provide a valid expiry date.',
             'max_order_quantity.min' => 'Maximum order quantity cannot be negative.',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $variant = $this->route('variant');
+
+        $validator->after(function (Validator $validator) use ($variant): void {
+            $submittedIds = $this->input('option_value_ids', []);
+
+            if (empty($submittedIds)) {
+                return;
+            }
+
+            $validIds = ProductOptionValue::query()
+                ->whereHas('option', fn ($q) => $q->where('product_id', $variant->product_id))
+                ->whereIn('id', $submittedIds)
+                ->pluck('id')
+                ->all();
+
+            $invalidIds = array_diff($submittedIds, $validIds);
+
+            if (! empty($invalidIds)) {
+                $validator->errors()->add('option_value_ids', 'One or more option values do not belong to this product.');
+            }
+        });
     }
 
     /**

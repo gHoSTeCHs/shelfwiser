@@ -80,6 +80,7 @@ export default function Create({
     const [customAttributes, setCustomAttributes] = useState<
         Record<string, unknown>
     >({});
+    const [sizeGuide, setSizeGuide] = useState<string>('');
     const [hasVariants, setHasVariants] = useState<boolean>(false);
     const [isActive, setIsActive] = useState<boolean>(true);
     const [selectedTemplateId, setSelectedTemplateId] = useState<number | ''>(
@@ -610,6 +611,31 @@ export default function Create({
                                         />
                                         <InputError
                                             message={errors.description}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="size_guide">
+                                            Size Guide{' '}
+                                            <span className="text-gray-400">
+                                                (Optional)
+                                            </span>
+                                        </Label>
+                                        <TextArea
+                                            value={sizeGuide}
+                                            onChange={(val) =>
+                                                setSizeGuide(val)
+                                            }
+                                            placeholder="Size chart or fitting guide shown on the storefront..."
+                                            rows={3}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="size_guide"
+                                            value={sizeGuide}
+                                        />
+                                        <InputError
+                                            message={errors.size_guide}
                                         />
                                     </div>
 

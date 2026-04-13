@@ -261,12 +261,10 @@ class Order extends Model
         $prefix = 'ORD';
         $date = $creationDate->format('Ymd');
 
-        // Query database to get the maximum sequence number for today
-        // This is more reliable than static cache for concurrent requests
         $lastOrder = self::where('tenant_id', $tenantId)
             ->whereDate('created_at', $creationDate)
             ->orderBy('id', 'desc')
-            ->lockForUpdate() // Lock the row to prevent race conditions
+            ->lockForUpdate()
             ->first();
 
         $sequence = $lastOrder ? (int) substr($lastOrder->order_number, -4) : 0;
@@ -304,5 +302,18 @@ class Order extends Model
         } else {
             $this->payment_status = PaymentStatus::UNPAID;
         }
+    }
+
+    public function loadOrderRelations(): static
+    {
+        return $this->load([
+            'items.productVariant.product',
+            'items.packagingType',
+            'items.sellable' => function ($morphTo) {
+                $morphTo->morphWith([
+                    \App\Models\ServiceVariant::class => ['service'],
+                ]);
+            },
+        ]);
     }
 }

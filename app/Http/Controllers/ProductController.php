@@ -54,15 +54,15 @@ class ProductController extends Controller
 
         $tenantId = auth()->user()->tenant_id;
 
-        $shops = Shop::where('tenant_id', $tenantId)
+        $shops = Shop::query()->where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->get(['id', 'name', 'slug', 'inventory_model']);
 
         $productTypes = ProductType::accessibleTo($tenantId)
             ->where('is_active', true)
-            ->get(['id', 'slug', 'label', 'description', 'config_schema', 'supports_variants', 'requires_batch_tracking', 'requires_serial_tracking']);
+            ->get(['id', 'slug', 'label', 'description', 'config_schema', 'option_templates', 'supports_variants', 'requires_batch_tracking', 'requires_serial_tracking']);
 
-        $categories = ProductCategory::where('tenant_id', $tenantId)
+        $categories = ProductCategory::query()->where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->whereNull('parent_id')
             ->with('children')
@@ -112,6 +112,8 @@ class ProductController extends Controller
             'shop',
             'variants.inventoryLocations.location',
             'variants.packagingTypes',
+            'variants.optionValues',
+            'options.values',
             'images' => function ($query) {
                 $query->ordered();
             },
@@ -122,13 +124,13 @@ class ProductController extends Controller
 
         $tenantId = auth()->user()->tenant_id;
 
-        $availableShops = Shop::where('tenant_id', $tenantId)
+        $availableShops = Shop::query()->where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->get(['id', 'name']);
 
         $variantIds = $product->variants->pluck('id');
 
-        $recentMovements = StockMovement::whereIn('product_variant_id', $variantIds)
+        $recentMovements = StockMovement::query()->whereIn('product_variant_id', $variantIds)
             ->with(['productVariant', 'fromLocation.location', 'toLocation.location'])
             ->latest()
             ->limit(10)
@@ -150,6 +152,8 @@ class ProductController extends Controller
             'type',
             'category',
             'variants.packagingTypes',
+            'variants.optionValues',
+            'options.values',
             'images' => function ($query) {
                 $query->ordered();
             },
@@ -162,9 +166,9 @@ class ProductController extends Controller
 
         $productTypes = ProductType::accessibleTo($tenantId)
             ->where('is_active', true)
-            ->get(['id', 'slug', 'label', 'description', 'config_schema', 'supports_variants', 'requires_batch_tracking', 'requires_serial_tracking']);
+            ->get(['id', 'slug', 'label', 'description', 'config_schema', 'option_templates', 'supports_variants', 'requires_batch_tracking', 'requires_serial_tracking']);
 
-        $categories = ProductCategory::where('tenant_id', $tenantId)
+        $categories = ProductCategory::query()->where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->whereNull('parent_id')
             ->with('children')
@@ -182,6 +186,8 @@ class ProductController extends Controller
      */
     public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
+        Gate::authorize('manage', $product);
+
         $this->productService->update($product, $request->validated());
 
         return Redirect::route('products.show', $product)

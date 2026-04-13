@@ -1,4 +1,4 @@
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { serviceDetail } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Badge from '@/components/ui/badge/Badge';
 import useCurrency from '@/hooks/useCurrency';
 import { Service } from '@/types/service';
@@ -33,10 +33,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, shop }) => {
 
     return (
         <Link
-            href={StorefrontController.showService.url({
-                shop: shop.slug,
-                service: service.slug,
-            })}
+            href={serviceDetail({ shop: shop.slug, service: service.slug }).url}
             className="group block h-full"
         >
             <article className="relative flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-300 hover:border-brand-300 hover:shadow-lg hover:shadow-brand-100/50 sm:rounded-2xl dark:border-navy-700 dark:bg-navy-800 dark:hover:border-brand-500 dark:hover:shadow-brand-500/10">

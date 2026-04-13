@@ -407,14 +407,33 @@ export interface ProductImageData {
     alt: string | null;
 }
 
+export type StorefrontOptionVisualType = 'dropdown' | 'color_swatch' | 'button_group' | 'image_swatch';
+
+export interface StorefrontOptionValueData {
+    id: number;
+    label: string;
+    value: string;
+    visual_data: Record<string, unknown> | null;
+}
+
+export interface StorefrontOptionData {
+    id: number;
+    name: string;
+    display_name: string;
+    visual_type: StorefrontOptionVisualType;
+    values: StorefrontOptionValueData[];
+}
+
 export interface ProductVariantDetailData {
     id: number;
     name: string;
+    display_name: string;
     sku: string | null;
     price: number;
     compare_at_price: number | null;
     stock_quantity: number | null;
     is_active: boolean;
+    option_value_ids: number[];
 }
 
 export interface ProductDetailData {
@@ -422,9 +441,12 @@ export interface ProductDetailData {
     name: string;
     slug: string;
     description: string | null;
+    has_variants: boolean;
+    size_guide: string | null;
     category_name: string | null;
     is_new: boolean;
     images: ProductImageData[];
+    options: StorefrontOptionData[];
     variants: ProductVariantDetailData[];
 }
 

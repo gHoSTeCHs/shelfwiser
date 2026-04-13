@@ -24,6 +24,7 @@ class ProductFactory extends Factory
             'is_active' => true,
             'is_featured' => false,
             'has_variants' => false,
+            'size_guide' => null,
             'track_stock' => true,
             'is_taxable' => false,
             'display_order' => 0,

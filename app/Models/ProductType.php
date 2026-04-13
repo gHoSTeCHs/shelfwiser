@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\Cache;
  * @property string $label
  * @property string|null $description
  * @property array|null $config_schema
+ * @property array|null $option_templates
  * @property bool $supports_variants
  * @property bool $requires_batch_tracking
  * @property bool $requires_serial_tracking
@@ -55,6 +56,7 @@ class ProductType extends Model
         'label',
         'description',
         'config_schema',
+        'option_templates',
         'supports_variants',
         'requires_batch_tracking',
         'requires_serial_tracking',
@@ -63,6 +65,7 @@ class ProductType extends Model
 
     protected $casts = [
         'config_schema' => 'array',
+        'option_templates' => 'array',
         'supports_variants' => 'boolean',
         'requires_batch_tracking' => 'boolean',
         'requires_serial_tracking' => 'boolean',

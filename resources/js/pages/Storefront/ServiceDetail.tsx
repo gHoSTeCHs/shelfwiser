@@ -1,4 +1,4 @@
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { home, services } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Checkbox from '@/components/form/input/Checkbox';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
@@ -153,15 +153,15 @@ const ServiceDetail: React.FC<StorefrontServiceDetailProps> = ({
                     items={[
                         {
                             label: 'Home',
-                            href: StorefrontController.index.url({
+                            href: home({
                                 shop: shop.slug,
-                            }),
+                            }).url,
                         },
                         {
                             label: 'Services',
-                            href: StorefrontController.services.url({
+                            href: services({
                                 shop: shop.slug,
-                            }),
+                            }).url,
                         },
                         ...(service.category
                             ? [{ label: service.category.name }]

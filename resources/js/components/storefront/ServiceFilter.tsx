@@ -1,4 +1,4 @@
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { services as storefrontServices } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Button from '@/components/ui/button/Button';
 import { ServiceCategory } from '@/types/service';
 import { Shop } from '@/types/shop';
@@ -32,7 +32,7 @@ const ServiceFilter: React.FC<ServiceFilterProps> = ({
         if (currentSort) params.sort = currentSort;
 
         router.get(
-            StorefrontController.services.url({ shop: shop.slug }),
+            storefrontServices({ shop: shop.slug }).url,
             params,
             { preserveState: true },
         );
@@ -40,7 +40,7 @@ const ServiceFilter: React.FC<ServiceFilterProps> = ({
 
     const handleClearFilters = () => {
         router.get(
-            StorefrontController.services.url({ shop: shop.slug }),
+            storefrontServices({ shop: shop.slug }).url,
             {},
             { preserveState: true },
         );

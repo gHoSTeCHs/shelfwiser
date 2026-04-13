@@ -85,6 +85,9 @@ export interface ProductVariant {
         slug: string;
         shop_id: number;
     };
+    display_name?: string;
+    option_value_ids?: number[];
+    option_values?: import('./product').ProductOptionValue[];
     inventory_locations?: InventoryLocation[];
     packaging_types?: ProductPackagingType[];
 }

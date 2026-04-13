@@ -29,6 +29,7 @@ class CreateProductRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'has_variants' => ['boolean'],
+            'size_guide' => ['nullable', 'string'],
         ];
 
         if ($this->has('custom_attributes') && $this->has('product_type_slug')) {

@@ -1,4 +1,4 @@
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { products, services } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import ProductCard from '@/components/storefront/ProductCard';
 import ServiceCard from '@/components/storefront/ServiceCard';
 import Button from '@/components/ui/button/Button';
@@ -99,9 +99,9 @@ const Home: React.FC<StorefrontHomeProps> = ({
                             className="flex flex-col gap-3 sm:flex-row sm:gap-4"
                         >
                             <Link
-                                href={StorefrontController.products.url({
+                                href={products({
                                     shop: shop.slug,
-                                })}
+                                }).url}
                             >
                                 <Button
                                     variant="secondary"
@@ -113,9 +113,9 @@ const Home: React.FC<StorefrontHomeProps> = ({
                                 </Button>
                             </Link>
                             <Link
-                                href={StorefrontController.services.url({
+                                href={services({
                                     shop: shop.slug,
-                                })}
+                                }).url}
                             >
                                 <Button
                                     variant="outline"
@@ -155,9 +155,9 @@ const Home: React.FC<StorefrontHomeProps> = ({
                                 >
                                     <Link
                                         href={
-                                            StorefrontController.products.url({
+                                            products({
                                                 shop: shop.slug,
-                                            }) + `?category=${category.id}`
+                                            }).url + `?category=${category.id}`
                                         }
                                         className="group block rounded-xl border border-gray-200 bg-white p-4 text-center transition-all duration-200 hover:border-brand-300 hover:shadow-lg hover:shadow-brand-100/50 sm:rounded-2xl sm:p-6 dark:border-navy-700 dark:bg-navy-800 dark:hover:border-brand-500 dark:hover:shadow-brand-500/10"
                                     >
@@ -196,9 +196,9 @@ const Home: React.FC<StorefrontHomeProps> = ({
                             </p>
                         </div>
                         <Link
-                            href={StorefrontController.products.url({
+                            href={products({
                                 shop: shop.slug,
-                            })}
+                            }).url}
                         >
                             <Button
                                 variant="outline"
@@ -257,9 +257,9 @@ const Home: React.FC<StorefrontHomeProps> = ({
                                 </p>
                             </div>
                             <Link
-                                href={StorefrontController.services.url({
+                                href={services({
                                     shop: shop.slug,
-                                })}
+                                }).url}
                             >
                                 <Button
                                     variant="outline"

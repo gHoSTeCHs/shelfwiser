@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BatchGenerateBarcodesRequest;
 use App\Http\Requests\UpdateProductVariantRequest;
 use App\Models\ProductVariant;
 use App\Services\BarcodeGeneratorService;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -28,7 +28,7 @@ class ProductVariantController extends Controller
     {
         Gate::authorize('update', $variant);
 
-        $variant->load(['product', 'packagingTypes', 'images']);
+        $variant->load(['product.options.values', 'packagingTypes', 'images', 'optionValues']);
 
         return Inertia::render('Products/Variants/Edit', [
             'variant' => $variant,
@@ -74,21 +74,15 @@ class ProductVariantController extends Controller
     /**
      * Batch generate barcodes for multiple variants
      */
-    public function batchGenerateBarcodes(Request $request): JsonResponse
+    public function batchGenerateBarcodes(BatchGenerateBarcodesRequest $request): JsonResponse
     {
-        $request->validate([
-            'variant_ids' => 'required|array',
-            'variant_ids.*' => 'exists:product_variants,id',
-        ]);
-
-        // Verify authorization for all variants
-        $variants = ProductVariant::with('product')->whereIn('id', $request->variant_ids)->get();
+        $variants = ProductVariant::query()->with('product')->whereIn('id', $request->validated()['variant_ids'])->get();
 
         foreach ($variants as $variant) {
             Gate::authorize('update', $variant);
         }
 
-        $results = $this->barcodeGenerator->batchGenerate($request->variant_ids);
+        $results = $this->barcodeGenerator->batchGenerate($request->validated()['variant_ids']);
 
         $successCount = count(array_filter($results, fn ($b) => $b !== null));
         $failedCount = count($results) - $successCount;

@@ -679,6 +679,8 @@ class StorefrontRenderService
             ->where('is_active', true)
             ->with([
                 'variants' => fn ($q) => $q->where('is_active', true)->where('is_available_online', true),
+                'variants.optionValues',
+                'options.values',
                 'category',
                 'images',
             ])
@@ -696,6 +698,8 @@ class StorefrontRenderService
             'name' => $product->name,
             'slug' => $product->slug,
             'description' => $product->description,
+            'has_variants' => (bool) $product->has_variants,
+            'size_guide' => $product->size_guide,
             'category_name' => $product->category?->name,
             'is_new' => $product->created_at?->isAfter(now()->subDays(14)) ?? false,
             'images' => $product->relationLoaded('images')
@@ -705,15 +709,33 @@ class StorefrontRenderService
                     'alt' => $image->alt_text ?? null,
                 ])->all()
                 : [],
+            'options' => $product->relationLoaded('options')
+                ? $product->options->map(fn ($option) => [
+                    'id' => $option->id,
+                    'name' => $option->name,
+                    'display_name' => $option->display_name ?? $option->name,
+                    'visual_type' => $option->visual_type?->value ?? 'button_group',
+                    'values' => $option->values->map(fn ($value) => [
+                        'id' => $value->id,
+                        'label' => $value->label,
+                        'value' => $value->value,
+                        'visual_data' => $value->visual_data,
+                    ])->all(),
+                ])->all()
+                : [],
             'variants' => $product->relationLoaded('variants')
                 ? $product->variants->map(fn ($variant) => [
                     'id' => $variant->id,
                     'name' => $variant->name,
+                    'display_name' => $variant->display_name,
                     'sku' => $variant->sku,
                     'price' => (float) $variant->price,
                     'compare_at_price' => $variant->compare_at_price ? (float) $variant->compare_at_price : null,
                     'stock_quantity' => $variant->available_stock ?? null,
                     'is_active' => $variant->is_active,
+                    'option_value_ids' => $variant->relationLoaded('optionValues')
+                        ? $variant->optionValues->pluck('id')->all()
+                        : [],
                 ])->all()
                 : [],
         ];

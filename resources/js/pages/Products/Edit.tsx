@@ -41,6 +41,9 @@ export default function Edit({ product, productTypes, categories }: Props) {
     const [customAttributes, setCustomAttributes] = useState<
         Record<string, unknown>
     >(product.custom_attributes || {});
+    const [sizeGuide, setSizeGuide] = useState<string>(
+        product.size_guide || '',
+    );
     const [isActive, setIsActive] = useState<boolean>(product.is_active);
 
     const selectedType = productTypes.find(
@@ -243,6 +246,28 @@ export default function Edit({ product, productTypes, categories }: Props) {
                                         />
                                     </div>
 
+                                    <div>
+                                        <Label htmlFor="size_guide">
+                                            Size Guide
+                                        </Label>
+                                        <TextArea
+                                            value={sizeGuide}
+                                            onChange={(val) =>
+                                                setSizeGuide(val)
+                                            }
+                                            placeholder="Size guide information (e.g., S=36cm, M=40cm...)"
+                                            rows={3}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="size_guide"
+                                            value={sizeGuide}
+                                        />
+                                        <InputError
+                                            message={errors.size_guide}
+                                        />
+                                    </div>
+
                                     <div className="mt-4">
                                         <div className="flex items-center gap-3">
                                             <Checkbox
@@ -404,9 +429,17 @@ export default function Edit({ product, productTypes, categories }: Props) {
                                     </div>
 
                                     <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                                        To edit variant details (pricing,
-                                        inventory, etc.), go to the product
-                                        detail page.
+                                        To manage options, variant pricing, and
+                                        inventory, go to the{' '}
+                                        <Link
+                                            href={ProductController.show.url({
+                                                product: product.id,
+                                            })}
+                                            className="font-medium text-brand-600 hover:underline dark:text-brand-400"
+                                        >
+                                            product detail page
+                                        </Link>
+                                        .
                                     </p>
                                 </Card>
                             )}

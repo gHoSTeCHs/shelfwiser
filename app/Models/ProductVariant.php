@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -128,6 +129,35 @@ class ProductVariant extends Model
             ->orderBy('display_order');
     }
 
+    public function optionValues(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            ProductOptionValue::class,
+            'product_option_value_variant',
+            'product_variant_id',
+            'product_option_value_id'
+        );
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        if ($this->relationLoaded('optionValues') && $this->optionValues->isNotEmpty()) {
+            return $this->optionValues->pluck('label')->join(' / ');
+        }
+
+        if (! empty($this->attributes['attributes'])) {
+            $attrs = is_array($this->attributes['attributes'])
+                ? $this->attributes['attributes']
+                : json_decode($this->attributes['attributes'], true);
+
+            if (is_array($attrs)) {
+                return implode(' / ', array_values($attrs));
+            }
+        }
+
+        return $this->name ?? $this->sku ?? '';
+    }
+
     /**
      * Get all images for this product variant
      */
@@ -156,7 +186,7 @@ class ProductVariant extends Model
     public function getAvailableStockAttribute(): int
     {
         if ($this->relationLoaded('inventoryLocations')) {
-            return $this->inventoryLocations->sum(fn($loc) => $loc->quantity - $loc->reserved_quantity);
+            return $this->inventoryLocations->sum(fn ($loc) => $loc->quantity - $loc->reserved_quantity);
         }
 
         return $this->inventoryLocations()->sum(\DB::raw('quantity - reserved_quantity'));
@@ -170,12 +200,12 @@ class ProductVariant extends Model
         \DB::transaction(function () use ($newQuantity, $newCostPerUnit) {
             $variant = self::lockForUpdate()->find($this->id);
 
-            if (!$variant) {
+            if (! $variant) {
                 return;
             }
 
             $currentQty = $variant->total_stock;
-            $currentCost = (float)$variant->cost_price;
+            $currentCost = (float) $variant->cost_price;
 
             if ($currentQty + $newQuantity <= 0) {
                 return;
@@ -193,7 +223,7 @@ class ProductVariant extends Model
      */
     public function getCostForPackage(ProductPackagingType $package): float
     {
-        return ((float)$this->cost_price) * $package->units_per_package;
+        return ((float) $this->cost_price) * $package->units_per_package;
     }
 
     /**

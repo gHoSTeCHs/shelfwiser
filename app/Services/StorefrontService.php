@@ -110,6 +110,8 @@ class StorefrontService
                     'variants' => fn ($q) => $q->where('is_available_online', true)
                         ->where('is_active', true)
                         ->with('packagingTypes'),
+                    'variants.optionValues',
+                    'options.values',
                     'category',
                     'type',
                 ])

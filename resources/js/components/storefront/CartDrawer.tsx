@@ -1,6 +1,6 @@
 import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
 import CheckoutController from '@/actions/App/Http/Controllers/Storefront/CheckoutController';
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { products as storefrontProducts } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Button from '@/components/ui/button/Button';
 import useCart from '@/hooks/useCart';
 import useCurrency from '@/hooks/useCurrency';
@@ -120,9 +120,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
                                     Looks like you haven't added anything yet.
                                 </p>
                                 <Link
-                                    href={StorefrontController.products.url({
-                                        shop: shop.slug,
-                                    })}
+                                    href={storefrontProducts({ shop: shop.slug }).url}
                                     onClick={closeDrawer}
                                 >
                                     <Button variant="primary" size="sm">

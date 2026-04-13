@@ -223,6 +223,7 @@ export function ThemeConfigPanel() {
 
     async function handleReset() {
         if (!config) return;
+        if (timerRef.current) clearTimeout(timerRef.current);
         setIsResetting(true);
 
         const result = await callApi<{ config: BuilderConfig; message: string }>(

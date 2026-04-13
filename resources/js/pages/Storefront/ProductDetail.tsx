@@ -1,4 +1,4 @@
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { home, products } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Select from '@/components/form/Select';
 import AddToCartButton from '@/components/storefront/AddToCartButton';
 import Breadcrumbs from '@/components/storefront/Breadcrumbs';
@@ -56,15 +56,15 @@ const ProductDetail: React.FC<StorefrontProductDetailProps> = ({
                     items={[
                         {
                             label: 'Home',
-                            href: StorefrontController.index.url({
+                            href: home({
                                 shop: shop.slug,
-                            }),
+                            }).url,
                         },
                         {
                             label: 'Products',
-                            href: StorefrontController.products.url({
+                            href: products({
                                 shop: shop.slug,
-                            }),
+                            }).url,
                         },
                         ...(product.category
                             ? [{ label: product.category.name }]

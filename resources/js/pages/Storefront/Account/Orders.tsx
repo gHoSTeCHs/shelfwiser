@@ -1,5 +1,5 @@
 import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { products } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
@@ -44,9 +44,9 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
                                 Start shopping to see your orders here
                             </p>
                             <Link
-                                href={StorefrontController.products.url({
+                                href={products({
                                     shop: shop.slug,
-                                })}
+                                }).url}
                             >
                                 <Button variant="primary">
                                     Browse Products

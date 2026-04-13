@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Product;
+use App\Models\ProductOptionValue;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,5 +22,21 @@ class ProductVariantFactory extends Factory
             'is_active' => true,
             'is_available_online' => true,
         ];
+    }
+
+    public function withOptionValues(array $optionValueIds): static
+    {
+        return $this->afterCreating(function ($variant) use ($optionValueIds) {
+            $variant->optionValues()->attach($optionValueIds);
+
+            $labels = ProductOptionValue::query()
+                ->whereIn('id', $optionValueIds)
+                ->pluck('label')
+                ->join(' / ');
+
+            if ($labels) {
+                $variant->update(['name' => $labels]);
+            }
+        });
     }
 }

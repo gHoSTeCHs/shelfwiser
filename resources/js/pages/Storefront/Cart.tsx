@@ -1,6 +1,6 @@
 import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
 import CheckoutController from '@/actions/App/Http/Controllers/Storefront/CheckoutController';
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { home, products, services } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import OrderSummary from '@/components/storefront/OrderSummary';
 import QuantitySelector from '@/components/storefront/QuantitySelector';
@@ -114,9 +114,9 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                     items={[
                         {
                             label: 'Home',
-                            href: StorefrontController.index.url({
+                            href: home({
                                 shop: shop.slug,
-                            }),
+                            }).url,
                         },
                         { label: 'Shopping Cart' },
                     ]}
@@ -139,18 +139,18 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                             action={
                                 <div className="flex gap-3">
                                     <Link
-                                        href={StorefrontController.products.url(
+                                        href={products(
                                             { shop: shop.slug },
-                                        )}
+                                        ).url}
                                     >
                                         <Button variant="primary">
                                             Browse Products
                                         </Button>
                                     </Link>
                                     <Link
-                                        href={StorefrontController.services.url(
+                                        href={services(
                                             { shop: shop.slug },
-                                        )}
+                                        ).url}
                                     >
                                         <Button variant="outline">
                                             Browse Services
@@ -401,9 +401,9 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
 
                             <div className="flex items-center justify-between pt-4">
                                 <Link
-                                    href={StorefrontController.products.url({
+                                    href={products({
                                         shop: shop.slug,
-                                    })}
+                                    }).url}
                                 >
                                     <Button variant="outline">
                                         Continue Shopping

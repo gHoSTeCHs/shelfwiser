@@ -16,6 +16,10 @@ use Throwable;
 
 class ProductService
 {
+    public function __construct(
+        private readonly VariantMatrixService $variantMatrixService
+    ) {}
+
     /**
      * @throws Throwable
      */
@@ -50,6 +54,7 @@ class ProductService
                     'description' => $data['description'] ?? null,
                     'custom_attributes' => $customAttributes,
                     'has_variants' => $hasVariants,
+                    'size_guide' => $data['size_guide'] ?? null,
                     'is_active' => $data['is_active'] ?? true,
                 ];
 
@@ -120,6 +125,14 @@ class ProductService
                     );
                 }
 
+                if (array_key_exists('has_variants', $data)) {
+                    if (! $product->has_variants && $data['has_variants']) {
+                        $this->variantMatrixService->guardToggleHasVariantsTrue($product);
+                    } elseif ($product->has_variants && ! $data['has_variants']) {
+                        $this->variantMatrixService->guardToggleHasVariantsFalse($product);
+                    }
+                }
+
                 $product->update($data);
 
                 // Invalidate specific product cache and list cache
@@ -145,7 +158,7 @@ class ProductService
 
     private function createVariant(Product $product, array $data): ProductVariant
     {
-        return ProductVariant::query()->create([
+        $variant = ProductVariant::query()->create([
             'product_id' => $product->id,
             'sku' => $data['sku'],
             'barcode' => $data['barcode'] ?? null,
@@ -162,6 +175,12 @@ class ProductService
             'serial_number' => $data['serial_number'] ?? null,
             'is_active' => $data['is_active'] ?? true,
         ]);
+
+        if (! empty($data['option_value_ids'])) {
+            $variant->optionValues()->attach($data['option_value_ids']);
+        }
+
+        return $variant;
     }
 
     private function createDefaultVariant(Product $product, array $data): ProductVariant
@@ -262,6 +281,10 @@ class ProductService
         try {
             return DB::transaction(function () use ($variant, $data) {
                 $variant->update($data);
+
+                if (isset($data['option_value_ids'])) {
+                    $variant->optionValues()->sync($data['option_value_ids']);
+                }
 
                 // If price changed, update packaging types prices proportionally
                 if (isset($data['price']) && $variant->packagingTypes()->exists()) {

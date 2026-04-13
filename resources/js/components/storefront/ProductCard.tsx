@@ -1,4 +1,4 @@
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { productDetail } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Badge from '@/components/ui/badge/Badge';
 import { Product } from '@/types/product';
 import { Shop } from '@/types/shop';
@@ -24,10 +24,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, shop }) => {
 
     return (
         <Link
-            href={StorefrontController.show.url({
-                shop: shop.slug,
-                product: product.slug,
-            })}
+            href={productDetail({ shop: shop.slug, product: product.slug }).url}
             className="group block h-full"
         >
             <article className="relative h-full overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-300 hover:border-brand-300 hover:shadow-lg hover:shadow-brand-100/50 sm:rounded-2xl dark:border-navy-700 dark:bg-navy-800 dark:hover:border-brand-500 dark:hover:shadow-brand-500/10">

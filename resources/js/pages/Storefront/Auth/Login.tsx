@@ -1,5 +1,5 @@
 import CustomerAuthController from '@/actions/App/Http/Controllers/Storefront/CustomerAuthController';
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { home } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
@@ -25,9 +25,9 @@ const Login: React.FC<AuthLoginProps> = ({ shop }) => {
                 items={[
                     {
                         label: 'Home',
-                        href: StorefrontController.index.url({
+                        href: home({
                             shop: shop.slug,
-                        }),
+                        }).url,
                     },
                     { label: 'Login' },
                 ]}

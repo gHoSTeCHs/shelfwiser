@@ -1,6 +1,6 @@
 import CustomerAuthController from '@/actions/App/Http/Controllers/Storefront/CustomerAuthController';
 import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
-import StorefrontController from '@/actions/App/Http/Controllers/Storefront/StorefrontController';
+import { home, products, services } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import FlashMessage from '@/components/FlashMessage';
 import CartDrawer from '@/components/storefront/CartDrawer';
 import MiniCartPreview from '@/components/storefront/MiniCartPreview';
@@ -118,15 +118,15 @@ const StorefrontLayoutInner: React.FC<StorefrontLayoutInnerProps> = ({
 
     const navLinks = [
         {
-            href: StorefrontController.index.url({ shop: shop.slug }),
+            href: home({ shop: shop.slug }).url,
             label: 'Home',
         },
         {
-            href: StorefrontController.products.url({ shop: shop.slug }),
+            href: products({ shop: shop.slug }).url,
             label: 'Products',
         },
         {
-            href: StorefrontController.services.url({ shop: shop.slug }),
+            href: services({ shop: shop.slug }).url,
             label: 'Services',
         },
     ];
@@ -170,9 +170,9 @@ const StorefrontLayoutInner: React.FC<StorefrontLayoutInnerProps> = ({
                                 </button>
 
                                 <Link
-                                    href={StorefrontController.index.url({
+                                    href={home({
                                         shop: shop.slug,
-                                    })}
+                                    }).url}
                                     className="group flex items-center gap-2"
                                 >
                                     <span className="text-xl font-bold text-gray-900 transition-colors group-hover:text-brand-600 md:text-2xl dark:text-white dark:group-hover:text-brand-400">

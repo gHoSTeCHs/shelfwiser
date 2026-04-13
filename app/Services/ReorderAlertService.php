@@ -23,9 +23,9 @@ class ReorderAlertService
                 }
             })
             ->with([
-                'product:id,name,shop_id,supplier_id',
+                'product:id,name,shop_id',
                 'product.shop:id,name',
-                'product.supplierCatalogItem:id,product_id,supplier_id',
+                'product.supplierCatalogItem:id,product_id,supplier_tenant_id',
                 'inventoryLocations',
             ])
             ->where('is_active', true)
