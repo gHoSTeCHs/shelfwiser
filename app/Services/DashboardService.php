@@ -93,7 +93,7 @@ class DashboardService
 
     public function getSalesMetrics(Collection $shopIds, Carbon $start, Carbon $end): array
     {
-        $cacheKey = "dashboard:sales:{$shopIds->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
+        $cacheKey = "dashboard:sales:{$shopIds->sort()->values()->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
 
         return Cache::tags(['dashboard'])->remember($cacheKey, now()->addMinutes(5), function () use ($shopIds, $start, $end) {
             $metrics = Order::query()->whereIn('shop_id', $shopIds)
@@ -137,7 +137,7 @@ class DashboardService
 
     public function getOrderMetrics(Collection $shopIds, Carbon $start, Carbon $end): array
     {
-        $cacheKey = "dashboard:orders:{$shopIds->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
+        $cacheKey = "dashboard:orders:{$shopIds->sort()->values()->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
 
         return Cache::tags(['dashboard'])->remember($cacheKey, now()->addMinutes(5), function () use ($shopIds, $start, $end) {
             $unpaid = PaymentStatus::UNPAID->value;
@@ -176,7 +176,7 @@ class DashboardService
 
     public function getTopProducts(Collection $shopIds, Carbon $start, Carbon $end, int $limit = 5): array
     {
-        $cacheKey = "dashboard:top-products:{$shopIds->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
+        $cacheKey = "dashboard:top-products:{$shopIds->sort()->values()->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
 
         return Cache::tags(['dashboard'])->remember($cacheKey, now()->addMinutes(15), function () use ($shopIds, $start, $end, $limit) {
             return OrderItem::query()->whereHas('order', function ($query) use ($shopIds, $start, $end) {
@@ -236,7 +236,7 @@ class DashboardService
 
     public function getLowStockAlerts(Collection $shopIds): array
     {
-        $cacheKey = "dashboard:low-stock:{$shopIds->implode(',')}";
+        $cacheKey = "dashboard:low-stock:{$shopIds->sort()->values()->implode(',')}";
 
         return Cache::tags(['dashboard'])->remember($cacheKey, now()->addMinutes(10), function () use ($shopIds) {
             return ProductVariant::query()->whereHas('product', function ($query) use ($shopIds) {
@@ -295,7 +295,7 @@ class DashboardService
 
     public function getInventoryValuation(Collection $shopIds): float
     {
-        $cacheKey = "dashboard:inventory-valuation:{$shopIds->implode(',')}";
+        $cacheKey = "dashboard:inventory-valuation:{$shopIds->sort()->values()->implode(',')}";
 
         return Cache::tags(['dashboard'])->remember($cacheKey, now()->addMinutes(10), function () use ($shopIds) {
             $valuation = ProductVariant::query()->whereHas('product', function ($query) use ($shopIds) {
@@ -319,7 +319,7 @@ class DashboardService
 
     public function getProfitMetrics(Collection $shopIds, Carbon $start, Carbon $end): array
     {
-        $cacheKey = "dashboard:profit:{$shopIds->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
+        $cacheKey = "dashboard:profit:{$shopIds->sort()->values()->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
 
         return Cache::tags(['dashboard'])->remember($cacheKey, now()->addMinutes(5), function () use ($shopIds, $start, $end) {
             $orderItems = OrderItem::query()->whereHas('order', function ($query) use ($shopIds, $start, $end) {
@@ -501,7 +501,7 @@ class DashboardService
     public function getSalesData(User $user, Collection $shopIds, Carbon $start, Carbon $end): array
     {
         $tenantId = $user->tenant_id;
-        $cacheKey = "dashboard:sales-tab:{$shopIds->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
+        $cacheKey = "dashboard:sales-tab:{$shopIds->sort()->values()->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
 
         return Cache::tags(['dashboard'])->remember($cacheKey, now()->addMinutes(10), function () use ($shopIds, $start, $end) {
             return [
@@ -559,22 +559,24 @@ class DashboardService
 
     protected function getRevenueTrend(Collection $shopIds, Carbon $start, Carbon $end): array
     {
-        $days = $start->diffInDays($end) + 1;
+        $limit = min((int) $start->diffInDays($end) + 1, 30);
+        $windowEnd = $start->copy()->addDays($limit - 1)->endOfDay();
+
+        $rows = Order::query()
+            ->whereIn('shop_id', $shopIds)
+            ->whereBetween('created_at', [$start->copy()->startOfDay(), $windowEnd])
+            ->whereNotIn('status', [OrderStatus::CANCELLED])
+            ->selectRaw('DATE(created_at) as day, SUM(total_amount) as revenue')
+            ->groupByRaw('DATE(created_at)')
+            ->pluck('revenue', 'day');
+
         $labels = [];
         $data = [];
 
-        for ($i = 0; $i < min($days, 30); $i++) {
+        for ($i = 0; $i < $limit; $i++) {
             $date = $start->copy()->addDays($i);
-            $dayStart = $date->copy()->startOfDay();
-            $dayEnd = $date->copy()->endOfDay();
-
-            $revenue = Order::whereIn('shop_id', $shopIds)
-                ->whereBetween('created_at', [$dayStart, $dayEnd])
-                ->whereNotIn('status', [OrderStatus::CANCELLED])
-                ->sum('total_amount');
-
             $labels[] = $date->format('M d');
-            $data[] = (float)$revenue;
+            $data[] = (float) ($rows->get($date->format('Y-m-d'), 0));
         }
 
         return [
@@ -609,7 +611,7 @@ class DashboardService
     public function getInventoryData(User $user, Collection $shopIds): array
     {
         $tenantId = $user->tenant_id;
-        $cacheKey = "dashboard:inventory:{$shopIds->implode(',')}";
+        $cacheKey = "dashboard:inventory:{$shopIds->sort()->values()->implode(',')}";
 
         return Cache::tags(['dashboard'])->remember($cacheKey, now()->addMinutes(10), function () use ($shopIds) {
             return [
@@ -697,8 +699,10 @@ class DashboardService
 
     protected function getInventoryValuationByShop(Collection $shopIds): array
     {
-        return $shopIds->map(function ($shopId) {
-            $shop = Shop::find($shopId);
+        $shops = Shop::query()->whereIn('id', $shopIds)->get()->keyBy('id');
+
+        return $shopIds->map(function ($shopId) use ($shops) {
+            $shop = $shops->get($shopId);
 
             $valuation = ProductVariant::whereHas('product', function ($query) use ($shopId) {
                 $query->where('shop_id', $shopId);
@@ -718,7 +722,7 @@ class DashboardService
             return [
                 'shop_id' => $shopId,
                 'shop_name' => $shop?->name ?? 'Unknown',
-                'valuation' => (float)$valuation,
+                'valuation' => (float) $valuation,
             ];
         })->toArray();
     }
@@ -727,7 +731,7 @@ class DashboardService
     public function getFinancialsData(User $user, Collection $shopIds, Carbon $start, Carbon $end): array
     {
         $tenantId = $user->tenant_id;
-        $cacheKey = "dashboard:financials:{$shopIds->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
+        $cacheKey = "dashboard:financials:{$shopIds->sort()->values()->implode(',')}:{$start->format('Ymd')}:{$end->format('Ymd')}";
 
         return Cache::tags(['dashboard'])->remember($cacheKey, now()->addMinutes(10), function () use ($shopIds, $start, $end) {
             return [
@@ -962,42 +966,46 @@ class DashboardService
 
     protected function getProfitByShop(Collection $shopIds, Carbon $start, Carbon $end): array
     {
-        return $shopIds->map(function ($shopId) use ($start, $end) {
-            $shop = Shop::find($shopId);
+        $shops = Shop::query()->whereIn('id', $shopIds)->get()->keyBy('id');
 
-            // Revenue for this shop
-            $revenue = Order::where('shop_id', $shopId)
-                ->whereBetween('created_at', [$start, $end])
-                ->whereNotIn('status', [OrderStatus::CANCELLED])
-                ->sum('total_amount');
+        $revenues = Order::query()
+            ->whereIn('shop_id', $shopIds)
+            ->whereBetween('created_at', [$start, $end])
+            ->whereNotIn('status', [OrderStatus::CANCELLED])
+            ->selectRaw('shop_id, SUM(total_amount) as revenue')
+            ->groupBy('shop_id')
+            ->pluck('revenue', 'shop_id');
 
-            // COGS for this shop
-            $cogs = OrderItem::whereHas('order', function ($query) use ($shopId, $start, $end) {
-                $query->where('shop_id', $shopId)
-                    ->whereBetween('created_at', [$start, $end])
-                    ->whereNotIn('status', [OrderStatus::CANCELLED]);
-            })
-                ->with('productVariant:id,cost_price')
-                ->get()
-                ->sum(function ($item) {
-                    return $item->quantity * ($item->productVariant?->cost_price ?? 0);
-                });
+        $cogsPerShop = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->join('product_variants', 'product_variants.id', '=', 'order_items.product_variant_id')
+            ->whereIn('orders.shop_id', $shopIds)
+            ->whereBetween('orders.created_at', [$start, $end])
+            ->whereNotIn('orders.status', [OrderStatus::CANCELLED->value])
+            ->selectRaw('orders.shop_id, SUM(order_items.quantity * COALESCE(product_variants.cost_price, 0)) as cogs')
+            ->groupBy('orders.shop_id')
+            ->pluck('cogs', 'shop_id');
 
-            // Expenses for this shop (purchase orders)
-            $expenses = PurchaseOrder::where('shop_id', $shopId)
-                ->whereBetween('created_at', [$start, $end])
-                ->whereNotIn('status', [PurchaseOrderStatus::CANCELLED])
-                ->sum('paid_amount');
+        $expensesPerShop = PurchaseOrder::query()
+            ->whereIn('shop_id', $shopIds)
+            ->whereBetween('created_at', [$start, $end])
+            ->whereNotIn('status', [PurchaseOrderStatus::CANCELLED])
+            ->selectRaw('shop_id, SUM(paid_amount) as expenses')
+            ->groupBy('shop_id')
+            ->pluck('expenses', 'shop_id');
 
+        return $shopIds->map(function ($shopId) use ($shops, $revenues, $cogsPerShop, $expensesPerShop) {
+            $revenue = (float) ($revenues->get($shopId, 0));
+            $cogs = (float) ($cogsPerShop->get($shopId, 0));
+            $expenses = (float) ($expensesPerShop->get($shopId, 0));
             $grossProfit = $revenue - $cogs;
-            $netProfit = $grossProfit - $expenses;
 
             return [
                 'shop_id' => $shopId,
-                'shop_name' => $shop?->name ?? 'Unknown',
-                'revenue' => (float)$revenue,
-                'gross_profit' => (float)$grossProfit,
-                'net_profit' => (float)$netProfit,
+                'shop_name' => $shops->get($shopId)?->name ?? 'Unknown',
+                'revenue' => $revenue,
+                'gross_profit' => $grossProfit,
+                'net_profit' => $grossProfit - $expenses,
             ];
         })->toArray();
     }

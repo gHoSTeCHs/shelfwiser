@@ -20,14 +20,19 @@ final readonly class DateRange
         string $fromKey = 'from',
         string $toKey = 'to'
     ): self {
-        return new self(
-            start: isset($validated[$fromKey])
-                ? Carbon::parse($validated[$fromKey])->startOfDay()
-                : now()->startOfMonth(),
-            end: isset($validated[$toKey])
-                ? Carbon::parse($validated[$toKey])->endOfDay()
-                : now()->endOfMonth(),
-        );
+        $start = isset($validated[$fromKey])
+            ? Carbon::parse($validated[$fromKey])->startOfDay()
+            : now()->startOfMonth();
+
+        $end = isset($validated[$toKey])
+            ? Carbon::parse($validated[$toKey])->endOfDay()
+            : now()->endOfMonth();
+
+        if ($start->gt($end)) {
+            throw new \InvalidArgumentException('Start date must not be after end date.');
+        }
+
+        return new self(start: $start, end: $end);
     }
 
     /**

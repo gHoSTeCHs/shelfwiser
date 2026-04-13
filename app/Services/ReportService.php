@@ -405,7 +405,7 @@ class ReportService
         Carbon     $endDate
     ): array
     {
-        $tenantId = $shopIds->first() ? Shop::find($shopIds->first())?->tenant_id : null;
+        $tenantId = $shopIds->first() ? Shop::query()->find($shopIds->first())?->tenant_id : null;
         if (!$tenantId) {
             throw new \InvalidArgumentException('Invalid shop IDs provided');
         }
@@ -521,7 +521,7 @@ class ReportService
      */
     public function getSalesSummary(Collection $shopIds, Carbon $startDate, Carbon $endDate): array
     {
-        $tenantId = $shopIds->first() ? Shop::find($shopIds->first())?->tenant_id : null;
+        $tenantId = $shopIds->first() ? Shop::query()->find($shopIds->first())?->tenant_id : null;
         if (!$tenantId) {
             throw new \InvalidArgumentException('Invalid shop IDs provided');
         }
@@ -561,7 +561,7 @@ class ReportService
      */
     public function getInventorySummary(Collection $shopIds): array
     {
-        $tenantId = $shopIds->first() ? Shop::find($shopIds->first())?->tenant_id : null;
+        $tenantId = $shopIds->first() ? Shop::query()->find($shopIds->first())?->tenant_id : null;
         if (!$tenantId) {
             throw new \InvalidArgumentException('Invalid shop IDs provided');
         }
@@ -659,7 +659,7 @@ class ReportService
      */
     public function getCustomerAnalyticsSummary(Collection $shopIds, Carbon $startDate, Carbon $endDate): array
     {
-        $tenantId = $shopIds->first() ? Shop::find($shopIds->first())?->tenant_id : null;
+        $tenantId = $shopIds->first() ? Shop::query()->find($shopIds->first())?->tenant_id : null;
         if (!$tenantId) {
             throw new \InvalidArgumentException('Invalid shop IDs provided');
         }
@@ -794,7 +794,7 @@ class ReportService
      */
     public function getProductProfitabilitySummary(Collection $shopIds, Carbon $startDate, Carbon $endDate): array
     {
-        $tenantId = $shopIds->first() ? Shop::find($shopIds->first())?->tenant_id : null;
+        $tenantId = $shopIds->first() ? Shop::query()->find($shopIds->first())?->tenant_id : null;
         if (!$tenantId) {
             throw new \InvalidArgumentException('Invalid shop IDs provided');
         }

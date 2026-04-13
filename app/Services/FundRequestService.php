@@ -23,8 +23,8 @@ class FundRequestService
      */
     public function create(User $user, Shop $shop, array $data): FundRequest
     {
-        return DB::transaction(function () use ($user, $shop, $data) {
-            $fundRequest = FundRequest::create([
+        $freshRequest = DB::transaction(function () use ($user, $shop, $data) {
+            $fundRequest = FundRequest::query()->create([
                 'user_id' => $user->id,
                 'shop_id' => $shop->id,
                 'tenant_id' => $user->tenant_id,
@@ -37,12 +37,12 @@ class FundRequestService
 
             $this->clearCache($user->tenant_id);
 
-            $freshRequest = $fundRequest->fresh(['user', 'shop']);
-
-            $this->notificationService->notifyFundRequestSubmitted($freshRequest);
-
-            return $freshRequest;
+            return $fundRequest->fresh(['user', 'shop']);
         });
+
+        $this->notificationService->notifyFundRequestSubmitted($freshRequest);
+
+        return $freshRequest;
     }
 
     /**
@@ -56,7 +56,7 @@ class FundRequestService
             throw new \RuntimeException('Fund request cannot be approved in current status');
         }
 
-        return DB::transaction(function () use ($fundRequest, $approver, $notes) {
+        $freshRequest = DB::transaction(function () use ($fundRequest, $approver, $notes) {
             $fundRequest->update([
                 'status' => FundRequestStatus::APPROVED,
                 'approved_by_user_id' => $approver->id,
@@ -67,12 +67,12 @@ class FundRequestService
 
             $this->clearCache($fundRequest->tenant_id);
 
-            $freshRequest = $fundRequest->fresh(['user', 'shop', 'approvedBy']);
-
-            $this->notificationService->notifyFundRequestApproved($freshRequest, $approver);
-
-            return $freshRequest;
+            return $fundRequest->fresh(['user', 'shop', 'approvedBy']);
         });
+
+        $this->notificationService->notifyFundRequestApproved($freshRequest, $approver);
+
+        return $freshRequest;
     }
 
     /**
@@ -86,7 +86,7 @@ class FundRequestService
             throw new \RuntimeException('Fund request cannot be rejected in current status');
         }
 
-        return DB::transaction(function () use ($fundRequest, $rejector, $reason) {
+        $freshRequest = DB::transaction(function () use ($fundRequest, $rejector, $reason) {
             $fundRequest->update([
                 'status' => FundRequestStatus::REJECTED,
                 'approved_by_user_id' => $rejector->id,
@@ -96,12 +96,12 @@ class FundRequestService
 
             $this->clearCache($fundRequest->tenant_id);
 
-            $freshRequest = $fundRequest->fresh(['user', 'shop', 'approvedBy']);
-
-            $this->notificationService->notifyFundRequestRejected($freshRequest, $rejector, $reason);
-
-            return $freshRequest;
+            return $fundRequest->fresh(['user', 'shop', 'approvedBy']);
         });
+
+        $this->notificationService->notifyFundRequestRejected($freshRequest, $rejector, $reason);
+
+        return $freshRequest;
     }
 
     /**
@@ -113,7 +113,7 @@ class FundRequestService
             throw new \RuntimeException('Fund request cannot be disbursed in current status');
         }
 
-        return DB::transaction(function () use ($fundRequest, $disburser, $notes) {
+        $freshRequest = DB::transaction(function () use ($fundRequest, $disburser, $notes) {
             $fundRequest->update([
                 'status' => FundRequestStatus::DISBURSED,
                 'disbursed_by_user_id' => $disburser->id,
@@ -123,12 +123,12 @@ class FundRequestService
 
             $this->clearCache($fundRequest->tenant_id);
 
-            $freshRequest = $fundRequest->fresh(['user', 'shop', 'approvedBy', 'disbursedBy']);
-
-            $this->notificationService->notifyFundRequestDisbursed($freshRequest, $disburser);
-
-            return $freshRequest;
+            return $fundRequest->fresh(['user', 'shop', 'approvedBy', 'disbursedBy']);
         });
+
+        $this->notificationService->notifyFundRequestDisbursed($freshRequest, $disburser);
+
+        return $freshRequest;
     }
 
     /**
@@ -173,7 +173,7 @@ class FundRequestService
      */
     public function getRequestsForApproval(User $manager, ?Shop $shop = null): Collection
     {
-        $query = FundRequest::where('tenant_id', $manager->tenant_id)
+        $query = FundRequest::query()->where('tenant_id', $manager->tenant_id)
             ->where('status', FundRequestStatus::PENDING)
             ->with(['user', 'shop', 'approvedBy']);
 
@@ -209,7 +209,7 @@ class FundRequestService
         ?Carbon $startDate = null,
         ?Carbon $endDate = null
     ): Collection {
-        $query = FundRequest::where('user_id', $user->id)
+        $query = FundRequest::query()->where('user_id', $user->id)
             ->where('tenant_id', $user->tenant_id)
             ->with(['shop', 'approvedBy', 'disbursedBy']);
 
@@ -242,7 +242,7 @@ class FundRequestService
         ?Carbon $startDate = null,
         ?Carbon $endDate = null
     ): Collection {
-        $query = FundRequest::where('shop_id', $shop->id)
+        $query = FundRequest::query()->where('shop_id', $shop->id)
             ->where('tenant_id', $shop->tenant_id)
             ->with(['user', 'approvedBy', 'disbursedBy']);
 
@@ -270,7 +270,7 @@ class FundRequestService
      */
     public function getStatistics(int $tenantId, ?Shop $shop = null, ?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
-        $query = FundRequest::where('tenant_id', $tenantId);
+        $query = FundRequest::query()->where('tenant_id', $tenantId);
 
         if ($shop) {
             $query->where('shop_id', $shop->id);

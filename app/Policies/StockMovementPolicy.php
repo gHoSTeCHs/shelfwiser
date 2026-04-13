@@ -50,4 +50,14 @@ class StockMovementPolicy
     {
         return $user->role->hasPermission('manage_inventory');
     }
+
+    public function recordPurchase(User $user): bool
+    {
+        return $user->role->hasPermission('manage_inventory');
+    }
+
+    public function setupLocations(User $user): bool
+    {
+        return $user->role->hasPermission('manage_inventory');
+    }
 }

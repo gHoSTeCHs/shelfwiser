@@ -219,9 +219,14 @@ class StockMovementController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function history(ProductVariant $variant): Response|JsonResponse
+    public function history(Request $request, ProductVariant $variant): Response|JsonResponse
     {
         Gate::authorize('viewAny', StockMovement::class);
+
+        abort_unless(
+            $request->user()->accessibleShopIds()->contains($variant->product->shop_id),
+            403
+        );
 
         $movements = StockMovement::forVariant($variant->id)
             ->with([
@@ -249,6 +254,8 @@ class StockMovementController extends Controller
      */
     public function recordPurchase(RecordPurchaseRequest $request): RedirectResponse|JsonResponse
     {
+        Gate::authorize('recordPurchase', StockMovement::class);
+
         try {
             $variant = ProductVariant::query()->findOrFail($request->input('product_variant_id'));
             $location = InventoryLocation::query()->findOrFail($request->input('location_id'));
@@ -290,19 +297,10 @@ class StockMovementController extends Controller
      */
     public function setupLocations(SetupInventoryLocationsRequest $request, ProductVariant $variant): RedirectResponse
     {
-        try {
-            $shopIds = $request->validated()['shop_ids'];
+        Gate::authorize('setupLocations', StockMovement::class);
 
-            foreach ($shopIds as $shopId) {
-                InventoryLocation::query()->firstOrCreate([
-                    'product_variant_id' => $variant->id,
-                    'location_type' => 'App\\Models\\Shop',
-                    'location_id' => $shopId,
-                ], [
-                    'quantity' => 0,
-                    'reserved_quantity' => 0,
-                ]);
-            }
+        try {
+            $this->stockMovementService->setupLocations($variant, $request->validated()['shop_ids']);
 
             return Redirect::back()
                 ->with('success', 'Inventory locations setup successfully.');

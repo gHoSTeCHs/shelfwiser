@@ -17,7 +17,7 @@ class DashboardIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
+            'shop' => ['nullable', 'integer', 'exists:shops,id,tenant_id,'.$this->user()->tenant_id],
             'period' => ['nullable', 'in:today,week,month,custom'],
             'from' => ['nullable', 'date', 'required_if:period,custom'],
             'to' => ['nullable', 'date', 'required_if:period,custom', 'after_or_equal:from'],

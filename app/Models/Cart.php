@@ -24,12 +24,12 @@ class Cart extends Model
         'expires_at',
     ];
 
-    /**
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'expires_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'expires_at' => 'datetime',
+        ];
+    }
 
     public function tenant(): BelongsTo
     {

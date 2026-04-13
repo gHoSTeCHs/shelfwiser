@@ -357,6 +357,10 @@ class StockMovementService
                     ->lockForUpdate()
                     ->firstOrFail();
 
+                if ($packagingType->units_per_package <= 0) {
+                    throw new \RuntimeException('Packaging type has invalid units per package (must be > 0)');
+                }
+
                 $baseUnits = $packageQuantity * $packagingType->units_per_package;
                 $costPerBaseUnit = $costPerPackage / $packagingType->units_per_package;
 
@@ -464,6 +468,9 @@ class StockMovementService
 
                 $packageQuantity = null;
                 if ($packagingType) {
+                    if ($packagingType->units_per_package <= 0) {
+                        throw new \RuntimeException('Packaging type has invalid units per package (must be > 0)');
+                    }
                     $packageQuantity = (int) ($quantity / $packagingType->units_per_package);
                 }
 
@@ -682,6 +689,20 @@ class StockMovementService
         }
 
         return $query->first();
+    }
+
+    public function setupLocations(ProductVariant $variant, array $shopIds): void
+    {
+        foreach ($shopIds as $shopId) {
+            InventoryLocation::query()->firstOrCreate([
+                'product_variant_id' => $variant->id,
+                'location_type' => 'App\\Models\\Shop',
+                'location_id' => $shopId,
+            ], [
+                'quantity' => 0,
+                'reserved_quantity' => 0,
+            ]);
+        }
     }
 
     private function generateReferenceNumber(StockMovementType $type): string

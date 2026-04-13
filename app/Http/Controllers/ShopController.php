@@ -9,9 +9,8 @@ use App\Http\Requests\UpdateShopRequest;
 use App\Http\Requests\UpdateStorefrontSettingsRequest;
 use App\Http\Resources\ShopResource;
 use App\Models\Shop;
-use App\Models\ShopType;
 use App\Services\ShopCreationService;
-use Auth;
+use App\Services\ShopService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
@@ -21,26 +20,23 @@ use Throwable;
 
 class ShopController extends Controller
 {
-    public function __construct(private readonly ShopCreationService $creationService) {}
+    public function __construct(
+        private readonly ShopCreationService $creationService,
+        private readonly ShopService $shopService,
+    ) {}
 
     /**
      * Show list of shops (Inertia page)
      */
-    public function index()
+    public function index(): Response
     {
-        Gate::authorize('create', Auth::user());
+        Gate::authorize('create', Shop::class);
 
-        $shops = Shop::query()->where('tenant_id', auth()->user()->tenant_id)
-            ->with('type', 'users')
-            ->withCount('products', 'users')
-            ->latest()
-            ->paginate(20);
+        $tenantId = request()->user()->tenant_id;
 
         return Inertia::render('Shops/Index', [
-            'shops' => $shops,
-            'shopTypes' => ShopType::accessibleTo(auth()->user()->tenant_id)
-                ->where('is_active', true)
-                ->get(['slug', 'label']),
+            'shops' => $this->shopService->getShopsForIndex(),
+            'shopTypes' => $this->shopService->getShopTypesForIndex($tenantId),
         ]);
     }
 
@@ -49,14 +45,10 @@ class ShopController extends Controller
      */
     public function create(): Response
     {
-        Gate::authorize('create', Auth::user());
-
-        $shopTypes = ShopType::accessibleTo(auth()->user()->tenant_id)
-            ->where('is_active', true)
-            ->get(['slug', 'label', 'description', 'config_schema']);
+        Gate::authorize('create', Shop::class);
 
         return Inertia::render('Shops/Create', [
-            'shopTypes' => $shopTypes,
+            'shopTypes' => $this->shopService->getShopTypesForForm(request()->user()->tenant_id),
             'inventoryModels' => InventoryModel::forSelectWithDescriptions(),
             'countries' => config('countries'),
         ]);
@@ -100,15 +92,9 @@ class ShopController extends Controller
     {
         Gate::authorize('shop.manage', $shop);
 
-        $shop->load('type');
-
-        $shopTypes = ShopType::accessibleTo(auth()->user()->tenant_id)
-            ->where('is_active', true)
-            ->get(['id', 'slug', 'label', 'description', 'config_schema']);
-
         return Inertia::render('Shops/Edit', [
-            'shop' => $shop,
-            'shopTypes' => $shopTypes,
+            'shop' => $shop->load('type'),
+            'shopTypes' => $this->shopService->getShopTypesForForm(request()->user()->tenant_id),
             'inventoryModels' => InventoryModel::forSelectWithDescriptions(),
             'countries' => config('countries'),
         ]);
@@ -119,6 +105,8 @@ class ShopController extends Controller
      */
     public function update(UpdateShopRequest $request, Shop $shop): RedirectResponse
     {
+        Gate::authorize('shop.manage', $shop);
+
         $shop->update($request->validated());
 
         return Redirect::route('shops.show', $shop)
@@ -156,35 +144,9 @@ class ShopController extends Controller
      */
     public function updateStorefrontSettings(UpdateStorefrontSettingsRequest $request, Shop $shop): RedirectResponse
     {
-        Gate::authorize('manage', $shop);
+        Gate::authorize('shop.manage', $shop);
 
-        $validated = $request->validated();
-
-        $storefrontSettings = [
-            'shipping_fee' => $validated['shipping_fee'] ?? 0,
-            'free_shipping_threshold' => $validated['free_shipping_threshold'] ?? 0,
-            'theme_color' => $validated['theme_color'] ?? '#6366f1',
-            'logo_url' => $validated['logo_url'] ?? null,
-            'banner_url' => $validated['banner_url'] ?? null,
-            'meta_title' => $validated['meta_title'] ?? null,
-            'meta_description' => $validated['meta_description'] ?? null,
-            'social_facebook' => $validated['social_facebook'] ?? null,
-            'social_instagram' => $validated['social_instagram'] ?? null,
-            'social_twitter' => $validated['social_twitter'] ?? null,
-            'business_hours' => $validated['business_hours'] ?? null,
-        ];
-
-        $shop->update([
-            'storefront_enabled' => $validated['storefront_enabled'],
-            'allow_retail_sales' => $validated['allow_retail_sales'] ?? false,
-            'currency' => $validated['currency'],
-            'currency_symbol' => $validated['currency_symbol'],
-            'currency_decimals' => $validated['currency_decimals'],
-            'vat_enabled' => $validated['vat_enabled'],
-            'vat_rate' => $validated['vat_rate'] ?? 0,
-            'vat_inclusive' => $validated['vat_inclusive'] ?? false,
-            'storefront_settings' => $storefrontSettings,
-        ]);
+        $this->shopService->updateStorefrontSettings($shop, $request->validated());
 
         return Redirect::route('shops.storefront-settings.edit', $shop)
             ->with('success', 'Storefront settings updated successfully.');

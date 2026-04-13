@@ -40,6 +40,7 @@ use App\Http\Controllers\ShopSettingsController;
 use App\Http\Controllers\StaffPayrollController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\StockTakeController;
+use App\Http\Controllers\StorefrontBuilderController;
 use App\Http\Controllers\SupplierCatalogController;
 use App\Http\Controllers\SupplierConnectionController;
 use App\Http\Controllers\SupplierProfileController;
@@ -303,19 +304,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::prefix('shops/{shop}/storefront-builder')->name('shops.storefront-builder.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\StorefrontBuilderController::class, 'index'])->name('index');
-        Route::get('/data', [\App\Http\Controllers\StorefrontBuilderController::class, 'getBuilderData'])->name('data');
-        Route::post('/theme', [\App\Http\Controllers\StorefrontBuilderController::class, 'selectTheme'])->name('theme');
-        Route::put('/config', [\App\Http\Controllers\StorefrontBuilderController::class, 'updateConfig'])->name('config');
-        Route::get('/pages/{pageType}', [\App\Http\Controllers\StorefrontBuilderController::class, 'getPage'])->name('page');
-        Route::post('/pages/{pageType}/sections', [\App\Http\Controllers\StorefrontBuilderController::class, 'addSection'])->name('section.add');
-        Route::put('/pages/{pageType}/sections/{sectionId}', [\App\Http\Controllers\StorefrontBuilderController::class, 'updateSection'])->name('section.update');
-        Route::delete('/pages/{pageType}/sections/{sectionId}', [\App\Http\Controllers\StorefrontBuilderController::class, 'removeSection'])->name('section.remove');
-        Route::put('/pages/{pageType}/reorder', [\App\Http\Controllers\StorefrontBuilderController::class, 'reorderSections'])->name('section.reorder');
-        Route::patch('/pages/{pageType}/sections/{sectionId}/visibility', [\App\Http\Controllers\StorefrontBuilderController::class, 'toggleVisibility'])->name('section.visibility');
-        Route::post('/publish', [\App\Http\Controllers\StorefrontBuilderController::class, 'publish'])->name('publish');
-        Route::post('/unpublish', [\App\Http\Controllers\StorefrontBuilderController::class, 'unpublish'])->name('unpublish');
-        Route::post('/reset', [\App\Http\Controllers\StorefrontBuilderController::class, 'resetToDefaults'])->name('reset');
+        Route::get('/', [StorefrontBuilderController::class, 'index'])->name('index');
+        Route::get('/data', [StorefrontBuilderController::class, 'getBuilderData'])->name('data');
+        Route::post('/theme', [StorefrontBuilderController::class, 'selectTheme'])->name('theme');
+        Route::put('/config', [StorefrontBuilderController::class, 'updateConfig'])->name('config');
+        Route::get('/pages/{pageType}', [StorefrontBuilderController::class, 'getPage'])->name('page');
+        Route::post('/pages/{pageType}/sections', [StorefrontBuilderController::class, 'addSection'])->name('section.add');
+        Route::put('/pages/{pageType}/sections/{sectionId}', [StorefrontBuilderController::class, 'updateSection'])->name('section.update');
+        Route::delete('/pages/{pageType}/sections/{sectionId}', [StorefrontBuilderController::class, 'removeSection'])->name('section.remove');
+        Route::put('/pages/{pageType}/reorder', [StorefrontBuilderController::class, 'reorderSections'])->name('section.reorder');
+        Route::patch('/pages/{pageType}/sections/{sectionId}/visibility', [StorefrontBuilderController::class, 'toggleVisibility'])->name('section.visibility');
+        Route::post('/publish', [StorefrontBuilderController::class, 'publish'])->name('publish');
+        Route::post('/unpublish', [StorefrontBuilderController::class, 'unpublish'])->name('unpublish');
+        Route::post('/reset', [StorefrontBuilderController::class, 'resetToDefaults'])->name('reset');
     });
 
     Route::prefix('shops/{shop}/tax-settings')->name('shops.tax-settings.')->group(function () {
