@@ -131,7 +131,7 @@ it('replaces values when updating option with values array', function () {
     $this->assertDatabaseMissing('product_option_values', ['label' => 'Old']);
 });
 
-it('soft-deletes an option', function () {
+it('soft-deletes an option with no variants', function () {
     $option = ProductOption::query()->create([
         'product_id' => $this->product->id,
         'tenant_id' => $this->tenant->id,
@@ -147,6 +147,82 @@ it('soft-deletes an option', function () {
         ->assertJsonPath('message', 'Option deleted successfully.');
 
     $this->assertSoftDeleted('product_options', ['id' => $option->id]);
+});
+
+it('deletes option axis with no ordered variants, soft-deletes linked variants and values', function () {
+    $option = ProductOption::query()->create([
+        'product_id' => $this->product->id,
+        'tenant_id' => $this->tenant->id,
+        'name' => 'size',
+        'position' => 1,
+        'visual_type' => OptionVisualType::ButtonGroup,
+    ]);
+    $small = $option->values()->create(['label' => 'Small', 'value' => 'small', 'position' => 1]);
+    $large = $option->values()->create(['label' => 'Large', 'value' => 'large', 'position' => 2]);
+
+    $variant = ProductVariant::factory()->create(['product_id' => $this->product->id]);
+    $variant->optionValues()->attach([$small->id]);
+
+    $this->actingAs($this->owner)
+        ->deleteJson(route('product-options.destroy', [$this->product, $option]))
+        ->assertOk()
+        ->assertJsonPath('message', 'Option deleted successfully.');
+
+    $this->assertSoftDeleted('product_options', ['id' => $option->id]);
+    $this->assertSoftDeleted('product_option_values', ['id' => $small->id]);
+    $this->assertSoftDeleted('product_option_values', ['id' => $large->id]);
+    $this->assertSoftDeleted('product_variants', ['id' => $variant->id]);
+});
+
+it('rejects deleting option axis when linked variants have orders', function () {
+    $option = ProductOption::query()->create([
+        'product_id' => $this->product->id,
+        'tenant_id' => $this->tenant->id,
+        'name' => 'size',
+        'position' => 1,
+        'visual_type' => OptionVisualType::ButtonGroup,
+    ]);
+    $small = $option->values()->create(['label' => 'Small', 'value' => 'small', 'position' => 1]);
+
+    $variant = ProductVariant::factory()->create(['product_id' => $this->product->id]);
+    $variant->optionValues()->attach([$small->id]);
+
+    $orderId = DB::table('orders')->insertGetId([
+        'tenant_id' => $this->tenant->id,
+        'shop_id' => $this->shop->id,
+        'order_number' => 'ORD-AXIS-'.uniqid(),
+        'status' => 'pending',
+        'payment_status' => 'unpaid',
+        'subtotal' => 1000,
+        'tax_amount' => 0,
+        'discount_amount' => 0,
+        'shipping_cost' => 0,
+        'total_amount' => 1000,
+        'created_by' => $this->owner->id,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('order_items')->insert([
+        'order_id' => $orderId,
+        'tenant_id' => $this->tenant->id,
+        'product_variant_id' => $variant->id,
+        'quantity' => 1,
+        'unit_price' => 1000,
+        'discount_amount' => 0,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->actingAs($this->owner)
+        ->deleteJson(route('product-options.destroy', [$this->product, $option]))
+        ->assertStatus(422)
+        ->assertJsonPath('message', fn ($msg) => str_contains($msg, 'Cannot delete'));
+
+    $this->assertDatabaseHas('product_options', ['id' => $option->id, 'deleted_at' => null]);
+    $this->assertDatabaseHas('product_variants', ['id' => $variant->id, 'deleted_at' => null]);
 });
 
 it('adds a value to an existing option', function () {

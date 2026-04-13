@@ -108,11 +108,51 @@ class ProductOptionController extends Controller
         abort_if($option->product_id !== $product->id, 404);
         Gate::authorize('delete', $option);
 
-        $option->delete();
+        $valueIds = $option->values()->pluck('id');
 
-        return response()->json([
-            'message' => 'Option deleted successfully.',
-        ]);
+        if ($valueIds->isEmpty()) {
+            $option->delete();
+
+            return response()->json(['message' => 'Option deleted successfully.']);
+        }
+
+        $variantIds = DB::table('product_option_value_variant')
+            ->whereIn('product_option_value_id', $valueIds)
+            ->distinct()
+            ->pluck('product_variant_id');
+
+        if ($variantIds->isNotEmpty()) {
+            $orderCount = DB::table('order_items')
+                ->whereIn('product_variant_id', $variantIds)
+                ->distinct('order_id')
+                ->count('order_id');
+
+            if ($orderCount > 0) {
+                return response()->json([
+                    'message' => "Cannot delete — variants linked to {$orderCount} past order(s). Archive them instead.",
+                ], 422);
+            }
+        }
+
+        DB::transaction(function () use ($option, $variantIds): void {
+            if ($variantIds->isNotEmpty()) {
+                \App\Models\ProductVariant::query()
+                    ->whereIn('id', $variantIds)
+                    ->each(function (\App\Models\ProductVariant $variant): void {
+                        Gate::authorize('delete', $variant);
+                        $variant->delete();
+                    });
+
+                DB::table('product_option_value_variant')
+                    ->whereIn('product_variant_id', $variantIds)
+                    ->delete();
+            }
+
+            $option->values()->each(fn ($value) => $value->delete());
+            $option->delete();
+        });
+
+        return response()->json(['message' => 'Option deleted successfully.']);
     }
 
     public function storeValue(StoreProductOptionValueRequest $request, Product $product, ProductOption $option): JsonResponse
