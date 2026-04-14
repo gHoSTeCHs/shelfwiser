@@ -2,13 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\DTOs\DateRange;
 use App\Enums\TimesheetStatus;
+use App\Http\Requests\ClockInRequest;
+use App\Http\Requests\ClockOutRequest;
+use App\Http\Requests\EndBreakRequest;
+use App\Http\Requests\RejectTimesheetRequest;
+use App\Http\Requests\StartBreakRequest;
+use App\Http\Requests\SubmitTimesheetRequest;
+use App\Http\Requests\TimesheetIndexRequest;
+use App\Http\Requests\UpdateTimesheetRequest;
 use App\Models\Shop;
 use App\Models\Timesheet;
 use App\Services\TimesheetService;
-use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,77 +24,64 @@ class TimesheetController extends Controller
 {
     public function __construct(
         private TimesheetService $timesheetService
-    )
-    {
-    }
+    ) {}
 
-    /**
-     * Display a listing of timesheets
-     */
-    public function index(Request $request): Response
+    public function index(TimesheetIndexRequest $request): Response
     {
         Gate::authorize('timesheet.viewAny', Timesheet::class);
 
         $user = $request->user();
         $shopId = $request->input('shop_id');
         $status = $request->input('status');
-        $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : now()->startOfMonth();
-        $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : now()->endOfMonth();
+        $dateRange = DateRange::fromRequest(
+            $request->only(['start_date', 'end_date']),
+            fromKey: 'start_date',
+            toKey: 'end_date',
+        );
 
-        $shop = $shopId ? Shop::findOrFail($shopId) : null;
+        $shop = $shopId ? Shop::query()->findOrFail($shopId) : null;
 
-        $timesheets = $this->timesheetService->getEmployeeTimesheets($user, $startDate, $endDate, $shop);
-
-        if ($status) {
-            $timesheets = $timesheets->where('status', TimesheetStatus::from($status));
-        }
-
-        $summary = $this->timesheetService->getTimesheetSummary($user, $startDate, $endDate);
-
-        $activeTimesheet = $this->timesheetService->getActiveTimesheet($user, $shop ?? $user->shops()->first());
+        $timesheets = $this->timesheetService->getEmployeeTimesheets($user, $dateRange->start, $dateRange->end, $shop);
+        $displayTimesheets = $status
+            ? $timesheets->where('status', TimesheetStatus::from($status))
+            : $timesheets;
 
         return Inertia::render('Timesheets/Index', [
-            'timesheets' => $timesheets,
-            'summary' => $summary,
-            'activeTimesheet' => $activeTimesheet,
+            'timesheets' => $displayTimesheets,
+            'summary' => $this->timesheetService->getTimesheetSummary($timesheets, $user, $dateRange->start, $dateRange->end),
+            'activeTimesheet' => $this->timesheetService->getActiveTimesheet($user, $shop ?? $user->shops()->first()),
             'filters' => [
                 'shop_id' => $shopId,
                 'status' => $status,
-                'start_date' => $startDate->toDateString(),
-                'end_date' => $endDate->toDateString(),
+                'start_date' => $dateRange->start->toDateString(),
+                'end_date' => $dateRange->end->toDateString(),
             ],
             'shops' => $user->shops,
-            'statusOptions' => collect(TimesheetStatus::cases())->map(fn($case) => [
+            'statusOptions' => collect(TimesheetStatus::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
         ]);
     }
 
-    /**
-     * Display timesheets awaiting approval
-     */
-    public function approvalQueue(Request $request): Response
+    public function approvalQueue(TimesheetIndexRequest $request): Response
     {
+        Gate::authorize('timesheet.viewAny', Timesheet::class);
+
         $user = $request->user();
         $shopId = $request->input('shop_id');
 
-        $shop = $shopId ? Shop::findOrFail($shopId) : null;
-
-        $timesheets = $this->timesheetService->getTimesheetsForApproval($user, $shop);
+        $shop = $shopId ? Shop::query()->findOrFail($shopId) : null;
 
         return Inertia::render('Timesheets/Approve', [
-            'timesheets' => $timesheets,
+            'timesheets' => $this->timesheetService->getTimesheetsForApproval($user, $shop),
             'filters' => [
                 'shop_id' => $shopId,
             ],
-            'shops' => $user->is_tenant_owner ? Shop::where('tenant_id', $user->tenant_id)->get() : $user->shops,
+            'shops' => $user->is_tenant_owner ? Shop::query()->get() : $user->shops,
         ]);
     }
 
-    /**
-     * Display the specified timesheet
-     */
     public function show(Timesheet $timesheet): Response
     {
         Gate::authorize('view', $timesheet);
@@ -103,26 +97,18 @@ class TimesheetController extends Controller
         ]);
     }
 
-    /**
-     * Clock in an employee
-     */
-    public function clockIn(Request $request): RedirectResponse
+    public function clockIn(ClockInRequest $request): RedirectResponse
     {
         Gate::authorize('clockInOut', auth()->user());
 
-        $validated = $request->validate([
-            'shop_id' => ['required', 'exists:shops,id'],
-            'clock_in' => ['nullable', 'date'],
-        ]);
-
-        $shop = Shop::findOrFail($validated['shop_id']);
-        $clockInTime = isset($validated['clock_in']) ? Carbon::parse($validated['clock_in']) : null;
+        $validated = $request->validated();
+        $shop = Shop::query()->findOrFail($validated['shop_id']);
 
         try {
             $timesheet = $this->timesheetService->clockIn(
-                $request->user(),
-                $shop,
-                $clockInTime
+                employee: $request->user(),
+                shop: $shop,
+                dateTime: $validated['clock_in'] ?? null,
             );
 
             return redirect()
@@ -135,21 +121,17 @@ class TimesheetController extends Controller
         }
     }
 
-    /**
-     * Clock out an employee
-     */
-    public function clockOut(Request $request, Timesheet $timesheet): RedirectResponse
+    public function clockOut(ClockOutRequest $request, Timesheet $timesheet): RedirectResponse
     {
         Gate::authorize('update', $timesheet);
 
-        $validated = $request->validate([
-            'clock_out' => ['nullable', 'date'],
-        ]);
-
-        $clockOutTime = isset($validated['clock_out']) ? Carbon::parse($validated['clock_out']) : null;
+        $validated = $request->validated();
 
         try {
-            $this->timesheetService->clockOut($timesheet, $clockOutTime);
+            $this->timesheetService->clockOut(
+                timesheet: $timesheet,
+                dateTime: $validated['clock_out'] ?? null,
+            );
 
             return redirect()
                 ->route('timesheets.show', $timesheet)
@@ -161,21 +143,17 @@ class TimesheetController extends Controller
         }
     }
 
-    /**
-     * Start a break
-     */
-    public function startBreak(Request $request, Timesheet $timesheet): RedirectResponse
+    public function startBreak(StartBreakRequest $request, Timesheet $timesheet): RedirectResponse
     {
         Gate::authorize('manageBreaks', $timesheet);
 
-        $validated = $request->validate([
-            'break_start' => ['nullable', 'date'],
-        ]);
-
-        $breakStartTime = isset($validated['break_start']) ? Carbon::parse($validated['break_start']) : null;
+        $validated = $request->validated();
 
         try {
-            $this->timesheetService->startBreak($timesheet, $breakStartTime);
+            $this->timesheetService->startBreak(
+                timesheet: $timesheet,
+                dateTime: $validated['break_start'] ?? null,
+            );
 
             return redirect()
                 ->route('timesheets.show', $timesheet)
@@ -187,21 +165,17 @@ class TimesheetController extends Controller
         }
     }
 
-    /**
-     * End a break
-     */
-    public function endBreak(Request $request, Timesheet $timesheet): RedirectResponse
+    public function endBreak(EndBreakRequest $request, Timesheet $timesheet): RedirectResponse
     {
         Gate::authorize('manageBreaks', $timesheet);
 
-        $validated = $request->validate([
-            'break_end' => ['nullable', 'date'],
-        ]);
-
-        $breakEndTime = isset($validated['break_end']) ? Carbon::parse($validated['break_end']) : null;
+        $validated = $request->validated();
 
         try {
-            $this->timesheetService->endBreak($timesheet, $breakEndTime);
+            $this->timesheetService->endBreak(
+                timesheet: $timesheet,
+                dateTime: $validated['break_end'] ?? null,
+            );
 
             return redirect()
                 ->route('timesheets.show', $timesheet)
@@ -213,37 +187,23 @@ class TimesheetController extends Controller
         }
     }
 
-    /**
-     * Update timesheet notes
-     */
-    public function update(Request $request, Timesheet $timesheet): RedirectResponse
+    public function update(UpdateTimesheetRequest $request, Timesheet $timesheet): RedirectResponse
     {
         Gate::authorize('update', $timesheet);
 
-        $validated = $request->validate([
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        $timesheet->update($validated);
+        $this->timesheetService->updateTimesheet($timesheet, $request->validated());
 
         return redirect()
             ->route('timesheets.show', $timesheet)
             ->with('success', 'Timesheet updated successfully');
     }
 
-    /**
-     * Submit timesheet for approval
-     */
-    public function submit(Request $request, Timesheet $timesheet): RedirectResponse
+    public function submit(SubmitTimesheetRequest $request, Timesheet $timesheet): RedirectResponse
     {
         Gate::authorize('submit', $timesheet);
 
-        $validated = $request->validate([
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
-
         try {
-            $this->timesheetService->submitTimesheet($timesheet, $validated['notes'] ?? null);
+            $this->timesheetService->submitTimesheet($timesheet, $request->validated('notes'));
 
             return redirect()
                 ->route('timesheets.show', $timesheet)
@@ -255,9 +215,6 @@ class TimesheetController extends Controller
         }
     }
 
-    /**
-     * Approve a timesheet
-     */
     public function approve(Timesheet $timesheet): RedirectResponse
     {
         Gate::authorize('approve', $timesheet);
@@ -275,22 +232,15 @@ class TimesheetController extends Controller
         }
     }
 
-    /**
-     * Reject a timesheet
-     */
-    public function reject(Request $request, Timesheet $timesheet): RedirectResponse
+    public function reject(RejectTimesheetRequest $request, Timesheet $timesheet): RedirectResponse
     {
         Gate::authorize('reject', $timesheet);
 
-        $validated = $request->validate([
-            'rejection_reason' => ['required', 'string', 'max:500'],
-        ]);
-
         try {
             $this->timesheetService->rejectTimesheet(
-                $timesheet,
-                auth()->user(),
-                $validated['rejection_reason']
+                timesheet: $timesheet,
+                approver: auth()->user(),
+                reason: $request->validated('rejection_reason'),
             );
 
             return redirect()
@@ -303,9 +253,6 @@ class TimesheetController extends Controller
         }
     }
 
-    /**
-     * Delete a timesheet
-     */
     public function destroy(Timesheet $timesheet): RedirectResponse
     {
         Gate::authorize('delete', $timesheet);

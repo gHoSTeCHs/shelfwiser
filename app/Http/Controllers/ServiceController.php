@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CreateServiceRequest;
 use App\Http\Requests\UpdateServiceRequest;
 use App\Models\Service;
-use App\Models\ServiceAddon;
-use App\Models\ServiceCategory;
 use App\Models\Shop;
 use App\Services\ServiceManagementService;
 use Illuminate\Http\RedirectResponse;
@@ -22,64 +20,33 @@ class ServiceController extends Controller
         private readonly ServiceManagementService $serviceManagementService
     ) {}
 
-    /**
-     * Display a listing of services
-     */
     public function index(): Response
     {
-        Gate::authorize('create', Service::class);
-
-        $tenantId = auth()->user()->tenant_id;
+        Gate::authorize('viewAny', Service::class);
 
         return Inertia::render('Services/Index', [
-            'services' => Service::query()->where('tenant_id', $tenantId)
-                ->with(['category', 'shop', 'variants', 'images' => function ($query) {
-                    $query->ordered();
-                }])
-                ->withCount('variants')
-                ->latest()
-                ->paginate(20),
+            'services' => $this->serviceManagementService->getPaginatedServices(),
         ]);
     }
 
-    /**
-     * Show the form for creating a new service
-     */
     public function create(): Response
     {
         Gate::authorize('create', Service::class);
 
-        $tenantId = auth()->user()->tenant_id;
-
-        $shops = Shop::where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->whereIn('shop_offering_type', ['services', 'both'])
-            ->get(['id', 'name', 'slug', 'shop_offering_type']);
-
-        $categories = ServiceCategory::query()->where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->whereNull('parent_id')
-            ->with('children')
-            ->orderBy('sort_order')
-            ->get(['id', 'name', 'slug', 'description']);
-
         return Inertia::render('Services/Create', [
-            'shops' => $shops,
-            'categories' => $categories,
+            'shops' => $this->serviceManagementService->getShopsForForm(),
+            'categories' => $this->serviceManagementService->getCategoriesForForm(),
         ]);
     }
 
     /**
-     * Store a newly created service
-     *
      * @throws Throwable
      */
     public function store(CreateServiceRequest $request): RedirectResponse
     {
-        // Validate shop belongs to user's tenant
-        $shop = Shop::query()
-            ->where('tenant_id', $request->user()->tenant_id)
-            ->findOrFail($request->input('shop_id'));
+        Gate::authorize('create', Service::class);
+
+        $shop = Shop::query()->findOrFail($request->validated()['shop_id']);
 
         $service = $this->serviceManagementService->create(
             $request->validated(),
@@ -91,9 +58,6 @@ class ServiceController extends Controller
             ->with('success', "Service '$service->name' created successfully.");
     }
 
-    /**
-     * Display the specified service
-     */
     public function show(Service $service): Response
     {
         Gate::authorize('view', $service);
@@ -103,31 +67,16 @@ class ServiceController extends Controller
             'shop',
             'variants' => fn ($q) => $q->orderBy('sort_order'),
             'addons' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
-            'images' => function ($query) {
-                $query->ordered();
-            },
+            'images' => fn ($q) => $q->ordered(),
         ]);
-
-        // Get category-wide addons if service has a category
-        $categoryAddons = [];
-        if ($service->service_category_id) {
-            $categoryAddons = ServiceAddon::query()->where('service_category_id', $service->service_category_id)
-                ->whereNull('service_id')
-                ->where('is_active', true)
-                ->orderBy('sort_order')
-                ->get();
-        }
 
         return Inertia::render('Services/Show', [
             'service' => $service,
-            'category_addons' => $categoryAddons,
+            'category_addons' => $this->serviceManagementService->getCategoryAddons($service->service_category_id),
             'can_manage' => auth()->user()->can('manage', $service),
         ]);
     }
 
-    /**
-     * Show the form for editing the specified service
-     */
     public function edit(Service $service): Response
     {
         Gate::authorize('manage', $service);
@@ -136,33 +85,22 @@ class ServiceController extends Controller
             'category',
             'variants' => fn ($q) => $q->orderBy('sort_order'),
             'addons' => fn ($q) => $q->orderBy('sort_order'),
-            'images' => function ($query) {
-                $query->ordered();
-            },
+            'images' => fn ($q) => $q->ordered(),
         ]);
-
-        $tenantId = auth()->user()->tenant_id;
-
-        $categories = ServiceCategory::query()->where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->whereNull('parent_id')
-            ->with('children')
-            ->orderBy('sort_order')
-            ->get(['id', 'name', 'slug', 'description']);
 
         return Inertia::render('Services/Edit', [
             'service' => $service,
-            'categories' => $categories,
+            'categories' => $this->serviceManagementService->getCategoriesForForm(),
         ]);
     }
 
     /**
-     * Update the specified service
-     *
      * @throws Throwable
      */
     public function update(UpdateServiceRequest $request, Service $service): RedirectResponse
     {
+        Gate::authorize('manage', $service);
+
         $this->serviceManagementService->update($service, $request->validated());
 
         return Redirect::route('services.show', $service)
@@ -170,8 +108,6 @@ class ServiceController extends Controller
     }
 
     /**
-     * Remove the specified service
-     *
      * @throws Throwable
      */
     public function destroy(Service $service): RedirectResponse

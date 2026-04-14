@@ -5,19 +5,17 @@ namespace App\Http\Controllers;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Http\Requests\CreateOrderRequest;
+use App\Http\Requests\RefundOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Http\Requests\UpdatePaymentStatusRequest;
 use App\Models\Customer;
 use App\Models\Order;
-use App\Models\ProductVariant;
 use App\Models\Shop;
 use App\Services\OrderRefundService;
 use App\Services\OrderService;
 use Exception;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -31,79 +29,25 @@ class OrderController extends Controller
         private readonly OrderRefundService $refundService
     ) {}
 
-    /**
-     * @throws AuthorizationException
-     */
     public function index(): Response
     {
         Gate::authorize('viewAny', Order::class);
 
-        $tenantId = auth()->user()->tenant_id;
-
         return Inertia::render('Orders/Index', [
-            'orders' => Order::query()->where('tenant_id', $tenantId)
-                ->with([
-                    'shop:id,name,slug',
-                    'customer:id,first_name,last_name,email',
-                    'createdBy:id,first_name,last_name',
-                ])
-                ->withCount('items')
-                ->latest()
-                ->paginate(20),
-            'stats' => [
-                'total' => Order::query()->where('tenant_id', $tenantId)->count(),
-                'pending' => Order::query()->where('tenant_id', $tenantId)
-                    ->where('status', OrderStatus::PENDING)
-                    ->count(),
-                'confirmed' => Order::query()->where('tenant_id', $tenantId)
-                    ->where('status', OrderStatus::CONFIRMED)
-                    ->count(),
-                'delivered' => Order::query()->where('tenant_id', $tenantId)
-                    ->where('status', OrderStatus::DELIVERED)
-                    ->count(),
-            ],
+            'orders' => $this->orderService->getPaginatedOrders(),
+            'stats' => $this->orderService->getOrderStats(),
             'order_statuses' => OrderStatus::forSelect(),
             'payment_statuses' => PaymentStatus::forSelect(),
         ]);
     }
 
-    /**
-     * @throws AuthorizationException
-     */
     public function create(): Response
     {
         Gate::authorize('create', Order::class);
 
-        $tenantId = auth()->user()->tenant_id;
-
-        $shops = Shop::query()->where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->get(['id', 'name', 'slug']);
-
-        // TODO: Replace with async product search (Select2/AJAX) for better performance with large inventories
-        // For now, limit results to prevent memory exhaustion
-        $products = ProductVariant::query()
-            ->whereHas('product', function ($query) use ($tenantId) {
-                $query->where('tenant_id', $tenantId)
-                    ->where('is_active', true);
-            })
-            ->with([
-                'product:id,name,slug,shop_id',
-                'product.shop:id,name',
-                'packagingTypes' => function ($query) {
-                    $query->where('is_active', true)
-                        ->orderBy('display_order')
-                        ->select('id', 'product_variant_id', 'name', 'display_name', 'price', 'units_per_package');
-                },
-            ])
-            ->select('id', 'product_id', 'name', 'sku', 'price', 'is_active')
-            ->where('is_active', true)
-            ->limit(100) // Prevent loading thousands of variants at once
-            ->get();
-
         return Inertia::render('Orders/Create', [
-            'shops' => $shops,
-            'products' => $products,
+            'shops' => $this->orderService->getShopsForForm(),
+            'products' => $this->orderService->getProductVariantsForCreate(),
         ]);
     }
 
@@ -112,30 +56,27 @@ class OrderController extends Controller
      */
     public function store(CreateOrderRequest $request): RedirectResponse
     {
-        try {
-            // Validate shop belongs to user's tenant
-            $shop = Shop::query()
-                ->where('tenant_id', $request->user()->tenant_id)
-                ->findOrFail($request->input('shop_id'));
+        Gate::authorize('create', Order::class);
 
-            // Validate customer belongs to user's tenant (if provided)
-            $customer = $request->input('customer_id')
-                ? Customer::query()
-                    ->where('tenant_id', $request->user()->tenant_id)
-                    ->findOrFail($request->input('customer_id'))
+        try {
+            $validated = $request->validated();
+
+            $shop = Shop::query()->findOrFail($validated['shop_id']);
+            $customer = isset($validated['customer_id'])
+                ? Customer::query()->findOrFail($validated['customer_id'])
                 : null;
 
             $order = $this->orderService->createOrder(
                 tenant: $request->user()->tenant,
                 shop: $shop,
-                items: $request->input('items'),
+                items: $validated['items'],
                 createdBy: $request->user(),
                 customer: $customer,
-                customerNotes: $request->input('customer_notes'),
-                internalNotes: $request->input('internal_notes'),
-                shippingCost: $request->input('shipping_cost', 0),
-                shippingAddress: $request->input('shipping_address'),
-                billingAddress: $request->input('billing_address')
+                customerNotes: $validated['customer_notes'] ?? null,
+                internalNotes: $validated['internal_notes'] ?? null,
+                shippingCost: $validated['shipping_cost'] ?? 0,
+                shippingAddress: $validated['shipping_address'] ?? null,
+                billingAddress: $validated['billing_address'] ?? null,
             );
 
             return Redirect::route('orders.show', $order)
@@ -147,36 +88,11 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * @throws AuthorizationException
-     */
     public function show(Order $order): Response
     {
         Gate::authorize('view', $order);
 
-        $order->load([
-            'shop',
-            'customer',
-            'items.productVariant.product',
-            'items.productVariant.inventoryLocations.location',
-            'items.packagingType',
-            'createdBy',
-            'payments.recordedBy',
-        ]);
-
-        // Load lifecycle user relationships if they exist
-        if ($order->packed_by) {
-            $order->load('packedByUser');
-        }
-        if ($order->shipped_by) {
-            $order->load('shippedByUser');
-        }
-        if ($order->delivered_by) {
-            $order->load('deliveredByUser');
-        }
-        if ($order->refunded_by) {
-            $order->load('refundedByUser');
-        }
+        $order->loadForShow();
 
         return Inertia::render('Orders/Show', [
             'order' => $order,
@@ -186,9 +102,6 @@ class OrderController extends Controller
         ]);
     }
 
-    /**
-     * @throws AuthorizationException
-     */
     public function edit(Order $order): Response|RedirectResponse
     {
         Gate::authorize('manage', $order);
@@ -200,26 +113,10 @@ class OrderController extends Controller
 
         $order->load(['shop', 'customer', 'items.productVariant.product']);
 
-        $tenantId = auth()->user()->tenant_id;
-
-        $shops = Shop::query()->where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->get(['id', 'name', 'slug']);
-
-        $products = ProductVariant::query()
-            ->whereHas('product', function ($query) use ($tenantId) {
-                $query->where('tenant_id', $tenantId)
-                    ->where('is_active', true);
-            })
-            ->with(['product.shop', 'inventoryLocations', 'packagingTypes' => function ($query) {
-                $query->where('is_active', true)->orderBy('display_order');
-            }])
-            ->get();
-
         return Inertia::render('Orders/Edit', [
             'order' => $order,
-            'shops' => $shops,
-            'products' => $products,
+            'shops' => $this->orderService->getShopsForForm(),
+            'products' => $this->orderService->getProductVariantsForEdit(),
         ]);
     }
 
@@ -228,6 +125,8 @@ class OrderController extends Controller
      */
     public function update(UpdateOrderRequest $request, Order $order): RedirectResponse
     {
+        Gate::authorize('manage', $order);
+
         try {
             $this->orderService->updateOrder($order, $request->validated());
 
@@ -240,9 +139,6 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * @throws AuthorizationException
-     */
     public function destroy(Order $order): RedirectResponse
     {
         Gate::authorize('delete', $order);
@@ -269,34 +165,19 @@ class OrderController extends Controller
         try {
             $newStatus = OrderStatus::from($request->input('status'));
 
-            if ($newStatus === OrderStatus::CONFIRMED) {
-                $this->orderService->confirmOrder($order, $request->user());
-            } elseif ($newStatus === OrderStatus::PROCESSING) {
-                $this->orderService->fulfillOrder($order, $request->user());
-            } elseif ($newStatus === OrderStatus::PACKED) {
-                $this->orderService->packOrder($order, $request->user());
-            } elseif ($newStatus === OrderStatus::SHIPPED) {
-                $shippingData = [
+            match ($newStatus) {
+                OrderStatus::CONFIRMED => $this->orderService->confirmOrder($order, $request->user()),
+                OrderStatus::PROCESSING => $this->orderService->fulfillOrder($order, $request->user()),
+                OrderStatus::PACKED => $this->orderService->packOrder($order, $request->user()),
+                OrderStatus::SHIPPED => $this->orderService->shipOrder($order, $request->user(), [
                     'tracking_number' => $request->validated('tracking_number'),
                     'carrier' => $request->validated('carrier'),
                     'notes' => $request->validated('notes'),
-                ];
-                $this->orderService->shipOrder($order, $request->user(), $shippingData);
-            } elseif ($newStatus === OrderStatus::DELIVERED) {
-                $this->orderService->deliverOrder($order, $request->user(), $request->validated('notes'));
-            } elseif ($newStatus === OrderStatus::CANCELLED) {
-                $this->orderService->cancelOrder(
-                    $order,
-                    $request->user(),
-                    $request->validated('reason')
-                );
-            } else {
-                if (! $order->status->canTransitionTo($newStatus)) {
-                    throw new Exception("Cannot change status from {$order->status->value} to $newStatus->value");
-                }
-                $order->status = $newStatus;
-                $order->save();
-            }
+                ]),
+                OrderStatus::DELIVERED => $this->orderService->deliverOrder($order, $request->user(), $request->validated('notes')),
+                OrderStatus::CANCELLED => $this->orderService->cancelOrder($order, $request->user(), $request->validated('reason')),
+                default => $this->orderService->forceStatus($order, $newStatus),
+            };
 
             return Redirect::back()
                 ->with('success', "Order status updated to {$newStatus->label()}.");
@@ -307,24 +188,20 @@ class OrderController extends Controller
     }
 
     /**
-     * Refund an order
      * @throws Throwable
      */
-    public function refund(Request $request, Order $order): RedirectResponse
+    public function refund(RefundOrderRequest $request, Order $order): RedirectResponse
     {
         Gate::authorize('update', $order);
 
-        $validated = $request->validate([
-            'reason' => 'required|string|max:1000',
-            'restock_items' => 'boolean',
-        ]);
-
         try {
+            $validated = $request->validated();
+
             $this->refundService->refundOrder(
                 $order,
                 $request->user(),
                 $validated['reason'],
-                $validated['restock_items'] ?? true
+                $validated['restock_items'] ?? true,
             );
 
             return Redirect::back()
@@ -345,7 +222,7 @@ class OrderController extends Controller
             $this->orderService->updatePaymentStatus(
                 $order,
                 $newStatus,
-                $request->input('payment_method')
+                $request->input('payment_method'),
             );
 
             return Redirect::back()

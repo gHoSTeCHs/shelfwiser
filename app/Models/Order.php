@@ -60,26 +60,29 @@ class Order extends Model
         'refunded_by',
     ];
 
-    protected $casts = [
-        'status' => OrderStatus::class,
-        'order_type' => OrderType::class,
-        'payment_status' => PaymentStatus::class,
-        'payment_method' => PaymentMethod::class,
-        'subtotal' => 'decimal:2',
-        'tax_amount' => 'decimal:2',
-        'discount_amount' => 'decimal:2',
-        'shipping_cost' => 'decimal:2',
-        'total_amount' => 'decimal:2',
-        'paid_amount' => 'decimal:2',
-        'confirmed_at' => 'datetime',
-        'packed_at' => 'datetime',
-        'shipped_at' => 'datetime',
-        'delivered_at' => 'datetime',
-        'cancelled_at' => 'datetime',
-        'refunded_at' => 'datetime',
-        'estimated_delivery_date' => 'date',
-        'actual_delivery_date' => 'date',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'status' => OrderStatus::class,
+            'order_type' => OrderType::class,
+            'payment_status' => PaymentStatus::class,
+            'payment_method' => PaymentMethod::class,
+            'subtotal' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'shipping_cost' => 'decimal:2',
+            'total_amount' => 'decimal:2',
+            'paid_amount' => 'decimal:2',
+            'confirmed_at' => 'datetime',
+            'packed_at' => 'datetime',
+            'shipped_at' => 'datetime',
+            'delivered_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'refunded_at' => 'datetime',
+            'estimated_delivery_date' => 'date',
+            'actual_delivery_date' => 'date',
+        ];
+    }
 
     protected static function boot(): void
     {
@@ -302,6 +305,7 @@ class Order extends Model
         } else {
             $this->payment_status = PaymentStatus::UNPAID;
         }
+        $this->save();
     }
 
     public function loadOrderRelations(): static
@@ -314,6 +318,25 @@ class Order extends Model
                     \App\Models\ServiceVariant::class => ['service'],
                 ]);
             },
+        ]);
+    }
+
+    public function loadForShow(): static
+    {
+        return $this->load([
+            'shop',
+            'customer',
+            'items.productVariant.product',
+            'items.productVariant.inventoryLocations' => fn ($q) => $q
+                ->where('location_type', \App\Models\Shop::class)
+                ->where('location_id', $this->shop_id),
+            'items.packagingType',
+            'createdBy',
+            'payments.recordedBy',
+            'packedByUser',
+            'shippedByUser',
+            'deliveredByUser',
+            'refundedByUser',
         ]);
     }
 }

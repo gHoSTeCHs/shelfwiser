@@ -14,6 +14,8 @@ use App\Models\Shop;
 use App\Models\Tenant;
 use App\Models\User;
 use Exception;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -23,6 +25,113 @@ class OrderService
     public function __construct(
         private readonly StockMovementService $stockMovementService
     ) {}
+
+    /**
+     * Get paginated orders with standard relations for the index page.
+     */
+    public function getPaginatedOrders(): LengthAwarePaginator
+    {
+        return Order::query()
+            ->with([
+                'shop:id,name,slug',
+                'customer:id,first_name,last_name,email',
+                'createdBy:id,first_name,last_name',
+            ])
+            ->withCount('items')
+            ->latest()
+            ->paginate(20);
+    }
+
+    /**
+     * Get order counts by status for the index page stats panel.
+     *
+     * @return array{total: int, pending: int, confirmed: int, delivered: int}
+     */
+    public function getOrderStats(): array
+    {
+        $counts = Order::query()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        return [
+            'total' => (int) $counts->sum(),
+            'pending' => (int) $counts->get(OrderStatus::PENDING->value, 0),
+            'confirmed' => (int) $counts->get(OrderStatus::CONFIRMED->value, 0),
+            'delivered' => (int) $counts->get(OrderStatus::DELIVERED->value, 0),
+        ];
+    }
+
+    /**
+     * Get active shops for order create/edit form dropdowns.
+     *
+     * @return Collection<int, Shop>
+     */
+    public function getShopsForForm(): Collection
+    {
+        return Shop::query()
+            ->where('is_active', true)
+            ->get(['id', 'name', 'slug']);
+    }
+
+    /**
+     * Get active product variants for the order create form (limited to 100).
+     *
+     * @return Collection<int, ProductVariant>
+     */
+    public function getProductVariantsForCreate(): Collection
+    {
+        return ProductVariant::query()
+            ->whereHas('product', fn ($q) => $q->where('is_active', true))
+            ->with([
+                'product:id,name,slug,shop_id',
+                'product.shop:id,name',
+                'packagingTypes' => function ($query) {
+                    $query->where('is_active', true)
+                        ->orderBy('display_order')
+                        ->select('id', 'product_variant_id', 'name', 'display_name', 'price', 'units_per_package');
+                },
+            ])
+            ->select('id', 'product_id', 'name', 'sku', 'price', 'is_active')
+            ->where('is_active', true)
+            ->limit(100)
+            ->get();
+    }
+
+    /**
+     * Get active product variants for the order edit form (full set with inventory).
+     *
+     * @return Collection<int, ProductVariant>
+     */
+    public function getProductVariantsForEdit(): Collection
+    {
+        return ProductVariant::query()
+            ->whereHas('product', fn ($q) => $q->where('is_active', true))
+            ->with([
+                'product.shop',
+                'inventoryLocations',
+                'packagingTypes' => fn ($q) => $q->where('is_active', true)->orderBy('display_order'),
+            ])
+            ->limit(200)
+            ->get();
+    }
+
+    /**
+     * Apply a generic status transition for statuses not handled by dedicated service methods.
+     *
+     * @throws Exception
+     */
+    public function forceStatus(Order $order, OrderStatus $newStatus): Order
+    {
+        if (! $order->status->canTransitionTo($newStatus)) {
+            throw new Exception("Cannot change status from {$order->status->value} to {$newStatus->value}");
+        }
+
+        $order->status = $newStatus;
+        $order->save();
+
+        return $order;
+    }
 
     /**
      * @throws Throwable
@@ -45,55 +154,69 @@ class OrderService
             'items_count' => count($items),
         ]);
 
-        try {
-            return DB::transaction(function () use (
-                $tenant,
-                $shop,
-                $items,
-                $createdBy,
-                $customer,
-                $customerNotes,
-                $internalNotes,
-                $shippingCost,
-                $shippingAddress,
-                $billingAddress
-            ) {
-                $order = Order::create([
+        $lastException = null;
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            try {
+                return DB::transaction(function () use (
+                    $tenant,
+                    $shop,
+                    $items,
+                    $createdBy,
+                    $customer,
+                    $customerNotes,
+                    $internalNotes,
+                    $shippingCost,
+                    $shippingAddress,
+                    $billingAddress
+                ) {
+                    $order = Order::query()->create([
+                        'tenant_id' => $tenant->id,
+                        'shop_id' => $shop->id,
+                        'customer_id' => $customer?->id,
+                        'status' => OrderStatus::PENDING,
+                        'payment_status' => PaymentStatus::UNPAID,
+                        'shipping_cost' => $shippingCost,
+                        'customer_notes' => $customerNotes,
+                        'internal_notes' => $internalNotes,
+                        'shipping_address' => $shippingAddress,
+                        'billing_address' => $billingAddress,
+                        'created_by' => $createdBy->id,
+                    ]);
+
+                    $this->createOrderItems($order, $items);
+
+                    $order->load([
+                        'items.productVariant.product',
+                        'items.sellable',
+                    ]);
+                    $order->calculateTotals();
+                    $order->save();
+
+                    Log::info('Order created successfully.', ['order_id' => $order->id]);
+
+                    return $order;
+                });
+            } catch (\Illuminate\Database\QueryException $e) {
+                if ($attempt >= 2 || ! str_contains($e->getMessage(), 'order_number')) {
+                    Log::error('Order creation failed.', [
+                        'tenant_id' => $tenant->id,
+                        'shop_id' => $shop->id,
+                        'exception' => $e,
+                    ]);
+                    throw $e;
+                }
+                $lastException = $e;
+            } catch (Throwable $e) {
+                Log::error('Order creation failed.', [
                     'tenant_id' => $tenant->id,
                     'shop_id' => $shop->id,
-                    'customer_id' => $customer?->id,
-                    'status' => OrderStatus::PENDING,
-                    'payment_status' => PaymentStatus::UNPAID,
-                    'shipping_cost' => $shippingCost,
-                    'customer_notes' => $customerNotes,
-                    'internal_notes' => $internalNotes,
-                    'shipping_address' => $shippingAddress,
-                    'billing_address' => $billingAddress,
-                    'created_by' => $createdBy->id,
+                    'exception' => $e,
                 ]);
-
-                $this->createOrderItems($order, $items);
-
-                $order->load([
-                    'items.productVariant.product',
-                    'items.sellable',
-                ]);
-                $order->calculateTotals();
-                $order->save();
-
-                Log::info('Order created successfully.', ['order_id' => $order->id]);
-
-                return $order;
-            });
-        } catch (Throwable $e) {
-            Log::error('Order creation failed.', [
-                'tenant_id' => $tenant->id,
-                'shop_id' => $shop->id,
-                'exception' => $e,
-            ]);
-
-            throw $e;
+                throw $e;
+            }
         }
+
+        throw $lastException;
     }
 
     /**
@@ -157,6 +280,8 @@ class OrderService
 
         try {
             return DB::transaction(function () use ($order) {
+                $order->load('items.productVariant');
+
                 foreach ($order->items as $item) {
                     // Only handle inventory for product items, skip services
                     if ($item->isProduct()) {
@@ -214,6 +339,8 @@ class OrderService
 
         try {
             return DB::transaction(function () use ($order, $user) {
+                $order->load('items.productVariant');
+
                 foreach ($order->items as $item) {
                     // Only handle inventory for product items, skip services
                     if ($item->isProduct()) {
@@ -228,7 +355,17 @@ class OrderService
                             throw new Exception("No inventory location found for variant {$variant->sku}");
                         }
 
-                        $location->reserved_quantity -= $item->quantity;
+                        if ($location->reserved_quantity < $item->quantity) {
+                            Log::warning('Reserved quantity mismatch during order fulfillment — clamping to zero', [
+                                'order_id' => $order->id,
+                                'variant_id' => $variant->id,
+                                'reserved' => $location->reserved_quantity,
+                                'needed' => $item->quantity,
+                            ]);
+                            $location->reserved_quantity = 0;
+                        } else {
+                            $location->reserved_quantity -= $item->quantity;
+                        }
                         $location->save();
 
                         $this->stockMovementService->adjustStock(
@@ -273,6 +410,8 @@ class OrderService
         try {
             return DB::transaction(function () use ($order, $user, $reason) {
                 if ($order->status === OrderStatus::CONFIRMED) {
+                    $order->load('items.productVariant');
+
                     foreach ($order->items as $item) {
                         // Only handle inventory for product items, skip services
                         if ($item->isProduct()) {
@@ -286,8 +425,13 @@ class OrderService
                                 ->first();
 
                             if ($location) {
-                                // Use atomic decrement to prevent race conditions
                                 $location->decrement('reserved_quantity', $item->quantity);
+                            } else {
+                                Log::warning('Inventory location not found during order cancellation — reserved stock not released', [
+                                    'order_id' => $order->id,
+                                    'variant_id' => $variant->id,
+                                    'shop_id' => $order->shop_id,
+                                ]);
                             }
                         }
                         // Services don't have reserved inventory
@@ -464,21 +608,47 @@ class OrderService
      */
     private function createOrderItems(Order $order, array $items): void
     {
-        foreach ($items as $item) {
+        // Normalise the legacy product_variant_id shorthand and collect IDs for batch loading
+        $normalizedItems = array_map(function (array $item) {
+            if (! isset($item['sellable_type']) && isset($item['product_variant_id'])) {
+                $item['sellable_type'] = ProductVariant::class;
+                $item['sellable_id'] = $item['product_variant_id'];
+            }
+
+            return $item;
+        }, $items);
+
+        $productVariantIds = array_values(array_unique(array_filter(
+            array_map(fn ($i) => ($i['sellable_type'] ?? null) === ProductVariant::class ? ($i['sellable_id'] ?? null) : null, $normalizedItems)
+        )));
+        $serviceVariantIds = array_values(array_unique(array_filter(
+            array_map(fn ($i) => ($i['sellable_type'] ?? null) === ServiceVariant::class ? ($i['sellable_id'] ?? null) : null, $normalizedItems)
+        )));
+        $packagingTypeIds = array_values(array_unique(array_filter(
+            array_column($normalizedItems, 'product_packaging_type_id')
+        )));
+
+        $productVariants = ! empty($productVariantIds)
+            ? ProductVariant::query()->whereIn('id', $productVariantIds)->get()->keyBy('id')
+            : collect();
+        $serviceVariants = ! empty($serviceVariantIds)
+            ? ServiceVariant::query()->whereIn('id', $serviceVariantIds)->get()->keyBy('id')
+            : collect();
+        $packagingTypes = ! empty($packagingTypeIds)
+            ? ProductPackagingType::query()->whereIn('id', $packagingTypeIds)->get()->keyBy('id')
+            : collect();
+
+        foreach ($normalizedItems as $item) {
             $sellableType = $item['sellable_type'] ?? null;
             $sellableId = $item['sellable_id'] ?? null;
-
-            if (! $sellableType && isset($item['product_variant_id'])) {
-                $sellableType = ProductVariant::class;
-                $sellableId = $item['product_variant_id'];
-            }
 
             if (! $sellableType || ! $sellableId) {
                 throw new Exception('Order item must specify sellable_type and sellable_id');
             }
 
             if ($sellableType === ProductVariant::class) {
-                $variant = ProductVariant::findOrFail($sellableId);
+                $variant = $productVariants->get($sellableId)
+                    ?? throw new Exception("Product variant not found: {$sellableId}");
 
                 $packagingType = null;
                 $packagingDescription = null;
@@ -486,7 +656,7 @@ class OrderService
                 $unitPrice = $variant->price;
 
                 if (isset($item['product_packaging_type_id'])) {
-                    $packagingType = ProductPackagingType::find($item['product_packaging_type_id']);
+                    $packagingType = $packagingTypes->get($item['product_packaging_type_id']);
 
                     if ($packagingType) {
                         if (isset($item['package_quantity'])) {
@@ -498,7 +668,7 @@ class OrderService
                     }
                 }
 
-                OrderItem::create([
+                OrderItem::query()->create([
                     'order_id' => $order->id,
                     'sellable_type' => $sellableType,
                     'sellable_id' => $sellableId,
@@ -511,7 +681,8 @@ class OrderService
                     'tax_amount' => $item['tax_amount'] ?? 0,
                 ]);
             } elseif ($sellableType === ServiceVariant::class) {
-                $variant = ServiceVariant::findOrFail($sellableId);
+                $variant = $serviceVariants->get($sellableId)
+                    ?? throw new Exception("Service variant not found: {$sellableId}");
 
                 $quantity = $item['quantity'] ?? 1;
                 $unitPrice = $variant->base_price;
@@ -522,7 +693,7 @@ class OrderService
                     'base_price' => $variant->base_price,
                 ];
 
-                OrderItem::create([
+                OrderItem::query()->create([
                     'order_id' => $order->id,
                     'sellable_type' => $sellableType,
                     'sellable_id' => $sellableId,

@@ -20,13 +20,13 @@ class TimesheetService
     /**
      * Clock in an employee for a shift
      */
-    public function clockIn(User $employee, Shop $shop, ?Carbon $dateTime = null): Timesheet
+    public function clockIn(User $employee, Shop $shop, ?string $dateTime = null): Timesheet
     {
-        $dateTime = $dateTime ?? now();
+        $dateTime = $dateTime ? Carbon::parse($dateTime) : now();
         $date = $dateTime->toDateString();
 
         return DB::transaction(function () use ($employee, $shop, $dateTime, $date) {
-            $existingTimesheet = Timesheet::where('user_id', $employee->id)
+            $existingTimesheet = Timesheet::query()->where('user_id', $employee->id)
                 ->where('shop_id', $shop->id)
                 ->where('date', $date)
                 ->where('status', TimesheetStatus::DRAFT)
@@ -36,13 +36,26 @@ class TimesheetService
                 throw new \RuntimeException('Employee is already clocked in for this shift');
             }
 
-            $timesheet = $existingTimesheet ?? Timesheet::create([
-                'user_id' => $employee->id,
-                'shop_id' => $shop->id,
-                'tenant_id' => $employee->tenant_id,
-                'date' => $date,
-                'status' => TimesheetStatus::DRAFT,
-            ]);
+            try {
+                $timesheet = $existingTimesheet ?? Timesheet::query()->create([
+                    'user_id' => $employee->id,
+                    'shop_id' => $shop->id,
+                    'tenant_id' => $employee->tenant_id,
+                    'date' => $date,
+                    'status' => TimesheetStatus::DRAFT,
+                ]);
+            } catch (\Illuminate\Database\QueryException $e) {
+                $timesheet = Timesheet::query()
+                    ->where('user_id', $employee->id)
+                    ->where('shop_id', $shop->id)
+                    ->where('date', $date)
+                    ->where('status', TimesheetStatus::DRAFT)
+                    ->firstOrFail();
+
+                if ($timesheet->isClockedIn()) {
+                    throw new \RuntimeException('Employee is already clocked in for this shift');
+                }
+            }
 
             $timesheet->update([
                 'clock_in' => $dateTime,
@@ -61,9 +74,9 @@ class TimesheetService
     /**
      * Clock out an employee and calculate hours
      */
-    public function clockOut(Timesheet $timesheet, ?Carbon $dateTime = null): Timesheet
+    public function clockOut(Timesheet $timesheet, ?string $dateTime = null): Timesheet
     {
-        $dateTime = $dateTime ?? now();
+        $dateTime = $dateTime ? Carbon::parse($dateTime) : now();
 
         if (! $timesheet->isClockedIn()) {
             throw new \RuntimeException('Employee is not currently clocked in');
@@ -74,6 +87,10 @@ class TimesheetService
         }
 
         return DB::transaction(function () use ($timesheet, $dateTime) {
+            if ($dateTime < $timesheet->clock_in) {
+                throw new \RuntimeException('Clock out time cannot be before clock in time');
+            }
+
             $timesheet->update(['clock_out' => $dateTime]);
 
             $hours = $this->calculateHours($timesheet);
@@ -93,9 +110,9 @@ class TimesheetService
     /**
      * Start a break period
      */
-    public function startBreak(Timesheet $timesheet, ?Carbon $dateTime = null): Timesheet
+    public function startBreak(Timesheet $timesheet, ?string $dateTime = null): Timesheet
     {
-        $dateTime = $dateTime ?? now();
+        $dateTime = $dateTime ? Carbon::parse($dateTime) : now();
 
         if (! $timesheet->isClockedIn()) {
             throw new \RuntimeException('Employee must be clocked in to start a break');
@@ -120,9 +137,9 @@ class TimesheetService
     /**
      * End a break period and update break duration
      */
-    public function endBreak(Timesheet $timesheet, ?Carbon $dateTime = null): Timesheet
+    public function endBreak(Timesheet $timesheet, ?string $dateTime = null): Timesheet
     {
-        $dateTime = $dateTime ?? now();
+        $dateTime = $dateTime ? Carbon::parse($dateTime) : now();
 
         if (! $timesheet->isOnBreak()) {
             throw new \RuntimeException('Employee is not currently on break');
@@ -159,6 +176,7 @@ class TimesheetService
         $workMinutes = max(0, $totalMinutes - $timesheet->break_duration_minutes);
         $workHours = round($workMinutes / 60, 2);
 
+        $timesheet->loadMissing(['shop.taxSettings']);
         $shop = $timesheet->shop;
         $taxSettings = $shop->taxSettings;
 
@@ -274,11 +292,22 @@ class TimesheetService
     }
 
     /**
+     * Update a timesheet's fields and clear the tenant cache.
+     */
+    public function updateTimesheet(Timesheet $timesheet, array $validated): Timesheet
+    {
+        $timesheet->update($validated);
+        $this->clearTimesheetCache($timesheet->tenant_id);
+
+        return $timesheet->fresh();
+    }
+
+    /**
      * Get timesheets that require approval for a manager
      */
     public function getTimesheetsForApproval(User $manager, ?Shop $shop = null): Collection
     {
-        $query = Timesheet::where('tenant_id', $manager->tenant_id)
+        $query = Timesheet::query()->where('tenant_id', $manager->tenant_id)
             ->where('status', TimesheetStatus::SUBMITTED)
             ->with(['user', 'shop']);
 
@@ -293,6 +322,10 @@ class TimesheetService
 
         return $timesheets->filter(function ($timesheet) use ($manager) {
             $employee = $timesheet->user;
+
+            if (! $employee) {
+                return false;
+            }
 
             if ($manager->id === $employee->id) {
                 return false;
@@ -315,7 +348,7 @@ class TimesheetService
         ?Carbon $endDate = null,
         ?Shop $shop = null
     ): Collection {
-        $query = Timesheet::where('user_id', $employee->id)
+        $query = Timesheet::query()->where('user_id', $employee->id)
             ->where('tenant_id', $employee->tenant_id)
             ->with(['shop', 'approvedBy']);
 
@@ -337,10 +370,8 @@ class TimesheetService
     /**
      * Get timesheet summary statistics for an employee
      */
-    public function getTimesheetSummary(User $employee, Carbon $startDate, Carbon $endDate): array
+    public function getTimesheetSummary(\Illuminate\Database\Eloquent\Collection $timesheets, User $employee, Carbon $startDate, Carbon $endDate): array
     {
-        $timesheets = $this->getEmployeeTimesheets($employee, $startDate, $endDate);
-
         $approvedTimesheets = $timesheets->where('status', TimesheetStatus::APPROVED);
 
         $totalRegularHours = $approvedTimesheets->sum('regular_hours');
@@ -369,7 +400,7 @@ class TimesheetService
      */
     public function getActiveTimesheet(User $employee, Shop $shop): ?Timesheet
     {
-        return Timesheet::where('user_id', $employee->id)
+        return Timesheet::query()->where('user_id', $employee->id)
             ->where('shop_id', $shop->id)
             ->where('date', now()->toDateString())
             ->where('status', TimesheetStatus::DRAFT)

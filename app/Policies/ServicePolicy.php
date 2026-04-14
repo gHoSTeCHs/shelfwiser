@@ -9,6 +9,14 @@ use App\Models\User;
 class ServicePolicy
 {
     /**
+     * Determine if the user can view any services
+     */
+    public function viewAny(User $user): bool
+    {
+        return $user->role->hasPermission('manage_inventory');
+    }
+
+    /**
      * Determine if the user can create services
      */
     public function create(User $user): bool

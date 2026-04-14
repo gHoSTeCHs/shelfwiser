@@ -72,7 +72,7 @@ class StockMovementService
             $query->where('product_variant_id', $variantId);
         }
 
-        return $query->get();
+        return $query->limit(10000)->get();
     }
 
     /**
@@ -141,7 +141,7 @@ class StockMovementService
         try {
             $movement = DB::transaction(function () use ($variant, $location, $quantity, $type, $user, $reason, $notes) {
                 // Use pessimistic locking to prevent race conditions
-                $location = InventoryLocation::where('id', $location->id)
+                $location = InventoryLocation::query()->where('id', $location->id)
                     ->lockForUpdate()
                     ->firstOrFail();
 
@@ -592,6 +592,103 @@ class StockMovementService
     }
 
     /**
+     * Get product variants with their current stock levels for a stock take session.
+     *
+     * @return \Illuminate\Support\Collection<int, array{id: int, sku: string, name: string, product_name: string, system_count: int, physical_count: null, location_id: int|null}>
+     */
+    public function getVariantsForStockTake(\App\Models\Shop $shop): \Illuminate\Support\Collection
+    {
+        $variants = ProductVariant::query()
+            ->whereHas('product', function ($query) use ($shop) {
+                $query->where('shop_id', $shop->id)
+                    ->where('is_active', true);
+            })
+            ->with([
+                'product:id,name,sku',
+                'inventoryLocations' => function ($query) use ($shop) {
+                    $query->where('location_type', \App\Models\Shop::class)
+                        ->where('location_id', $shop->id);
+                },
+            ])
+            ->where('is_active', true)
+            ->orderBy('sku')
+            ->get();
+
+        return $variants->map(function (ProductVariant $variant) {
+            $location = $variant->inventoryLocations->first();
+
+            return [
+                'id' => $variant->id,
+                'sku' => $variant->sku,
+                'name' => $variant->name,
+                'product_name' => $variant->product->name,
+                'system_count' => $location?->quantity ?? 0,
+                'physical_count' => null,
+                'location_id' => $location?->id,
+            ];
+        });
+    }
+
+    /**
+     * Process a batch stock take, creating adjustment movements for each count discrepancy.
+     *
+     * @param  array<int, array{variant_id: int, location_id: int, physical_count: int, system_count: int}>  $counts
+     * @return array<int, array{variant: string, difference: int, movement_id: int}>
+     *
+     * @throws Throwable
+     */
+    public function processBatchStockTake(array $counts, ?string $notes, User $user): array
+    {
+        $adjustments = [];
+
+        DB::transaction(function () use ($counts, $notes, $user, &$adjustments) {
+            $variantIds = array_values(array_unique(array_column($counts, 'variant_id')));
+            $locationIds = array_values(array_unique(array_column($counts, 'location_id')));
+
+            $variants = ProductVariant::query()->whereIn('id', $variantIds)->get()->keyBy('id');
+            $locations = InventoryLocation::query()->whereIn('id', $locationIds)->get()->keyBy('id');
+
+            foreach ($counts as $count) {
+                $variant = $variants->get($count['variant_id'])
+                    ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException("ProductVariant {$count['variant_id']} not found");
+                $location = $locations->get($count['location_id'])
+                    ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException("InventoryLocation {$count['location_id']} not found");
+
+                $systemCount = (int) $count['system_count'];
+                $physicalCount = (int) $count['physical_count'];
+                $difference = $physicalCount - $systemCount;
+
+                if ($difference !== 0) {
+                    $quantity = abs($difference);
+                    $type = $difference > 0
+                        ? StockMovementType::ADJUSTMENT_IN
+                        : StockMovementType::ADJUSTMENT_OUT;
+
+                    $reason = "Stock take adjustment - Physical count: {$physicalCount}, System count: {$systemCount}";
+
+                    $movement = $this->adjustStock(
+                        variant: $variant,
+                        location: $location,
+                        quantity: $quantity,
+                        type: $type,
+                        user: $user,
+                        reason: $reason,
+                        notes: $notes ?? 'Stock take conducted',
+                    );
+
+                    $adjustments[] = [
+                        'variant' => $variant->sku,
+                        'difference' => $difference,
+                        'movement_id' => $movement->id,
+                    ];
+                }
+            }
+        });
+
+        return $adjustments;
+    }
+
+    /**
      * @throws Throwable
      */
     public function recordMovement(array $data): StockMovement
@@ -607,7 +704,7 @@ class StockMovementService
             throw new Exception('Invalid stock movement type');
         }
 
-        $variant = ProductVariant::where('id', $data['product_variant_id'])
+        $variant = ProductVariant::query()->where('id', $data['product_variant_id'])
             ->whereHas('product', fn ($q) => $q->where('tenant_id', $data['tenant_id']))
             ->first();
 
@@ -616,7 +713,7 @@ class StockMovementService
         }
 
         if (isset($data['shop_id'])) {
-            $shopBelongsToTenant = \App\Models\Shop::where('id', $data['shop_id'])
+            $shopBelongsToTenant = \App\Models\Shop::query()->where('id', $data['shop_id'])
                 ->where('tenant_id', $data['tenant_id'])
                 ->exists();
 
@@ -626,7 +723,7 @@ class StockMovementService
         }
 
         return DB::transaction(function () use ($data) {
-            $movement = StockMovement::create($data);
+            $movement = StockMovement::query()->create($data);
 
             Log::info('Stock movement recorded', [
                 'movement_id' => $movement->id,

@@ -8,6 +8,8 @@ use App\Models\ServiceCategory;
 use App\Models\ServiceVariant;
 use App\Models\Shop;
 use App\Models\Tenant;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +18,60 @@ use Throwable;
 
 class ServiceManagementService
 {
+    /**
+     * Get paginated services with eager-loaded relations for the index page.
+     */
+    public function getPaginatedServices(): LengthAwarePaginator
+    {
+        return Service::query()
+            ->with(['category', 'shop', 'variants', 'images' => fn ($q) => $q->ordered()])
+            ->withCount('variants')
+            ->latest()
+            ->paginate(20);
+    }
+
+    /**
+     * Get active shops that offer services (for create form dropdowns).
+     */
+    public function getShopsForForm(): Collection
+    {
+        return Shop::query()
+            ->where('is_active', true)
+            ->whereIn('shop_offering_type', ['services', 'both'])
+            ->get(['id', 'name', 'slug', 'shop_offering_type']);
+    }
+
+    /**
+     * Get active root categories with children (shared between create and edit forms).
+     */
+    public function getCategoriesForForm(): Collection
+    {
+        return ServiceCategory::query()
+            ->where('is_active', true)
+            ->whereNull('parent_id')
+            ->with('children')
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'slug', 'description']);
+    }
+
+    /**
+     * Get category-wide addons for the service show page.
+     * Returns an empty collection when no category is set.
+     */
+    public function getCategoryAddons(?int $serviceCategoryId): Collection
+    {
+        if (! $serviceCategoryId) {
+            return collect();
+        }
+
+        return ServiceAddon::query()
+            ->where('service_category_id', $serviceCategoryId)
+            ->whereNull('service_id')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+    }
+
     /**
      * Create a new service with variants
      *
@@ -26,7 +82,7 @@ class ServiceManagementService
         Log::info('Service creation process started.', [
             'tenant_id' => $tenant->id,
             'shop_id' => $shop->id,
-            'data' => $data,
+            'name' => $data['name'] ?? null,
         ]);
 
         try {
@@ -46,7 +102,7 @@ class ServiceManagementService
                     'is_available_online' => $data['is_available_online'] ?? true,
                 ];
 
-                $service = Service::create($serviceData);
+                $service = Service::query()->create($serviceData);
 
                 // Create variants
                 if (isset($data['variants']) && is_array($data['variants'])) {
@@ -66,7 +122,7 @@ class ServiceManagementService
             Log::error('Service creation failed.', [
                 'tenant_id' => $tenant->id,
                 'shop_id' => $shop->id,
-                'data' => $data,
+                'name' => $data['name'] ?? null,
                 'exception' => $e,
             ]);
 
@@ -83,7 +139,7 @@ class ServiceManagementService
     {
         Log::info('Service update process started.', [
             'service_id' => $service->id,
-            'data' => $data,
+            'name' => $data['name'] ?? null,
         ]);
 
         try {
@@ -108,7 +164,7 @@ class ServiceManagementService
         } catch (Throwable $e) {
             Log::error('Service update failed.', [
                 'service_id' => $service->id,
-                'data' => $data,
+                'name' => $data['name'] ?? null,
                 'exception' => $e,
             ]);
 
@@ -166,7 +222,7 @@ class ServiceManagementService
     {
         Log::info('Service variant creation started.', [
             'service_id' => $service->id,
-            'data' => $data,
+            'name' => $data['name'] ?? null,
         ]);
 
         try {
@@ -196,7 +252,7 @@ class ServiceManagementService
         } catch (Throwable $e) {
             Log::error('Service variant creation failed.', [
                 'service_id' => $service->id,
-                'data' => $data,
+                'name' => $data['name'] ?? null,
                 'exception' => $e,
             ]);
 
@@ -213,7 +269,7 @@ class ServiceManagementService
     {
         Log::info('Service variant update started.', [
             'variant_id' => $variant->id,
-            'data' => $data,
+            'name' => $data['name'] ?? null,
         ]);
 
         try {
@@ -231,7 +287,7 @@ class ServiceManagementService
         } catch (Throwable $e) {
             Log::error('Service variant update failed.', [
                 'variant_id' => $variant->id,
-                'data' => $data,
+                'name' => $data['name'] ?? null,
                 'exception' => $e,
             ]);
 
@@ -283,7 +339,7 @@ class ServiceManagementService
         Log::info('Service addon creation started.', [
             'service_id' => $service?->id,
             'category_id' => $category?->id,
-            'data' => $data,
+            'name' => $data['name'] ?? null,
         ]);
 
         try {
@@ -299,7 +355,7 @@ class ServiceManagementService
                 'is_active' => $data['is_active'] ?? true,
             ];
 
-            $addon = ServiceAddon::create($addonData);
+            $addon = ServiceAddon::query()->create($addonData);
 
             // Invalidate cache based on context (list and specific service)
             if ($service) {
@@ -318,7 +374,7 @@ class ServiceManagementService
             Log::error('Service addon creation failed.', [
                 'service_id' => $service?->id,
                 'category_id' => $category?->id,
-                'data' => $data,
+                'name' => $data['name'] ?? null,
                 'exception' => $e,
             ]);
 
@@ -335,7 +391,7 @@ class ServiceManagementService
     {
         Log::info('Service addon update started.', [
             'addon_id' => $addon->id,
-            'data' => $data,
+            'name' => $data['name'] ?? null,
         ]);
 
         try {
@@ -357,7 +413,7 @@ class ServiceManagementService
         } catch (Throwable $e) {
             Log::error('Service addon update failed.', [
                 'addon_id' => $addon->id,
-                'data' => $data,
+                'name' => $data['name'] ?? null,
                 'exception' => $e,
             ]);
 
