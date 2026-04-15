@@ -220,6 +220,31 @@ class OrderService
     }
 
     /**
+     * Delete an order. Only PENDING orders can be deleted; anything further along
+     * the lifecycle requires cancellation/refund instead.
+     *
+     * @throws Throwable
+     */
+    public function deleteOrder(Order $order): string
+    {
+        if ($order->status !== OrderStatus::PENDING) {
+            throw new \RuntimeException('Only pending orders can be deleted.');
+        }
+
+        $orderNumber = $order->order_number;
+
+        DB::transaction(function () use ($order) {
+            $order->items()->delete();
+            $order->payments()->delete();
+            $order->delete();
+        });
+
+        Log::info('Order deleted', ['order_id' => $order->id, 'order_number' => $orderNumber]);
+
+        return $orderNumber;
+    }
+
+    /**
      * @throws Throwable
      */
     public function updateOrder(Order $order, array $data): Order
@@ -356,16 +381,19 @@ class OrderService
                         }
 
                         if ($location->reserved_quantity < $item->quantity) {
-                            Log::warning('Reserved quantity mismatch during order fulfillment — clamping to zero', [
+                            Log::error('Reserved quantity mismatch during order fulfillment', [
                                 'order_id' => $order->id,
                                 'variant_id' => $variant->id,
                                 'reserved' => $location->reserved_quantity,
                                 'needed' => $item->quantity,
                             ]);
-                            $location->reserved_quantity = 0;
-                        } else {
-                            $location->reserved_quantity -= $item->quantity;
+
+                            throw new \RuntimeException(
+                                "Reserved stock for {$variant->sku} ({$location->reserved_quantity}) is less than the order item quantity ({$item->quantity}). Order cannot be fulfilled — the reservation may have been released or double-fulfilled."
+                            );
                         }
+
+                        $location->reserved_quantity -= $item->quantity;
                         $location->save();
 
                         $this->stockMovementService->adjustStock(

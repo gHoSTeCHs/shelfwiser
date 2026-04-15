@@ -18,13 +18,15 @@ class SalesReportRequest extends FormRequest
      */
     public function rules(): array
     {
+        $tenantId = $this->user()->tenant_id;
+
         return [
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
+            'shop' => ['nullable', 'integer', 'exists:shops,id,tenant_id,'.$tenantId],
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'category' => ['nullable', 'integer', 'exists:product_categories,id'],
-            'product' => ['nullable', 'integer', 'exists:products,id'],
-            'customer' => ['nullable', 'integer', 'exists:users,id'],
+            'category' => ['nullable', 'integer', 'exists:product_categories,id,tenant_id,'.$tenantId],
+            'product' => ['nullable', 'integer', 'exists:products,id,tenant_id,'.$tenantId],
+            'customer' => ['nullable', 'integer', 'exists:customers,id,tenant_id,'.$tenantId],
             'status' => ['nullable', 'in:'.implode(',', array_column(OrderStatus::cases(), 'value'))],
             'payment_status' => ['nullable', 'in:'.implode(',', array_column(PaymentStatus::cases(), 'value'))],
             'group_by' => ['nullable', 'in:order,product,customer,shop,day'],

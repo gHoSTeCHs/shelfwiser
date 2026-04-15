@@ -47,7 +47,7 @@ beforeEach(function () {
         'config' => [],
     ]);
 
-    $this->cart = Cart::create([
+    $this->cart = Cart::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
     ]);

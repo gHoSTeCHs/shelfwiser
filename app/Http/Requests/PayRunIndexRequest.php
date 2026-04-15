@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PayRunStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class PayRunIndexRequest extends FormRequest
 {
@@ -17,8 +19,8 @@ class PayRunIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['nullable', 'string'],
-            'pay_calendar_id' => ['nullable', 'integer', 'exists:pay_calendars,id'],
+            'status' => ['nullable', Rule::enum(PayRunStatus::class)],
+            'pay_calendar_id' => ['nullable', 'integer', 'exists:pay_calendars,id,tenant_id,'.$this->user()->tenant_id],
             'search' => ['nullable', 'string', 'max:255'],
         ];
     }

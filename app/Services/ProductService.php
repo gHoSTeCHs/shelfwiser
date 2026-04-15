@@ -3,11 +3,16 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\ProductPackagingType;
+use App\Models\ProductTemplate;
 use App\Models\ProductType;
 use App\Models\ProductVariant;
 use App\Models\Shop;
+use App\Models\StockMovement;
 use App\Models\Tenant;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -28,7 +33,9 @@ class ProductService
         Log::info('Product creation process started.', [
             'tenant_id' => $tenant->id,
             'shop_id' => $shop->id,
-            'data' => $data,
+            'product_name' => $data['name'] ?? null,
+            'product_type' => $data['product_type_slug'] ?? null,
+            'has_variants' => $data['has_variants'] ?? false,
         ]);
 
         try {
@@ -93,7 +100,7 @@ class ProductService
             Log::error('Product creation failed.', [
                 'tenant_id' => $tenant->id,
                 'shop_id' => $shop->id,
-                'data' => $data,
+                'product_name' => $data['name'] ?? null,
                 'exception' => $e,
             ]);
 
@@ -108,7 +115,7 @@ class ProductService
     {
         Log::info('Product update process started.', [
             'product_id' => $product->id,
-            'data' => $data,
+            'fields' => array_keys($data),
         ]);
 
         try {
@@ -148,12 +155,144 @@ class ProductService
         } catch (Throwable $e) {
             Log::error('Product update failed.', [
                 'product_id' => $product->id,
-                'data' => $data,
                 'exception' => $e,
             ]);
 
             throw $e;
         }
+    }
+
+    /**
+     * Soft-delete a product. Refuses if any of its variants are attached to
+     * non-cancelled order items — preserves order history integrity.
+     *
+     * @throws Throwable
+     */
+    public function delete(Product $product): void
+    {
+        $variantIds = $product->variants()->pluck('id');
+
+        $hasOpenSales = \App\Models\OrderItem::query()
+            ->whereIn('product_variant_id', $variantIds)
+            ->whereHas('order', fn ($q) => $q->where('status', '!=', 'cancelled'))
+            ->exists();
+
+        if ($hasOpenSales) {
+            throw new \RuntimeException('Cannot delete a product that has been sold. Archive it instead.');
+        }
+
+        DB::transaction(function () use ($product) {
+            $product->variants()->delete();
+            $product->delete();
+        });
+
+        Log::info('Product deleted', ['product_id' => $product->id, 'name' => $product->name]);
+
+        Cache::tags(["tenant:{$product->tenant_id}:products"])->flush();
+    }
+
+    public function getProductsForIndex(): LengthAwarePaginator
+    {
+        return Product::query()
+            ->with([
+                'type:id,slug,label',
+                'category:id,name,slug',
+                'shop:id,name,slug',
+                'variants.inventoryLocations',
+                'images' => function ($query) {
+                    $query->ordered()->limit(1);
+                },
+            ])
+            ->withCount('variants')
+            ->latest()
+            ->paginate(20);
+    }
+
+    public function getCreateFormData(int $tenantId): array
+    {
+        return [
+            'shops' => Shop::query()
+                ->where('is_active', true)
+                ->get(['id', 'name', 'slug', 'inventory_model']),
+            'productTypes' => $this->getProductTypesForForm($tenantId),
+            'categories' => $this->getCategoriesForForm(),
+            'templates' => ProductTemplate::availableFor($tenantId)
+                ->active()
+                ->with(['productType', 'category'])
+                ->orderBy('name')
+                ->get(),
+        ];
+    }
+
+    public function getEditFormData(Product $product): array
+    {
+        $product->load([
+            'type',
+            'category',
+            'variants.packagingTypes',
+            'variants.optionValues',
+            'options.values',
+            'images' => function ($query) {
+                $query->ordered();
+            },
+            'variants.images' => function ($query) {
+                $query->ordered();
+            },
+        ]);
+
+        return [
+            'productTypes' => $this->getProductTypesForForm($product->tenant_id),
+            'categories' => $this->getCategoriesForForm(),
+        ];
+    }
+
+    public function getProductShowData(Product $product): array
+    {
+        $product->load([
+            'type',
+            'category',
+            'shop',
+            'variants.inventoryLocations.location',
+            'variants.packagingTypes',
+            'variants.optionValues',
+            'options.values',
+            'images' => function ($query) {
+                $query->ordered();
+            },
+            'variants.images' => function ($query) {
+                $query->ordered();
+            },
+        ]);
+
+        $variantIds = $product->variants->pluck('id');
+
+        return [
+            'available_shops' => Shop::query()
+                ->where('is_active', true)
+                ->get(['id', 'name']),
+            'recent_movements' => StockMovement::query()
+                ->whereIn('product_variant_id', $variantIds)
+                ->with(['productVariant', 'fromLocation.location', 'toLocation.location'])
+                ->latest()
+                ->limit(10)
+                ->get(),
+        ];
+    }
+
+    private function getProductTypesForForm(int $tenantId): \Illuminate\Support\Collection
+    {
+        return ProductType::accessibleTo($tenantId)
+            ->where('is_active', true)
+            ->get(['id', 'slug', 'label', 'description', 'config_schema', 'option_templates', 'supports_variants', 'requires_batch_tracking', 'requires_serial_tracking']);
+    }
+
+    private function getCategoriesForForm(): \Illuminate\Support\Collection
+    {
+        return ProductCategory::query()
+            ->where('is_active', true)
+            ->whereNull('parent_id')
+            ->with('children')
+            ->get(['id', 'name', 'slug']);
     }
 
     private function createVariant(Product $product, array $data): ProductVariant
@@ -275,18 +414,22 @@ class ProductService
         Log::info('Product variant update process started.', [
             'variant_id' => $variant->id,
             'product_id' => $variant->product_id,
-            'data' => $data,
+            'fields' => array_keys($data),
         ]);
 
         try {
             return DB::transaction(function () use ($variant, $data) {
-                $variant->update($data);
+                $variant->update(Arr::only($data, [
+                    'sku', 'barcode', 'name', 'attributes', 'price', 'retail_price',
+                    'cost_price', 'reorder_level', 'max_order_quantity', 'base_unit_name',
+                    'image_url', 'images', 'batch_number', 'expiry_date', 'serial_number',
+                    'is_active', 'is_available_online', 'allow_retail_sales',
+                ]));
 
                 if (isset($data['option_value_ids'])) {
                     $variant->optionValues()->sync($data['option_value_ids']);
                 }
 
-                // If price changed, update packaging types prices proportionally
                 if (isset($data['price']) && $variant->packagingTypes()->exists()) {
                     $basePackaging = $variant->packagingTypes()
                         ->where('is_base_unit', true)
@@ -295,20 +438,12 @@ class ProductService
                     if ($basePackaging) {
                         $basePackaging->update(['price' => $data['price']]);
 
-                        // Update other packaging types based on units_per_package
-                        $otherPackaging = $variant->packagingTypes()
+                        $variant->packagingTypes()
                             ->where('is_base_unit', false)
-                            ->get();
-
-                        foreach ($otherPackaging as $packaging) {
-                            $packaging->update([
-                                'price' => $data['price'] * $packaging->units_per_package,
-                            ]);
-                        }
+                            ->update(['price' => DB::raw('units_per_package * '.(float) $data['price'])]);
                     }
                 }
 
-                // If cost_price changed, update packaging types cost prices proportionally
                 if (isset($data['cost_price']) && $variant->packagingTypes()->exists()) {
                     $basePackaging = $variant->packagingTypes()
                         ->where('is_base_unit', true)
@@ -317,16 +452,9 @@ class ProductService
                     if ($basePackaging && $data['cost_price'] !== null) {
                         $basePackaging->update(['cost_price' => $data['cost_price']]);
 
-                        // Update other packaging types based on units_per_package
-                        $otherPackaging = $variant->packagingTypes()
+                        $variant->packagingTypes()
                             ->where('is_base_unit', false)
-                            ->get();
-
-                        foreach ($otherPackaging as $packaging) {
-                            $packaging->update([
-                                'cost_price' => $data['cost_price'] * $packaging->units_per_package,
-                            ]);
-                        }
+                            ->update(['cost_price' => DB::raw('units_per_package * '.(float) $data['cost_price'])]);
                     }
                 }
 
@@ -349,7 +477,6 @@ class ProductService
             Log::error('Product variant update failed.', [
                 'variant_id' => $variant->id,
                 'product_id' => $variant->product_id,
-                'data' => $data,
                 'exception' => $e,
             ]);
 

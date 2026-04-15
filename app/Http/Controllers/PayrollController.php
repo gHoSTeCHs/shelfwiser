@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CancelPayrollPeriodRequest;
+use App\Http\Requests\StorePayrollPeriodRequest;
 use App\Models\PayrollPeriod;
-use App\Models\PayRun;
 use App\Models\Payslip;
 use App\Services\PayrollAuditService;
 use App\Services\PayrollService;
 use App\Services\PayRunService;
-use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -52,26 +52,19 @@ class PayrollController extends Controller
      * Store a newly created payroll period and create a PayRun
      * Uses PayRunService for unified payroll processing
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StorePayrollPeriodRequest $request): RedirectResponse
     {
         Gate::authorize('create', PayrollPeriod::class);
 
-        $validated = $request->validate([
-            'shop_id' => ['nullable', 'exists:shops,id'],
-            'period_name' => ['nullable', 'string', 'max:255'],
-            'start_date' => ['required', 'date'],
-            'end_date' => ['required', 'date', 'after:start_date'],
-            'payment_date' => ['required', 'date', 'after_or_equal:end_date'],
-        ]);
-
+        $validated = $request->validated();
         $tenantId = $request->user()->tenant_id;
 
         $payrollPeriod = $this->payRunService->createPayrollPeriod(
             $tenantId,
             $validated['shop_id'] ?? null,
-            Carbon::parse($validated['start_date']),
-            Carbon::parse($validated['end_date']),
-            Carbon::parse($validated['payment_date']),
+            $validated['start_date'],
+            $validated['end_date'],
+            $validated['payment_date'],
             $validated['period_name'] ?? null
         );
 
@@ -93,12 +86,12 @@ class PayrollController extends Controller
     {
         Gate::authorize('view', $payrollPeriod);
 
-        $payRun = PayRun::where('payroll_period_id', $payrollPeriod->id)->first();
+        $payRun = $this->payRunService->findByPayrollPeriod($payrollPeriod);
         if ($payRun) {
             return redirect()->route('pay-runs.show', $payRun);
         }
 
-        $payrollPeriod->load(['payslips.user', 'shop', 'processedBy', 'approvedBy']);
+        $this->payrollService->loadPayrollPeriodRelations($payrollPeriod);
 
         return Inertia::render('Payroll/Show', [
             'payrollPeriod' => $payrollPeriod,
@@ -118,7 +111,7 @@ class PayrollController extends Controller
         Gate::authorize('process', $payrollPeriod);
 
         try {
-            $payRun = PayRun::where('payroll_period_id', $payrollPeriod->id)->first();
+            $payRun = $this->payRunService->findByPayrollPeriod($payrollPeriod);
 
             if (! $payRun) {
                 $payRun = $this->payRunService->createPayRun(
@@ -150,7 +143,7 @@ class PayrollController extends Controller
         Gate::authorize('approve', $payrollPeriod);
 
         try {
-            $payRun = PayRun::where('payroll_period_id', $payrollPeriod->id)->first();
+            $payRun = $this->payRunService->findByPayrollPeriod($payrollPeriod);
 
             if ($payRun) {
                 $payRun = $this->payRunService->approvePayRun($payRun);
@@ -181,7 +174,7 @@ class PayrollController extends Controller
         Gate::authorize('markAsPaid', $payrollPeriod);
 
         try {
-            $payRun = PayRun::where('payroll_period_id', $payrollPeriod->id)->first();
+            $payRun = $this->payRunService->findByPayrollPeriod($payrollPeriod);
 
             if ($payRun) {
                 $payRun = $this->payRunService->completePayRun($payRun);
@@ -207,27 +200,23 @@ class PayrollController extends Controller
     /**
      * Cancel payroll - delegates to PayRun if exists
      */
-    public function cancel(Request $request, PayrollPeriod $payrollPeriod): RedirectResponse
+    public function cancel(CancelPayrollPeriodRequest $request, PayrollPeriod $payrollPeriod): RedirectResponse
     {
         Gate::authorize('cancel', $payrollPeriod);
 
-        $validated = $request->validate([
-            'reason' => ['required', 'string', 'max:500'],
-        ]);
-
         try {
-            $payRun = PayRun::where('payroll_period_id', $payrollPeriod->id)->first();
+            $payRun = $this->payRunService->findByPayrollPeriod($payrollPeriod);
 
             if ($payRun) {
-                $payRun = $this->payRunService->cancelPayRun($payRun, $validated['reason']);
-                $this->auditService->logPayRunCancelled($payRun, auth()->user(), $validated['reason']);
+                $payRun = $this->payRunService->cancelPayRun($payRun, $request->validated()['reason']);
+                $this->auditService->logPayRunCancelled($payRun, auth()->user(), $request->validated()['reason']);
 
                 return redirect()
                     ->route('pay-runs.index')
                     ->with('success', 'Payroll cancelled');
             }
 
-            $this->payrollService->cancelPayroll($payrollPeriod, $validated['reason']);
+            $this->payrollService->cancelPayroll($payrollPeriod, $request->validated()['reason'], auth()->id());
 
             return redirect()
                 ->route('payroll.index')
@@ -246,30 +235,26 @@ class PayrollController extends Controller
     {
         Gate::authorize('delete', $payrollPeriod);
 
-        $payrollPeriod->delete();
+        try {
+            $this->payrollService->deletePayrollPeriod($payrollPeriod, auth()->user());
 
-        return redirect()
-            ->route('payroll.index')
-            ->with('success', 'Payroll period deleted successfully');
+            return redirect()
+                ->route('payroll.index')
+                ->with('success', 'Payroll period deleted successfully');
+        } catch (\RuntimeException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
     /**
      * Display employee's own payslips
-     * Query Payslip model directly instead of using deprecated PayrollService method
      */
     public function myPayslips(Request $request): Response
     {
         Gate::authorize('viewOwn', Payslip::class);
 
-        $user = $request->user();
-
-        $payslips = Payslip::forUser($user->id)
-            ->with(['payrollPeriod', 'shop'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
         return Inertia::render('Payroll/MyPayslips', [
-            'payslips' => $payslips,
+            'payslips' => $this->payrollService->getPayslipsForUser($request->user()),
         ]);
     }
 

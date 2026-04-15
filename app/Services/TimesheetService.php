@@ -303,6 +303,22 @@ class TimesheetService
     }
 
     /**
+     * Delete a timesheet. Only DRAFT timesheets are deletable; submitted, approved,
+     * rejected, and paid timesheets are part of the audit trail.
+     */
+    public function deleteTimesheet(Timesheet $timesheet): void
+    {
+        if ($timesheet->status !== \App\Enums\TimesheetStatus::DRAFT) {
+            throw new \RuntimeException(
+                'Only draft timesheets can be deleted. Submitted timesheets must be rejected by a manager.'
+            );
+        }
+
+        $timesheet->delete();
+        $this->clearTimesheetCache($timesheet->tenant_id);
+    }
+
+    /**
      * Get timesheets that require approval for a manager
      */
     public function getTimesheetsForApproval(User $manager, ?Shop $shop = null): Collection

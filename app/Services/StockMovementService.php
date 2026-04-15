@@ -10,6 +10,7 @@ use App\Models\StockMovement;
 use App\Models\User;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -722,8 +723,18 @@ class StockMovementService
             }
         }
 
-        return DB::transaction(function () use ($data) {
-            $movement = StockMovement::query()->create($data);
+        $allowed = Arr::only($data, [
+            'tenant_id', 'shop_id', 'purchase_order_id',
+            'product_variant_id', 'product_packaging_type_id',
+            'from_location_id', 'to_location_id',
+            'type', 'quantity', 'package_quantity',
+            'cost_per_package', 'cost_per_base_unit',
+            'quantity_before', 'quantity_after',
+            'reference_number', 'reason', 'notes', 'created_by',
+        ]);
+
+        return DB::transaction(function () use ($allowed) {
+            $movement = StockMovement::query()->create($allowed);
 
             Log::info('Stock movement recorded', [
                 'movement_id' => $movement->id,

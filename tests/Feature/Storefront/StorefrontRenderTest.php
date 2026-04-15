@@ -53,11 +53,11 @@ function setupPage(StorefrontConfig $config, StorefrontPageType $pageType, array
 
 function setupOrder(Tenant $tenant, Shop $shop, Customer $customer, array $overrides = []): Order
 {
-    return Order::query()->create(array_merge([
+    return Order::query()->forceCreate(array_merge([
         'tenant_id' => $tenant->id,
         'shop_id' => $shop->id,
         'customer_id' => $customer->id,
-        'order_number' => 'ORD-' . fake()->unique()->numerify('###'),
+        'order_number' => 'ORD-'.fake()->unique()->numerify('###'),
         'status' => OrderStatus::PENDING,
         'subtotal' => 1000,
         'tax_amount' => 0,

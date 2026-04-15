@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
-use App\Http\Controllers\Controller;
 use App\Http\Requests\Storefront\ProcessCheckoutRequest;
 use App\Models\Order;
 use App\Models\ProductVariant;
@@ -18,7 +17,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class CheckoutController extends Controller
+class CheckoutController extends StorefrontBaseController
 {
     public function __construct(
         protected CartService $cartService,
@@ -54,7 +53,7 @@ class CheckoutController extends Controller
 
         if ($productVariantIds->isNotEmpty()) {
             $variants = ProductVariant::query()->whereIn('id', $productVariantIds)
-                ->with('inventoryLocations')
+                ->with(['inventoryLocations', 'product'])
                 ->get()
                 ->keyBy('id');
         } else {
@@ -152,7 +151,7 @@ class CheckoutController extends Controller
                 : $validated['billing_address'];
 
             $paymentMethod = PaymentMethod::from($validated['payment_method']);
-            $paymentReference = $validated['payment_reference'] ?? $this->generatePaymentReference($shop);
+            $paymentReference = $this->generatePaymentReference($shop);
 
             $order = $this->checkoutService->createOrderFromCart(
                 $cart,
@@ -197,15 +196,7 @@ class CheckoutController extends Controller
      */
     public function success(Shop $shop, Order $order): Response
     {
-        $customer = auth('customer')->user();
-
-        if ($order->customer_id !== $customer->id) {
-            abort(403, 'Unauthorized');
-        }
-
-        if ($order->shop_id !== $shop->id) {
-            abort(404);
-        }
+        $this->authorizeOrderAccess($order, $shop);
 
         $order->load([
             'items.productVariant.product',
@@ -228,15 +219,7 @@ class CheckoutController extends Controller
      */
     public function paymentPending(Shop $shop, Order $order): Response
     {
-        $customer = auth('customer')->user();
-
-        if ($order->customer_id !== $customer->id) {
-            abort(403, 'Unauthorized');
-        }
-
-        if ($order->shop_id !== $shop->id) {
-            abort(404);
-        }
+        $this->authorizeOrderAccess($order, $shop);
 
         $order->load([
             'items.productVariant.product',
@@ -336,22 +319,38 @@ class CheckoutController extends Controller
         $data = $request->input('data');
 
         if ($event === 'charge.success') {
+            $reference = $data['reference'] ?? null;
+            $eventId = $data['id'] ?? null;
+
+            if (! $reference) {
+                Log::warning('Paystack webhook missing reference', ['shop_id' => $shop->id]);
+
+                return response()->json(['error' => 'Missing reference'], 400);
+            }
+
             try {
-                $reference = $data['reference'] ?? null;
-                if ($reference) {
-                    $this->checkoutService->updatePaymentStatus(
-                        $reference,
-                        PaymentStatus::PAID,
-                        $data['id'] ?? null,
-                        ($data['amount'] ?? 0) / 100
-                    );
-                }
-            } catch (\Exception $e) {
-                Log::error('Webhook processing error', [
+                $this->checkoutService->updatePaymentStatus(
+                    $reference,
+                    PaymentStatus::PAID,
+                    $eventId,
+                    ($data['amount'] ?? 0) / 100
+                );
+            } catch (\RuntimeException $e) {
+                Log::warning('Paystack webhook rejected', [
                     'event' => $event,
-                    'reference' => $data['reference'] ?? 'unknown',
+                    'reference' => $reference,
+                    'reason' => $e->getMessage(),
+                ]);
+
+                return response()->json(['error' => $e->getMessage()], 422);
+            } catch (\Throwable $e) {
+                Log::error('Paystack webhook processing error', [
+                    'event' => $event,
+                    'reference' => $reference,
                     'error' => $e->getMessage(),
                 ]);
+
+                return response()->json(['error' => 'Internal error'], 500);
             }
         }
 

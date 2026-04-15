@@ -160,6 +160,8 @@ class PurchaseOrderService
                 throw new \Exception('PO cannot be submitted in current status');
             }
 
+            $po->loadMissing('items.productVariant');
+
             if ($po->items->isEmpty()) {
                 throw new \Exception('Cannot submit empty purchase order');
             }
@@ -232,6 +234,8 @@ class PurchaseOrderService
                 throw new \Exception('PO cannot be shipped in current status');
             }
 
+            $po->loadMissing('items.productVariant');
+
             $validatedLocations = $this->validateStockForShipping($po);
 
             foreach ($po->items as $item) {
@@ -273,6 +277,8 @@ class PurchaseOrderService
                 throw new \Exception('PO cannot be received in current status');
             }
 
+            $po->loadMissing('items.productVariant');
+
             foreach ($po->items as $item) {
                 $newReceivedQty = $data['items'][$item->id]['received_quantity'] ?? 0;
 
@@ -294,8 +300,9 @@ class PurchaseOrderService
                 }
             }
 
-            $allItemsFullyReceived = $po->items()->get()->every(fn ($item) => $item->isFullyReceived());
-            $anyItemsPartiallyReceived = $po->items()->get()->some(fn ($item) => $item->received_quantity > 0 && ! $item->isFullyReceived());
+            $freshItems = $po->items()->get();
+            $allItemsFullyReceived = $freshItems->every(fn ($item) => $item->isFullyReceived());
+            $anyItemsPartiallyReceived = $freshItems->some(fn ($item) => $item->received_quantity > 0 && ! $item->isFullyReceived());
 
             $newStatus = $allItemsFullyReceived
                 ? PurchaseOrderStatus::RECEIVED
@@ -338,14 +345,16 @@ class PurchaseOrderService
         });
     }
 
-    public function cancelPurchaseOrder(PurchaseOrder $po, ?string $reason = null): PurchaseOrder
+    public function cancelPurchaseOrder(PurchaseOrder $po, User $user, ?string $reason = null): PurchaseOrder
     {
-        return DB::transaction(function () use ($po, $reason) {
+        return DB::transaction(function () use ($po, $user, $reason) {
             if (! $po->status->canCancel()) {
                 throw new \Exception('PO cannot be cancelled in current status');
             }
 
-            $this->releaseStockReservation($po);
+            $po->loadMissing('items.productVariant');
+
+            $this->releaseStockReservation($po, $user);
 
             $po->update([
                 'status' => PurchaseOrderStatus::CANCELLED,
@@ -489,14 +498,14 @@ class PurchaseOrderService
         $date = now()->format('Ymd');
 
         for ($attempt = 0; $attempt < 3; $attempt++) {
-            $candidate = 'PO-' . $date . '-' . strtoupper(\Illuminate\Support\Str::random(6));
+            $candidate = 'PO-'.$date.'-'.strtoupper(\Illuminate\Support\Str::random(6));
 
             if (! PurchaseOrder::query()->where('po_number', $candidate)->exists()) {
                 return $candidate;
             }
         }
 
-        return 'PO-' . $date . '-' . strtoupper(\Illuminate\Support\Str::random(8));
+        return 'PO-'.$date.'-'.strtoupper(\Illuminate\Support\Str::random(8));
     }
 
     /**
@@ -523,6 +532,56 @@ class PurchaseOrderService
         }
 
         return now()->addDays(30)->toDateTime();
+    }
+
+    public function getPaginatedBuyerPurchaseOrders(Tenant $buyerTenant, ?int $shopId): \Illuminate\Pagination\LengthAwarePaginator
+    {
+        $query = PurchaseOrder::forBuyer($buyerTenant->id)
+            ->with(['supplierTenant', 'shop', 'items.productVariant', 'createdBy']);
+
+        if ($shopId) {
+            $query->forShop($shopId);
+        }
+
+        return $query->orderBy('created_at', 'desc')->paginate(20);
+    }
+
+    public function getPaginatedSupplierPurchaseOrders(Tenant $supplierTenant): \Illuminate\Pagination\LengthAwarePaginator
+    {
+        return PurchaseOrder::forSupplier($supplierTenant->id)
+            ->with(['buyerTenant', 'shop', 'items.productVariant', 'createdBy'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+    }
+
+    public function getShopsForDropdown(int $tenantId): Collection
+    {
+        return Shop::query()
+            ->where('tenant_id', $tenantId)
+            ->get(['id', 'name']);
+    }
+
+    public function getApprovedConnectionsForBuyer(Tenant $buyerTenant): \Illuminate\Support\Collection
+    {
+        return $this->connectionService->getConnectionsForBuyer($buyerTenant)
+            ->filter(fn ($conn) => $conn->status->canOrder());
+    }
+
+    public function getSupplierCatalog(Tenant $supplierTenant, string $search, int $perPage): \Illuminate\Pagination\LengthAwarePaginator
+    {
+        $query = $supplierTenant->supplierProfile
+            ->catalogItems()
+            ->where('is_available', true)
+            ->with(['product', 'pricingTiers']);
+
+        if ($search) {
+            $query->whereHas('product', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%");
+            });
+        }
+
+        return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
 
     public function getPurchaseOrdersForBuyer(Tenant $buyerTenant, ?Shop $shop = null): Collection
@@ -573,12 +632,12 @@ class PurchaseOrderService
             $query->where('id', '!=', $excludePoId);
         }
 
-        $unpaidPOs = $query->get();
+        $unpaidPOs = $query->withSum('payments', 'amount')->get();
 
         $totalOutstanding = 0;
         foreach ($unpaidPOs as $po) {
             $totalAmount = $po->total_amount ?? 0;
-            $paidAmount = $po->payments()->sum('amount');
+            $paidAmount = (float) ($po->payments_sum_amount ?? 0);
             $totalOutstanding += ($totalAmount - $paidAmount);
         }
 
@@ -636,7 +695,7 @@ class PurchaseOrderService
     /**
      * Release stock reservation when a PO is cancelled.
      */
-    protected function releaseStockReservation(PurchaseOrder $po): void
+    protected function releaseStockReservation(PurchaseOrder $po, User $user): void
     {
         if (! in_array($po->status, [PurchaseOrderStatus::SUBMITTED, PurchaseOrderStatus::APPROVED, PurchaseOrderStatus::PROCESSING])) {
             return;
@@ -665,7 +724,7 @@ class PurchaseOrderService
                     'quantity_after' => $location->quantity,
                     'reference_number' => $po->po_number,
                     'reason' => "Reservation released for cancelled PO #{$po->po_number}",
-                    'created_by' => auth()->id(),
+                    'created_by' => $user->id,
                 ]);
             }
         }

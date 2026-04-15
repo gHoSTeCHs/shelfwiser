@@ -446,19 +446,25 @@ test('held sale sets correct expiration time', function () {
     expect($heldSale->expires_at->greaterThanOrEqualTo($beforeCreation->copy()->addHours(23)))->toBeTrue();
 });
 
-test('held sale preserves all item data', function () {
-    $response = $this->actingAs($this->user)
+test('held sale snapshots authoritative item data from variant', function () {
+    $tamperedItems = $this->validItems;
+    $tamperedItems[0]['unit_price'] = 1.00;
+    $tamperedItems[0]['name'] = 'Hacked Name';
+    $tamperedItems[0]['sku'] = 'HACKED';
+
+    $this->actingAs($this->user)
         ->postJson(route('pos.hold', $this->shop), [
-            'items' => $this->validItems,
+            'items' => $tamperedItems,
         ]);
 
     $heldSale = HeldSale::first();
 
     expect($heldSale->items)->toHaveCount(2);
     expect($heldSale->items[0]['variant_id'])->toBe($this->variant1->id);
-    expect($heldSale->items[0]['name'])->toBe('Test Product');
+    expect($heldSale->items[0]['name'])->toBe($this->variant1->name);
+    expect($heldSale->items[0]['sku'])->toBe($this->variant1->sku);
     expect($heldSale->items[0]['quantity'])->toBe(2);
-    expect($heldSale->items[0]['unit_price'])->toEqual(100.00);
+    expect((float) $heldSale->items[0]['unit_price'])->toBe((float) $this->variant1->price);
 });
 
 test('held sale calculates total amount correctly', function () {

@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\HeldSale;
 use App\Models\InventoryLocation;
+use App\Models\ProductPackagingType;
+use App\Models\ProductVariant;
 use App\Models\Shop;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -25,41 +27,75 @@ class HeldSaleService
         ?string $notes = null
     ): HeldSale {
         return DB::transaction(function () use ($shop, $items, $customerId, $notes) {
-            $variantIds = collect($items)->pluck('variant_id')->toArray();
+            $variantIds = collect($items)->pluck('variant_id')->unique()->all();
 
-            $locations = InventoryLocation::where('location_type', Shop::class)
+            $variants = ProductVariant::query()
+                ->with('product')
+                ->whereIn('id', $variantIds)
+                ->get()
+                ->keyBy('id');
+
+            $packagingIds = collect($items)->pluck('packaging_type_id')->filter()->unique()->all();
+            $packagingTypes = $packagingIds === []
+                ? collect()
+                : ProductPackagingType::query()->whereIn('id', $packagingIds)->get()->keyBy('id');
+
+            $locations = InventoryLocation::query()
+                ->where('location_type', Shop::class)
                 ->where('location_id', $shop->id)
                 ->whereIn('product_variant_id', $variantIds)
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('product_variant_id');
 
+            $snapshotItems = [];
+
             foreach ($items as $item) {
-                $location = $locations->get($item['variant_id']);
+                $variantId = $item['variant_id'];
+                $variant = $variants->get($variantId);
+
+                if (! $variant) {
+                    throw new \Exception("Product variant {$variantId} not found");
+                }
+
+                $location = $locations->get($variantId);
 
                 if (! $location) {
-                    throw new \Exception("Inventory location not found for variant ID {$item['variant_id']}");
+                    throw new \Exception("Inventory location not found for variant ID {$variantId}");
                 }
 
                 $availableStock = $location->quantity - $location->reserved_quantity;
 
                 if ($availableStock < $item['quantity']) {
                     throw new \Exception(
-                        "Insufficient stock to hold. Only {$availableStock} units available for variant ID {$item['variant_id']}"
+                        "Insufficient stock to hold. Only {$availableStock} units available for variant ID {$variantId}"
                     );
                 }
 
                 $location->increment('reserved_quantity', $item['quantity']);
+
+                $packagingType = isset($item['packaging_type_id'])
+                    ? $packagingTypes->get($item['packaging_type_id'])
+                    : null;
+
+                $snapshotItems[] = [
+                    'variant_id' => $variantId,
+                    'name' => $variant->name ?: $variant->product?->name,
+                    'sku' => $variant->sku,
+                    'quantity' => $item['quantity'],
+                    'unit_price' => (float) ($packagingType?->price ?? $variant->price),
+                    'packaging_type_id' => $packagingType?->id,
+                ];
             }
 
             $holdReference = $this->generateHoldReference($shop->id);
 
-            return HeldSale::create([
+            return HeldSale::query()->create([
                 'tenant_id' => auth()->user()->tenant_id,
                 'shop_id' => $shop->id,
                 'hold_reference' => $holdReference,
                 'customer_id' => $customerId,
-                'items' => $items,
+                'items' => $snapshotItems,
                 'notes' => $notes,
                 'held_by' => auth()->id(),
             ]);

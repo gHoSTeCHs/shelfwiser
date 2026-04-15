@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ConnectionStatus;
+use App\Http\Requests\Supplier\CancelPurchaseOrderRequest;
 use App\Http\Requests\Supplier\CreatePurchaseOrderRequest;
 use App\Http\Requests\Supplier\ReceivePurchaseOrderRequest;
 use App\Http\Requests\Supplier\RecordPaymentRequest;
 use App\Models\PurchaseOrder;
 use App\Models\Shop;
+use App\Models\SupplierConnection;
 use App\Models\Tenant;
 use App\Services\PurchaseOrderService;
-use App\Services\SupplierConnectionService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,7 +24,6 @@ class PurchaseOrderController extends Controller
 {
     public function __construct(
         private readonly PurchaseOrderService $purchaseOrderService,
-        private readonly SupplierConnectionService $connectionService
     ) {}
 
     /**
@@ -32,23 +33,14 @@ class PurchaseOrderController extends Controller
     {
         Gate::authorize('purchaseOrder.viewAny', PurchaseOrder::class);
 
-        $tenantId = auth()->user()->tenant_id;
-        $shopId = $request->input('shop_id');
-
-        $query = PurchaseOrder::forBuyer($tenantId)
-            ->with(['supplierTenant', 'shop', 'items.productVariant', 'createdBy']);
-
-        if ($shopId) {
-            $query->forShop($shopId);
-        }
-
-        $purchaseOrders = $query->orderBy('created_at', 'desc')->paginate(20);
-
-        $shops = Shop::where('tenant_id', $tenantId)->get(['id', 'name']);
+        $shopId = $request->input('shop_id') ? (int) $request->input('shop_id') : null;
 
         return Inertia::render('PurchaseOrders/Index', [
-            'purchaseOrders' => $purchaseOrders,
-            'shops' => $shops,
+            'purchaseOrders' => $this->purchaseOrderService->getPaginatedBuyerPurchaseOrders(
+                auth()->user()->tenant,
+                $shopId,
+            ),
+            'shops' => $this->purchaseOrderService->getShopsForDropdown(auth()->user()->tenant_id),
         ]);
     }
 
@@ -59,13 +51,10 @@ class PurchaseOrderController extends Controller
     {
         Gate::authorize('purchaseOrder.viewAsSupplier', auth()->user()->tenant);
 
-        $purchaseOrders = PurchaseOrder::forSupplier(auth()->user()->tenant_id)
-            ->with(['buyerTenant', 'shop', 'items.productVariant', 'createdBy'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-
         return Inertia::render('PurchaseOrders/Supplier', [
-            'purchaseOrders' => $purchaseOrders,
+            'purchaseOrders' => $this->purchaseOrderService->getPaginatedSupplierPurchaseOrders(
+                auth()->user()->tenant,
+            ),
         ]);
     }
 
@@ -73,38 +62,26 @@ class PurchaseOrderController extends Controller
     {
         Gate::authorize('purchaseOrder.viewAny', PurchaseOrder::class);
 
-        $tenantId = auth()->user()->tenant_id;
-        $shops = Shop::where('tenant_id', $tenantId)->get(['id', 'name']);
-
-        $connections = $this->connectionService->getConnectionsForBuyer(auth()->user()->tenant);
-        $approvedConnections = $connections->filter(fn ($conn) => $conn->status->canOrder());
-
-        $supplierCatalog = null;
         $selectedSupplierId = $request->input('supplier');
+        $supplierCatalog = null;
 
         if ($selectedSupplierId) {
-            $supplierTenant = Tenant::findOrFail($selectedSupplierId);
+            $supplierTenant = $this->resolveApprovedSupplier((int) $selectedSupplierId);
             $search = $request->input('search', '');
             $perPage = min((int) $request->input('per_page', 20), 50);
 
-            $query = $supplierTenant->supplierProfile
-                ->catalogItems()
-                ->where('is_available', true)
-                ->with(['product', 'pricingTiers']);
-
-            if ($search) {
-                $query->whereHas('product', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('slug', 'like', "%{$search}%");
-                });
-            }
-
-            $supplierCatalog = $query->orderBy('created_at', 'desc')->paginate($perPage);
+            $supplierCatalog = $this->purchaseOrderService->getSupplierCatalog(
+                $supplierTenant,
+                $search,
+                $perPage,
+            );
         }
 
         return Inertia::render('PurchaseOrders/Create', [
-            'shops' => $shops,
-            'supplierConnections' => $approvedConnections,
+            'shops' => $this->purchaseOrderService->getShopsForDropdown(auth()->user()->tenant_id),
+            'supplierConnections' => $this->purchaseOrderService->getApprovedConnectionsForBuyer(
+                auth()->user()->tenant,
+            ),
             'supplierCatalog' => $supplierCatalog,
             'selectedSupplierId' => $selectedSupplierId ? (int) $selectedSupplierId : null,
         ]);
@@ -112,13 +89,10 @@ class PurchaseOrderController extends Controller
 
     public function store(CreatePurchaseOrderRequest $request): RedirectResponse
     {
-        // Validate shop belongs to user's tenant
-        $shop = Shop::query()
-            ->where('tenant_id', auth()->user()->tenant_id)
-            ->findOrFail($request->input('shop_id'));
+        $shop = Shop::query()->findOrFail($request->validated('shop_id'));
+        Gate::authorize('purchaseOrder.create', $shop);
 
-        // Supplier tenant doesn't need validation as it's a different tenant (B2B)
-        $supplierTenant = Tenant::findOrFail($request->input('supplier_tenant_id'));
+        $supplierTenant = $this->resolveApprovedSupplier((int) $request->validated('supplier_tenant_id'));
 
         $po = $this->purchaseOrderService->createPurchaseOrder(
             auth()->user()->tenant,
@@ -192,6 +166,8 @@ class PurchaseOrderController extends Controller
 
     public function receive(ReceivePurchaseOrderRequest $request, PurchaseOrder $purchaseOrder): RedirectResponse
     {
+        Gate::authorize('purchaseOrder.receive', $purchaseOrder);
+
         $this->purchaseOrderService->receivePurchaseOrder(
             $purchaseOrder,
             auth()->user(),
@@ -202,21 +178,41 @@ class PurchaseOrderController extends Controller
             ->with('success', 'Purchase order received. Stock has been added to your inventory.');
     }
 
-    public function cancel(Request $request, PurchaseOrder $purchaseOrder): RedirectResponse
+    public function cancel(CancelPurchaseOrderRequest $request, PurchaseOrder $purchaseOrder): RedirectResponse
     {
         Gate::authorize('purchaseOrder.cancel', $purchaseOrder);
 
         $this->purchaseOrderService->cancelPurchaseOrder(
             $purchaseOrder,
-            $request->input('reason')
+            $request->user(),
+            $request->validated('reason')
         );
 
         return Redirect::back()
             ->with('success', 'Purchase order cancelled.');
     }
 
+    /**
+     * Resolve a supplier tenant only if the current tenant has an approved/active
+     * supplier connection with them. 404s otherwise — prevents enumeration.
+     */
+    private function resolveApprovedSupplier(int $supplierTenantId): Tenant
+    {
+        $buyerTenantId = auth()->user()->tenant_id;
+
+        SupplierConnection::query()
+            ->where('buyer_tenant_id', $buyerTenantId)
+            ->where('supplier_tenant_id', $supplierTenantId)
+            ->whereIn('status', [ConnectionStatus::APPROVED->value, ConnectionStatus::ACTIVE->value])
+            ->firstOrFail();
+
+        return Tenant::query()->findOrFail($supplierTenantId);
+    }
+
     public function recordPayment(RecordPaymentRequest $request, PurchaseOrder $purchaseOrder): RedirectResponse
     {
+        Gate::authorize('purchaseOrder.recordPayment', $purchaseOrder);
+
         $this->purchaseOrderService->recordPayment(
             $purchaseOrder,
             $request->validated(),

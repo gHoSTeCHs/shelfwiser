@@ -66,22 +66,28 @@ class WageAdvanceService
     /**
      * Create a wage advance request
      */
-    public function create(User $user, Shop $shop, array $data): WageAdvance
+    public function create(User $user, int $shopId, array $data): WageAdvance
     {
-        $eligibility = $this->calculateEligibility($user, $shop);
+        $shop = Shop::query()->findOrFail($shopId);
 
-        if (! $eligibility['eligible']) {
-            throw new \RuntimeException($eligibility['reason']);
-        }
+        return DB::transaction(function () use ($user, $shop, $shopId, $data) {
+            // Serialize concurrent advance requests for this user so we can re-check
+            // eligibility under a lock and prevent two requests from both passing the cap.
+            User::query()->whereKey($user->id)->lockForUpdate()->first();
 
-        if ($data['amount_requested'] > $eligibility['available_amount']) {
-            throw new \RuntimeException("Requested amount exceeds available limit of {$eligibility['available_amount']}");
-        }
+            $eligibility = $this->calculateEligibility($user, $shop);
 
-        return DB::transaction(function () use ($user, $shop, $data) {
-            $wageAdvance = WageAdvance::create([
+            if (! $eligibility['eligible']) {
+                throw new \RuntimeException($eligibility['reason']);
+            }
+
+            if ($data['amount_requested'] > $eligibility['available_amount']) {
+                throw new \RuntimeException("Requested amount exceeds available limit of {$eligibility['available_amount']}");
+            }
+
+            $wageAdvance = WageAdvance::query()->create([
                 'user_id' => $user->id,
-                'shop_id' => $shop->id,
+                'shop_id' => $shopId,
                 'tenant_id' => $user->tenant_id,
                 'amount_requested' => $data['amount_requested'],
                 'reason' => $data['reason'] ?? null,
@@ -101,6 +107,18 @@ class WageAdvanceService
     }
 
     /**
+     * Update the reason on a wage advance
+     */
+    public function updateReason(WageAdvance $wageAdvance, ?string $reason): WageAdvance
+    {
+        $wageAdvance->update(['reason' => $reason]);
+
+        $this->clearCache($wageAdvance->tenant_id);
+
+        return $wageAdvance->fresh();
+    }
+
+    /**
      * Approve a wage advance request
      */
     public function approve(
@@ -113,13 +131,13 @@ class WageAdvanceService
         $approvedAmount = $amountApproved ?? $wageAdvance->amount_requested;
 
         return DB::transaction(function () use ($wageAdvance, $approver, $approvedAmount, $installments, $notes) {
-            $lockedAdvance = WageAdvance::lockForUpdate()->find($wageAdvance->id);
+            $lockedAdvance = WageAdvance::query()->lockForUpdate()->find($wageAdvance->id);
 
             if (! $lockedAdvance->status->canApprove()) {
                 throw new \RuntimeException('Wage advance cannot be approved in current status');
             }
 
-            $lockedUser = User::lockForUpdate()->find($lockedAdvance->user_id);
+            $lockedUser = User::query()->lockForUpdate()->find($lockedAdvance->user_id);
 
             $eligibility = $this->calculateEligibility($lockedUser, $lockedAdvance->shop);
             if ($approvedAmount > $eligibility['available_amount']) {
@@ -179,19 +197,23 @@ class WageAdvanceService
     public function disburse(
         WageAdvance $wageAdvance,
         User $disburser,
-        ?Carbon $repaymentStartDate = null,
+        ?string $repaymentStartDate = null,
         ?string $notes = null
     ): WageAdvance {
         if (! $wageAdvance->status->canDisburse()) {
             throw new \RuntimeException('Wage advance cannot be disbursed in current status');
         }
 
-        return DB::transaction(function () use ($wageAdvance, $disburser, $repaymentStartDate, $notes) {
+        $parsedRepaymentDate = $repaymentStartDate
+            ? Carbon::parse($repaymentStartDate)
+            : null;
+
+        return DB::transaction(function () use ($wageAdvance, $disburser, $parsedRepaymentDate, $notes) {
             $wageAdvance->update([
                 'status' => WageAdvanceStatus::DISBURSED,
                 'disbursed_by_user_id' => $disburser->id,
                 'disbursed_at' => now(),
-                'repayment_start_date' => $repaymentStartDate ?? now()->addMonth()->startOfMonth(),
+                'repayment_start_date' => $parsedRepaymentDate ?? now()->addMonth()->startOfMonth(),
                 'notes' => $notes ?? $wageAdvance->notes,
             ]);
 
@@ -260,16 +282,30 @@ class WageAdvanceService
     }
 
     /**
+     * Get shops available for the approval queue filter UI
+     */
+    public function getShopsForApprovalQueue(User $user): \Illuminate\Database\Eloquent\Collection
+    {
+        if ($user->is_tenant_owner) {
+            return Shop::query()
+                ->where('tenant_id', $user->tenant_id)
+                ->get(['id', 'name']);
+        }
+
+        return $user->shops;
+    }
+
+    /**
      * Get wage advances for approval
      */
-    public function getAdvancesForApproval(User $manager, ?Shop $shop = null): Collection
+    public function getAdvancesForApproval(User $manager, ?int $shopId = null): Collection
     {
-        $query = WageAdvance::where('tenant_id', $manager->tenant_id)
+        $query = WageAdvance::query()->where('tenant_id', $manager->tenant_id)
             ->where('status', WageAdvanceStatus::PENDING)
-            ->with(['user', 'shop', 'approvedBy']);
+            ->with(['user.role', 'shop', 'approvedBy']);
 
-        if ($shop) {
-            $query->where('shop_id', $shop->id);
+        if ($shopId) {
+            $query->where('shop_id', $shopId);
         } elseif (! $manager->is_tenant_owner) {
             $managerShopIds = $manager->shops()->pluck('shops.id');
             $query->whereIn('shop_id', $managerShopIds);
@@ -299,7 +335,7 @@ class WageAdvanceService
         ?Carbon $startDate = null,
         ?Carbon $endDate = null
     ): Collection {
-        $query = WageAdvance::where('user_id', $user->id)
+        $query = WageAdvance::query()->where('user_id', $user->id)
             ->where('tenant_id', $user->tenant_id)
             ->with(['shop', 'approvedBy', 'disbursedBy']);
 
@@ -323,7 +359,7 @@ class WageAdvanceService
      */
     public function getActiveAdvancesForPayroll(User $employee, Carbon $payrollDate): Collection
     {
-        return WageAdvance::where('tenant_id', $employee->tenant_id)
+        return WageAdvance::query()->where('tenant_id', $employee->tenant_id)
             ->where('user_id', $employee->id)
             ->whereIn('status', [WageAdvanceStatus::DISBURSED, WageAdvanceStatus::REPAYING])
             ->where('repayment_start_date', '<=', $payrollDate)
@@ -335,40 +371,46 @@ class WageAdvanceService
      */
     public function getStatistics(int $tenantId, ?Shop $shop = null, ?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
-        $query = WageAdvance::where('tenant_id', $tenantId);
+        $base = WageAdvance::query()->where('tenant_id', $tenantId);
 
         if ($shop) {
-            $query->where('shop_id', $shop->id);
+            $base->where('shop_id', $shop->id);
         }
 
         if ($startDate) {
-            $query->where('requested_at', '>=', $startDate);
+            $base->where('requested_at', '>=', $startDate);
         }
 
         if ($endDate) {
-            $query->where('requested_at', '<=', $endDate);
+            $base->where('requested_at', '<=', $endDate);
         }
 
-        $all = $query->get();
+        $statusCounts = (clone $base)
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $totalDisbursed = (clone $base)
+            ->whereIn('status', [WageAdvanceStatus::DISBURSED, WageAdvanceStatus::REPAYING, WageAdvanceStatus::REPAID])
+            ->selectRaw('COALESCE(SUM(COALESCE(amount_approved, amount_requested)), 0) as total')
+            ->value('total');
+
+        $totalOutstanding = (clone $base)
+            ->whereIn('status', [WageAdvanceStatus::DISBURSED, WageAdvanceStatus::REPAYING])
+            ->selectRaw('COALESCE(SUM(COALESCE(amount_approved, amount_requested) - COALESCE(amount_repaid, 0)), 0) as total')
+            ->value('total');
 
         return [
-            'total_advances' => $all->count(),
-            'pending_advances' => $all->where('status', WageAdvanceStatus::PENDING)->count(),
-            'approved_advances' => $all->where('status', WageAdvanceStatus::APPROVED)->count(),
-            'disbursed_advances' => $all->where('status', WageAdvanceStatus::DISBURSED)->count(),
-            'repaying_advances' => $all->where('status', WageAdvanceStatus::REPAYING)->count(),
-            'repaid_advances' => $all->where('status', WageAdvanceStatus::REPAID)->count(),
-            'total_amount_requested' => $all->sum('amount_requested'),
-            'total_amount_approved' => $all->whereNotNull('amount_approved')->sum('amount_approved'),
-            'total_amount_disbursed' => $all->whereIn('status', [
-                WageAdvanceStatus::DISBURSED,
-                WageAdvanceStatus::REPAYING,
-                WageAdvanceStatus::REPAID,
-            ])->sum(fn ($advance) => $advance->amount_approved ?? $advance->amount_requested),
-            'total_amount_outstanding' => $all->whereIn('status', [
-                WageAdvanceStatus::DISBURSED,
-                WageAdvanceStatus::REPAYING,
-            ])->sum(fn ($advance) => $advance->getRemainingBalance()),
+            'total_advances' => (int) $statusCounts->sum(),
+            'pending_advances' => (int) $statusCounts->get(WageAdvanceStatus::PENDING->value, 0),
+            'approved_advances' => (int) $statusCounts->get(WageAdvanceStatus::APPROVED->value, 0),
+            'disbursed_advances' => (int) $statusCounts->get(WageAdvanceStatus::DISBURSED->value, 0),
+            'repaying_advances' => (int) $statusCounts->get(WageAdvanceStatus::REPAYING->value, 0),
+            'repaid_advances' => (int) $statusCounts->get(WageAdvanceStatus::REPAID->value, 0),
+            'total_amount_requested' => (float) (clone $base)->sum('amount_requested'),
+            'total_amount_approved' => (float) (clone $base)->whereNotNull('amount_approved')->sum('amount_approved'),
+            'total_amount_disbursed' => (float) $totalDisbursed,
+            'total_amount_outstanding' => (float) $totalOutstanding,
         ];
     }
 

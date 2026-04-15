@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\OrderStatus;
 use App\Enums\PayrollStatus;
 use App\Enums\PayType;
 use App\Enums\TaxHandling;
@@ -13,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Throwable;
 
@@ -167,7 +169,7 @@ readonly class PayrollService
             throw new RuntimeException("Employee $employee->name has no payroll details configured");
         }
 
-        $shop = $employee->shops()->first();
+        $shop = $employee->shops->first();
 
         if (! $shop) {
             throw new RuntimeException("Employee $employee->name is not assigned to any shop");
@@ -258,7 +260,7 @@ readonly class PayrollService
                 break;
         }
 
-        $commission = $this->calculateCommission($payrollDetail, $payrollPeriod->start_date, $payrollPeriod->end_date);
+        $commission = $this->calculateCommission($employee, $payrollDetail, $payrollPeriod->start_date, $payrollPeriod->end_date);
 
         $grossPay = $baseSalary + $regularPay + $overtimePay + $commission;
 
@@ -280,7 +282,7 @@ readonly class PayrollService
     protected function calculateDeductions(User $employee, PayrollPeriod $payrollPeriod, float $grossPay): array
     {
         $payrollDetail = $employee->employeePayrollDetail;
-        $shop = $employee->shops()->first();
+        $shop = $employee->shops->first();
 
         if (! $shop) {
             throw new RuntimeException("Employee {$employee->name} is not assigned to any shop");
@@ -357,7 +359,7 @@ readonly class PayrollService
      */
     protected function getEmployeesForPayroll(PayrollPeriod $payrollPeriod): Collection
     {
-        $query = User::where('tenant_id', $payrollPeriod->tenant_id)
+        $query = User::query()->where('tenant_id', $payrollPeriod->tenant_id)
             ->where('is_active', true)
             ->whereHas('employeePayrollDetail', function ($q) use ($payrollPeriod) {
                 $q->where(function ($query) use ($payrollPeriod) {
@@ -431,11 +433,19 @@ readonly class PayrollService
                 'status' => PayrollStatus::PAID,
             ]);
 
+            $payrollPeriod->loadMissing('payslips.user');
+
+            $userIds = $payrollPeriod->payslips->pluck('user_id');
+            $advancesByUser = \App\Models\WageAdvance::query()
+                ->whereIn('user_id', $userIds)
+                ->where('tenant_id', $payrollPeriod->tenant_id)
+                ->whereIn('status', [\App\Enums\WageAdvanceStatus::DISBURSED, \App\Enums\WageAdvanceStatus::REPAYING])
+                ->where('repayment_start_date', '<=', $payrollPeriod->end_date)
+                ->get()
+                ->groupBy('user_id');
+
             foreach ($payrollPeriod->payslips as $payslip) {
-                $activeAdvances = $this->wageAdvanceService->getActiveAdvancesForPayroll(
-                    $payslip->user,
-                    $payrollPeriod->end_date
-                );
+                $activeAdvances = $advancesByUser->get($payslip->user_id, collect());
 
                 foreach ($activeAdvances as $advance) {
                     $installmentAmount = $advance->getInstallmentAmount();
@@ -460,7 +470,30 @@ readonly class PayrollService
      *
      * @throws Throwable
      */
-    public function cancelPayroll(PayrollPeriod $payrollPeriod, string $reason): PayrollPeriod
+    public function deletePayrollPeriod(PayrollPeriod $payrollPeriod, User $user): void
+    {
+        if (! $payrollPeriod->canBeDeleted()) {
+            throw new RuntimeException('Payroll period cannot be deleted in its current status: '.$payrollPeriod->status->value);
+        }
+
+        if ($payrollPeriod->payRun()->exists()) {
+            throw new RuntimeException('Cannot delete payroll period — a pay run has been generated. Cancel the pay run first.');
+        }
+
+        DB::transaction(function () use ($payrollPeriod) {
+            $payrollPeriod->payslips()->delete();
+            $payrollPeriod->delete();
+        });
+
+        Log::info('Payroll period deleted', [
+            'payroll_period_id' => $payrollPeriod->id,
+            'deleted_by' => $user->id,
+        ]);
+
+        $this->clearCache($payrollPeriod->tenant_id);
+    }
+
+    public function cancelPayroll(PayrollPeriod $payrollPeriod, string $reason, ?int $cancelledByUserId = null): PayrollPeriod
     {
         trigger_error('PayrollService::cancelPayroll() is deprecated. Use PayRunService::cancelPayRun() instead.', E_USER_DEPRECATED);
 
@@ -468,9 +501,11 @@ readonly class PayrollService
             throw new RuntimeException('Payroll cannot be cancelled in current status');
         }
 
-        return DB::transaction(function () use ($payrollPeriod, $reason) {
+        return DB::transaction(function () use ($payrollPeriod, $reason, $cancelledByUserId) {
             foreach ($payrollPeriod->payslips as $payslip) {
-                $payslip->cancel($reason, auth()->id());
+                if ($cancelledByUserId !== null) {
+                    $payslip->cancel($reason, $cancelledByUserId);
+                }
             }
 
             $payrollPeriod->update([
@@ -530,6 +565,7 @@ readonly class PayrollService
      * Calculate commission for an employee based on their sales
      */
     protected function calculateCommission(
+        User $employee,
         \App\Models\EmployeePayrollDetail $payrollDetail,
         Carbon $startDate,
         Carbon $endDate
@@ -538,7 +574,12 @@ readonly class PayrollService
             return 0;
         }
 
-        $salesAmount = $this->getEmployeeSales($payrollDetail->user_id, $startDate, $endDate);
+        $salesAmount = $this->getEmployeeSales(
+            $employee->id,
+            $employee->tenant_id,
+            $startDate,
+            $endDate
+        );
 
         return $payrollDetail->calculateCommission($salesAmount);
     }
@@ -546,14 +587,12 @@ readonly class PayrollService
     /**
      * Get total completed sales for an employee in a date range
      */
-    protected function getEmployeeSales(int $userId, Carbon $startDate, Carbon $endDate): float
+    protected function getEmployeeSales(int $userId, int $tenantId, Carbon $startDate, Carbon $endDate): float
     {
-        $user = User::find($userId);
-
-        return \App\Models\Order::where('created_by', $userId)
-            ->where('tenant_id', $user->tenant_id)
+        return \App\Models\Order::query()->where('created_by', $userId)
+            ->where('tenant_id', $tenantId)
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', 'completed')
+            ->where('status', OrderStatus::DELIVERED)
             ->sum('total_amount');
     }
 
@@ -587,6 +626,19 @@ readonly class PayrollService
         }
 
         return $total;
+    }
+
+    public function loadPayrollPeriodRelations(PayrollPeriod $payrollPeriod): PayrollPeriod
+    {
+        return $payrollPeriod->load(['payslips.user', 'shop', 'processedBy', 'approvedBy']);
+    }
+
+    public function getPayslipsForUser(User $user): Collection
+    {
+        return Payslip::forUser($user->id)
+            ->with(['payrollPeriod', 'shop'])
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     /**

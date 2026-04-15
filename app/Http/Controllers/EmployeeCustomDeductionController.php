@@ -64,8 +64,9 @@ class EmployeeCustomDeductionController extends Controller
     public function update(UpdateEmployeeCustomDeductionRequest $request, User $employee, EmployeeCustomDeduction $deduction): RedirectResponse
     {
         Gate::authorize('updatePayrollDetails', $employee);
+        Gate::authorize('manage', [$deduction, $employee]);
 
-        $this->service->updateDeduction($deduction, $employee, $request->validated());
+        $this->service->updateDeduction($deduction, $request->validated());
 
         return redirect()
             ->route('users.deductions.index', $employee)
@@ -75,8 +76,9 @@ class EmployeeCustomDeductionController extends Controller
     public function destroy(User $employee, EmployeeCustomDeduction $deduction): RedirectResponse
     {
         Gate::authorize('updatePayrollDetails', $employee);
+        Gate::authorize('manage', [$deduction, $employee]);
 
-        $this->service->deleteDeduction($deduction, $employee);
+        $this->service->deleteDeduction($deduction);
 
         return redirect()
             ->route('users.deductions.index', $employee)
@@ -86,8 +88,9 @@ class EmployeeCustomDeductionController extends Controller
     public function toggleStatus(User $employee, EmployeeCustomDeduction $deduction): RedirectResponse
     {
         Gate::authorize('updatePayrollDetails', $employee);
+        Gate::authorize('manage', [$deduction, $employee]);
 
-        $status = $this->service->toggleDeductionStatus($deduction, $employee);
+        $status = $this->service->toggleDeductionStatus($deduction);
 
         return redirect()
             ->back()

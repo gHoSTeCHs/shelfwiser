@@ -2,33 +2,14 @@
 
 namespace App\Http\Requests\Supplier;
 
-use App\Models\PurchaseOrder;
-use App\Models\Shop;
+use App\Enums\ConnectionStatus;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class CreatePurchaseOrderRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Check if user can create purchase orders
-        if (!Gate::allows('purchaseOrder.create', PurchaseOrder::class)) {
-            return false;
-        }
-
-        // Validate shop belongs to user's tenant (defense in depth)
-        $shopId = $this->input('shop_id');
-        if ($shopId) {
-            $shop = Shop::where('id', $shopId)
-                ->where('tenant_id', auth()->user()->tenant_id)
-                ->first();
-
-            if (!$shop) {
-                return false;
-            }
-        }
-
         return true;
     }
 
@@ -38,7 +19,14 @@ class CreatePurchaseOrderRequest extends FormRequest
         $supplierTenantId = $this->input('supplier_tenant_id');
 
         return [
-            'supplier_tenant_id' => ['bail', 'required', 'exists:tenants,id'],
+            'supplier_tenant_id' => [
+                'bail',
+                'required',
+                'integer',
+                Rule::exists('supplier_connections', 'supplier_tenant_id')
+                    ->where('buyer_tenant_id', $tenantId)
+                    ->whereIn('status', [ConnectionStatus::APPROVED->value, ConnectionStatus::ACTIVE->value]),
+            ],
             'shop_id' => [
                 'bail',
                 'required',
@@ -55,6 +43,8 @@ class CreatePurchaseOrderRequest extends FormRequest
                 Rule::exists('supplier_catalog_items', 'id')->where(function ($query) use ($supplierTenantId) {
                     if ($supplierTenantId) {
                         $query->where('supplier_tenant_id', $supplierTenantId);
+                    } else {
+                        $query->whereRaw('1 = 0');
                     }
                 }),
             ],
@@ -67,7 +57,7 @@ class CreatePurchaseOrderRequest extends FormRequest
     {
         return [
             'supplier_tenant_id.required' => 'Please select a supplier for this purchase order.',
-            'supplier_tenant_id.exists' => 'The selected supplier does not exist.',
+            'supplier_tenant_id.exists' => 'The selected supplier is not an approved supplier for your organization.',
             'shop_id.required' => 'Please select which shop will receive this order.',
             'shop_id.exists' => 'The selected shop does not exist or does not belong to your organization.',
             'expected_delivery_date.after' => 'Expected delivery date must be in the future.',

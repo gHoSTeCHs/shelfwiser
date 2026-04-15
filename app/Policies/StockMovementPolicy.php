@@ -25,7 +25,10 @@ class StockMovementPolicy
 
         $variant = $stockMovement->productVariant;
         if ($variant && $variant->product) {
-            return $user->shops()->where('shops.id', $variant->product->shop_id)->exists();
+            return $user->shops()
+                ->where('shops.id', $variant->product->shop_id)
+                ->where('shops.is_active', true)
+                ->exists();
         }
 
         return false;

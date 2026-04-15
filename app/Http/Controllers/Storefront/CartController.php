@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\Enums\MaterialOption;
-use App\Http\Controllers\Controller;
 use App\Http\Requests\Storefront\AddServiceToCartApiRequest;
 use App\Http\Requests\Storefront\AddToCartApiRequest;
 use App\Http\Requests\Storefront\UpdateCartItemApiRequest;
@@ -15,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class CartController extends Controller
+class CartController extends StorefrontBaseController
 {
     public function __construct(
         protected CartService $cartService
@@ -26,6 +25,8 @@ class CartController extends Controller
      */
     public function index(Shop $shop): Response
     {
+        $this->ensureCustomerCanAccessShop($shop);
+
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
         $cartSummary = $this->cartService->getCartSummary($cart);
 
@@ -49,6 +50,8 @@ class CartController extends Controller
      */
     public function store(AddToCartApiRequest $request, Shop $shop): RedirectResponse
     {
+        $this->ensureCustomerCanAccessShop($shop);
+
         $validated = $request->validated();
 
         try {
@@ -74,6 +77,8 @@ class CartController extends Controller
      */
     public function storeService(AddServiceToCartApiRequest $request, Shop $shop): RedirectResponse
     {
+        $this->ensureCustomerCanAccessShop($shop);
+
         $validated = $request->validated();
 
         try {
@@ -106,6 +111,8 @@ class CartController extends Controller
      */
     public function update(UpdateCartItemApiRequest $request, Shop $shop, CartItem $item): RedirectResponse
     {
+        $this->ensureCustomerCanAccessShop($shop);
+
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
         if ($item->cart_id !== $cart->id) {
             abort(403, 'Unauthorized');
@@ -129,6 +136,8 @@ class CartController extends Controller
      */
     public function destroy(Shop $shop, CartItem $item): RedirectResponse
     {
+        $this->ensureCustomerCanAccessShop($shop);
+
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
         if ($item->cart_id !== $cart->id) {
             abort(403, 'Unauthorized');

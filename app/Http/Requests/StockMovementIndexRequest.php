@@ -17,7 +17,7 @@ class StockMovementIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
+            'shop' => ['nullable', 'integer', 'exists:shops,id,tenant_id,'.$this->user()->tenant_id],
         ];
     }
 }

@@ -3,13 +3,14 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CreateProductRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('create', \App\Models\Product::class);
+        return true;
     }
 
     public function rules(): array
@@ -52,7 +53,7 @@ class CreateProductRequest extends FormRequest
                 'string',
                 Rule::unique('product_variants', 'sku')
                     ->where(fn ($query) => $query->whereExists(
-                        fn ($q) => $q->select(\DB::raw(1))
+                        fn ($q) => $q->select(DB::raw(1))
                             ->from('products')
                             ->whereColumn('products.id', 'product_variants.product_id')
                             ->where('products.tenant_id', $tenantId)
@@ -66,7 +67,7 @@ class CreateProductRequest extends FormRequest
                 'string',
                 Rule::unique('product_variants', 'barcode')
                     ->where(fn ($query) => $query->whereExists(
-                        fn ($q) => $q->select(\DB::raw(1))
+                        fn ($q) => $q->select(DB::raw(1))
                             ->from('products')
                             ->whereColumn('products.id', 'product_variants.product_id')
                             ->where('products.tenant_id', $tenantId)
@@ -91,7 +92,7 @@ class CreateProductRequest extends FormRequest
                 'string',
                 Rule::unique('product_variants', 'sku')
                     ->where(fn ($query) => $query->whereExists(
-                        fn ($q) => $q->select(\DB::raw(1))
+                        fn ($q) => $q->select(DB::raw(1))
                             ->from('products')
                             ->whereColumn('products.id', 'product_variants.product_id')
                             ->where('products.tenant_id', $tenantId)
@@ -104,7 +105,7 @@ class CreateProductRequest extends FormRequest
                 'string',
                 Rule::unique('product_variants', 'barcode')
                     ->where(fn ($query) => $query->whereExists(
-                        fn ($q) => $q->select(\DB::raw(1))
+                        fn ($q) => $q->select(DB::raw(1))
                             ->from('products')
                             ->whereColumn('products.id', 'product_variants.product_id')
                             ->where('products.tenant_id', $tenantId)

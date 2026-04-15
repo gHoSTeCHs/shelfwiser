@@ -32,6 +32,41 @@ class ShopService
             ->get(['id', 'slug', 'label', 'description', 'config_schema']);
     }
 
+    /**
+     * Soft-delete a shop. Refuses if the shop has open orders (anything not
+     * cancelled, refunded, or delivered), since deleting it would orphan
+     * customer-facing records.
+     *
+     * @throws \RuntimeException
+     */
+    public function delete(Shop $shop): void
+    {
+        $hasOpenOrders = \App\Models\Order::query()
+            ->where('shop_id', $shop->id)
+            ->whereNotIn('status', ['cancelled', 'refunded', 'delivered'])
+            ->exists();
+
+        if ($hasOpenOrders) {
+            throw new \RuntimeException('Cannot delete a shop with open orders. Resolve them first.');
+        }
+
+        $shop->delete();
+
+        \Illuminate\Support\Facades\Log::info('Shop deleted', ['shop_id' => $shop->id, 'name' => $shop->name]);
+    }
+
+    public function update(Shop $shop, array $validated): Shop
+    {
+        $allowed = [
+            'name', 'inventory_model', 'address', 'city', 'state', 'country',
+            'phone', 'email', 'is_active', 'shop_type_slug', 'config',
+        ];
+
+        $shop->update(array_intersect_key($validated, array_flip($allowed)));
+
+        return $shop->refresh();
+    }
+
     public function updateStorefrontSettings(Shop $shop, array $validated): void
     {
         $storefrontSettings = [

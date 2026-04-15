@@ -5,13 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CreateProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
-use App\Models\ProductCategory;
-use App\Models\ProductTemplate;
-use App\Models\ProductType;
 use App\Models\Shop;
-use App\Models\StockMovement;
 use App\Services\ProductService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -29,57 +26,16 @@ class ProductController extends Controller
     {
         Gate::authorize('viewAny', Product::class);
 
-        $tenantId = auth()->user()->tenant_id;
-
         return Inertia::render('Products/Index', [
-            'products' => Product::query()->where('tenant_id', $tenantId)
-                ->with([
-                    'type:id,slug,label',
-                    'category:id,name,slug',
-                    'shop:id,name,slug',
-                    'variants.inventoryLocations',
-                    'images' => function ($query) {
-                        $query->ordered()->limit(1);
-                    },
-                ])
-                ->withCount('variants')
-                ->latest()
-                ->paginate(20),
+            'products' => $this->productService->getProductsForIndex(),
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         Gate::authorize('create', Product::class);
 
-        $tenantId = auth()->user()->tenant_id;
-
-        $shops = Shop::query()->where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->get(['id', 'name', 'slug', 'inventory_model']);
-
-        $productTypes = ProductType::accessibleTo($tenantId)
-            ->where('is_active', true)
-            ->get(['id', 'slug', 'label', 'description', 'config_schema', 'option_templates', 'supports_variants', 'requires_batch_tracking', 'requires_serial_tracking']);
-
-        $categories = ProductCategory::query()->where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->whereNull('parent_id')
-            ->with('children')
-            ->get(['id', 'name', 'slug']);
-
-        $templates = ProductTemplate::availableFor($tenantId)
-            ->active()
-            ->with(['productType', 'category'])
-            ->orderBy('name')
-            ->get();
-
-        return Inertia::render('Products/Create', [
-            'shops' => $shops,
-            'productTypes' => $productTypes,
-            'categories' => $categories,
-            'templates' => $templates,
-        ]);
+        return Inertia::render('Products/Create', $this->productService->getCreateFormData($request->user()->tenant_id));
     }
 
     /**
@@ -87,10 +43,9 @@ class ProductController extends Controller
      */
     public function store(CreateProductRequest $request): RedirectResponse
     {
-        // Validate shop belongs to user's tenant
-        $shop = Shop::query()
-            ->where('tenant_id', $request->user()->tenant_id)
-            ->findOrFail($request->input('shop_id'));
+        Gate::authorize('create', Product::class);
+
+        $shop = Shop::query()->findOrFail($request->validated()['shop_id']);
 
         $product = $this->productService->create(
             $request->validated(),
@@ -106,41 +61,12 @@ class ProductController extends Controller
     {
         Gate::authorize('view', $product);
 
-        $product->load([
-            'type',
-            'category',
-            'shop',
-            'variants.inventoryLocations.location',
-            'variants.packagingTypes',
-            'variants.optionValues',
-            'options.values',
-            'images' => function ($query) {
-                $query->ordered();
-            },
-            'variants.images' => function ($query) {
-                $query->ordered();
-            },
-        ]);
-
-        $tenantId = auth()->user()->tenant_id;
-
-        $availableShops = Shop::query()->where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->get(['id', 'name']);
-
-        $variantIds = $product->variants->pluck('id');
-
-        $recentMovements = StockMovement::query()->whereIn('product_variant_id', $variantIds)
-            ->with(['productVariant', 'fromLocation.location', 'toLocation.location'])
-            ->latest()
-            ->limit(10)
-            ->get();
+        $showData = $this->productService->getProductShowData($product);
 
         return Inertia::render('Products/Show', [
             'product' => $product,
             'can_manage' => auth()->user()->can('manage', $product),
-            'available_shops' => $availableShops,
-            'recent_movements' => $recentMovements,
+            ...$showData,
         ]);
     }
 
@@ -148,36 +74,11 @@ class ProductController extends Controller
     {
         Gate::authorize('manage', $product);
 
-        $product->load([
-            'type',
-            'category',
-            'variants.packagingTypes',
-            'variants.optionValues',
-            'options.values',
-            'images' => function ($query) {
-                $query->ordered();
-            },
-            'variants.images' => function ($query) {
-                $query->ordered();
-            },
-        ]);
-
-        $tenantId = auth()->user()->tenant_id;
-
-        $productTypes = ProductType::accessibleTo($tenantId)
-            ->where('is_active', true)
-            ->get(['id', 'slug', 'label', 'description', 'config_schema', 'option_templates', 'supports_variants', 'requires_batch_tracking', 'requires_serial_tracking']);
-
-        $categories = ProductCategory::query()->where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->whereNull('parent_id')
-            ->with('children')
-            ->get(['id', 'name', 'slug']);
+        $formData = $this->productService->getEditFormData($product);
 
         return Inertia::render('Products/Edit', [
             'product' => $product,
-            'productTypes' => $productTypes,
-            'categories' => $categories,
+            ...$formData,
         ]);
     }
 
@@ -198,9 +99,13 @@ class ProductController extends Controller
     {
         Gate::authorize('delete', $product);
 
-        $product->delete();
+        try {
+            $this->productService->delete($product);
 
-        return Redirect::route('products.index')
-            ->with('success', 'Product deleted successfully.');
+            return Redirect::route('products.index')
+                ->with('success', 'Product deleted successfully.');
+        } catch (\RuntimeException $e) {
+            return Redirect::back()->with('error', $e->getMessage());
+        }
     }
 }

@@ -19,7 +19,6 @@ class Order extends Model
     use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'tenant_id',
         'shop_id',
         'customer_id',
         'order_number',
@@ -27,8 +26,6 @@ class Order extends Model
         'order_type',
         'tracking_number',
         'shipping_carrier',
-        'status',
-        'payment_status',
         'payment_method',
         'payment_reference',
         'subtotal',
@@ -36,7 +33,6 @@ class Order extends Model
         'discount_amount',
         'shipping_cost',
         'total_amount',
-        'paid_amount',
         'customer_notes',
         'internal_notes',
         'cancellation_reason',
@@ -52,12 +48,10 @@ class Order extends Model
         'refunded_at',
         'estimated_delivery_date',
         'actual_delivery_date',
-        'created_by',
         'packed_by',
         'shipped_by',
         'delivered_by',
         'cancelled_by',
-        'refunded_by',
     ];
 
     protected function casts(): array

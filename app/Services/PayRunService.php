@@ -102,7 +102,7 @@ class PayRunService
     public function getOpenPeriods(): Collection
     {
         return PayrollPeriod::query()
-            ->where('status', 'open')
+            ->where('status', PayrollStatus::DRAFT)
             ->orderByDesc('start_date')
             ->get(['id', 'period_name', 'start_date', 'end_date']);
     }
@@ -122,14 +122,27 @@ class PayRunService
      *
      * @throws RuntimeException if overlapping period exists
      */
+    public function findByPayrollPeriod(PayrollPeriod $payrollPeriod): ?PayRun
+    {
+        return PayRun::query()->where('payroll_period_id', $payrollPeriod->id)->first();
+    }
+
     public function createPayrollPeriod(
         int $tenantId,
         ?int $shopId,
-        Carbon $startDate,
-        Carbon $endDate,
-        Carbon $paymentDate,
+        string $startDate,
+        string $endDate,
+        string $paymentDate,
         ?string $periodName = null
     ): PayrollPeriod {
+        $startDate = Carbon::parse($startDate);
+        $endDate = Carbon::parse($endDate);
+        $paymentDate = Carbon::parse($paymentDate);
+
+        if ($startDate->gte($endDate)) {
+            throw new \InvalidArgumentException('Start date must be before end date.');
+        }
+
         return DB::transaction(function () use ($tenantId, $shopId, $startDate, $endDate, $paymentDate, $periodName) {
             $overlapping = PayrollPeriod::query()
                 ->where('tenant_id', $tenantId)
@@ -437,6 +450,14 @@ class PayRunService
                 ? EmployeeDeduction::query()->whereIn('id', $allDeductionIds)->get()->keyBy('id')
                 : collect();
 
+            $advancesByUser = \App\Models\WageAdvance::query()
+                ->whereIn('user_id', $userIds)
+                ->where('tenant_id', $payRun->tenant_id)
+                ->whereIn('status', [\App\Enums\WageAdvanceStatus::DISBURSED, \App\Enums\WageAdvanceStatus::REPAYING])
+                ->where('repayment_start_date', '<=', $periodEnd)
+                ->get()
+                ->groupBy('user_id');
+
             foreach ($items as $item) {
                 $ytdData = $ytdDataByUser->get($item->user_id, $emptyYtd);
 
@@ -455,8 +476,8 @@ class PayRunService
                     'gross_earnings' => $item->gross_earnings,
                     'total_deductions' => $item->total_deductions,
                     'net_pay' => $item->net_pay,
-                    'income_tax'        => $taxCalc['tax'] ?? 0,
-                    'pension_employee'  => $pensionEmployee,
+                    'income_tax' => $taxCalc['tax'] ?? 0,
+                    'pension_employee' => $pensionEmployee,
                     'ytd_gross' => $ytdData['ytd_gross'] + $item->gross_earnings,
                     'ytd_tax' => $ytdData['ytd_tax'] + ($taxCalc['tax'] ?? 0),
                     'ytd_pension' => $ytdData['ytd_pension'] + $pensionEmployee,
@@ -476,7 +497,13 @@ class PayRunService
 
                 $this->updateDeductionRecords($item, $employeeDeductions);
 
-                $this->recordWageAdvanceRepayments($item, $periodEnd);
+                $activeAdvances = $advancesByUser->get($item->user_id, collect());
+                foreach ($activeAdvances as $advance) {
+                    $installmentAmount = $advance->getInstallmentAmount();
+                    if ($installmentAmount > 0) {
+                        $this->wageAdvanceService->recordRepayment($advance, $installmentAmount);
+                    }
+                }
             }
 
             $payRun->update([

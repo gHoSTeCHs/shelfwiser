@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\DTOs\DateRange;
 use App\Enums\WageAdvanceStatus;
-use App\Models\Shop;
+use App\Http\Requests\ApproveWageAdvanceRequest;
+use App\Http\Requests\CancelWageAdvanceRequest;
+use App\Http\Requests\DisburseWageAdvanceRequest;
+use App\Http\Requests\RecordWageAdvanceRepaymentRequest;
+use App\Http\Requests\RejectWageAdvanceRequest;
+use App\Http\Requests\StoreWageAdvanceRequest;
+use App\Http\Requests\UpdateWageAdvanceRequest;
 use App\Models\WageAdvance;
 use App\Models\WageAdvanceRepayment;
 use App\Services\WageAdvanceRepaymentService;
 use App\Services\WageAdvanceService;
-use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -30,24 +36,22 @@ class WageAdvanceController extends Controller
         Gate::authorize('viewAny', WageAdvance::class);
 
         $user = $request->user();
+        $dateRange = DateRange::fromRequest($request->only(['start_date', 'end_date']), 'start_date', 'end_date');
         $status = $request->input('status');
-        $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : now()->startOfMonth();
-        $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : now()->endOfMonth();
-
         $statusEnum = $status ? WageAdvanceStatus::from($status) : null;
 
         $wageAdvances = $this->wageAdvanceService->getUserAdvances(
             $user,
             $statusEnum,
-            $startDate,
-            $endDate
+            $dateRange->start,
+            $dateRange->end
         );
 
         $statistics = $this->wageAdvanceService->getStatistics(
             $user->tenant_id,
             null,
-            $startDate,
-            $endDate
+            $dateRange->start,
+            $dateRange->end
         );
 
         $shop = $user->shops()->first();
@@ -59,8 +63,8 @@ class WageAdvanceController extends Controller
             'eligibility' => $eligibility,
             'filters' => [
                 'status' => $status,
-                'start_date' => $startDate->toDateString(),
-                'end_date' => $endDate->toDateString(),
+                'start_date' => $dateRange->start->toDateString(),
+                'end_date' => $dateRange->end->toDateString(),
             ],
             'statusOptions' => collect(WageAdvanceStatus::cases())->map(fn ($case) => [
                 'value' => $case->value,
@@ -74,19 +78,19 @@ class WageAdvanceController extends Controller
      */
     public function approvalQueue(Request $request): Response
     {
+        Gate::authorize('viewAny', WageAdvance::class);
+
         $user = $request->user();
         $shopId = $request->input('shop_id');
 
-        $shop = $shopId ? Shop::findOrFail($shopId) : null;
-
-        $wageAdvances = $this->wageAdvanceService->getAdvancesForApproval($user, $shop);
+        $wageAdvances = $this->wageAdvanceService->getAdvancesForApproval($user, $shopId ? (int) $shopId : null);
 
         return Inertia::render('WageAdvances/Approve', [
             'wageAdvances' => $wageAdvances,
             'filters' => [
                 'shop_id' => $shopId,
             ],
-            'shops' => $user->is_tenant_owner ? Shop::where('tenant_id', $user->tenant_id)->get() : $user->shops,
+            'shops' => $this->wageAdvanceService->getShopsForApprovalQueue($user),
         ]);
     }
 
@@ -115,24 +119,15 @@ class WageAdvanceController extends Controller
     /**
      * Store a newly created wage advance
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreWageAdvanceRequest $request): RedirectResponse
     {
         Gate::authorize('create', WageAdvance::class);
-
-        $validated = $request->validate([
-            'shop_id' => ['required', 'exists:shops,id'],
-            'amount_requested' => ['required', 'numeric', 'min:0.01'],
-            'reason' => ['nullable', 'string', 'max:500'],
-            'repayment_installments' => ['required', 'integer', 'min:1', 'max:12'],
-        ]);
-
-        $shop = Shop::findOrFail($validated['shop_id']);
 
         try {
             $wageAdvance = $this->wageAdvanceService->create(
                 $request->user(),
-                $shop,
-                $validated
+                $request->validated()['shop_id'],
+                $request->validated()
             );
 
             return redirect()
@@ -180,15 +175,11 @@ class WageAdvanceController extends Controller
     /**
      * Update wage advance reason
      */
-    public function update(Request $request, WageAdvance $wageAdvance): RedirectResponse
+    public function update(UpdateWageAdvanceRequest $request, WageAdvance $wageAdvance): RedirectResponse
     {
         Gate::authorize('update', $wageAdvance);
 
-        $validated = $request->validate([
-            'reason' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        $wageAdvance->update($validated);
+        $this->wageAdvanceService->updateReason($wageAdvance, $request->validated()['reason'] ?? null);
 
         return redirect()
             ->route('wage-advances.show', $wageAdvance)
@@ -198,20 +189,16 @@ class WageAdvanceController extends Controller
     /**
      * Approve a wage advance
      */
-    public function approve(Request $request, WageAdvance $wageAdvance): RedirectResponse
+    public function approve(ApproveWageAdvanceRequest $request, WageAdvance $wageAdvance): RedirectResponse
     {
         Gate::authorize('approve', $wageAdvance);
 
-        $validated = $request->validate([
-            'amount_approved' => ['nullable', 'numeric', 'min:0.01'],
-            'repayment_installments' => ['nullable', 'integer', 'min:1', 'max:12'],
-            'notes' => ['nullable', 'string', 'max:500'],
-        ]);
-
         try {
+            $validated = $request->validated();
+
             $this->wageAdvanceService->approve(
                 $wageAdvance,
-                auth()->user(),
+                $request->user(),
                 $validated['amount_approved'] ?? null,
                 $validated['repayment_installments'] ?? null,
                 $validated['notes'] ?? null
@@ -230,19 +217,15 @@ class WageAdvanceController extends Controller
     /**
      * Reject a wage advance
      */
-    public function reject(Request $request, WageAdvance $wageAdvance): RedirectResponse
+    public function reject(RejectWageAdvanceRequest $request, WageAdvance $wageAdvance): RedirectResponse
     {
         Gate::authorize('reject', $wageAdvance);
-
-        $validated = $request->validate([
-            'rejection_reason' => ['required', 'string', 'max:500'],
-        ]);
 
         try {
             $this->wageAdvanceService->reject(
                 $wageAdvance,
-                auth()->user(),
-                $validated['rejection_reason']
+                $request->user(),
+                $request->validated()['rejection_reason']
             );
 
             return redirect()
@@ -258,24 +241,17 @@ class WageAdvanceController extends Controller
     /**
      * Disburse approved wage advance
      */
-    public function disburse(Request $request, WageAdvance $wageAdvance): RedirectResponse
+    public function disburse(DisburseWageAdvanceRequest $request, WageAdvance $wageAdvance): RedirectResponse
     {
         Gate::authorize('disburse', $wageAdvance);
 
-        $validated = $request->validate([
-            'repayment_start_date' => ['nullable', 'date', 'after:today'],
-            'notes' => ['nullable', 'string', 'max:500'],
-        ]);
-
         try {
-            $repaymentDate = isset($validated['repayment_start_date'])
-                ? Carbon::parse($validated['repayment_start_date'])
-                : null;
+            $validated = $request->validated();
 
             $this->wageAdvanceService->disburse(
                 $wageAdvance,
-                auth()->user(),
-                $repaymentDate,
+                $request->user(),
+                $validated['repayment_start_date'] ?? null,
                 $validated['notes'] ?? null
             );
 
@@ -292,23 +268,15 @@ class WageAdvanceController extends Controller
     /**
      * Record a repayment installment
      */
-    public function recordRepayment(Request $request, WageAdvance $wageAdvance): RedirectResponse
+    public function recordRepayment(RecordWageAdvanceRepaymentRequest $request, WageAdvance $wageAdvance): RedirectResponse
     {
         Gate::authorize('recordRepayment', $wageAdvance);
-
-        $validated = $request->validate([
-            'amount' => ['required', 'numeric', 'min:0.01'],
-            'repayment_date' => ['nullable', 'date'],
-            'payment_method' => ['nullable', 'string', 'in:deducted_from_salary,cash,bank_transfer'],
-            'reference_number' => ['nullable', 'string', 'max:255'],
-            'notes' => ['nullable', 'string', 'max:500'],
-        ]);
 
         try {
             $this->repaymentService->recordRepayment(
                 $wageAdvance,
-                auth()->user(),
-                $validated
+                $request->user(),
+                $request->validated()
             );
 
             return redirect()
@@ -348,19 +316,15 @@ class WageAdvanceController extends Controller
     /**
      * Cancel a wage advance
      */
-    public function cancel(Request $request, WageAdvance $wageAdvance): RedirectResponse
+    public function cancel(CancelWageAdvanceRequest $request, WageAdvance $wageAdvance): RedirectResponse
     {
         Gate::authorize('cancel', $wageAdvance);
-
-        $validated = $request->validate([
-            'reason' => ['required', 'string', 'max:500'],
-        ]);
 
         try {
             $this->wageAdvanceService->cancel(
                 $wageAdvance,
-                auth()->user(),
-                $validated['reason']
+                $request->user(),
+                $request->validated()['reason']
             );
 
             return redirect()

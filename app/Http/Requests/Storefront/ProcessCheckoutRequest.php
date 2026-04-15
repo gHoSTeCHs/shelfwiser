@@ -41,7 +41,6 @@ class ProcessCheckoutRequest extends FormRequest
             'billing_address.postal_code' => ['nullable', 'string', 'max:20'],
             'billing_address.country' => ['required_if:billing_same_as_shipping,false', 'string', 'max:100'],
             'payment_method' => ['required', 'string', Rule::in(PaymentMethod::storefrontValues())],
-            'payment_reference' => ['nullable', 'string', 'max:255'],
             'idempotency_key' => ['nullable', 'string', 'max:255'],
             'customer_notes' => ['nullable', 'string', 'max:500'],
             'save_addresses' => ['boolean'],

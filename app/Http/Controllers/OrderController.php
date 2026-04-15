@@ -17,6 +17,7 @@ use App\Services\OrderService;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -81,10 +82,12 @@ class OrderController extends Controller
 
             return Redirect::route('orders.show', $order)
                 ->with('success', "Order #$order->order_number created successfully.");
+        } catch (\RuntimeException $e) {
+            return Redirect::back()->withInput()->with('error', $e->getMessage());
         } catch (Exception $e) {
-            return Redirect::back()
-                ->withInput()
-                ->with('error', 'Failed to create order: '.$e->getMessage());
+            Log::error('Order create failed', ['error' => $e->getMessage()]);
+
+            return Redirect::back()->withInput()->with('error', 'Failed to create order.');
         }
     }
 
@@ -132,10 +135,12 @@ class OrderController extends Controller
 
             return Redirect::route('orders.show', $order)
                 ->with('success', "Order #$order->order_number updated successfully.");
+        } catch (\RuntimeException $e) {
+            return Redirect::back()->withInput()->with('error', $e->getMessage());
         } catch (Exception $e) {
-            return Redirect::back()
-                ->withInput()
-                ->with('error', 'Failed to update order: '.$e->getMessage());
+            Log::error('Order update failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+
+            return Redirect::back()->withInput()->with('error', 'Failed to update order.');
         }
     }
 
@@ -143,16 +148,18 @@ class OrderController extends Controller
     {
         Gate::authorize('delete', $order);
 
-        if ($order->status !== OrderStatus::PENDING) {
-            return Redirect::back()
-                ->with('error', 'Only pending orders can be deleted.');
+        try {
+            $orderNumber = $this->orderService->deleteOrder($order);
+
+            return Redirect::route('orders.index')
+                ->with('success', "Order #$orderNumber deleted successfully.");
+        } catch (\RuntimeException $e) {
+            return Redirect::back()->with('error', $e->getMessage());
+        } catch (Exception $e) {
+            Log::error('Order delete failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+
+            return Redirect::back()->with('error', 'Failed to delete order.');
         }
-
-        $orderNumber = $order->order_number;
-        $order->delete();
-
-        return Redirect::route('orders.index')
-            ->with('success', "Order #$orderNumber deleted successfully.");
     }
 
     /**
@@ -181,9 +188,12 @@ class OrderController extends Controller
 
             return Redirect::back()
                 ->with('success', "Order status updated to {$newStatus->label()}.");
+        } catch (\RuntimeException $e) {
+            return Redirect::back()->with('error', $e->getMessage());
         } catch (Exception $e) {
-            return Redirect::back()
-                ->with('error', 'Failed to update order status: '.$e->getMessage());
+            Log::error('Order status update failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+
+            return Redirect::back()->with('error', 'Failed to update order status.');
         }
     }
 
@@ -206,9 +216,12 @@ class OrderController extends Controller
 
             return Redirect::back()
                 ->with('success', 'Order refunded successfully.');
+        } catch (\RuntimeException $e) {
+            return Redirect::back()->with('error', $e->getMessage());
         } catch (Exception $e) {
-            return Redirect::back()
-                ->with('error', 'Failed to refund order: '.$e->getMessage());
+            Log::error('Order refund failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+
+            return Redirect::back()->with('error', 'Failed to refund order.');
         }
     }
 
@@ -227,9 +240,12 @@ class OrderController extends Controller
 
             return Redirect::back()
                 ->with('success', "Payment status updated to {$newStatus->label()}.");
+        } catch (\RuntimeException $e) {
+            return Redirect::back()->with('error', $e->getMessage());
         } catch (Exception $e) {
-            return Redirect::back()
-                ->with('error', 'Failed to update payment status: '.$e->getMessage());
+            Log::error('Order payment status update failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+
+            return Redirect::back()->with('error', 'Failed to update payment status.');
         }
     }
 }

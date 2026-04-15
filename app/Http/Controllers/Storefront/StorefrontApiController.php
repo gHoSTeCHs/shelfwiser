@@ -409,11 +409,11 @@ class StorefrontApiController extends Controller
             return response()->json(['message' => 'This order cannot be cancelled.'], 422);
         }
 
-        $orderModel->update([
+        $orderModel->forceFill([
             'status' => OrderStatus::CANCELLED,
             'cancellation_reason' => $request->validated('cancellation_reason'),
             'cancelled_at' => now(),
-        ]);
+        ])->save();
 
         return response()->json(['message' => 'Order cancelled']);
     }

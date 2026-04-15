@@ -16,10 +16,12 @@ class InventoryReportRequest extends FormRequest
      */
     public function rules(): array
     {
+        $tenantId = $this->user()->tenant_id;
+
         return [
-            'shop' => ['nullable', 'integer', 'exists:shops,id'],
-            'category' => ['nullable', 'integer', 'exists:product_categories,id'],
-            'product' => ['nullable', 'integer', 'exists:products,id'],
+            'shop' => ['nullable', 'integer', 'exists:shops,id,tenant_id,'.$tenantId],
+            'category' => ['nullable', 'integer', 'exists:product_categories,id,tenant_id,'.$tenantId],
+            'product' => ['nullable', 'integer', 'exists:products,id,tenant_id,'.$tenantId],
             'stock_status' => ['nullable', 'in:low,adequate,overstocked'],
             'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
             'format' => ['nullable', 'in:csv,excel,pdf'],

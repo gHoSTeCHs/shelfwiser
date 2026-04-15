@@ -77,7 +77,7 @@ class CheckoutService
                 }
             }
 
-            $order = Order::create([
+            $order = Order::query()->forceCreate([
                 'tenant_id' => $cart->shop->tenant_id,
                 'shop_id' => $cart->shop_id,
                 'customer_id' => $customer->id,
@@ -267,10 +267,6 @@ class CheckoutService
                 return false;
             }
 
-            $order->update([
-                'payment_status' => $status->value,
-            ]);
-
             if ($status === PaymentStatus::PAID) {
                 $refNumber = $transactionId ?? $paymentReference;
 
@@ -278,20 +274,29 @@ class CheckoutService
                     return true;
                 }
 
-                $order->update([
+                $expectedAmount = $order->remainingBalance();
+
+                if ($verifiedAmount === null || $verifiedAmount < $expectedAmount * 0.99) {
+                    Log::warning('Payment amount mismatch — refusing to mark order paid', [
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'expected' => $expectedAmount,
+                        'received' => $verifiedAmount,
+                        'reference' => $paymentReference,
+                    ]);
+
+                    throw new \RuntimeException(
+                        "Payment amount mismatch for order {$order->order_number}: expected {$expectedAmount}, received ".($verifiedAmount ?? 'null')
+                    );
+                }
+
+                $order->forceFill([
+                    'payment_status' => $status->value,
                     'status' => OrderStatus::CONFIRMED->value,
                     'confirmed_at' => now(),
-                ]);
+                ])->save();
 
-                $paymentAmount = $verifiedAmount ?? $order->total_amount;
-
-                if ($verifiedAmount !== null && $verifiedAmount < $order->remainingBalance() * 0.99) {
-                    Log::warning('Payment amount less than expected', [
-                        'order_id' => $order->id,
-                        'expected' => $order->remainingBalance(),
-                        'received' => $verifiedAmount,
-                    ]);
-                }
+                $paymentAmount = $verifiedAmount;
 
                 OrderPayment::create([
                     'tenant_id' => $order->tenant_id,
@@ -303,6 +308,10 @@ class CheckoutService
                     'paid_at' => now(),
                     'notes' => 'Payment verified via Paystack',
                 ]);
+            } else {
+                $order->forceFill([
+                    'payment_status' => $status->value,
+                ])->save();
             }
 
             Log::info('Payment status updated', [

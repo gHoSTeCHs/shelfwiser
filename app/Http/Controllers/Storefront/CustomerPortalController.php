@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Storefront;
 use App\Enums\OrderStatus;
 use App\Enums\OrderType;
 use App\Enums\PaymentStatus;
-use App\Http\Controllers\Controller;
 use App\Http\Requests\Storefront\CancelOrderApiRequest;
 use App\Http\Requests\Storefront\UpdateCustomerProfileRequest;
 use App\Models\Shop;
@@ -14,16 +13,14 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class CustomerPortalController extends Controller
+class CustomerPortalController extends StorefrontBaseController
 {
     /**
      * Display customer dashboard with stats and recent orders.
      */
     public function dashboard(Shop $shop): Response
     {
-        $customer = auth('customer')->user();
-
-        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
+        $customer = $this->customerForShop($shop);
 
         $stats = [
             'total_orders' => $customer->orders()
@@ -62,9 +59,7 @@ class CustomerPortalController extends Controller
      */
     public function orders(Request $request, Shop $shop): Response
     {
-        $customer = auth('customer')->user();
-
-        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
+        $customer = $this->customerForShop($shop);
 
         $orders = $customer->orders()
             ->where('shop_id', $shop->id)
@@ -84,9 +79,7 @@ class CustomerPortalController extends Controller
      */
     public function orderDetail(Shop $shop, $orderId): Response
     {
-        $customer = auth('customer')->user();
-
-        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
+        $customer = $this->customerForShop($shop);
 
         $order = $customer->orders()
             ->where('id', $orderId)
@@ -106,9 +99,7 @@ class CustomerPortalController extends Controller
      */
     public function profile(Shop $shop): Response
     {
-        $customer = auth('customer')->user();
-
-        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
+        $customer = $this->customerForShop($shop);
 
         $addresses = $customer->addresses;
 
@@ -124,8 +115,7 @@ class CustomerPortalController extends Controller
      */
     public function updateProfile(UpdateCustomerProfileRequest $request, Shop $shop): RedirectResponse
     {
-        $customer = auth('customer')->user();
-        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
+        $customer = $this->customerForShop($shop);
 
         $customer->update($request->validated());
 
@@ -137,8 +127,7 @@ class CustomerPortalController extends Controller
      */
     public function cancelOrder(CancelOrderApiRequest $request, Shop $shop, $orderId): RedirectResponse
     {
-        $customer = auth('customer')->user();
-        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
+        $customer = $this->customerForShop($shop);
 
         $order = $customer->orders()
             ->where('id', $orderId)

@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\EmailReceiptRequest;
 use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Models\Receipt;
 use App\Services\ReceiptService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,43 +17,22 @@ class ReceiptController extends Controller
 {
     public function __construct(
         protected ReceiptService $receiptService
-    )
-    {
-    }
+    ) {}
 
     /**
      * Display receipt list
      */
     public function index(Request $request): Response
     {
-        $this->authorize('viewAny', Receipt::class);
-
-        $receipts = Receipt::query()
-            ->where('tenant_id', auth()->user()->tenant_id)
-            ->with(['order', 'orderPayment', 'customer', 'shop', 'generatedBy'])
-            ->when($request->type, fn($q, $type) => $q->where('type', $type))
-            ->when($request->search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('receipt_number', 'like', "%$search%")
-                        ->orWhereHas('customer', function ($q) use ($search) {
-                            $q->where('first_name', 'like', "%$search%")
-                                ->orWhere('last_name', 'like', "%$search%")
-                                ->orWhere('email', 'like', "%$search%");
-                        });
-                });
-            })
-            ->latest()
-            ->paginate(20)
-            ->withQueryString();
+        Gate::authorize('viewAny', Receipt::class);
 
         return Inertia::render('Receipts/Index', [
-            'receipts' => $receipts,
+            'receipts' => $this->receiptService->getPaginatedReceipts(
+                search: $request->input('search'),
+                type: $request->input('type'),
+            ),
             'filters' => $request->only(['search', 'type']),
-            'stats' => [
-                'total_receipts' => Receipt::query()->where('tenant_id', auth()->user()->tenant_id)->count(),
-                'order_receipts' => Receipt::query()->where('tenant_id', auth()->user()->tenant_id)->where('type', 'order')->count(),
-                'payment_receipts' => Receipt::query()->where('tenant_id', auth()->user()->tenant_id)->where('type', 'payment')->count(),
-            ],
+            'stats' => $this->receiptService->getReceiptStats(),
         ]);
     }
 
@@ -60,15 +41,9 @@ class ReceiptController extends Controller
      */
     public function viewOrderReceipt(Order $order)
     {
-        $this->authorize('view', $order);
+        Gate::authorize('view', $order);
 
-        $receipt = Receipt::query()->where('order_id', $order->id)
-            ->where('type', 'order')
-            ->first();
-
-        if (!$receipt) {
-            $receipt = $this->receiptService->generateOrderReceipt($order);
-        }
+        $receipt = $this->receiptService->findOrCreateOrderReceipt($order, generatedBy: auth()->id());
 
         return $this->receiptService->generateOrderPdf($order, $receipt)->stream();
     }
@@ -78,19 +53,11 @@ class ReceiptController extends Controller
      */
     public function downloadOrderReceipt(Order $order)
     {
-        $this->authorize('view', $order);
+        Gate::authorize('view', $order);
 
-        $receipt = Receipt::query()->where('order_id', $order->id)
-            ->where('type', 'order')
-            ->first();
+        $receipt = $this->receiptService->findOrCreateOrderReceipt($order, savePdf: true, generatedBy: auth()->id());
 
-        if (!$receipt) {
-            $receipt = $this->receiptService->generateOrderReceipt($order, true);
-        }
-
-        $filename = "receipt-$order->order_number.pdf";
-
-        return $this->receiptService->generateOrderPdf($order, $receipt)->download($filename);
+        return $this->receiptService->generateOrderPdf($order, $receipt)->download("receipt-$order->order_number.pdf");
     }
 
     /**
@@ -98,15 +65,9 @@ class ReceiptController extends Controller
      */
     public function viewPaymentReceipt(OrderPayment $payment)
     {
-        $this->authorize('view', $payment->order);
+        Gate::authorize('view', $payment->order);
 
-        $receipt = Receipt::query()->where('order_payment_id', $payment->id)
-            ->where('type', 'payment')
-            ->first();
-
-        if (!$receipt) {
-            $receipt = $this->receiptService->generatePaymentReceipt($payment);
-        }
+        $receipt = $this->receiptService->findOrCreatePaymentReceipt($payment, generatedBy: auth()->id());
 
         return $this->receiptService->generatePaymentPdf($payment, $receipt)->stream();
     }
@@ -116,36 +77,25 @@ class ReceiptController extends Controller
      */
     public function downloadPaymentReceipt(OrderPayment $payment)
     {
-        $this->authorize('view', $payment->order);
+        Gate::authorize('view', $payment->order);
 
-        $receipt = Receipt::query()->where('order_payment_id', $payment->id)
-            ->where('type', 'payment')
-            ->first();
+        $receipt = $this->receiptService->findOrCreatePaymentReceipt($payment, savePdf: true, generatedBy: auth()->id());
 
-        if (!$receipt) {
-            $receipt = $this->receiptService->generatePaymentReceipt($payment, true);
-        }
-
-        $filename = "payment-receipt-$payment->id.pdf";
-
-        return $this->receiptService->generatePaymentPdf($payment, $receipt)->download($filename);
+        return $this->receiptService->generatePaymentPdf($payment, $receipt)->download("payment-receipt-$payment->id.pdf");
     }
 
     /**
      * Email receipt to customer
      */
-    public function emailReceipt(Request $request, Receipt $receipt): RedirectResponse
+    public function emailReceipt(EmailReceiptRequest $request, Receipt $receipt): RedirectResponse
     {
-        $this->authorize('view', $receipt);
+        Gate::authorize('view', $receipt);
 
-        $request->validate([
-            'email' => ['required', 'email'],
-        ]);
-
-        $sent = $this->receiptService->emailReceipt($receipt, $request->email);
+        $email = $request->validated()['email'];
+        $sent = $this->receiptService->emailReceipt($receipt, $email);
 
         if ($sent) {
-            return back()->with('success', "Receipt emailed to $request->email");
+            return back()->with('success', "Receipt emailed to $email");
         }
 
         return back()->with('error', 'Failed to email receipt');
@@ -156,7 +106,7 @@ class ReceiptController extends Controller
      */
     public function show(Receipt $receipt): Response
     {
-        $this->authorize('view', $receipt);
+        Gate::authorize('view', $receipt);
 
         $receipt->load(['order.items.productVariant.product', 'orderPayment', 'customer', 'shop', 'generatedBy']);
 

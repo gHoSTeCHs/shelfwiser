@@ -13,9 +13,11 @@ class StorePayRunRequest extends FormRequest
 
     public function rules(): array
     {
+        $tenantId = $this->user()->tenant_id;
+
         return [
-            'payroll_period_id' => ['required', 'exists:payroll_periods,id'],
-            'pay_calendar_id' => ['nullable', 'exists:pay_calendars,id'],
+            'payroll_period_id' => ['required', 'integer', 'exists:payroll_periods,id,tenant_id,'.$tenantId],
+            'pay_calendar_id' => ['nullable', 'integer', 'exists:pay_calendars,id,tenant_id,'.$tenantId],
             'name' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];

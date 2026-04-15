@@ -9,6 +9,7 @@ use App\Enums\EarningCalculationType;
 use App\Enums\EarningCategory;
 use App\Enums\PayFrequency;
 use App\Enums\TaxLawVersion;
+use App\Http\Requests\CompareTaxLawsRequest;
 use App\Http\Requests\EstimateTaxRequest;
 use App\Http\Requests\StoreDeductionTypeRequest;
 use App\Http\Requests\StoreEarningTypeRequest;
@@ -219,11 +220,11 @@ class PayrollSettingsController extends Controller
         ]);
     }
 
-    public function compareTaxLaws(Request $request): JsonResponse
+    public function compareTaxLaws(CompareTaxLawsRequest $request): JsonResponse
     {
         Gate::authorize('view_payroll_settings');
 
-        $annualSalary = $request->input('annual_salary', 1200000);
+        $annualSalary = (float) ($request->validated('annual_salary') ?? 1200000);
 
         return response()->json(
             $this->taxCalculationService->compareTaxLaws($annualSalary, $this->tenantId())

@@ -140,7 +140,7 @@ beforeEach(function () {
 });
 
 test('can checkout with services only', function () {
-    $cart = Cart::create([
+    $cart = Cart::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $this->customer->id,
@@ -185,7 +185,7 @@ test('can checkout with services only', function () {
 });
 
 test('can checkout with mixed cart containing products and services', function () {
-    $cart = Cart::create([
+    $cart = Cart::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $this->customer->id,
@@ -244,7 +244,7 @@ test('can checkout with mixed cart containing products and services', function (
 });
 
 test('service order item preserves material option in metadata', function () {
-    $cart = Cart::create([
+    $cart = Cart::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $this->customer->id,
@@ -284,7 +284,7 @@ test('service order item preserves material option in metadata', function () {
 });
 
 test('service order item uses polymorphic sellable relationship', function () {
-    $cart = Cart::create([
+    $cart = Cart::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $this->customer->id,
@@ -325,7 +325,7 @@ test('service order item uses polymorphic sellable relationship', function () {
 });
 
 test('order totals calculate correctly with services', function () {
-    $cart = Cart::create([
+    $cart = Cart::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $this->customer->id,
@@ -369,7 +369,7 @@ test('order totals calculate correctly with services', function () {
 });
 
 test('cart is cleared after successful checkout with services', function () {
-    $cart = Cart::create([
+    $cart = Cart::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $this->customer->id,

@@ -8,7 +8,7 @@ class DashboardPolicy
 {
     public function view(User $user): bool
     {
-        return $user->is_active;
+        return $user->is_active && $user->hasTenant();
     }
 
     public function viewFinancials(User $user): bool

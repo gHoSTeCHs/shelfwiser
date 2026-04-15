@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -11,7 +12,6 @@ use App\Models\ServiceVariant;
 use App\Models\Shop;
 use App\Models\ShopType;
 use App\Models\Tenant;
-use App\Models\Customer;
 use Illuminate\Support\Facades\Hash;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
@@ -57,15 +57,15 @@ beforeEach(function () {
         'is_active' => true,
     ]);
 
-    $this->order = Order::create([
+    $this->order = Order::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $this->customer->id,
         'order_number' => 'ORD-001',
-        'subtotal_amount' => 0,
+        'subtotal' => 0,
         'tax_amount' => 0,
         'discount_amount' => 0,
-        'shipping_amount' => 0,
+        'shipping_cost' => 0,
         'total_amount' => 0,
     ]);
 });
@@ -356,7 +356,7 @@ test('calculateTotal method calculates correctly', function () {
 
     $orderItem->calculateTotal();
 
-    expect((float)$orderItem->total_amount)->toBe(145.00);
+    expect((float) $orderItem->total_amount)->toBe(145.00);
 });
 
 test('metadata casts to array correctly', function () {

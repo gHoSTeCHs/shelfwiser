@@ -9,9 +9,12 @@ use App\Models\Customer;
 use App\Models\ProductVariant;
 use App\Models\ServiceVariant;
 use App\Models\Shop;
+use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use InvalidArgumentException;
+use Throwable;
 
 class CartService
 {
@@ -23,29 +26,31 @@ class CartService
      * Get or create a cart for the current session/customer.
      * Regenerates session ID for new guest carts to prevent session fixation.
      *
-     * @throws \InvalidArgumentException If customer does not belong to shop tenant
+     * @throws InvalidArgumentException If customer does not belong to shop tenant
      */
     public function getCart(Shop $shop, ?int $customerId = null): Cart
     {
         if ($customerId) {
-            $customer = Customer::find($customerId);
+            $customer = Customer::query()->find($customerId);
             if ($customer && $customer->tenant_id !== $shop->tenant_id) {
-                throw new \InvalidArgumentException('Customer does not belong to shop tenant');
+                throw new InvalidArgumentException('Customer does not belong to shop tenant');
             }
 
             $cacheKey = $this->getCartCacheKey($shop->tenant_id, $shop->id, $customerId);
 
             return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($customerId, $shop) {
-                return Cart::query()->firstOrCreate(
-                    [
-                        'customer_id' => $customerId,
-                        'shop_id' => $shop->id,
-                        'tenant_id' => $shop->tenant_id,
-                    ],
-                    [
-                        'expires_at' => now()->addDays(30),
-                    ]
-                );
+                $cart = Cart::query()
+                    ->where('customer_id', $customerId)
+                    ->where('shop_id', $shop->id)
+                    ->where('tenant_id', $shop->tenant_id)
+                    ->first();
+
+                return $cart ?? Cart::query()->forceCreate([
+                    'tenant_id' => $shop->tenant_id,
+                    'shop_id' => $shop->id,
+                    'customer_id' => $customerId,
+                    'expires_at' => now()->addDays(30),
+                ]);
             });
         }
 
@@ -67,7 +72,7 @@ class CartService
         Session::regenerate();
         $newSessionId = Session::getId();
 
-        $cart = Cart::query()->create([
+        $cart = Cart::query()->forceCreate([
             'session_id' => $newSessionId,
             'shop_id' => $shop->id,
             'tenant_id' => $shop->tenant_id,
@@ -89,7 +94,7 @@ class CartService
         int $quantity = 1,
         ?int $packagingTypeId = null
     ): CartItem {
-        $variant = ProductVariant::findOrFail($variantId);
+        $variant = ProductVariant::query()->findOrFail($variantId);
 
         return DB::transaction(function () use ($cart, $variant, $quantity, $packagingTypeId) {
             $cartItem = CartItem::query()
@@ -138,17 +143,17 @@ class CartService
         ?MaterialOption $materialOption = null,
         array $selectedAddons = []
     ): CartItem {
-        $variant = ServiceVariant::with('service')->findOrFail($serviceVariantId);
+        $variant = ServiceVariant::query()->with('service')->findOrFail($serviceVariantId);
 
         if (! $variant->service->is_available_online || ! $variant->is_active) {
-            throw new \Exception('This service is not available for online booking.');
+            throw new Exception('This service is not available for online booking.');
         }
 
         return DB::transaction(function () use ($cart, $variant, $quantity, $materialOption, $selectedAddons) {
             $basePrice = $variant->getPriceForMaterialOption($materialOption);
             $totalPrice = $variant->calculateTotalPrice($materialOption, $selectedAddons);
 
-            $cartItem = CartItem::create([
+            $cartItem = CartItem::query()->create([
                 'cart_id' => $cart->id,
                 'tenant_id' => $cart->tenant_id,
                 'sellable_type' => ServiceVariant::class,
@@ -170,6 +175,8 @@ class CartService
 
     /**
      * Update cart item quantity.
+     *
+     * @throws Exception
      */
     public function updateQuantity(CartItem $item, int $quantity): ?CartItem
     {
@@ -261,11 +268,13 @@ class CartService
     /**
      * Merge guest cart into customer cart when logging in.
      * Regenerates session ID to prevent session fixation attacks.
+     *
+     * @throws Throwable
      */
     public function mergeGuestCartIntoCustomerCart(string $sessionId, int $customerId, int $shopId): Cart
     {
         return DB::transaction(function () use ($sessionId, $customerId, $shopId) {
-            $shop = Shop::find($shopId);
+            $shop = Shop::query()->find($shopId);
             $customerCart = $this->getCart($shop, $customerId);
 
             $guestCart = Cart::query()
@@ -336,16 +345,16 @@ class CartService
      * Validate stock availability for storefront purchases.
      * Includes additional checks for online availability and max order quantity.
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function validateStockAvailabilityForStorefront(ProductVariant $variant, int $requestedQuantity, ?int $shopId = null): void
     {
         if (! $variant->is_available_online) {
-            throw new \Exception('This product is not available for online purchase.');
+            throw new Exception('This product is not available for online purchase.');
         }
 
         if ($variant->max_order_quantity && $requestedQuantity > $variant->max_order_quantity) {
-            throw new \Exception("Maximum order quantity for this product is {$variant->max_order_quantity} units.");
+            throw new Exception("Maximum order quantity for this product is $variant->max_order_quantity units.");
         }
 
         if (! ($variant->product->track_stock ?? true)) {
@@ -354,7 +363,7 @@ class CartService
 
         if (! $this->stockMovementService->checkStockAvailability($variant, $requestedQuantity, $shopId)) {
             $available = $this->stockMovementService->getAvailableStock($variant, $shopId);
-            throw new \Exception("Insufficient stock available. Only {$available} units in stock.");
+            throw new Exception("Insufficient stock available. Only $available units in stock.");
         }
     }
 
@@ -423,10 +432,10 @@ class CartService
     protected function getCartCacheKey(int $tenantId, int $shopId, ?int $customerId = null, ?string $sessionId = null): string
     {
         if ($customerId) {
-            return "tenant:{$tenantId}:shop:{$shopId}:cart:customer:{$customerId}";
+            return "tenant:$tenantId:shop:$shopId:cart:customer:$customerId";
         }
 
-        return "tenant:{$tenantId}:shop:{$shopId}:cart:session:{$sessionId}";
+        return "tenant:$tenantId:shop:$shopId:cart:session:$sessionId";
     }
 
     /**
@@ -434,7 +443,7 @@ class CartService
      */
     protected function getCartSummaryCacheKey(int $tenantId, int $cartId): string
     {
-        return "tenant:{$tenantId}:cart:{$cartId}:summary";
+        return "tenant:$tenantId:cart:$cartId:summary";
     }
 
     /**

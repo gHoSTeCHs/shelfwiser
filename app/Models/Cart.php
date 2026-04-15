@@ -17,9 +17,7 @@ class Cart extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'tenant_id',
         'shop_id',
-        'customer_id',
         'session_id',
         'expires_at',
     ];

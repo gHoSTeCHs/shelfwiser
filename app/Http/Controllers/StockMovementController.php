@@ -6,6 +6,7 @@ use App\Enums\StockMovementType;
 use App\Http\Requests\AdjustStockRequest;
 use App\Http\Requests\RecordPurchaseRequest;
 use App\Http\Requests\SetupInventoryLocationsRequest;
+use App\Http\Requests\StockMovementExportRequest;
 use App\Http\Requests\StockMovementIndexRequest;
 use App\Http\Requests\StockTakeRequest;
 use App\Http\Requests\TransferStockRequest;
@@ -21,6 +22,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -104,15 +106,20 @@ class StockMovementController extends Controller
             }
 
             return Redirect::back()->with('success', 'Stock adjusted successfully.');
-        } catch (Exception $e) {
+        } catch (\RuntimeException $e) {
             if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage(),
-                ], 422);
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
             }
 
             return Redirect::back()->with('error', $e->getMessage());
+        } catch (Exception $e) {
+            Log::error('Stock adjustment failed', ['error' => $e->getMessage()]);
+
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Stock adjustment failed.'], 500);
+            }
+
+            return Redirect::back()->with('error', 'Stock adjustment failed.');
         }
     }
 
@@ -156,15 +163,20 @@ class StockMovementController extends Controller
             }
 
             return Redirect::back()->with('success', 'Stock transferred successfully.');
-        } catch (Exception $e) {
+        } catch (\RuntimeException $e) {
             if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage(),
-                ], 422);
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
             }
 
             return Redirect::back()->with('error', $e->getMessage());
+        } catch (Exception $e) {
+            Log::error('Stock transfer failed', ['error' => $e->getMessage()]);
+
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Stock transfer failed.'], 500);
+            }
+
+            return Redirect::back()->with('error', 'Stock transfer failed.');
         }
     }
 
@@ -204,15 +216,20 @@ class StockMovementController extends Controller
             }
 
             return Redirect::back()->with('success', $message);
-        } catch (Exception $e) {
+        } catch (\RuntimeException $e) {
             if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage(),
-                ], 422);
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
             }
 
             return Redirect::back()->with('error', $e->getMessage());
+        } catch (Exception $e) {
+            Log::error('Stock take failed', ['error' => $e->getMessage()]);
+
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Stock take failed.'], 500);
+            }
+
+            return Redirect::back()->with('error', 'Stock take failed.');
         }
     }
 
@@ -280,15 +297,20 @@ class StockMovementController extends Controller
             }
 
             return Redirect::back()->with('success', 'Purchase recorded successfully.');
-        } catch (Exception $e) {
+        } catch (\RuntimeException $e) {
             if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage(),
-                ], 422);
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
             }
 
             return Redirect::back()->with('error', $e->getMessage());
+        } catch (Exception $e) {
+            Log::error('Purchase recording failed', ['error' => $e->getMessage()]);
+
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to record purchase.'], 500);
+            }
+
+            return Redirect::back()->with('error', 'Failed to record purchase.');
         }
     }
 
@@ -304,20 +326,34 @@ class StockMovementController extends Controller
 
             return Redirect::back()
                 ->with('success', 'Inventory locations setup successfully.');
+        } catch (\RuntimeException $e) {
+            return Redirect::back()->with('error', $e->getMessage());
         } catch (Exception $e) {
-            return Redirect::back()
-                ->with('error', 'Failed to setup inventory locations: '.$e->getMessage());
+            Log::error('Setup inventory locations failed', ['variant_id' => $variant->id, 'error' => $e->getMessage()]);
+
+            return Redirect::back()->with('error', 'Failed to setup inventory locations.');
         }
     }
 
-    public function export(Request $request): StreamedResponse
+    public function export(StockMovementExportRequest $request): StreamedResponse
     {
         Gate::authorize('viewAny', StockMovement::class);
 
-        $variantId = $request->query('variant_id');
-        $variantId = $variantId !== null ? (int) $variantId : null;
+        $variantId = $request->validated('variant_id');
 
-        $movements = $this->stockMovementService->getMovementsForExport($variantId);
+        if ($variantId !== null) {
+            $variant = ProductVariant::query()->with('product')->findOrFail($variantId);
+
+            abort_unless(
+                $request->user()->accessibleShopIds()->contains($variant->product->shop_id),
+                403,
+                'You do not have access to this variant.'
+            );
+        }
+
+        $movements = $this->stockMovementService->getMovementsForExport(
+            $variantId !== null ? (int) $variantId : null
+        );
         $formatted = $this->stockMovementService->formatMovementsExport($movements);
         $filename = 'stock-movements-'.now()->format('Y-m-d-His').'.csv';
 

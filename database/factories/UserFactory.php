@@ -42,6 +42,14 @@ class UserFactory extends Factory
         ];
     }
 
+    public function newModel(array $attributes = [])
+    {
+        $model = parent::newModel();
+        $model->forceFill($attributes);
+
+        return $model;
+    }
+
     /**
      * Indicate that the model's email address should be unverified.
      */

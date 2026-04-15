@@ -78,7 +78,9 @@ class TimesheetController extends Controller
             'filters' => [
                 'shop_id' => $shopId,
             ],
-            'shops' => $user->is_tenant_owner ? Shop::query()->get() : $user->shops,
+            'shops' => $user->is_tenant_owner
+                ? Shop::query()->where('tenant_id', $user->tenant_id)->where('is_active', true)->get()
+                : $user->shops,
         ]);
     }
 
@@ -257,10 +259,14 @@ class TimesheetController extends Controller
     {
         Gate::authorize('delete', $timesheet);
 
-        $timesheet->delete();
+        try {
+            $this->timesheetService->deleteTimesheet($timesheet);
 
-        return redirect()
-            ->route('timesheets.index')
-            ->with('success', 'Timesheet deleted successfully');
+            return redirect()
+                ->route('timesheets.index')
+                ->with('success', 'Timesheet deleted successfully');
+        } catch (\RuntimeException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 }

@@ -439,7 +439,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('receipts')->name('receipts.')->group(function () {
         Route::get('/', [ReceiptController::class, 'index'])->name('index');
         Route::get('/{receipt}', [ReceiptController::class, 'show'])->name('show');
-        Route::post('/{receipt}/email', [ReceiptController::class, 'emailReceipt'])->name('email');
+        Route::post('/{receipt}/email', [ReceiptController::class, 'emailReceipt'])
+            ->middleware('throttle:10,1')
+            ->name('email');
         Route::get('/orders/{order}/view', [ReceiptController::class, 'viewOrderReceipt'])->name('orders.view');
         Route::get('/orders/{order}/download', [ReceiptController::class, 'downloadOrderReceipt'])->name('orders.download');
         Route::get('/payments/{payment}/view', [ReceiptController::class, 'viewPaymentReceipt'])->name('payments.view');
@@ -448,8 +450,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('pos/{shop}')->name('pos.')->group(function () {
         Route::get('/', [POSController::class, 'index'])->name('index');
-        Route::get('/search/products', [POSController::class, 'searchProducts'])->name('search.products');
-        Route::get('/search/customers', [POSController::class, 'searchCustomers'])->name('search.customers');
+        Route::get('/search/products', [POSController::class, 'searchProducts'])
+            ->middleware('throttle:60,1')
+            ->name('search.products');
+        Route::get('/search/customers', [POSController::class, 'searchCustomers'])
+            ->middleware('throttle:60,1')
+            ->name('search.customers');
         Route::post('/complete', [POSController::class, 'completeSale'])->name('complete');
         Route::get('/session-summary', [POSController::class, 'sessionSummary'])->name('session-summary');
         Route::post('/hold', [POSController::class, 'holdSale'])->name('hold');

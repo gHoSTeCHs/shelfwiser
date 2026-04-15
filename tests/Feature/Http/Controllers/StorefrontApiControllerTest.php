@@ -114,7 +114,7 @@ it('rejects updating another carts item', function () {
         'preferred_shop_id' => $this->shop->id,
     ]);
 
-    $otherCart = Cart::query()->create([
+    $otherCart = Cart::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $otherCustomer->id,
@@ -365,7 +365,7 @@ it('cancels a cancellable order', function () {
         'preferred_shop_id' => $this->shop->id,
     ]);
 
-    $order = Order::query()->create([
+    $order = Order::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $customer->id,
@@ -396,7 +396,7 @@ it('rejects cancelling a non-cancellable order', function () {
         'preferred_shop_id' => $this->shop->id,
     ]);
 
-    $order = Order::query()->create([
+    $order = Order::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $customer->id,
@@ -421,7 +421,7 @@ it('rejects cancelling another customers order', function () {
         'preferred_shop_id' => $this->shop->id,
     ]);
 
-    $order = Order::query()->create([
+    $order = Order::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $otherCustomer->id,

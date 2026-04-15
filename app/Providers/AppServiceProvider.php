@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Customer;
+use App\Models\EmployeeCustomDeduction;
 use App\Models\EmployeeDeduction;
 use App\Models\EmployeeEarning;
 use App\Models\FundRequest;
@@ -25,6 +26,7 @@ use App\Models\User;
 use App\Models\WageAdvance;
 use App\Policies\CustomerPolicy;
 use App\Policies\DashboardPolicy;
+use App\Policies\EmployeeCustomDeductionPolicy;
 use App\Policies\EmployeeDeductionPolicy;
 use App\Policies\EmployeeEarningPolicy;
 use App\Policies\EmployeePayrollPolicy;
@@ -113,6 +115,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(WageAdvance::class, WageAdvancePolicy::class);
         Gate::policy(PayrollPeriod::class, PayrollPolicy::class);
         Gate::policy(PayRun::class, PayRunPolicy::class);
+        Gate::policy(EmployeeCustomDeduction::class, EmployeeCustomDeductionPolicy::class);
         Gate::policy(EmployeeDeduction::class, EmployeeDeductionPolicy::class);
         Gate::policy(EmployeeEarning::class, EmployeeEarningPolicy::class);
         Gate::policy(Notification::class, NotificationPolicy::class);

@@ -61,6 +61,7 @@ class ShopController extends Controller
      */
     public function store(CreateShopRequest $request): RedirectResponse
     {
+        Gate::authorize('create', Shop::class);
 
         $shop = $this->creationService->create(
             $request->validated(),
@@ -107,7 +108,7 @@ class ShopController extends Controller
     {
         Gate::authorize('shop.manage', $shop);
 
-        $shop->update($request->validated());
+        $this->shopService->update($shop, $request->validated());
 
         return Redirect::route('shops.show', $shop)
             ->with('success', "Shop '{$shop->name}' updated successfully.");
@@ -120,10 +121,14 @@ class ShopController extends Controller
     {
         Gate::authorize('delete', $shop);
 
-        $shop->delete();
+        try {
+            $this->shopService->delete($shop);
 
-        return Redirect::route('shops.index')
-            ->with('success', 'Shop deleted successfully.');
+            return Redirect::route('shops.index')
+                ->with('success', 'Shop deleted successfully.');
+        } catch (\RuntimeException $e) {
+            return Redirect::back()->with('error', $e->getMessage());
+        }
     }
 
     /**

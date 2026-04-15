@@ -67,7 +67,7 @@ class StorefrontSeeder extends Seeder
             return;
         }
 
-        $cart = Cart::create([
+        $cart = Cart::query()->forceCreate([
             'tenant_id' => $shop->tenant_id,
             'shop_id' => $shop->id,
             'customer_id' => $customer->id,
@@ -81,7 +81,7 @@ class StorefrontSeeder extends Seeder
     {
         $sessionId = 'seed_guest_'.uniqid();
 
-        $cart = Cart::create([
+        $cart = Cart::query()->forceCreate([
             'tenant_id' => $shop->tenant_id,
             'shop_id' => $shop->id,
             'session_id' => $sessionId,
@@ -173,7 +173,7 @@ class StorefrontSeeder extends Seeder
             'country' => 'Nigeria',
         ];
 
-        $order = Order::create([
+        $order = Order::query()->forceCreate([
             'tenant_id' => $shop->tenant_id,
             'shop_id' => $shop->id,
             'customer_id' => $customer->id,

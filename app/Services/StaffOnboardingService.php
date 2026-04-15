@@ -36,11 +36,11 @@ class StaffOnboardingService
 
             $this->assignDefaultEarnings($staff, $payrollDetail);
 
-            $staff->update([
+            $staff->forceFill([
                 'onboarding_status' => 'completed',
                 'onboarded_at' => now(),
                 'onboarded_by' => $creator->id,
-            ]);
+            ])->save();
 
             if ($data['send_invitation'] ?? false) {
                 $this->sendInvitationEmail($staff);
@@ -81,7 +81,7 @@ class StaffOnboardingService
      */
     protected function createUser(array $data, Tenant $tenant): User
     {
-        return User::create([
+        return User::query()->forceCreate([
             'tenant_id' => $tenant->id,
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
@@ -103,7 +103,7 @@ class StaffOnboardingService
         $userData = array_intersect_key($data, array_flip($userFields));
 
         if (! empty($userData)) {
-            $staff->update($userData);
+            $staff->forceFill($userData)->save();
         }
     }
 

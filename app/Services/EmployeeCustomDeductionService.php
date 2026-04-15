@@ -45,10 +45,8 @@ class EmployeeCustomDeductionService
         ]);
     }
 
-    public function updateDeduction(EmployeeCustomDeduction $deduction, User $employee, array $validated): void
+    public function updateDeduction(EmployeeCustomDeduction $deduction, array $validated): void
     {
-        $this->verifyOwnership($deduction, $employee);
-
         $deduction->update([
             'deduction_name' => $validated['deduction_name'],
             'deduction_type' => $validated['deduction_type'],
@@ -60,26 +58,17 @@ class EmployeeCustomDeductionService
         ]);
     }
 
-    public function deleteDeduction(EmployeeCustomDeduction $deduction, User $employee): void
+    public function deleteDeduction(EmployeeCustomDeduction $deduction): void
     {
-        $this->verifyOwnership($deduction, $employee);
-
         $deduction->delete();
     }
 
-    public function toggleDeductionStatus(EmployeeCustomDeduction $deduction, User $employee): string
+    public function toggleDeductionStatus(EmployeeCustomDeduction $deduction): string
     {
-        $this->verifyOwnership($deduction, $employee);
-
         $deduction->update(['is_active' => ! $deduction->is_active]);
 
         $deduction->refresh();
 
         return $deduction->is_active ? 'activated' : 'deactivated';
-    }
-
-    private function verifyOwnership(EmployeeCustomDeduction $deduction, User $employee): void
-    {
-        abort_if($deduction->user_id !== $employee->id, 403);
     }
 }

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PaymentMethod;
+use App\Http\Requests\CompleteSaleRequest;
 use App\Http\Requests\HoldSaleRequest;
+use App\Http\Requests\POSSessionSummaryRequest;
+use App\Http\Requests\SearchCustomersRequest;
+use App\Http\Requests\SearchProductsRequest;
 use App\Models\HeldSale;
-use App\Models\ProductPackagingType;
 use App\Models\Shop;
 use App\Services\HeldSaleService;
 use App\Services\POSService;
@@ -13,8 +16,8 @@ use App\Services\ReceiptService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -31,7 +34,7 @@ class POSController extends Controller
      */
     public function index(Shop $shop): Response
     {
-        $this->authorize('shop.manage', $shop);
+        Gate::authorize('shop.manage', $shop);
 
         return Inertia::render('POS/Index', [
             'shop' => $shop,
@@ -40,17 +43,14 @@ class POSController extends Controller
         ]);
     }
 
-    public function searchProducts(Request $request, Shop $shop): JsonResponse
+    public function searchProducts(SearchProductsRequest $request, Shop $shop): JsonResponse
     {
-        $this->authorize('shop.manage', $shop);
-
-        $request->validate([
-            'query' => ['required', 'string', 'min:1'],
-        ]);
+        Gate::authorize('shop.manage', $shop);
 
         $products = $this->posService->searchProducts(
             $shop,
-            $request->query->has('query') ? $request->query->get('query') : null,
+            $request->validated('query'),
+            $request->user(),
             20
         );
 
@@ -59,17 +59,14 @@ class POSController extends Controller
         ]);
     }
 
-    public function searchCustomers(Request $request, Shop $shop): JsonResponse
+    public function searchCustomers(SearchCustomersRequest $request, Shop $shop): JsonResponse
     {
-        $this->authorize('shop.manage', $shop);
-
-        $request->validate([
-            'query' => ['required', 'string', 'min:1'],
-        ]);
+        Gate::authorize('shop.manage', $shop);
 
         $customers = $this->posService->searchCustomers(
-            $request->input('query'),
+            $request->validated('query'),
             $shop,
+            $request->user(),
             10
         );
 
@@ -82,40 +79,17 @@ class POSController extends Controller
      * Complete POS sale.
      * Returns JSON for AJAX/fetch requests, RedirectResponse for traditional form submissions.
      */
-    public function completeSale(Request $request, Shop $shop): JsonResponse|RedirectResponse
+    public function completeSale(CompleteSaleRequest $request, Shop $shop): JsonResponse|RedirectResponse
     {
-        $this->authorize('shop.manage', $shop);
+        Gate::authorize('shop.manage', $shop);
 
-        $validated = $request->validate([
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.variant_id' => ['required', 'exists:product_variants,id'],
-            'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
-            'items.*.unit_price' => ['required', 'decimal:0,2', 'min:0'],
-            'items.*.packaging_type_id' => [
-                'nullable',
-                'exists:product_packaging_types,id',
-                function ($attribute, $value, $fail) {
-                    if ($value) {
-                        $packagingType = ProductPackagingType::find($value);
-                        if ($packagingType && $packagingType->productVariant?->product?->tenant_id !== auth()->user()->tenant_id) {
-                            $fail('The selected packaging type does not belong to your organization.');
-                        }
-                    }
-                },
-            ],
-            'items.*.discount_amount' => ['nullable', 'decimal:0,2', 'min:0'],
-            'customer_id' => ['nullable', 'exists:customers,id'],
-            'payment_method' => ['required', 'string', Rule::enum(PaymentMethod::class)],
-            'amount_tendered' => ['nullable', 'decimal:0,2', 'min:0'],
-            'discount_amount' => ['nullable', 'decimal:0,2', 'min:0'],
-            'reference_number' => ['nullable', 'string', 'max:100'],
-            'notes' => ['nullable', 'string', 'max:500'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $order = $this->posService->createQuickSale(
                 shop: $shop,
                 items: $validated['items'],
+                user: $request->user(),
                 customerId: $validated['customer_id'] ?? null,
                 paymentMethod: $validated['payment_method'],
                 amountTendered: $validated['amount_tendered'] ?? 0,
@@ -146,31 +120,35 @@ class POSController extends Controller
                 ->with('success', "Sale completed! Order #{$order->order_number}")
                 ->with('receipt_url', $receiptUrl);
 
-        } catch (Exception $e) {
+        } catch (\RuntimeException $e) {
             if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'error' => $e->getMessage(),
-                ], 422);
+                return response()->json(['success' => false, 'error' => $e->getMessage()], 422);
             }
 
-            return back()
-                ->with('error', $e->getMessage())
-                ->withInput();
+            return back()->with('error', $e->getMessage())->withInput();
+        } catch (Exception $e) {
+            Log::error('POS sale failed', ['shop_id' => $shop->id, 'error' => $e->getMessage()]);
+
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'error' => 'Sale could not be completed.'], 500);
+            }
+
+            return back()->with('error', 'Sale could not be completed.')->withInput();
         }
     }
 
     /**
      * Get POS session summary
      */
-    public function sessionSummary(Request $request, Shop $shop): JsonResponse
+    public function sessionSummary(POSSessionSummaryRequest $request, Shop $shop): JsonResponse
     {
-        $this->authorize('shop.manage', $shop);
+        Gate::authorize('shop.manage', $shop);
 
         $summary = $this->posService->getSessionSummary(
             $shop,
-            $request->start_date,
-            $request->end_date
+            $request->user(),
+            $request->validated('start_date'),
+            $request->validated('end_date')
         );
 
         return response()->json($summary);
@@ -181,7 +159,7 @@ class POSController extends Controller
      */
     public function holdSale(HoldSaleRequest $request, Shop $shop): JsonResponse
     {
-        $this->authorize('shop.manage', $shop);
+        Gate::authorize('shop.manage', $shop);
 
         try {
             $heldSale = $this->heldSaleService->holdSale(
@@ -195,10 +173,12 @@ class POSController extends Controller
                 'held_sale' => $heldSale->load(['customer', 'heldByUser']),
                 'message' => "Sale held as {$heldSale->hold_reference}",
             ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-            ], 500);
+            Log::error('Hold sale failed', ['shop_id' => $shop->id, 'error' => $e->getMessage()]);
+
+            return response()->json(['error' => 'Failed to hold sale.'], 500);
         }
     }
 
@@ -207,7 +187,7 @@ class POSController extends Controller
      */
     public function retrieveHeldSale(Shop $shop, HeldSale $heldSale): JsonResponse
     {
-        $this->authorize('shop.manage', $shop);
+        Gate::authorize('shop.manage', $shop);
 
         if ($heldSale->tenant_id !== auth()->user()->tenant_id) {
             return response()->json([
@@ -234,10 +214,12 @@ class POSController extends Controller
                 'held_sale' => $retrievedSale->load(['customer', 'heldByUser']),
                 'message' => "Sale {$retrievedSale->hold_reference} retrieved successfully.",
             ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-            ], 500);
+            Log::error('Retrieve held sale failed', ['held_sale_id' => $heldSale->id, 'error' => $e->getMessage()]);
+
+            return response()->json(['error' => 'Failed to retrieve held sale.'], 500);
         }
     }
 
@@ -246,7 +228,7 @@ class POSController extends Controller
      */
     public function heldSales(Shop $shop): JsonResponse
     {
-        $this->authorize('shop.manage', $shop);
+        Gate::authorize('shop.manage', $shop);
 
         $heldSales = $this->heldSaleService->getActiveHeldSales($shop);
 
@@ -260,7 +242,7 @@ class POSController extends Controller
      */
     public function heldSalesCount(Shop $shop): JsonResponse
     {
-        $this->authorize('shop.manage', $shop);
+        Gate::authorize('shop.manage', $shop);
 
         return response()->json([
             'count' => $this->heldSaleService->getActiveCount($shop),
@@ -272,7 +254,7 @@ class POSController extends Controller
      */
     public function deleteHeldSale(Shop $shop, HeldSale $heldSale): JsonResponse
     {
-        $this->authorize('shop.manage', $shop);
+        Gate::authorize('shop.manage', $shop);
 
         if ($heldSale->tenant_id !== auth()->user()->tenant_id) {
             return response()->json([
@@ -293,10 +275,12 @@ class POSController extends Controller
             return response()->json([
                 'message' => "Held sale {$reference} deleted successfully.",
             ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-            ], 500);
+            Log::error('Delete held sale failed', ['held_sale_id' => $heldSale->id, 'error' => $e->getMessage()]);
+
+            return response()->json(['error' => 'Failed to delete held sale.'], 500);
         }
     }
 }

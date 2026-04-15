@@ -23,16 +23,14 @@ class ApprovalService
     ): ?ApprovalRequest {
         $entityType = get_class($approvable);
 
-        // Find the appropriate approval chain
         $chain = $this->findApplicableChain($tenant, $entityType, $amount);
 
-        // If no chain found, no approval needed
         if (! $chain) {
             return null;
         }
 
         return DB::transaction(function () use ($approvable, $tenant, $requestedBy, $chain) {
-            $approvalRequest = ApprovalRequest::create([
+            $approvalRequest = ApprovalRequest::query()->create([
                 'tenant_id' => $tenant->id,
                 'approval_chain_id' => $chain->id,
                 'approvable_type' => get_class($approvable),
@@ -135,7 +133,6 @@ class ApprovalService
             throw new \Exception('Only pending approval requests can be cancelled');
         }
 
-        // Only the requester or a high-level admin can cancel
         if ($request->requested_by !== $user->id && $user->role->level() < 80) {
             throw new \Exception('You do not have permission to cancel this request');
         }
@@ -212,7 +209,7 @@ class ApprovalService
      */
     public function getApprovalStatus(Model $approvable): ?ApprovalRequest
     {
-        return ApprovalRequest::where('approvable_type', get_class($approvable))
+        return ApprovalRequest::query()->where('approvable_type', get_class($approvable))
             ->where('approvable_id', $approvable->id)
             ->latest()
             ->first();

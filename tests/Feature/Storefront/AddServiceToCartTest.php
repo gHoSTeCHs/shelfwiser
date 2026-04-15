@@ -196,7 +196,7 @@ test('can add service with addons', function () {
 });
 
 test('service validation enforced by CartService', function () {
-    $cart = Cart::create([
+    $cart = Cart::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $this->customer->id,
@@ -248,7 +248,7 @@ test('service cart item uses polymorphic sellable columns', function () {
 });
 
 test('cart can contain both products and services', function () {
-    $cart = Cart::create([
+    $cart = Cart::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $this->customer->id,
@@ -304,7 +304,7 @@ test('cart can contain both products and services', function () {
 });
 
 test('cart items use sellable polymorphic relationship for uniqueness', function () {
-    $cart = Cart::create([
+    $cart = Cart::query()->forceCreate([
         'tenant_id' => $this->tenant->id,
         'shop_id' => $this->shop->id,
         'customer_id' => $this->customer->id,

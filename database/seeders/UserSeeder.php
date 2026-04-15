@@ -12,39 +12,41 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        /**
-         * Create Super Admin user (not tied to any tenant)
-         * This user has platform-wide access for administration
-         */
-        User::updateOrCreate(
-            ['email' => 'superadmin@shelfwiser.com'],
-            [
-                'first_name' => 'Super',
-                'last_name' => 'Admin',
-                'password' => Hash::make('password'),
-                'role' => UserRole::SUPER_ADMIN,
-                'is_super_admin' => true,
-                'is_tenant_owner' => false,
-                'is_active' => true,
-                'tenant_id' => null,
-            ]
-        );
+        User::unguarded(function () {
+            /**
+             * Create Super Admin user (not tied to any tenant)
+             * This user has platform-wide access for administration
+             */
+            User::updateOrCreate(
+                ['email' => 'superadmin@shelfwiser.com'],
+                [
+                    'first_name' => 'Super',
+                    'last_name' => 'Admin',
+                    'password' => Hash::make('password'),
+                    'role' => UserRole::SUPER_ADMIN,
+                    'is_super_admin' => true,
+                    'is_tenant_owner' => false,
+                    'is_active' => true,
+                    'tenant_id' => null,
+                ]
+            );
 
-        $tenants = Tenant::all();
+            $tenants = Tenant::all();
 
-        foreach ($tenants as $tenant) {
-            $users = $this->getUsersForTenant($tenant);
+            foreach ($tenants as $tenant) {
+                $users = $this->getUsersForTenant($tenant);
 
-            foreach ($users as $userData) {
-                User::updateOrCreate(
-                    ['email' => $userData['email']],
-                    array_merge($userData, [
-                        'tenant_id' => $tenant->id,
-                        'password' => Hash::make('password'),
-                    ])
-                );
+                foreach ($users as $userData) {
+                    User::updateOrCreate(
+                        ['email' => $userData['email']],
+                        array_merge($userData, [
+                            'tenant_id' => $tenant->id,
+                            'password' => Hash::make('password'),
+                        ])
+                    );
+                }
             }
-        }
+        });
     }
 
     protected function getUsersForTenant(Tenant $tenant): array

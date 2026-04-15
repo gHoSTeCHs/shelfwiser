@@ -30,7 +30,7 @@ class StaffManagementService
 
         try {
             return DB::transaction(function () use ($data, $tenant) {
-                $staff = User::query()->create([
+                $staff = User::query()->forceCreate([
                     'tenant_id' => $tenant->id,
                     'first_name' => $data['first_name'],
                     'last_name' => $data['last_name'],
@@ -49,7 +49,6 @@ class StaffManagementService
                     Log::info('Invitation email queued for staff.', ['staff_id' => $staff->id]);
                 }
 
-                // Invalidate only list cache, not individual staff caches
                 Cache::tags(["tenant:$tenant->id:staff:list"])->flush();
 
                 Log::info('Staff member created successfully.', [
@@ -95,7 +94,7 @@ class StaffManagementService
                     $updateData['is_active'] = $data['is_active'];
                 }
 
-                $staff->update($updateData);
+                $staff->forceFill($updateData)->save();
 
                 if (isset($data['shop_ids'])) {
                     $this->assignShops($staff, $data['shop_ids'], $staff->tenant);
@@ -178,7 +177,7 @@ class StaffManagementService
             DB::transaction(function () use ($staff) {
                 $staff->shops()->detach();
 
-                $staff->update(['is_active' => false]);
+                $staff->forceFill(['is_active' => false])->save();
 
                 // Invalidate specific staff cache and list cache
                 Cache::tags([

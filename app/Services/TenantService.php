@@ -28,7 +28,7 @@ class TenantService extends Controller
                 'trial_ends_at' => now()->addDays(50),
             ]);
 
-            $owner = User::query()->create([
+            $owner = User::query()->forceCreate([
                 'first_name' => $ownerData['first_name'],
                 'last_name' => $ownerData['last_name'],
                 'email' => $ownerData['email'],
@@ -36,7 +36,6 @@ class TenantService extends Controller
                 'tenant_id' => $tenant->id,
                 'role' => UserRole::OWNER->value,
                 'is_tenant_owner' => true,
-
                 'is_active' => true,
             ]);
 

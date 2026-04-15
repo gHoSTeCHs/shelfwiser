@@ -37,7 +37,10 @@ class ServicePolicy
             return true;
         }
 
-        return $user->shops()->where('shops.id', $service->shop_id)->exists();
+        return $user->shops()
+            ->where('shops.id', $service->shop_id)
+            ->where('shops.is_active', true)
+            ->exists();
     }
 
     /**
@@ -53,7 +56,10 @@ class ServicePolicy
             return true;
         }
 
-        return $user->shops()->where('shops.id', $service->shop_id)->exists();
+        return $user->shops()
+            ->where('shops.id', $service->shop_id)
+            ->where('shops.is_active', true)
+            ->exists();
     }
 
     /**

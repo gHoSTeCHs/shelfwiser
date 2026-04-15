@@ -49,7 +49,7 @@ class OrderSeeder extends Seeder
         $sequence = $this->dailyCounters[$dateKey];
         $orderNumber = sprintf('ORD-%s-%04d', $createdAt->format('Ymd'), $sequence);
 
-        $order = Order::create([
+        $order = Order::query()->forceCreate([
             'tenant_id' => $shop->tenant_id,
             'shop_id' => $shop->id,
             'customer_id' => $customer?->id,
