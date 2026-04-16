@@ -202,7 +202,7 @@ class OrderController extends Controller
      */
     public function refund(RefundOrderRequest $request, Order $order): RedirectResponse
     {
-        Gate::authorize('update', $order);
+        Gate::authorize('refund', $order);
 
         try {
             $validated = $request->validated();

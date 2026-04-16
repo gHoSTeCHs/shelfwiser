@@ -265,7 +265,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [PayRunController::class, 'store'])->name('store');
         Route::get('/{payRun}', [PayRunController::class, 'show'])->name('show');
         Route::post('/{payRun}/calculate', [PayRunController::class, 'calculate'])->name('calculate');
-        Route::post('/{payRun}/items/{item}/recalculate', [PayRunController::class, 'recalculateItem'])->name('recalculate-item');
+        Route::post('/{payRun}/items/{item}/recalculate', [PayRunController::class, 'recalculateItem'])
+            ->scopeBindings()
+            ->name('recalculate-item');
         Route::post('/{payRun}/submit', [PayRunController::class, 'submitForApproval'])->name('submit');
         Route::post('/{payRun}/approve', [PayRunController::class, 'approve'])->name('approve');
         Route::post('/{payRun}/reject', [PayRunController::class, 'reject'])->name('reject');
@@ -466,7 +468,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Sync endpoints for offline POS (moved from api.php for session auth)
-    Route::prefix('api/sync')->name('api.sync.')->group(function () {
+    Route::prefix('api/sync')->name('api.sync.')->middleware('throttle:60,1')->group(function () {
         Route::get('/products', [App\Http\Controllers\Api\SyncController::class, 'syncProducts'])->name('products');
         Route::get('/customers', [App\Http\Controllers\Api\SyncController::class, 'syncCustomers'])->name('customers');
         Route::post('/orders', [App\Http\Controllers\Api\SyncController::class, 'syncOrders'])->name('orders');

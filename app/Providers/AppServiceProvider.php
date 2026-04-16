@@ -8,19 +8,23 @@ use App\Models\EmployeeDeduction;
 use App\Models\EmployeeEarning;
 use App\Models\FundRequest;
 use App\Models\HeldSale;
+use App\Models\Image;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\PayrollPeriod;
 use App\Models\PayRun;
+use App\Models\Payslip;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\ProductOption;
 use App\Models\ProductVariant;
 use App\Models\Receipt;
 use App\Models\Service;
 use App\Models\Shop;
 use App\Models\StockMovement;
+use App\Models\SupplierConnection;
 use App\Models\Timesheet;
 use App\Models\User;
 use App\Models\WageAdvance;
@@ -32,12 +36,15 @@ use App\Policies\EmployeeEarningPolicy;
 use App\Policies\EmployeePayrollPolicy;
 use App\Policies\FundRequestPolicy;
 use App\Policies\HeldSalePolicy;
+use App\Policies\ImagePolicy;
 use App\Policies\NotificationPolicy;
 use App\Policies\OrderItemPolicy;
 use App\Policies\OrderPaymentPolicy;
 use App\Policies\OrderPolicy;
 use App\Policies\PayrollPolicy;
 use App\Policies\PayRunPolicy;
+use App\Policies\PayslipPolicy;
+use App\Policies\ProductCategoryPolicy;
 use App\Policies\ProductOptionPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\ProductVariantPolicy;
@@ -48,7 +55,7 @@ use App\Policies\ServicePolicy;
 use App\Policies\ShopPolicy;
 use App\Policies\StaffPolicy;
 use App\Policies\StockMovementPolicy;
-use App\Policies\StorefrontPolicy;
+use App\Policies\SupplierConnectionPolicy;
 use App\Policies\SupplierPolicy;
 use App\Policies\SyncPolicy;
 use App\Policies\TimesheetPolicy;
@@ -99,10 +106,11 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(User::class, StaffPolicy::class);
         Gate::policy(Shop::class, ShopPolicy::class);
-        Gate::policy(Shop::class, StorefrontPolicy::class);
         Gate::policy(Service::class, ServicePolicy::class);
         Gate::policy(Customer::class, CustomerPolicy::class);
+        Gate::policy(Image::class, ImagePolicy::class);
         Gate::policy(Product::class, ProductPolicy::class);
+        Gate::policy(ProductCategory::class, ProductCategoryPolicy::class);
         Gate::policy(ProductOption::class, ProductOptionPolicy::class);
         Gate::policy(ProductVariant::class, ProductVariantPolicy::class);
         Gate::policy(Order::class, OrderPolicy::class);
@@ -115,11 +123,13 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(WageAdvance::class, WageAdvancePolicy::class);
         Gate::policy(PayrollPeriod::class, PayrollPolicy::class);
         Gate::policy(PayRun::class, PayRunPolicy::class);
+        Gate::policy(Payslip::class, PayslipPolicy::class);
         Gate::policy(EmployeeCustomDeduction::class, EmployeeCustomDeductionPolicy::class);
         Gate::policy(EmployeeDeduction::class, EmployeeDeductionPolicy::class);
         Gate::policy(EmployeeEarning::class, EmployeeEarningPolicy::class);
         Gate::policy(Notification::class, NotificationPolicy::class);
         Gate::policy(StockMovement::class, StockMovementPolicy::class);
+        Gate::policy(SupplierConnection::class, SupplierConnectionPolicy::class);
 
         Gate::define('payRun.viewAny', [PayRunPolicy::class, 'viewAny']);
         Gate::define('payRun.create', [PayRunPolicy::class, 'create']);
@@ -178,12 +188,17 @@ class AppServiceProvider extends ServiceProvider
         // Employee payroll detail access (User model bound to StaffPolicy, so use named gates)
         Gate::define('viewPayrollDetails', [EmployeePayrollPolicy::class, 'viewPayrollDetails']);
         Gate::define('updatePayrollDetails', [EmployeePayrollPolicy::class, 'updatePayrollDetails']);
+        Gate::define('updateDeductionPreferences', [EmployeePayrollPolicy::class, 'updateDeductionPreferences']);
+        Gate::define('updateTaxSettings', [EmployeePayrollPolicy::class, 'updateTaxSettings']);
 
         // Sync (POS offline) — controller passes [Shop::class, $shop] so handle the class hint arg
         Gate::define('syncProducts', function (User $user, $_, Shop $shop) {
             return (new SyncPolicy)->syncProducts($user, $shop);
         });
         Gate::define('syncCustomers', fn (User $user) => (new SyncPolicy)->syncCustomers($user));
+        Gate::define('syncOrders', function (User $user, $_, Shop $shop) {
+            return (new SyncPolicy)->syncOrders($user, $shop);
+        });
 
         // Admin gates - super admin only actions
         Gate::define('admin.tenants.viewAny', fn (User $user) => $user->isSuperAdmin());

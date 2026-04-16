@@ -2,197 +2,104 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\InitializePaymentRequest;
+use App\Http\Requests\PaymentCallbackRequest;
+use App\Http\Requests\VerifyPaymentRequest;
 use App\Models\Order;
-use App\Models\OrderPayment;
 use App\Services\Payment\PaymentGatewayManager;
+use App\Services\Payment\PaymentProcessingService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Gate;
 
 class PaymentController extends Controller
 {
     public function __construct(
-        protected PaymentGatewayManager $gatewayManager
+        protected PaymentGatewayManager $gatewayManager,
+        protected PaymentProcessingService $paymentProcessingService,
     ) {}
 
     /**
      * Handle payment gateway callback/redirect.
      */
-    public function callback(Request $request, string $gatewayName, Order $order): RedirectResponse
+    public function callback(PaymentCallbackRequest $request, string $gatewayName, Order $order): RedirectResponse
     {
-        // Verify tenant ownership if user is authenticated
-        if ($order->tenant_id !== auth()->user()->tenant_id) {
-            abort(403, 'Unauthorized access to order');
-        }
+        Gate::authorize('handlePayment', $order);
 
-        $gateway = $this->gatewayManager->gateway($gatewayName);
-        $reference = $request->get('reference') ?? $request->get('tx_ref') ?? $order->payment_reference;
+        $outcome = $this->paymentProcessingService->handleCallback($order, $gatewayName, $request->reference());
 
-        if (! $reference) {
-            return redirect()
-                ->route('orders.show', $order)
-                ->with('error', 'Payment reference not found');
-        }
+        $redirect = redirect()->route('orders.show', $order);
 
-        $result = $gateway->verifyPayment($reference);
-
-        if ($result->isSuccessful()) {
-            DB::transaction(function () use ($order, $reference, $result, $gatewayName, $gateway) {
-                $lockedOrder = Order::query()->where('id', $order->id)->lockForUpdate()->first();
-
-                if ($lockedOrder->payment_reference && $lockedOrder->payment_reference !== $reference) {
-                    Log::warning('Payment reference mismatch', [
-                        'order_id' => $lockedOrder->id,
-                        'expected' => $lockedOrder->payment_reference,
-                        'received' => $reference,
-                    ]);
-
-                    return;
-                }
-
-                if (OrderPayment::query()->where('reference_number', $reference)->exists()) {
-                    return;
-                }
-
-                if ($result->amount < $lockedOrder->remainingBalance() * 0.99) {
-                    Log::warning('Payment amount less than expected', [
-                        'order_id' => $lockedOrder->id,
-                        'expected' => $lockedOrder->remainingBalance(),
-                        'received' => $result->amount,
-                    ]);
-                }
-
-                OrderPayment::create([
-                    'order_id' => $lockedOrder->id,
-                    'tenant_id' => $lockedOrder->tenant_id,
-                    'shop_id' => $lockedOrder->shop_id,
-                    'amount' => $result->amount,
-                    'currency' => $result->currency ?? 'NGN',
-                    'gateway_fee' => $result->gatewayFee ?? 0,
-                    'payment_method' => $result->paymentMethod ?? $gatewayName,
-                    'gateway' => $gatewayName,
-                    'gateway_reference' => $result->gatewayReference,
-                    'gateway_status' => 'success',
-                    'gateway_response' => $result->rawResponse,
-                    'verified_at' => now(),
-                    'payment_date' => now(),
-                    'reference_number' => $reference,
-                    'notes' => "Payment via {$gateway->getName()}",
-                    'recorded_by' => null,
-                ]);
-            });
-
-            return redirect()
-                ->route('orders.show', $order)
-                ->with('success', 'Payment completed successfully');
-        }
-
-        if ($result->isPending()) {
-            return redirect()
-                ->route('orders.show', $order)
-                ->with('info', 'Payment is being processed. You will be notified once confirmed.');
-        }
-
-        return redirect()
-            ->route('orders.show', $order)
-            ->with('error', $result->message ?? 'Payment failed');
+        return match ($outcome['status']) {
+            'success' => $redirect->with('success', $outcome['message']),
+            'pending' => $redirect->with('info', $outcome['message']),
+            'missing_reference', 'failed' => $redirect->with('error', $outcome['message']),
+        };
     }
 
     /**
      * Initialize a payment for an order.
      */
-    public function initialize(Request $request, Order $order): RedirectResponse|\Illuminate\Http\JsonResponse
+    public function initialize(InitializePaymentRequest $request, Order $order): RedirectResponse|JsonResponse
     {
-        // Verify tenant ownership
-        if ($order->tenant_id !== auth()->user()->tenant_id) {
-            abort(403, 'Unauthorized access to order');
-        }
+        Gate::authorize('handlePayment', $order);
 
-        $validated = $request->validate([
-            'gateway' => ['required', 'string'],
-        ]);
+        $gatewayName = $request->validated('gateway');
+        $callbackUrl = route('payment.callback', ['gateway' => $gatewayName, 'order' => $order->id]);
+        $outcome = $this->paymentProcessingService->initialize($order, $gatewayName, $callbackUrl);
 
-        $gateway = $this->gatewayManager->gateway($validated['gateway']);
-
-        if (! $gateway->isAvailable()) {
+        if (! $outcome['success']) {
             if ($request->wantsJson()) {
-                return response()->json(['error' => 'Payment gateway not available'], 400);
+                return response()->json(['error' => $outcome['message']], 400);
             }
 
-            return back()->with('error', 'Payment gateway not available');
+            return back()->with('error', $outcome['message']);
         }
-
-        $result = $gateway->initializePayment($order, [
-            'callback_url' => route('payment.callback', [
-                'gateway' => $validated['gateway'],
-                'order' => $order->id,
-            ]),
-        ]);
-
-        if (! $result->success) {
-            if ($request->wantsJson()) {
-                return response()->json(['error' => $result->message], 400);
-            }
-
-            return back()->with('error', $result->message ?? 'Failed to initialize payment');
-        }
-
-        $order->update([
-            'payment_gateway' => $validated['gateway'],
-            'payment_reference' => $result->reference,
-        ]);
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'reference' => $result->reference,
-                'authorization_url' => $result->authorizationUrl,
-                'inline_data' => $result->metadata['inline_data'] ?? null,
+                'reference' => $outcome['reference'],
+                'authorization_url' => $outcome['authorizationUrl'],
+                'inline_data' => $outcome['inlineData'],
             ]);
         }
 
-        if ($result->requiresRedirect()) {
-            return redirect($result->authorizationUrl);
+        if ($outcome['requiresRedirect']) {
+            return redirect($outcome['authorizationUrl']);
         }
 
         return back()->with('payment_data', [
-            'reference' => $result->reference,
-            'inline_data' => $result->metadata['inline_data'] ?? null,
+            'reference' => $outcome['reference'],
+            'inline_data' => $outcome['inlineData'],
         ]);
     }
 
     /**
      * Verify a payment status.
      */
-    public function verify(Request $request, Order $order): \Illuminate\Http\JsonResponse
+    public function verify(VerifyPaymentRequest $request, Order $order): JsonResponse
     {
-        // Verify tenant ownership
-        if ($order->tenant_id !== auth()->user()->tenant_id) {
-            return response()->json(['error' => 'Unauthorized access to order'], 403);
+        Gate::authorize('handlePayment', $order);
+
+        $outcome = $this->paymentProcessingService->verify($order, $request->validated('reference'));
+
+        if ($outcome['error']) {
+            return response()->json(['error' => $outcome['error']], 400);
         }
-
-        $reference = $request->get('reference') ?? $order->payment_reference;
-
-        if (! $reference || ! $order->payment_gateway) {
-            return response()->json(['error' => 'No payment to verify'], 400);
-        }
-
-        $gateway = $this->gatewayManager->gateway($order->payment_gateway);
-        $result = $gateway->verifyPayment($reference);
 
         return response()->json([
-            'success' => $result->isSuccessful(),
-            'status' => $result->status,
-            'message' => $result->message,
-            'amount' => $result->amount,
+            'success' => $outcome['success'],
+            'status' => $outcome['status'],
+            'message' => $outcome['message'],
+            'amount' => $outcome['amount'],
         ]);
     }
 
     /**
      * Get available payment gateways.
      */
-    public function gateways(): \Illuminate\Http\JsonResponse
+    public function gateways(): JsonResponse
     {
         $gateways = [];
 

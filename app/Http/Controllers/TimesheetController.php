@@ -101,7 +101,7 @@ class TimesheetController extends Controller
 
     public function clockIn(ClockInRequest $request): RedirectResponse
     {
-        Gate::authorize('clockInOut', auth()->user());
+        Gate::authorize('clockInOut', Timesheet::class);
 
         $validated = $request->validated();
         $shop = Shop::query()->findOrFail($validated['shop_id']);

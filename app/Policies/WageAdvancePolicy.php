@@ -186,6 +186,15 @@ class WageAdvancePolicy
         return false;
     }
 
+    public function deleteRepayment(User $user, WageAdvance $wageAdvance): bool
+    {
+        if ($user->tenant_id !== $wageAdvance->tenant_id) {
+            return false;
+        }
+
+        return $user->is_tenant_owner || $user->role === UserRole::GENERAL_MANAGER;
+    }
+
     /**
      * Determine if user can delete a wage advance
      */

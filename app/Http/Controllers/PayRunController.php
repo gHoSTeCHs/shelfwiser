@@ -7,12 +7,12 @@ use App\Http\Requests\ExcludeEmployeeRequest;
 use App\Http\Requests\PayRunIndexRequest;
 use App\Http\Requests\RejectPayRunRequest;
 use App\Http\Requests\StorePayRunRequest;
+use App\Models\PayrollPeriod;
 use App\Models\PayRun;
 use App\Models\PayRunItem;
-use App\Models\PayrollPeriod;
 use App\Models\User;
-use App\Services\PayRunService;
 use App\Services\PayrollAuditService;
+use App\Services\PayRunService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -73,8 +73,6 @@ class PayRunController extends Controller
     {
         Gate::authorize('view', $payRun);
 
-        $this->authorizePayRun($payRun);
-
         $payRun->load([
             'payrollPeriod:id,period_name,start_date,end_date',
             'payCalendar:id,name',
@@ -96,8 +94,6 @@ class PayRunController extends Controller
     {
         Gate::authorize('calculate', $payRun);
 
-        $this->authorizePayRun($payRun);
-
         try {
             $payRun = $this->payRunService->calculatePayRun($payRun, auth()->user());
             $this->auditService->logPayRunCalculated($payRun, auth()->user());
@@ -113,12 +109,6 @@ class PayRunController extends Controller
     public function recalculateItem(PayRun $payRun, PayRunItem $item): RedirectResponse
     {
         Gate::authorize('calculate', $payRun);
-
-        $this->authorizePayRun($payRun);
-
-        if ($item->pay_run_id !== $payRun->id) {
-            abort(404);
-        }
 
         try {
             $item = $this->payRunService->recalculateItem($item);
@@ -136,8 +126,6 @@ class PayRunController extends Controller
     {
         Gate::authorize('submit', $payRun);
 
-        $this->authorizePayRun($payRun);
-
         try {
             $payRun = $this->payRunService->submitForApproval($payRun);
             $this->auditService->logPayRunSubmitted($payRun, auth()->user());
@@ -154,8 +142,6 @@ class PayRunController extends Controller
     {
         Gate::authorize('approve', $payRun);
 
-        $this->authorizePayRun($payRun);
-
         try {
             $payRun = $this->payRunService->approvePayRun($payRun, auth()->user());
             $this->auditService->logPayRunApproved($payRun, auth()->user());
@@ -171,8 +157,6 @@ class PayRunController extends Controller
     public function reject(RejectPayRunRequest $request, PayRun $payRun): RedirectResponse
     {
         Gate::authorize('approve', $payRun);
-
-        $this->authorizePayRun($payRun);
 
         try {
             $validated = $request->validated();
@@ -191,8 +175,6 @@ class PayRunController extends Controller
     {
         Gate::authorize('complete', $payRun);
 
-        $this->authorizePayRun($payRun);
-
         try {
             $payRun = $this->payRunService->completePayRun($payRun, auth()->user());
             $this->auditService->logPayRunCompleted($payRun, auth()->user());
@@ -209,8 +191,6 @@ class PayRunController extends Controller
     {
         Gate::authorize('cancel', $payRun);
 
-        $this->authorizePayRun($payRun);
-
         try {
             $validated = $request->validated();
             $payRun = $this->payRunService->cancelPayRun($payRun, $validated['reason'] ?? null);
@@ -226,9 +206,7 @@ class PayRunController extends Controller
 
     public function excludeEmployee(ExcludeEmployeeRequest $request, PayRun $payRun, User $user): RedirectResponse
     {
-        Gate::authorize('update', $payRun);
-
-        $this->authorizePayRun($payRun);
+        Gate::authorize('excludeEmployee', $payRun);
 
         try {
             $validated = $request->validated();
@@ -245,9 +223,7 @@ class PayRunController extends Controller
 
     public function includeEmployee(PayRun $payRun, User $user): RedirectResponse
     {
-        Gate::authorize('update', $payRun);
-
-        $this->authorizePayRun($payRun);
+        Gate::authorize('includeEmployee', $payRun);
 
         try {
             $this->payRunService->includeEmployee($payRun, $user->id);
@@ -258,13 +234,6 @@ class PayRunController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('pay-runs.show', $payRun)
                 ->with('error', 'Failed to include: '.$e->getMessage());
-        }
-    }
-
-    protected function authorizePayRun(PayRun $payRun): void
-    {
-        if ($payRun->tenant_id !== auth()->user()->tenant_id) {
-            abort(403);
         }
     }
 }

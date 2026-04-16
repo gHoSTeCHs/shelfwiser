@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\OrderStatus;
 use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\User;
@@ -67,7 +68,7 @@ class OrderPolicy
             return false;
         }
 
-        if (! in_array($order->status, ['pending', 'confirmed'])) {
+        if (! $order->status->canEdit()) {
             return false;
         }
 
@@ -80,7 +81,7 @@ class OrderPolicy
             return false;
         }
 
-        if (in_array($order->status, ['completed', 'cancelled'])) {
+        if (! $order->status->canCancel()) {
             return false;
         }
 
@@ -97,7 +98,7 @@ class OrderPolicy
             return false;
         }
 
-        if ($order->status !== 'completed') {
+        if ($order->status !== OrderStatus::DELIVERED) {
             return false;
         }
 
@@ -120,7 +121,7 @@ class OrderPolicy
             return false;
         }
 
-        if ($order->status !== 'confirmed') {
+        if ($order->status !== OrderStatus::CONFIRMED) {
             return false;
         }
 
@@ -133,10 +134,27 @@ class OrderPolicy
             return false;
         }
 
-        if ($order->status !== 'fulfilled') {
+        if ($order->status !== OrderStatus::PACKED) {
             return false;
         }
 
         return $user->role->hasPermission('manage_orders');
+    }
+
+    public function handlePayment(User $user, Order $order): bool
+    {
+        if ($user->tenant_id !== $order->tenant_id) {
+            return false;
+        }
+
+        if (in_array($user->role->value, [UserRole::OWNER->value, UserRole::GENERAL_MANAGER->value])) {
+            return true;
+        }
+
+        if (! $user->role->hasPermission('manage_orders')) {
+            return false;
+        }
+
+        return $user->shops()->where('shops.id', $order->shop_id)->exists();
     }
 }
