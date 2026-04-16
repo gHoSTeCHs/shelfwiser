@@ -101,7 +101,7 @@ const FundRequestsIndex = ({
         if (startDate) params.start_date = startDate;
         if (endDate) params.end_date = endDate;
 
-        router.get('/fund-requests', params, {
+        router.get(FundRequestController.index.url(), params, {
             preserveState: true,
             preserveScroll: true,
         });
@@ -112,7 +112,7 @@ const FundRequestsIndex = ({
         setSelectedStatus('');
         setSelectedType('');
         router.get(
-            '/fund-requests',
+            FundRequestController.index.url(),
             {},
             { preserveState: true, preserveScroll: true },
         );
@@ -439,8 +439,16 @@ const FundRequestsIndex = ({
                                                 </p>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <Badge color={fundRequestStatusConfig[request.status]?.color || 'gray'}>
-                                                    {fundRequestStatusConfig[request.status]?.label || request.status}
+                                                <Badge
+                                                    color={
+                                                        fundRequestStatusConfig[
+                                                            request.status
+                                                        ]?.color || 'gray'
+                                                    }
+                                                >
+                                                    {fundRequestStatusConfig[
+                                                        request.status
+                                                    ]?.label || request.status}
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4 text-right">

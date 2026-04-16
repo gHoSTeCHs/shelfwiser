@@ -46,7 +46,7 @@ export default function Edit({ service, categories }: Props) {
 
             <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                    <Link href={`/services/${service.id}`}>
+                    <Link href={ServiceController.show.url({ service: service.id })}>
                         <Button variant="outline" size="sm">
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Back
@@ -278,7 +278,7 @@ export default function Edit({ service, categories }: Props) {
 
                             {/* Actions */}
                             <div className="flex justify-end gap-4">
-                                <Link href={`/services/${service.id}`}>
+                                <Link href={ServiceController.show.url({ service: service.id })}>
                                     <Button type="button" variant="outline">
                                         Cancel
                                     </Button>

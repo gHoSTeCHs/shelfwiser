@@ -1,3 +1,8 @@
+import ProductController from '@/actions/App/Http/Controllers/ProductController';
+import ReorderAlertController from '@/actions/App/Http/Controllers/ReorderAlertController';
+import ShopController from '@/actions/App/Http/Controllers/ShopController';
+import StockTakeController from '@/actions/App/Http/Controllers/StockTakeController';
+import StorefrontBuilderController from '@/actions/App/Http/Controllers/StorefrontBuilderController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import Card from '@/components/ui/card/Card';
@@ -42,7 +47,7 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link
-                            href={'/shops'}
+                            href={ShopController.index.url()}
                             className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ChevronLeft className="mr-1 h-4 w-4" />
@@ -51,7 +56,7 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                     </div>
 
                     {can_manage && (
-                        <Link href={`/shops/${shop.id}/edit`}>
+                        <Link href={ShopController.edit.url({ shop: shop.id })}>
                             <Button size="sm" className="gap-2">
                                 <Edit className="h-4 w-4" />
                                 Edit Shop
@@ -113,7 +118,8 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                                             Business Type
                                         </label>
                                         <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                                            {shop.type?.label ?? 'Not specified'}
+                                            {shop.type?.label ??
+                                                'Not specified'}
                                         </p>
                                     </div>
 
@@ -309,7 +315,11 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                         <div className="space-y-3">
                             {can_manage && (
                                 <>
-                                    <Link href={`/shops/${shop.id}/settings`}>
+                                    <Link
+                                        href={ShopController.edit.url({
+                                            shop: shop.id,
+                                        })}
+                                    >
                                         <Button
                                             variant="outline"
                                             className="w-full gap-2"
@@ -321,7 +331,9 @@ export default function ShopsShow({ shop, can_manage }: Props) {
 
                                     {shop.storefront_enabled && (
                                         <Link
-                                            href={`/shops/${shop.id}/storefront-builder`}
+                                            href={StorefrontBuilderController.index.url(
+                                                { shop: shop.id },
+                                            )}
                                         >
                                             <Button className="w-full gap-2">
                                                 <LayoutTemplate className="h-4 w-4" />
@@ -331,7 +343,9 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                                     )}
 
                                     <Link
-                                        href={`/shops/${shop.id}/storefront-settings`}
+                                        href={ShopController.editStorefrontSettings.url(
+                                            { shop: shop.id },
+                                        )}
                                     >
                                         <Button
                                             variant="outline"
@@ -344,7 +358,11 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                                 </>
                             )}
 
-                            <Link href={`/shops/${shop.id}/products`}>
+                            <Link
+                                href={ProductController.index.url({
+                                    query: { shop_id: shop.id.toString() },
+                                })}
+                            >
                                 <Button
                                     variant="outline"
                                     className="w-full gap-2"
@@ -356,7 +374,11 @@ export default function ShopsShow({ shop, can_manage }: Props) {
 
                             {can_manage && (
                                 <>
-                                    <Link href={`/shops/${shop.id}/stock-take`}>
+                                    <Link
+                                        href={StockTakeController.index.url({
+                                            shop: shop.id,
+                                        })}
+                                    >
                                         <Button
                                             variant="outline"
                                             className="w-full gap-2"
@@ -367,7 +389,9 @@ export default function ShopsShow({ shop, can_manage }: Props) {
                                     </Link>
 
                                     <Link
-                                        href={`/shops/${shop.id}/reorder-alerts`}
+                                        href={ReorderAlertController.index[
+                                            '/shops/{shop}/reorder-alerts'
+                                        ].url({ shop: shop.id })}
                                     >
                                         <Button
                                             variant="outline"

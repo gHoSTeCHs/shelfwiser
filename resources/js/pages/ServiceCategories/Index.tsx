@@ -26,9 +26,11 @@ export default function Index({ categories }: Props) {
         });
         if (!confirmed) return;
 
-        router.delete(ServiceCategoryController.destroy.url({
-            service_category: category.id,
-        }));
+        router.delete(
+            ServiceCategoryController.destroy.url({
+                service_category: category.id,
+            }),
+        );
     };
 
     return (
@@ -45,7 +47,7 @@ export default function Index({ categories }: Props) {
                             Organize your services into categories
                         </p>
                     </div>
-                    <Link href={'/service-categories/create'}>
+                    <Link href={ServiceCategoryController.create.url()}>
                         <Button>
                             <Plus className="mr-2 h-4 w-4" />
                             Create Category
@@ -127,7 +129,12 @@ export default function Index({ categories }: Props) {
 
                                         <div className="flex gap-2">
                                             <Link
-                                                href={`/service-categories/${category.id}/edit`}
+                                                href={ServiceCategoryController.edit.url(
+                                                    {
+                                                        service_category:
+                                                            category.id,
+                                                    },
+                                                )}
                                             >
                                                 <Button
                                                     variant="outline"
@@ -140,7 +147,9 @@ export default function Index({ categories }: Props) {
                                                 variant="destructive"
                                                 size="sm"
                                                 onClick={() =>
-                                                    handleDeleteCategory(category)
+                                                    handleDeleteCategory(
+                                                        category,
+                                                    )
                                                 }
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -186,7 +195,12 @@ export default function Index({ categories }: Props) {
 
                                                             <div className="flex gap-2">
                                                                 <Link
-                                                                    href={`/service-categories/${child.id}/edit`}
+                                                                    href={ServiceCategoryController.edit.url(
+                                                                        {
+                                                                            service_category:
+                                                                                child.id,
+                                                                        },
+                                                                    )}
                                                                 >
                                                                     <Button
                                                                         variant="outline"
@@ -199,7 +213,9 @@ export default function Index({ categories }: Props) {
                                                                     variant="destructive"
                                                                     size="sm"
                                                                     onClick={() =>
-                                                                        handleDeleteCategory(child)
+                                                                        handleDeleteCategory(
+                                                                            child,
+                                                                        )
                                                                     }
                                                                 >
                                                                     <Trash2 className="h-4 w-4" />

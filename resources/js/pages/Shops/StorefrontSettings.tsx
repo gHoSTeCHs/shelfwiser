@@ -73,7 +73,7 @@ export default function StorefrontSettings({
             <div className="space-y-6">
                 <div>
                     <Link
-                        href={`/shops/${shop.id}`}
+                        href={ShopController.show.url({ shop: shop.id })}
                         className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />
@@ -636,7 +636,7 @@ export default function StorefrontSettings({
             </div>
         </>
     );
-};
+}
 
 StorefrontSettings.layout = (page: React.ReactNode) => (
     <AppLayout>{page}</AppLayout>

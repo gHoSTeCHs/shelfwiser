@@ -1,3 +1,4 @@
+import ShopController from '@/actions/App/Http/Controllers/ShopController';
 import StockTakeController from '@/actions/App/Http/Controllers/StockTakeController';
 import Input from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
@@ -67,7 +68,7 @@ export default function Index({ shop, variants }: Props) {
                 <div className="flex items-center justify-between">
                     <div>
                         <Link
-                            href={`/shops/${shop.id}`}
+                            href={ShopController.show.url({ shop: shop.id })}
                             className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -104,156 +105,190 @@ export default function Index({ shop, variants }: Props) {
                     >
                         {({ processing }) => (
                             <>
-                                <input type="hidden" name="counts" value={JSON.stringify(prepareSubmitData().counts)} />
-                                <input type="hidden" name="notes" value={notes} />
-                            <div className="space-y-6">
-                                <Card className="overflow-hidden">
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                            <thead className="bg-gray-50 dark:bg-gray-800">
-                                                <tr>
-                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                                        SKU
-                                                    </th>
-                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                                        Product
-                                                    </th>
-                                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                                        System Count
-                                                    </th>
-                                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                                        Physical Count
-                                                    </th>
-                                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                                                        Difference
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-                                                {variants.map((variant) => {
-                                                    const difference =
-                                                        calculateDifference(
-                                                            variant,
-                                                        );
-                                                    return (
-                                                        <tr
-                                                            key={variant.id}
-                                                            className={
-                                                                difference !== 0
-                                                                    ? 'bg-warning-50 dark:bg-warning-950/20'
-                                                                    : ''
-                                                            }
+                                <input
+                                    type="hidden"
+                                    name="counts"
+                                    value={JSON.stringify(
+                                        prepareSubmitData().counts,
+                                    )}
+                                />
+                                <input
+                                    type="hidden"
+                                    name="notes"
+                                    value={notes}
+                                />
+                                <div className="space-y-6">
+                                    <Card className="overflow-hidden">
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                                <thead className="bg-gray-50 dark:bg-gray-800">
+                                                    <tr>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
                                                         >
-                                                            <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white">
-                                                                {variant.sku}
-                                                            </td>
-                                                            <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                                                                <div>
-                                                                    <div className="font-medium">
-                                                                        {
-                                                                            variant.product_name
-                                                                        }
-                                                                    </div>
-                                                                    {variant.name && (
-                                                                        <div className="text-gray-500 dark:text-gray-400">
+                                                            SKU
+                                                        </th>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                                        >
+                                                            Product
+                                                        </th>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                                        >
+                                                            System Count
+                                                        </th>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                                        >
+                                                            Physical Count
+                                                        </th>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                                        >
+                                                            Difference
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
+                                                    {variants.map((variant) => {
+                                                        const difference =
+                                                            calculateDifference(
+                                                                variant,
+                                                            );
+                                                        return (
+                                                            <tr
+                                                                key={variant.id}
+                                                                className={
+                                                                    difference !==
+                                                                    0
+                                                                        ? 'bg-warning-50 dark:bg-warning-950/20'
+                                                                        : ''
+                                                                }
+                                                            >
+                                                                <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white">
+                                                                    {
+                                                                        variant.sku
+                                                                    }
+                                                                </td>
+                                                                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                                                    <div>
+                                                                        <div className="font-medium">
                                                                             {
-                                                                                variant.name
+                                                                                variant.product_name
                                                                             }
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-4 text-right text-sm whitespace-nowrap text-gray-900 dark:text-white">
-                                                                {
-                                                                    variant.system_count
-                                                                }
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                                <Input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    value={
-                                                                        counts[
-                                                                            variant
-                                                                                .id
-                                                                        ]?.toString() ||
-                                                                        variant.system_count.toString()
+                                                                        {variant.name && (
+                                                                            <div className="text-gray-500 dark:text-gray-400">
+                                                                                {
+                                                                                    variant.name
+                                                                                }
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4 text-right text-sm whitespace-nowrap text-gray-900 dark:text-white">
+                                                                    {
+                                                                        variant.system_count
                                                                     }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) =>
-                                                                        handleCountChange(
-                                                                            variant.id,
-                                                                            e
-                                                                                .target
-                                                                                .value,
-                                                                        )
-                                                                    }
-                                                                    className="w-32 text-right"
-                                                                />
-                                                            </td>
-                                                            <td
-                                                                className={`px-6 py-4 text-right text-sm font-medium whitespace-nowrap ${
-                                                                    difference >
+                                                                </td>
+                                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                                    <Input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        value={
+                                                                            counts[
+                                                                                variant
+                                                                                    .id
+                                                                            ]?.toString() ||
+                                                                            variant.system_count.toString()
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            handleCountChange(
+                                                                                variant.id,
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                            )
+                                                                        }
+                                                                        className="w-32 text-right"
+                                                                    />
+                                                                </td>
+                                                                <td
+                                                                    className={`px-6 py-4 text-right text-sm font-medium whitespace-nowrap ${
+                                                                        difference >
+                                                                        0
+                                                                            ? 'text-success-600 dark:text-success-400'
+                                                                            : difference <
+                                                                                0
+                                                                              ? 'text-error-600 dark:text-error-400'
+                                                                              : 'text-gray-900 dark:text-white'
+                                                                    }`}
+                                                                >
+                                                                    {difference >
                                                                     0
-                                                                        ? 'text-success-600 dark:text-success-400'
-                                                                        : difference <
-                                                                            0
-                                                                          ? 'text-error-600 dark:text-error-400'
-                                                                          : 'text-gray-900 dark:text-white'
-                                                                }`}
-                                                            >
-                                                                {difference > 0
-                                                                    ? '+'
-                                                                    : ''}
-                                                                {difference}
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </Card>
-
-                                <Card className="p-6">
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Notes
-                                            </label>
-                                            <TextArea
-                                                value={notes}
-                                                onChange={(value) =>
-                                                    setNotes(value)
-                                                }
-                                                placeholder="Add any notes about this stock take..."
-                                                rows={3}
-                                            />
+                                                                        ? '+'
+                                                                        : ''}
+                                                                    {difference}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
                                         </div>
+                                    </Card>
 
-                                        <div className="flex justify-end gap-3">
-                                            <Link href={`/shops/${shop.id}`}>
-                                                <Button variant="outline">
-                                                    Cancel
+                                    <Card className="p-6">
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    Notes
+                                                </label>
+                                                <TextArea
+                                                    value={notes}
+                                                    onChange={(value) =>
+                                                        setNotes(value)
+                                                    }
+                                                    placeholder="Add any notes about this stock take..."
+                                                    rows={3}
+                                                />
+                                            </div>
+
+                                            <div className="flex justify-end gap-3">
+                                                <Link
+                                                    href={ShopController.show.url(
+                                                        { shop: shop.id },
+                                                    )}
+                                                >
+                                                    <Button variant="outline">
+                                                        Cancel
+                                                    </Button>
+                                                </Link>
+                                                <Button
+                                                    type="submit"
+                                                    disabled={
+                                                        processing ||
+                                                        !hasChanges
+                                                    }
+                                                    loading={processing}
+                                                >
+                                                    <Save className="mr-2 h-4 w-4" />
+                                                    {hasChanges
+                                                        ? 'Complete Stock Take'
+                                                        : 'No Changes to Save'}
                                                 </Button>
-                                            </Link>
-                                            <Button
-                                                type="submit"
-                                                disabled={
-                                                    processing || !hasChanges
-                                                }
-                                                loading={processing}
-                                            >
-                                                <Save className="mr-2 h-4 w-4" />
-                                                {hasChanges
-                                                    ? 'Complete Stock Take'
-                                                    : 'No Changes to Save'}
-                                            </Button>
+                                            </div>
                                         </div>
-                                    </div>
-                                </Card>
-                            </div>
+                                    </Card>
+                                </div>
                             </>
                         )}
                     </Form>

@@ -20,7 +20,7 @@ import {
     ShoppingCart,
     Trash2,
 } from 'lucide-react';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 /**
  * Shopping cart page for viewing and managing cart items (products and services).
@@ -57,7 +57,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
     };
 
     // Cleanup timeout on unmount
-    React.useEffect(() => {
+    useEffect(() => {
         return () => {
             if (updateTimeoutRef.current) {
                 clearTimeout(updateTimeoutRef.current);

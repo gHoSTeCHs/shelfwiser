@@ -1,4 +1,5 @@
 import OrderController from '@/actions/App/Http/Controllers/OrderController';
+import OrderReturnController from '@/actions/App/Http/Controllers/OrderReturnController';
 import ReceiptController from '@/actions/App/Http/Controllers/ReceiptController';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
@@ -11,7 +12,10 @@ import { Modal } from '@/components/ui/modal';
 import { useModal } from '@/hooks/useModal';
 import AppLayout from '@/layouts/AppLayout';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
-import { getOrderStatusColor, getPaymentStatusColor } from '@/lib/status-configs';
+import {
+    getOrderStatusColor,
+    getPaymentStatusColor,
+} from '@/lib/status-configs';
 import { Order, OrderStatus, PaymentStatus } from '@/types/order';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
@@ -156,19 +160,21 @@ export default function Show({
                                         </>
                                     )}
                                 {order.status === 'delivered' && (
-                                        <Link
-                                            href={`/orders/${order.id}/return`}
+                                    <Link
+                                        href={OrderReturnController.create.url({
+                                            order: order.id,
+                                        })}
+                                    >
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-warning-600 hover:text-warning-700"
                                         >
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="text-warning-600 hover:text-warning-700"
-                                            >
-                                                <Package className="mr-2 h-4 w-4" />
-                                                Process Return
-                                            </Button>
-                                        </Link>
-                                    )}
+                                            <Package className="mr-2 h-4 w-4" />
+                                            Process Return
+                                        </Button>
+                                    </Link>
+                                )}
                             </>
                         )}
                     </div>

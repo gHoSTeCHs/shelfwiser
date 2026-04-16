@@ -1,3 +1,4 @@
+import DashboardController from '@/actions/App/Http/Controllers/DashboardController';
 import FinancialsTab from '@/components/dashboard/tabs/FinancialsTab';
 import InventoryTab from '@/components/dashboard/tabs/InventoryTab';
 import OverviewTab from '@/components/dashboard/tabs/OverviewTab';
@@ -40,7 +41,7 @@ export default function Dashboard({
     const [showDatePickers, setShowDatePickers] = useState(period === 'custom');
 
     const handleFilterChange = (filters: Record<string, string>) => {
-        router.get('/dashboard', filters, {
+        router.get(DashboardController.index.url(), filters, {
             preserveState: true,
             preserveScroll: true,
         });

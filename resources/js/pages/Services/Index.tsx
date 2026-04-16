@@ -1,3 +1,4 @@
+import ServiceController from '@/actions/App/Http/Controllers/ServiceController';
 import Select from '@/components/form/Select';
 import Input from '@/components/form/input/InputField';
 import EmptyState from '@/components/ui/EmptyState';
@@ -67,7 +68,7 @@ export default function Index({ services }: Props) {
                             Manage your service offerings
                         </p>
                     </div>
-                    <Link href={'/services/create'}>
+                    <Link href={ServiceController.create.url()}>
                         <Button>
                             <Plus className="mr-2 h-4 w-4" />
                             Create Service
@@ -131,7 +132,7 @@ export default function Index({ services }: Props) {
                             !searchTerm &&
                             !selectedCategory &&
                             !selectedShop ? (
-                                <Link href={'/services/create'}>
+                                <Link href={ServiceController.create.url()}>
                                     <Button>
                                         <Plus className="mr-2 h-4 w-4" />
                                         Create Service
@@ -238,7 +239,10 @@ export default function Index({ services }: Props) {
                                                 service.variants.length > 0 && (
                                                     <div className="flex items-center text-sm font-medium text-gray-900 dark:text-white">
                                                         <DollarSign className="mr-1 h-4 w-4" />
-                                                        From {formatCurrency(minPrice)}
+                                                        From{' '}
+                                                        {formatCurrency(
+                                                            minPrice,
+                                                        )}
                                                     </div>
                                                 )}
                                         </div>
@@ -263,7 +267,9 @@ export default function Index({ services }: Props) {
 
                                         <div className="flex gap-2">
                                             <Link
-                                                href={`/services/${service.id}`}
+                                                href={ServiceController.show.url(
+                                                    { service: service.id },
+                                                )}
                                                 className="flex-1"
                                                 onClick={(e) =>
                                                     e.stopPropagation()
@@ -277,7 +283,9 @@ export default function Index({ services }: Props) {
                                                 </Button>
                                             </Link>
                                             <Link
-                                                href={`/services/${service.id}/edit`}
+                                                href={ServiceController.edit.url(
+                                                    { service: service.id },
+                                                )}
                                                 className="flex-1"
                                                 onClick={(e) =>
                                                     e.stopPropagation()

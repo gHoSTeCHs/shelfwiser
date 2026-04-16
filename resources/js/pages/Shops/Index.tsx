@@ -1,9 +1,11 @@
+import ShopController from '@/actions/App/Http/Controllers/ShopController';
+import StorefrontBuilderController from '@/actions/App/Http/Controllers/StorefrontBuilderController';
 import Select from '@/components/form/Select';
 import Input from '@/components/form/input/InputField';
 import EmptyState from '@/components/ui/EmptyState';
 import Badge from '@/components/ui/badge/Badge';
 
-import Button from '@/components/ui/button/Button.tsx';
+import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { Shop } from '@/types/shop';
@@ -66,7 +68,7 @@ export default function Index({ shops, shopTypes }: Props) {
                             Manage your shops and locations
                         </p>
                     </div>
-                    <Link href={'/shops/create'}>
+                    <Link href={ShopController.create.url()}>
                         <Button>
                             <Plus className="mr-2 h-4 w-4" />
                             Create Shop
@@ -112,7 +114,7 @@ export default function Index({ shops, shopTypes }: Props) {
                         }
                         action={
                             !searchTerm && !selectedShopType ? (
-                                <Link href={'/shops/create'}>
+                                <Link href={ShopController.create.url()}>
                                     <Button>
                                         <Plus className="mr-2 h-4 w-4" />
                                         Create Shop
@@ -210,7 +212,9 @@ export default function Index({ shops, shopTypes }: Props) {
                                     <div className="space-y-2">
                                         <div className="flex gap-2">
                                             <Link
-                                                href={`/shops/${shop.id}`}
+                                                href={ShopController.show.url({
+                                                    shop: shop.id,
+                                                })}
                                                 className="flex-1"
                                                 onClick={(e) =>
                                                     e.stopPropagation()
@@ -224,7 +228,9 @@ export default function Index({ shops, shopTypes }: Props) {
                                                 </Button>
                                             </Link>
                                             <Link
-                                                href={`/shops/${shop.id}/edit`}
+                                                href={ShopController.edit.url({
+                                                    shop: shop.id,
+                                                })}
                                                 className="flex-1"
                                                 onClick={(e) =>
                                                     e.stopPropagation()
@@ -239,9 +245,13 @@ export default function Index({ shops, shopTypes }: Props) {
                                         {shop.storefront_enabled && (
                                             <div className="flex gap-2">
                                                 <Link
-                                                    href={`/shops/${shop.id}/storefront-builder`}
+                                                    href={StorefrontBuilderController.index.url(
+                                                        { shop: shop.id },
+                                                    )}
                                                     className="flex-1"
-                                                    onClick={(e) => e.stopPropagation()}
+                                                    onClick={(e) =>
+                                                        e.stopPropagation()
+                                                    }
                                                 >
                                                     <Button className="w-full">
                                                         <LayoutTemplate className="mr-2 h-4 w-4" />
@@ -249,15 +259,16 @@ export default function Index({ shops, shopTypes }: Props) {
                                                     </Button>
                                                 </Link>
                                                 <Link
-                                                    href={`/shops/${shop.id}/storefront-settings`}
+                                                    href={ShopController.editStorefrontSettings.url(
+                                                        { shop: shop.id },
+                                                    )}
                                                     className="flex-1"
-                                                    onClick={(e) => e.stopPropagation()}
+                                                    onClick={(e) =>
+                                                        e.stopPropagation()
+                                                    }
                                                 >
-                                                    <Button
-                                                        variant="outline"
-                                                        className="w-full"
-                                                    >
-                                                        <Store className="mr-2 h-4 w-4" />
+                                                    <Button className="w-full">
+                                                        <Settings className="mr-2 h-4 w-4" />
                                                         Settings
                                                     </Button>
                                                 </Link>

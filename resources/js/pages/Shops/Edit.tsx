@@ -1,4 +1,4 @@
-import ShopController from '@/actions/App/Http/Controllers/ShopController.ts';
+import ShopController from '@/actions/App/Http/Controllers/ShopController';
 import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
@@ -49,7 +49,7 @@ export default function Edit({ shop, shopTypes, inventoryModels }: Props) {
                 <div className="flex items-center justify-between">
                     <div>
                         <Link
-                            href={`/shops/${shop.id}`}
+                            href={ShopController.show.url({ shop: shop.id })}
                             className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -532,7 +532,7 @@ export default function Edit({ shop, shopTypes, inventoryModels }: Props) {
                             )}
 
                             <div className="flex items-center justify-between border-t border-gray-200 pt-6 dark:border-gray-700">
-                                <Link href={`/shops/${shop.id}`}>
+                                <Link href={ShopController.show.url({ shop: shop.id })}>
                                     <Button
                                         variant="outline"
                                         disabled={processing}

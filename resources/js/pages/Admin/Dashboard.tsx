@@ -1,3 +1,4 @@
+import AdminTenantController from '@/actions/App/Http/Controllers/Admin/AdminTenantController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
@@ -188,7 +189,7 @@ export default function Dashboard({
                             <h3 className="font-semibold text-gray-900 dark:text-white">
                                 Recent Tenants
                             </h3>
-                            <Link href="/admin/tenants">
+                            <Link href={AdminTenantController.index.url()}>
                                 <Button
                                     variant="ghost"
                                     size="sm"
@@ -233,7 +234,9 @@ export default function Dashboard({
                                         <tr key={tenant.id}>
                                             <td className="py-2">
                                                 <Link
-                                                    href={`/admin/tenants/${tenant.id}`}
+                                                    href={AdminTenantController.show.url(
+                                                        { tenant: tenant.id },
+                                                    )}
                                                     className="font-medium text-gray-900 hover:text-brand-600 dark:text-white dark:hover:text-brand-400"
                                                 >
                                                     {tenant.name}
@@ -293,7 +296,9 @@ export default function Dashboard({
                                 >
                                     <div>
                                         <Link
-                                            href={`/admin/tenants/${tenant.id}`}
+                                            href={AdminTenantController.show.url(
+                                                { tenant: tenant.id },
+                                            )}
                                             className="font-medium text-gray-900 hover:text-brand-600 dark:text-white dark:hover:text-brand-400"
                                         >
                                             {tenant.name}

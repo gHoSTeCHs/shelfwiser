@@ -93,10 +93,7 @@ export interface Product {
     updated_at: string;
 }
 
-export interface ProductListResponse {
-    data: Product[];
-    total: number;
-}
+export type ProductListResponse = import('@/types/index').PaginatedResponse<Product>;
 
 export interface TemplatePackagingType {
     name: string;
@@ -154,10 +151,7 @@ export interface ProductTemplate {
     usage_count?: number;
 }
 
-export interface ProductTemplateListResponse {
-    data: ProductTemplate[];
-    total: number;
-}
+export type ProductTemplateListResponse = import('@/types/index').PaginatedResponse<ProductTemplate>;
 
 /**
  * Form data types for product creation/editing.

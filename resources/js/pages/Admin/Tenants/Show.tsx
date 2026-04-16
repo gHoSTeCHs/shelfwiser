@@ -1,3 +1,4 @@
+import AdminTenantController from '@/actions/App/Http/Controllers/Admin/AdminTenantController';
 import Input from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
 import Badge from '@/components/ui/badge/Badge';
@@ -71,7 +72,9 @@ export default function Show({ tenant }: Props) {
     const [extendDays, setExtendDays] = useState(30);
 
     const handleToggleActive = () => {
-        router.post(`/admin/tenants/${tenant.id}/toggle-active`);
+        router.post(
+            AdminTenantController.toggleActive.url({ tenant: tenant.id }),
+        );
     };
 
     return (
@@ -81,7 +84,7 @@ export default function Show({ tenant }: Props) {
             <div className="space-y-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
-                        <Link href="/admin/tenants">
+                        <Link href={AdminTenantController.index.url()}>
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="h-4 w-4" />
                             </Button>
@@ -104,7 +107,11 @@ export default function Show({ tenant }: Props) {
                         >
                             {tenant.is_active ? 'Deactivate' : 'Activate'}
                         </Button>
-                        <Link href={`/admin/tenants/${tenant.id}/edit`}>
+                        <Link
+                            href={AdminTenantController.edit.url({
+                                tenant: tenant.id,
+                            })}
+                        >
                             <Button
                                 size="sm"
                                 startIcon={<Edit className="h-4 w-4" />}
@@ -381,7 +388,9 @@ export default function Show({ tenant }: Props) {
                             <hr className="my-4 border-gray-200 dark:border-gray-700" />
 
                             <Form
-                                action={`/admin/tenants/${tenant.id}/extend-subscription`}
+                                action={AdminTenantController.extendSubscription.url(
+                                    { tenant: tenant.id },
+                                )}
                                 method="post"
                             >
                                 {({ processing }) => (

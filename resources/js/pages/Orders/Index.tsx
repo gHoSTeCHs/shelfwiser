@@ -1,3 +1,4 @@
+import OrderController from '@/actions/App/Http/Controllers/OrderController';
 import Select from '@/components/form/Select';
 import Input from '@/components/form/input/InputField';
 import EmptyState from '@/components/ui/EmptyState';
@@ -6,7 +7,10 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { formatCurrency, formatDateShort } from '@/lib/formatters';
-import { getOrderStatusColor, getPaymentStatusColor } from '@/lib/status-configs';
+import {
+    getOrderStatusColor,
+    getPaymentStatusColor,
+} from '@/lib/status-configs';
 import { OrderListResponse, OrderStats } from '@/types/order';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -70,7 +74,7 @@ export default function Index({
                             Manage sales orders and track fulfillment
                         </p>
                     </div>
-                    <Link href={'/orders/create'}>
+                    <Link href={OrderController.create.url()}>
                         <Button>
                             <Plus className="mr-2 h-4 w-4" />
                             Create Order
@@ -254,7 +258,10 @@ export default function Index({
                                                         Customer:
                                                     </span>
                                                     <span>
-                                                        {order.customer.full_name}
+                                                        {
+                                                            order.customer
+                                                                .full_name
+                                                        }
                                                     </span>
                                                 </div>
                                             )}
@@ -294,7 +301,11 @@ export default function Index({
                                                 )}
                                             </p>
                                         </div>
-                                        <Link href={`/orders/${order.id}`}>
+                                        <Link
+                                            href={OrderController.show.url({
+                                                order: order.id,
+                                            })}
+                                        >
                                             <Button variant="outline" size="sm">
                                                 <Eye className="mr-2 h-4 w-4" />
                                                 View
