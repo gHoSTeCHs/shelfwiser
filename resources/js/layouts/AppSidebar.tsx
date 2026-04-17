@@ -1,4 +1,5 @@
 import { useSidebar } from '@/context/SidebarContext';
+import { home } from '@/routes';
 import { SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
@@ -408,7 +409,7 @@ const AppSidebar: React.FC = () => {
                         : 'justify-start'
                 }`}
             >
-                <Link href="/">
+                <Link href={home.url()}>
                     {isExpanded || isHovered || isMobileOpen ? (
                         <>
                             <img

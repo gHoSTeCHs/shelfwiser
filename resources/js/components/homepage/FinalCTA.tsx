@@ -1,5 +1,5 @@
 import { useScrollReveal } from '@/hooks/useScrollReveal';
-import { register } from '@/routes';
+import { dashboard, register } from '@/routes';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
@@ -37,7 +37,7 @@ export default function FinalCTA() {
 
                     {auth.user ? (
                         <Link
-                            href="/dashboard"
+                            href={dashboard.url()}
                             className="group inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 text-sm font-semibold text-brand-600 shadow-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl"
                         >
                             Go to Dashboard

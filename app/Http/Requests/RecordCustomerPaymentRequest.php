@@ -3,39 +3,14 @@
 namespace App\Http\Requests;
 
 use App\Enums\PaymentMethod;
-use App\Models\Customer;
-use App\Models\Shop;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class RecordCustomerPaymentRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        $shop = $this->route('shop');
-        $customer = $this->route('customer');
-
-        // Verify shop and customer are valid route model bindings
-        if (! $shop instanceof Shop || ! $customer instanceof Customer) {
-            return false;
-        }
-
-        // Verify shop belongs to user's tenant
-        if ($shop->tenant_id !== auth()->user()->tenant_id) {
-            return false;
-        }
-
-        // Verify customer belongs to user's tenant
-        if ($customer->tenant_id !== auth()->user()->tenant_id) {
-            return false;
-        }
-
-        // Check user has permission to manage customer credit
-        return Gate::allows('manage', $customer);
+        return true;
     }
 
     /**

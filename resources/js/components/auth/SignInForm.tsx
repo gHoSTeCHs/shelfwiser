@@ -1,4 +1,6 @@
 import AuthenticatedSessionController from '@/actions/App/Http/Controllers/Auth/AuthenticatedSessionController.ts';
+import { home, register } from '@/routes';
+import password from '@/routes/password';
 import { Form, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
@@ -17,7 +19,7 @@ export default function SignInForm() {
         <div className="flex flex-1 flex-col">
             <div className="mx-auto w-full max-w-md pt-4 sm:pt-8">
                 <Link
-                    href="/"
+                    href={home.url()}
                     className="inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-brand-600 dark:text-gray-400 dark:hover:text-brand-400"
                 >
                     <ArrowLeft className="h-4 w-4" />
@@ -164,7 +166,7 @@ export default function SignInForm() {
                                             Remember me
                                         </Label>
                                     </div>
-                                    <TextLink href="/reset-password">
+                                    <TextLink href={password.request.url()}>
                                         Forgot password?
                                     </TextLink>
                                 </div>
@@ -179,7 +181,7 @@ export default function SignInForm() {
 
                                 <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                                     Don&apos;t have an account?{' '}
-                                    <TextLink href="/register">
+                                    <TextLink href={register.url()}>
                                         Sign up
                                     </TextLink>
                                 </p>

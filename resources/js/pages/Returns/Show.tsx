@@ -44,7 +44,7 @@ export default function Show({ return: returnData, can_approve }: Props) {
                 <div className="flex items-center justify-between">
                     <div>
                         <Link
-                            href="/returns"
+                            href={OrderReturnController.index.url()}
                             className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -94,16 +94,28 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                 <table className="w-full">
                                     <thead className="border-b border-gray-200 dark:border-gray-700">
                                         <tr className="text-left text-sm text-gray-500 dark:text-gray-400">
-                                            <th scope="col" className="pb-3 font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 font-medium"
+                                            >
                                                 Product
                                             </th>
-                                            <th scope="col" className="pb-3 font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 font-medium"
+                                            >
                                                 SKU
                                             </th>
-                                            <th scope="col" className="pb-3 text-right font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 text-right font-medium"
+                                            >
                                                 Quantity
                                             </th>
-                                            <th scope="col" className="pb-3 font-medium">
+                                            <th
+                                                scope="col"
+                                                className="pb-3 font-medium"
+                                            >
                                                 Condition
                                             </th>
                                         </tr>
@@ -240,7 +252,9 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                         <CheckCircle className="mr-2 h-4 w-4 text-success-500" />
                                         <span className="text-gray-500 dark:text-gray-400">
                                             Approved on{' '}
-                                            {formatDateTime(returnData.approved_at)}
+                                            {formatDateTime(
+                                                returnData.approved_at,
+                                            )}
                                         </span>
                                     </div>
                                 )}
@@ -250,7 +264,9 @@ export default function Show({ return: returnData, can_approve }: Props) {
                                         <XCircle className="mr-2 h-4 w-4 text-error-500" />
                                         <span className="text-gray-500 dark:text-gray-400">
                                             Rejected on{' '}
-                                            {formatDateTime(returnData.rejected_at)}
+                                            {formatDateTime(
+                                                returnData.rejected_at,
+                                            )}
                                         </span>
                                     </div>
                                 )}
@@ -348,10 +364,7 @@ export default function Show({ return: returnData, can_approve }: Props) {
                 </div>
             </Modal>
 
-            <Modal
-                isOpen={rejectModal.isOpen}
-                onClose={rejectModal.closeModal}
-            >
+            <Modal isOpen={rejectModal.isOpen} onClose={rejectModal.closeModal}>
                 <div className="p-6">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Reject Return

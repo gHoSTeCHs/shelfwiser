@@ -8,6 +8,7 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/useToast';
 import AppLayout from '@/layouts/AppLayout';
+import { dashboard } from '@/routes';
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useState } from 'react';
@@ -100,7 +101,7 @@ export default function ShopSettings({
 
             <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
                 <div className="mb-6 flex items-center gap-4">
-                    <Link href="/dashboard">
+                    <Link href={dashboard.url()}>
                         <Button variant="outline" size="sm">
                             <ArrowLeft className="h-4 w-4" />
                             Back
@@ -412,7 +413,7 @@ export default function ShopSettings({
                             </Card>
 
                             <div className="flex justify-end gap-3">
-                                <Link href="/dashboard">
+                                <Link href={dashboard.url()}>
                                     <Button variant="outline">Cancel</Button>
                                 </Link>
                                 <Button

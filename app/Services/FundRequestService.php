@@ -169,11 +169,21 @@ class FundRequestService
     }
 
     /**
+     * Update fund request description
+     */
+    public function updateDescription(FundRequest $fundRequest, string $description): FundRequest
+    {
+        $fundRequest->update(['description' => $description]);
+
+        return $fundRequest->fresh();
+    }
+
+    /**
      * Get fund requests for approval
      */
     public function getRequestsForApproval(User $manager, ?Shop $shop = null): Collection
     {
-        $query = FundRequest::query()->where('tenant_id', $manager->tenant_id)
+        $query = FundRequest::query()
             ->where('status', FundRequestStatus::PENDING)
             ->with(['user', 'shop', 'approvedBy']);
 
@@ -207,10 +217,10 @@ class FundRequestService
         ?FundRequestStatus $status = null,
         ?Shop $shop = null,
         ?Carbon $startDate = null,
-        ?Carbon $endDate = null
+        ?Carbon $endDate = null,
+        ?FundRequestType $type = null
     ): Collection {
         $query = FundRequest::query()->where('user_id', $user->id)
-            ->where('tenant_id', $user->tenant_id)
             ->with(['shop', 'approvedBy', 'disbursedBy']);
 
         if ($status) {
@@ -219,6 +229,10 @@ class FundRequestService
 
         if ($shop) {
             $query->where('shop_id', $shop->id);
+        }
+
+        if ($type) {
+            $query->where('request_type', $type);
         }
 
         if ($startDate) {
@@ -243,7 +257,6 @@ class FundRequestService
         ?Carbon $endDate = null
     ): Collection {
         $query = FundRequest::query()->where('shop_id', $shop->id)
-            ->where('tenant_id', $shop->tenant_id)
             ->with(['user', 'approvedBy', 'disbursedBy']);
 
         if ($status) {
@@ -268,9 +281,9 @@ class FundRequestService
     /**
      * Get fund request statistics
      */
-    public function getStatistics(int $tenantId, ?Shop $shop = null, ?Carbon $startDate = null, ?Carbon $endDate = null): array
+    public function getStatistics(?Shop $shop = null, ?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
-        $query = FundRequest::query()->where('tenant_id', $tenantId);
+        $query = FundRequest::query();
 
         if ($shop) {
             $query->where('shop_id', $shop->id);

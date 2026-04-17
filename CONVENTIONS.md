@@ -209,34 +209,31 @@ policy layer and leads to permission string confusion.
 (e.g. `view_reports`). Gate names map to policy methods, which internally check
 permission strings. Controllers only use Gate names.
 
-### Defined Gates (from `AppServiceProvider`)
+### How to verify a Gate resolves
 
-```
-reports.view            → ReportPolicy::view
-dashboard.view          → DashboardPolicy::view
-dashboard.view_financials → DashboardPolicy::viewFinancials
-dashboard.refresh_cache → DashboardPolicy::refreshCache
-shop.view               → ShopPolicy::view
-shop.manage             → ShopPolicy::manage
-payRun.viewAny          → PayRunPolicy::viewAny
-payRun.create           → PayRunPolicy::create
-payRun.viewReports      → PayRunPolicy::viewReports
-payRun.exportReports    → PayRunPolicy::exportReports
-payRun.manageSettings   → PayRunPolicy::manageSettings
-timesheet.viewAny       → TimesheetPolicy::viewAny
-catalog.*               → SupplierPolicy::*
-purchaseOrder.*         → PurchaseOrderPolicy::*
+**Do not rely on any hardcoded list in this document.** Gate registrations drift.
+The source of truth is `app/Providers/AppServiceProvider.php`. To check whether a
+`Gate::authorize(ability, target)` call actually resolves, run the deterministic
+verifier:
+
+```bash
+php .claude/audit-reports/audit-gates.php
 ```
 
-### KNOWN BUGS: Undefined Gates
+The script loads the live `Gate` container, enumerates every `Gate::authorize()`
+call in `app/Http/Controllers/`, and reports which resolve (via named gate or
+policy method) and which fail. Use its output — not this doc — as ground truth.
 
-These are called in controllers but have NO corresponding `Gate::define()`:
+Rules the verifier enforces:
 
-- `view_payroll_settings` — used 6 times in `PayrollSettingsController`
-- `manage_payroll_settings` — used 10 times in `PayrollSettingsController`
-
-These must be defined in `AppServiceProvider` with a corresponding `PayrollSettingsPolicy`
-before the payroll settings pages will work for any user.
+- Each ability string must exist as a `Gate::define()` **or** as a method on the
+  policy bound via `Gate::policy($model, $policy)` for the target's class.
+- `Gate::policy()` calls for the same model class overwrite each other — only the
+  last one wins. One policy per model.
+- For `Gate::authorize('ability', auth()->user())`, the target resolves to the
+  `User` model and therefore to `StaffPolicy` — if the ability belongs on a
+  different policy (e.g. `TimesheetPolicy::clockInOut`), pass the correct class
+  (`Gate::authorize('clockInOut', Timesheet::class)`) instead.
 
 ### Wrong (direct permission check, wrong string)
 

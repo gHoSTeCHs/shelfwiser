@@ -4,12 +4,11 @@ import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/EmptyState';
 import AppLayout from '@/layouts/AppLayout';
 import { formatCurrency } from '@/lib/formatters';
-import { getCatalogVisibilityColor, getCatalogVisibilityLabel } from '@/lib/status-configs';
 import {
-    CatalogVisibility,
-    SupplierCatalogItem,
-    Tenant,
-} from '@/types/supplier';
+    getCatalogVisibilityColor,
+    getCatalogVisibilityLabel,
+} from '@/lib/status-configs';
+import { SupplierCatalogItem, Tenant } from '@/types/supplier';
 import { Head, Link } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -54,7 +53,9 @@ export default function Browse({ catalogItems, supplier }: Props) {
                                 : 'No supplier catalogs are currently available. Connect with suppliers to start browsing their products.'
                         }
                         action={
-                            <Link href="/supplier/connections">
+                            <Link
+                                href={SupplierConnectionController.index.url()}
+                            >
                                 <Button>
                                     <Store className="mr-2 h-4 w-4" />
                                     Manage Connections
@@ -79,8 +80,14 @@ export default function Browse({ catalogItems, supplier }: Props) {
                                                 </p>
                                             )}
                                         </div>
-                                        <Badge color={getCatalogVisibilityColor(item.visibility)}>
-                                            {getCatalogVisibilityLabel(item.visibility)}
+                                        <Badge
+                                            color={getCatalogVisibilityColor(
+                                                item.visibility,
+                                            )}
+                                        >
+                                            {getCatalogVisibilityLabel(
+                                                item.visibility,
+                                            )}
                                         </Badge>
                                     </div>
 
@@ -99,7 +106,10 @@ export default function Browse({ catalogItems, supplier }: Props) {
                                                 </span>
                                             </div>
                                             <span className="text-lg font-bold text-brand-900 dark:text-brand-100">
-                                                {formatCurrency(item.base_wholesale_price, 'USD')}
+                                                {formatCurrency(
+                                                    item.base_wholesale_price,
+                                                    'USD',
+                                                )}
                                             </span>
                                         </div>
 
@@ -160,7 +170,10 @@ export default function Browse({ catalogItems, supplier }: Props) {
                                                                         units
                                                                     </span>
                                                                     <span className="font-semibold">
-                                                                        {formatCurrency(tier.price, 'USD')}
+                                                                        {formatCurrency(
+                                                                            tier.price,
+                                                                            'USD',
+                                                                        )}
                                                                     </span>
                                                                 </div>
                                                             ))}

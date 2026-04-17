@@ -1,3 +1,4 @@
+import { home } from '@/routes';
 import { Link } from '@inertiajs/react';
 import React, { useState } from 'react';
 import { ThemeToggleButton } from '../common/ThemeToggleButton';
@@ -77,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({ onClick, onToggle }) => {
                         </svg>
                     </button>
 
-                    <Link href="/" className="lg:hidden">
+                    <Link href={home.url()} className="lg:hidden">
                         <img
                             className="dark:hidden"
                             src={'./images/logo/logo.svg'}

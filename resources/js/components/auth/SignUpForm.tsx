@@ -1,4 +1,5 @@
 import RegisteredUserController from '@/actions/App/Http/Controllers/Auth/RegisteredUserController.ts';
+import { home, login } from '@/routes';
 import { Form, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
@@ -18,7 +19,7 @@ export default function SignUpForm() {
         <div className="no-scrollbar flex w-full flex-1 flex-col overflow-y-auto">
             <div className="mx-auto mb-4 w-full max-w-md pt-4 sm:pt-8">
                 <Link
-                    href="/"
+                    href={home.url()}
                     className="inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-brand-600 dark:text-gray-400 dark:hover:text-brand-400"
                 >
                     <ArrowLeft className="h-4 w-4" />
@@ -201,7 +202,9 @@ export default function SignUpForm() {
 
                                 <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                                     Already have an account?{' '}
-                                    <TextLink href="/login">Sign in</TextLink>
+                                    <TextLink href={login.url()}>
+                                        Sign in
+                                    </TextLink>
                                 </p>
                             </div>
                         )}

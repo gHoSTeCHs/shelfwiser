@@ -5,7 +5,7 @@ import Input from '@/components/form/input/InputField';
 import TextLink from '@/components/text-link';
 import Button from '@/components/ui/button/Button';
 import AuthLayout from '@/layouts/AuthPageLayout.tsx';
-import { login } from '@/routes';
+import { home, login } from '@/routes';
 import { Form, Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, LoaderCircle, Mail } from 'lucide-react';
@@ -18,7 +18,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
             <div className="flex flex-1 flex-col">
                 <div className="mx-auto w-full max-w-md pt-4 sm:pt-8">
                     <Link
-                        href="/"
+                        href={home.url()}
                         className="inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-brand-600 dark:text-gray-400 dark:hover:text-brand-400"
                     >
                         <ArrowLeft className="h-4 w-4" />

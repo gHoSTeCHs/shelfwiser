@@ -1,4 +1,4 @@
-import { login, register } from '@/routes';
+import { dashboard, register } from '@/routes';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowRight, Play } from 'lucide-react';
@@ -62,7 +62,7 @@ export default function Hero() {
                         <div className="flex flex-wrap items-center gap-4">
                             {auth.user ? (
                                 <Link
-                                    href="/dashboard"
+                                    href={dashboard.url()}
                                     className="group inline-flex items-center gap-2 rounded-xl bg-brand-500 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-xl hover:shadow-brand-500/30"
                                 >
                                     Go to Dashboard
@@ -98,7 +98,7 @@ export default function Hero() {
                                 ].map((bg, i) => (
                                     <div
                                         key={i}
-                                        className={`flex h-8 w-8 items-center justify-center rounded-full ${bg} ring-2 ring-white text-xs font-semibold text-white dark:ring-navy-950`}
+                                        className={`flex h-8 w-8 items-center justify-center rounded-full ${bg} text-xs font-semibold text-white ring-2 ring-white dark:ring-navy-950`}
                                     >
                                         {['AO', 'KI', 'TF', 'BS'][i]}
                                     </div>

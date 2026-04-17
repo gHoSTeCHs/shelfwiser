@@ -2,13 +2,60 @@
 
 namespace App\Services;
 
+use App\Models\PayRun;
 use Illuminate\Support\Collection;
 
 class PayrollExportService
 {
     public function __construct(
-        protected ExportService $exportService
+        protected ExportService $exportService,
+        protected NibssExportService $nibssService,
     ) {}
+
+    public function validateBankDetails(PayRun $payRun): array
+    {
+        return $this->nibssService->validateBankDetails($payRun);
+    }
+
+    /**
+     * Unified export dispatch for all payroll report types and formats.
+     *
+     * @param  string  $type    One of: summary, tax, pension, bankSchedule
+     * @param  string  $format  One of: csv, excel, pdf, nibss
+     */
+    public function exportReport(
+        string $type,
+        array $reportData,
+        string $format,
+        string $filename,
+        ?PayRun $payRun = null,
+    ): mixed {
+        if ($format === 'nibss') {
+            abort_unless($payRun !== null, 422, 'A pay run is required for NIBSS export.');
+
+            return $this->nibssService->downloadNibssFile($payRun);
+        }
+
+        $formatted = match ($type) {
+            'summary'      => $this->formatPayrollSummary($reportData),
+            'tax'          => $this->formatTaxRemittance($reportData),
+            'pension'      => $this->formatPensionReport($reportData),
+            'bankSchedule' => $this->formatBankSchedule($reportData),
+        };
+
+        $titles = [
+            'summary'      => 'Payroll Summary Report',
+            'tax'          => 'Tax Remittance Report',
+            'pension'      => 'Pension Contributions Report',
+            'bankSchedule' => 'Bank Payment Schedule',
+        ];
+
+        return match ($format) {
+            'excel'   => $this->exportService->exportToExcel($formatted['headers'], $formatted['rows'], $filename.'.xlsx'),
+            'pdf'     => $this->exportService->exportToPdf($formatted['headers'], $formatted['rows'], $filename.'.pdf', $titles[$type]),
+            default   => $this->exportService->exportToCsv($formatted['headers'], $formatted['rows'], $filename.'.csv'),
+        };
+    }
 
     public function formatPayrollSummary(array $reportData): array
     {

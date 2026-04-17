@@ -2,16 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\DTOs\DateRange;
 use App\Enums\FundRequestStatus;
 use App\Enums\FundRequestType;
+use App\Http\Requests\ApproveFundRequestRequest;
+use App\Http\Requests\CancelFundRequestRequest;
+use App\Http\Requests\DisburseFundRequestRequest;
+use App\Http\Requests\RejectFundRequestRequest;
+use App\Http\Requests\StoreFundRequestRequest;
+use App\Http\Requests\UpdateFundRequestRequest;
 use App\Models\FundRequest;
 use App\Models\Shop;
 use App\Services\FundRequestService;
-use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,52 +26,38 @@ class FundRequestController extends Controller
         private FundRequestService $fundRequestService
     ) {}
 
-    /**
-     * Display a listing of fund requests
-     */
     public function index(Request $request): Response
     {
         Gate::authorize('viewAny', FundRequest::class);
 
+        $validated = $request->only(['shop_id', 'status', 'type', 'start_date', 'end_date']);
         $user = $request->user();
-        $shopId = $request->input('shop_id');
-        $status = $request->input('status');
-        $type = $request->input('type');
-        $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : now()->startOfMonth();
-        $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : now()->endOfMonth();
 
-        $shop = $shopId ? Shop::findOrFail($shopId) : null;
-        $statusEnum = $status ? FundRequestStatus::from($status) : null;
-        $typeEnum = $type ? FundRequestType::from($type) : null;
-
-        $fundRequests = $this->fundRequestService->getUserRequests(
-            $user,
-            $statusEnum,
-            $shop,
-            $startDate,
-            $endDate
-        );
-
-        if ($typeEnum) {
-            $fundRequests = $fundRequests->where('request_type', $typeEnum);
-        }
-
-        $statistics = $this->fundRequestService->getStatistics(
-            $user->tenant_id,
-            $shop,
-            $startDate,
-            $endDate
-        );
+        $shop = isset($validated['shop_id']) ? Shop::query()->findOrFail($validated['shop_id']) : null;
+        $statusEnum = isset($validated['status']) ? FundRequestStatus::from($validated['status']) : null;
+        $typeEnum = isset($validated['type']) ? FundRequestType::from($validated['type']) : null;
+        $dateRange = DateRange::fromRequest($validated, 'start_date', 'end_date');
 
         return Inertia::render('FundRequests/Index', [
-            'fundRequests' => $fundRequests,
-            'statistics' => $statistics,
+            'fundRequests' => $this->fundRequestService->getUserRequests(
+                user: $user,
+                status: $statusEnum,
+                shop: $shop,
+                startDate: $dateRange->start,
+                endDate: $dateRange->end,
+                type: $typeEnum,
+            ),
+            'statistics' => $this->fundRequestService->getStatistics(
+                shop: $shop,
+                startDate: $dateRange->start,
+                endDate: $dateRange->end,
+            ),
             'filters' => [
-                'shop_id' => $shopId,
-                'status' => $status,
-                'type' => $type,
-                'start_date' => $startDate->toDateString(),
-                'end_date' => $endDate->toDateString(),
+                'shop_id' => $validated['shop_id'] ?? null,
+                'status' => $validated['status'] ?? null,
+                'type' => $validated['type'] ?? null,
+                'start_date' => $dateRange->start->toDateString(),
+                'end_date' => $dateRange->end->toDateString(),
             ],
             'shops' => $user->shops,
             'statusOptions' => collect(FundRequestStatus::cases())->map(fn ($case) => [
@@ -80,36 +71,30 @@ class FundRequestController extends Controller
         ]);
     }
 
-    /**
-     * Display pending requests awaiting approval
-     */
     public function approvalQueue(Request $request): Response
     {
+        Gate::authorize('viewAny', FundRequest::class);
+
         $user = $request->user();
         $shopId = $request->input('shop_id');
 
-        $shop = $shopId ? Shop::findOrFail($shopId) : null;
-
-        $fundRequests = $this->fundRequestService->getRequestsForApproval($user, $shop);
+        $shop = $shopId ? Shop::query()->findOrFail($shopId) : null;
 
         return Inertia::render('FundRequests/Approve', [
-            'fundRequests' => $fundRequests,
+            'fundRequests' => $this->fundRequestService->getRequestsForApproval($user, $shop),
             'filters' => [
                 'shop_id' => $shopId,
             ],
-            'shops' => $user->is_tenant_owner ? Shop::where('tenant_id', $user->tenant_id)->get() : $user->shops,
+            'shops' => $user->is_tenant_owner ? Shop::query()->get() : $user->shops,
         ]);
     }
 
-    /**
-     * Show the form for creating a new fund request
-     */
-    public function create(): Response
+    public function create(Request $request): Response
     {
         Gate::authorize('create', FundRequest::class);
 
         return Inertia::render('FundRequests/Create', [
-            'shops' => auth()->user()->shops,
+            'shops' => $request->user()->shops,
             'requestTypes' => collect(FundRequestType::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'label' => $case->label(),
@@ -119,27 +104,17 @@ class FundRequestController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created fund request
-     */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreFundRequestRequest $request): RedirectResponse
     {
         Gate::authorize('create', FundRequest::class);
 
-        $validated = $request->validate([
-            'shop_id' => ['required', 'exists:shops,id'],
-            'request_type' => ['required', Rule::enum(FundRequestType::class)],
-            'amount' => ['required', 'numeric', 'min:0.01'],
-            'description' => ['required', 'string', 'max:1000'],
-        ]);
-
-        $shop = Shop::findOrFail($validated['shop_id']);
+        $shop = Shop::query()->findOrFail($request->validated('shop_id'));
 
         try {
             $fundRequest = $this->fundRequestService->create(
                 $request->user(),
                 $shop,
-                $validated
+                $request->validated()
             );
 
             return redirect()
@@ -153,9 +128,6 @@ class FundRequestController extends Controller
         }
     }
 
-    /**
-     * Display the specified fund request
-     */
     public function show(FundRequest $fundRequest): Response
     {
         Gate::authorize('view', $fundRequest);
@@ -173,40 +145,26 @@ class FundRequestController extends Controller
         ]);
     }
 
-    /**
-     * Update fund request description
-     */
-    public function update(Request $request, FundRequest $fundRequest): RedirectResponse
+    public function update(UpdateFundRequestRequest $request, FundRequest $fundRequest): RedirectResponse
     {
         Gate::authorize('update', $fundRequest);
 
-        $validated = $request->validate([
-            'description' => ['required', 'string', 'max:1000'],
-        ]);
-
-        $fundRequest->update($validated);
+        $this->fundRequestService->updateDescription($fundRequest, $request->validated('description'));
 
         return redirect()
             ->route('fund-requests.show', $fundRequest)
             ->with('success', 'Fund request updated successfully');
     }
 
-    /**
-     * Approve a fund request
-     */
-    public function approve(Request $request, FundRequest $fundRequest): RedirectResponse
+    public function approve(ApproveFundRequestRequest $request, FundRequest $fundRequest): RedirectResponse
     {
         Gate::authorize('approve', $fundRequest);
-
-        $validated = $request->validate([
-            'notes' => ['nullable', 'string', 'max:500'],
-        ]);
 
         try {
             $this->fundRequestService->approve(
                 $fundRequest,
-                auth()->user(),
-                $validated['notes'] ?? null
+                $request->user(),
+                $request->validated('notes')
             );
 
             return redirect()
@@ -219,22 +177,15 @@ class FundRequestController extends Controller
         }
     }
 
-    /**
-     * Reject a fund request
-     */
-    public function reject(Request $request, FundRequest $fundRequest): RedirectResponse
+    public function reject(RejectFundRequestRequest $request, FundRequest $fundRequest): RedirectResponse
     {
         Gate::authorize('reject', $fundRequest);
-
-        $validated = $request->validate([
-            'rejection_reason' => ['required', 'string', 'max:500'],
-        ]);
 
         try {
             $this->fundRequestService->reject(
                 $fundRequest,
-                auth()->user(),
-                $validated['rejection_reason']
+                $request->user(),
+                $request->validated('rejection_reason')
             );
 
             return redirect()
@@ -247,22 +198,15 @@ class FundRequestController extends Controller
         }
     }
 
-    /**
-     * Disburse approved funds
-     */
-    public function disburse(Request $request, FundRequest $fundRequest): RedirectResponse
+    public function disburse(DisburseFundRequestRequest $request, FundRequest $fundRequest): RedirectResponse
     {
         Gate::authorize('disburse', $fundRequest);
-
-        $validated = $request->validate([
-            'notes' => ['nullable', 'string', 'max:500'],
-        ]);
 
         try {
             $this->fundRequestService->disburse(
                 $fundRequest,
-                auth()->user(),
-                $validated['notes'] ?? null
+                $request->user(),
+                $request->validated('notes')
             );
 
             return redirect()
@@ -275,22 +219,15 @@ class FundRequestController extends Controller
         }
     }
 
-    /**
-     * Cancel a fund request
-     */
-    public function cancel(Request $request, FundRequest $fundRequest): RedirectResponse
+    public function cancel(CancelFundRequestRequest $request, FundRequest $fundRequest): RedirectResponse
     {
         Gate::authorize('cancel', $fundRequest);
-
-        $validated = $request->validate([
-            'reason' => ['required', 'string', 'max:500'],
-        ]);
 
         try {
             $this->fundRequestService->cancel(
                 $fundRequest,
-                auth()->user(),
-                $validated['reason']
+                $request->user(),
+                $request->validated('reason')
             );
 
             return redirect()
@@ -303,9 +240,6 @@ class FundRequestController extends Controller
         }
     }
 
-    /**
-     * Delete a fund request
-     */
     public function destroy(FundRequest $fundRequest): RedirectResponse
     {
         Gate::authorize('delete', $fundRequest);

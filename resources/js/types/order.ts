@@ -1,7 +1,7 @@
-import { User } from '@/types/index';
+import { PaginatedResponse, User } from '@/types/index';
+import { Customer } from './customer';
 import { Shop } from './shop';
 import { ProductPackagingType, ProductVariant } from './stockMovement';
-import { Customer } from './customer';
 
 export type OrderStatus =
     | 'pending'
@@ -108,13 +108,7 @@ export interface OrderStats {
     delivered: number;
 }
 
-export interface OrderListResponse {
-    data: Order[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-}
+export type OrderListResponse = PaginatedResponse<Order>;
 
 export interface OrderStatusOption {
     value: OrderStatus;

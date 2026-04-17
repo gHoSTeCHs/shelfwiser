@@ -45,37 +45,24 @@ export interface StorefrontSettings {
 }
 
 export interface Shop {
-    products_count?: number;
     id: number;
     tenant_id: number;
-    shop_type_id: number;
     name: string;
     slug: string;
-    description?: string;
-    inventory_model: InventoryModelType;
-    address?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    phone?: string;
-    email?: string;
-    type: ShopType;
-    config: Record<string, SchemaPropertyValue>;
+    address: string | null;
+    city: string | null;
+    state: string | null;
+    country: string | null;
+    phone: string | null;
+    email: string | null;
+    type: ShopType | null;
+    config: Record<string, SchemaPropertyValue> | null;
     is_active: boolean;
+    storefront_enabled: boolean;
     users_count?: number;
     can_manage: boolean;
     created_at: string;
     updated_at: string;
-    storefront_enabled: boolean;
-    storefront_settings: StorefrontSettings | null;
-    allow_retail_sales: boolean;
-    shop_offering_type: ShopOfferingType;
-    currency: string;
-    currency_symbol: string;
-    currency_decimals: number;
-    vat_enabled: boolean;
-    vat_rate: number;
-    vat_inclusive: boolean;
 }
 
 export interface CreateShopRequest {
