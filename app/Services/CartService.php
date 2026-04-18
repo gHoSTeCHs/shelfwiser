@@ -54,6 +54,10 @@ class CartService
             });
         }
 
+        // Session::getId() is intentionally used here — CartService is the single owner of
+        // guest cart ↔ session binding. Extracting this to every caller would scatter the
+        // concern across 10+ controller methods. Session::regenerate() is NOT called here;
+        // auth flows (login/register) regenerate the session before calling mergeGuestCart.
         $sessionId = Session::getId();
         $cacheKey = $this->getCartCacheKey($shop->tenant_id, $shop->id, null, $sessionId);
 
@@ -69,18 +73,14 @@ class CartService
             return $existingCart;
         }
 
-        Session::regenerate();
-        $newSessionId = Session::getId();
-
         $cart = Cart::query()->forceCreate([
-            'session_id' => $newSessionId,
+            'session_id' => $sessionId,
             'shop_id' => $shop->id,
             'tenant_id' => $shop->tenant_id,
             'expires_at' => now()->addDays(7),
         ]);
 
-        Cache::forget($cacheKey);
-        $this->invalidateCartCache($shop->tenant_id, $shop->id, null, $newSessionId);
+        $this->invalidateCartCache($shop->tenant_id, $shop->id, null, $sessionId);
 
         return $cart;
     }
@@ -94,7 +94,12 @@ class CartService
         int $quantity = 1,
         ?int $packagingTypeId = null
     ): CartItem {
-        $variant = ProductVariant::query()->findOrFail($variantId);
+        $variant = ProductVariant::query()
+            ->whereHas('product', fn ($q) => $q
+                ->where('tenant_id', $cart->tenant_id)
+                ->where('shop_id', $cart->shop_id)
+            )
+            ->findOrFail($variantId);
 
         return DB::transaction(function () use ($cart, $variant, $quantity, $packagingTypeId) {
             $cartItem = CartItem::query()
@@ -143,7 +148,13 @@ class CartService
         ?MaterialOption $materialOption = null,
         array $selectedAddons = []
     ): CartItem {
-        $variant = ServiceVariant::query()->with('service')->findOrFail($serviceVariantId);
+        $variant = ServiceVariant::query()
+            ->whereHas('service', fn ($q) => $q
+                ->where('tenant_id', $cart->tenant_id)
+                ->where('shop_id', $cart->shop_id)
+            )
+            ->with('service')
+            ->findOrFail($serviceVariantId);
 
         if (! $variant->service->is_available_online || ! $variant->is_active) {
             throw new Exception('This service is not available for online booking.');
@@ -274,7 +285,7 @@ class CartService
     public function mergeGuestCartIntoCustomerCart(string $sessionId, int $customerId, int $shopId): Cart
     {
         return DB::transaction(function () use ($sessionId, $customerId, $shopId) {
-            $shop = Shop::query()->find($shopId);
+            $shop = Shop::query()->findOrFail($shopId);
             $customerCart = $this->getCart($shop, $customerId);
 
             $guestCart = Cart::query()
@@ -284,45 +295,52 @@ class CartService
                 ->first();
 
             if (! $guestCart) {
-                Session::regenerate();
-
                 return $customerCart;
             }
 
             $guestCart->load('items.productVariant.product', 'items.productVariant.inventoryLocations');
 
+            $variantIds = $guestCart->items
+                ->filter(fn ($i) => $i->isProduct())
+                ->pluck('product_variant_id')
+                ->filter()
+                ->unique();
+
+            $existingItems = CartItem::query()
+                ->where('cart_id', $customerCart->id)
+                ->whereIn('product_variant_id', $variantIds)
+                ->lockForUpdate()
+                ->get()
+                ->keyBy(fn ($i) => $i->product_variant_id.':'.($i->product_packaging_type_id ?? ''));
+
             foreach ($guestCart->items as $guestItem) {
-                if ($guestItem->isProduct()) {
-                    $existingItem = CartItem::query()
-                        ->where([
-                            'cart_id' => $customerCart->id,
-                            'product_variant_id' => $guestItem->product_variant_id,
-                            'product_packaging_type_id' => $guestItem->product_packaging_type_id,
-                        ])
-                        ->lockForUpdate()
-                        ->first();
-
-                    if ($existingItem) {
-                        $newQuantity = $existingItem->quantity + $guestItem->quantity;
-
-                        $variant = $guestItem->productVariant;
-                        if ($variant && ($variant->product->track_stock ?? true)) {
-                            $available = $this->stockMovementService->getAvailableStock($variant, $customerCart->shop_id);
-                            $newQuantity = min($newQuantity, max(0, $available));
-                        }
-
-                        if ($variant?->max_order_quantity) {
-                            $newQuantity = min($newQuantity, $variant->max_order_quantity);
-                        }
-
-                        if ($newQuantity > 0) {
-                            $existingItem->update(['quantity' => $newQuantity]);
-                        }
-                    } else {
-                        $guestItem->update(['cart_id' => $customerCart->id]);
-                    }
-                } else {
+                if (! $guestItem->isProduct()) {
                     $guestItem->update(['cart_id' => $customerCart->id]);
+                    continue;
+                }
+
+                $key = $guestItem->product_variant_id.':'.($guestItem->product_packaging_type_id ?? '');
+                $existingItem = $existingItems->get($key);
+
+                if (! $existingItem) {
+                    $guestItem->update(['cart_id' => $customerCart->id]);
+                    continue;
+                }
+
+                $newQuantity = $existingItem->quantity + $guestItem->quantity;
+                $variant = $guestItem->productVariant;
+
+                if ($variant && ($variant->product->track_stock ?? true)) {
+                    $available = $this->stockMovementService->getAvailableStock($variant, $customerCart->shop_id);
+                    $newQuantity = min($newQuantity, max(0, $available));
+                }
+
+                if ($variant?->max_order_quantity) {
+                    $newQuantity = min($newQuantity, $variant->max_order_quantity);
+                }
+
+                if ($newQuantity > 0) {
+                    $existingItem->update(['quantity' => $newQuantity]);
                 }
             }
 
@@ -330,8 +348,6 @@ class CartService
             $this->invalidateCartCache($customerCart->tenant_id, $shopId, $customerId);
 
             $guestCart->delete();
-
-            Session::regenerate();
 
             return $customerCart->fresh([
                 'items.productVariant.product',
@@ -424,6 +440,25 @@ class CartService
         }
 
         return round($taxAmount, 2);
+    }
+
+    /**
+     * Serialize a CartItem into the standard API array shape.
+     * Assumes productVariant.product and sellable are already loaded on the item.
+     */
+    public function buildCartItemArray(CartItem $item): array
+    {
+        $item->loadMissing(['productVariant.product', 'sellable']);
+
+        return [
+            'id' => $item->id,
+            'name' => $item->productVariant?->product?->name ?? $item->sellable?->name ?? '',
+            'variant_name' => $item->productVariant?->name,
+            'price' => (float) $item->price,
+            'quantity' => $item->quantity,
+            'image' => $item->productVariant?->product?->primary_image_url ?? null,
+            'max_quantity' => $item->productVariant?->stock_quantity,
+        ];
     }
 
     /**
