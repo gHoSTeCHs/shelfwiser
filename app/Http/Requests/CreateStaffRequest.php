@@ -12,7 +12,7 @@ class CreateStaffRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Gate::allows('create', \App\Models\User::class);
+        return true;
     }
 
     public function rules(): array
