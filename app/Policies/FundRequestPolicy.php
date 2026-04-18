@@ -49,7 +49,7 @@ class FundRequestPolicy
      */
     public function create(User $user): bool
     {
-        return $user->role->hasPermission('create_fund_requests');
+        return $user->role->level() >= UserRole::CASHIER->level();
     }
 
     /**
@@ -93,8 +93,19 @@ class FundRequestPolicy
             return true;
         }
 
-        if ($user->role->level() >= UserRole::ASSISTANT_MANAGER->level() &&
-            $user->role->level() > $fundRequest->user->role->level()) {
+        if ($user->role->level() >= UserRole::ASSISTANT_MANAGER->level()) {
+            $requestOwner = $fundRequest->relationLoaded('user')
+                ? $fundRequest->user
+                : $fundRequest->user()->first();
+
+            if (! $requestOwner) {
+                return false;
+            }
+
+            if ($user->role->level() <= $requestOwner->role->level()) {
+                return false;
+            }
+
             $userShops = $user->shops()->pluck('shops.id');
 
             return $userShops->contains($fundRequest->shop_id);
