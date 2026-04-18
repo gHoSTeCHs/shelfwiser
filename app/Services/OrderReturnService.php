@@ -121,7 +121,7 @@ class OrderReturnService
                                 $this->stockMovementService->adjustStock(
                                     $variant,
                                     $location,
-                                    -$returnItem->quantity, // Negative to add stock back
+                                    $returnItem->quantity,
                                     StockMovementType::RETURN,
                                     $user,
                                     "Return #{$return->return_number}",

@@ -86,7 +86,7 @@ class OrderRefundService
                                 $this->stockMovementService->adjustStock(
                                     $variant,
                                     $location,
-                                    -$item->quantity, // Negative to add stock back
+                                    $item->quantity,
                                     StockMovementType::RETURN,
                                     $user,
                                     "Order #{$order->order_number} Refund",
@@ -175,7 +175,7 @@ class OrderRefundService
                             $this->stockMovementService->adjustStock(
                                 $variant,
                                 $location,
-                                -$quantity,
+                                $quantity,
                                 StockMovementType::RETURN,
                                 $user,
                                 "Order #{$order->order_number} Partial Refund",
