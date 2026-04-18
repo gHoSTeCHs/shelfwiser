@@ -287,10 +287,6 @@ class CheckoutService
             if ($status === PaymentStatus::PAID) {
                 $refNumber = $transactionId ?? $paymentReference;
 
-                if (OrderPayment::query()->where('reference_number', $refNumber)->exists()) {
-                    return true;
-                }
-
                 $expectedAmount = $order->remainingBalance();
 
                 if ($verifiedAmount === null || $verifiedAmount < $expectedAmount * 0.99) {
@@ -313,18 +309,25 @@ class CheckoutService
                     'confirmed_at' => now(),
                 ])->save();
 
-                $paymentAmount = $verifiedAmount;
+                try {
+                    OrderPayment::query()->create([
+                        'tenant_id' => $order->tenant_id,
+                        'order_id' => $order->id,
+                        'amount' => $verifiedAmount,
+                        'payment_method' => $order->payment_method,
+                        'reference_number' => $refNumber,
+                        'status' => 'completed',
+                        'paid_at' => now(),
+                        'notes' => 'Payment verified via Paystack',
+                    ]);
+                } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+                    Log::info('Duplicate payment reference — idempotent success', [
+                        'reference' => $refNumber,
+                        'order_id' => $order->id,
+                    ]);
 
-                OrderPayment::query()->create([
-                    'tenant_id' => $order->tenant_id,
-                    'order_id' => $order->id,
-                    'amount' => $paymentAmount,
-                    'payment_method' => $order->payment_method,
-                    'reference_number' => $refNumber,
-                    'status' => 'completed',
-                    'paid_at' => now(),
-                    'notes' => 'Payment verified via Paystack',
-                ]);
+                    return true;
+                }
             } else {
                 $order->forceFill([
                     'payment_status' => $status->value,
