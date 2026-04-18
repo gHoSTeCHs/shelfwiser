@@ -12,6 +12,7 @@ use App\Models\InventoryLocation;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
+use App\Models\ProductVariant;
 use App\Models\Shop;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
@@ -47,11 +48,14 @@ class CheckoutService
         ) {
             $cartSummary = $this->cartService->getCartSummary($cart);
 
-            if (empty($cartSummary['items'])) {
-                throw new \Exception('Cannot checkout with empty cart');
+            if ($cartSummary['items']->isEmpty()) {
+                throw new \Exception('Your cart is empty.');
             }
 
             $productItems = collect($cartSummary['items'])->filter(fn ($item) => $item->isProduct());
+
+            $productVariantIds = $productItems->pluck('product_variant_id')->toArray();
+            $currentPrices = ProductVariant::query()->whereIn('id', $productVariantIds)->pluck('price', 'id');
 
             $locations = collect();
 
@@ -99,12 +103,16 @@ class CheckoutService
             ]);
 
             foreach ($cartSummary['items'] as $cartItem) {
+                $currentPrice = $cartItem->isProduct()
+                    ? (float) ($currentPrices->get($cartItem->product_variant_id) ?? $cartItem->price)
+                    : (float) $cartItem->price;
+
                 $orderItemData = [
                     'order_id' => $order->id,
                     'tenant_id' => $cart->tenant_id,
                     'quantity' => $cartItem->quantity,
-                    'unit_price' => $cartItem->price,
-                    'total_amount' => $cartItem->price * $cartItem->quantity,
+                    'unit_price' => $currentPrice,
+                    'total_amount' => $currentPrice * $cartItem->quantity,
                 ];
 
                 if ($cartItem->isProduct()) {
@@ -162,6 +170,13 @@ class CheckoutService
                     }
                 }
             }
+
+            $order->load('items');
+            $recalculatedSubtotal = $order->items->sum(fn ($item) => $item->unit_price * $item->quantity);
+            $order->forceFill([
+                'subtotal' => round($recalculatedSubtotal, 2),
+                'total_amount' => round($recalculatedSubtotal + (float) $order->tax_amount + (float) $order->shipping_cost, 2),
+            ])->save();
 
             $cart->items()->delete();
             $cart->delete();
