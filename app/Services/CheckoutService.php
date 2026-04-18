@@ -342,26 +342,74 @@ class CheckoutService
     /**
      * Cancel an order on behalf of a customer.
      * Finds the order scoped to the customer and shop, validates it can be cancelled,
-     * then records the reason and timestamp.
+     * restores inventory for any product items, then records the cancellation.
      *
      * @throws \RuntimeException if the order cannot be cancelled
      * @throws ModelNotFoundException if the order does not belong to the customer/shop
      */
     public function cancelByCustomer(int $orderId, Customer $customer, Shop $shop, ?string $reason): void
     {
-        $order = $customer->orders()
-            ->where('shop_id', $shop->id)
-            ->where('order_type', OrderType::CUSTOMER->value)
-            ->findOrFail($orderId);
+        DB::transaction(function () use ($orderId, $customer, $shop, $reason) {
+            $order = $customer->orders()
+                ->where('shop_id', $shop->id)
+                ->where('order_type', OrderType::CUSTOMER->value)
+                ->lockForUpdate()
+                ->findOrFail($orderId);
 
-        if (! $order->canCancel()) {
-            throw new \RuntimeException('This order cannot be cancelled.');
-        }
+            if (! $order->canCancel()) {
+                throw new \RuntimeException('This order cannot be cancelled.');
+            }
 
-        $order->forceFill([
-            'status' => OrderStatus::CANCELLED,
-            'cancellation_reason' => $reason,
-            'cancelled_at' => now(),
-        ])->save();
+            $order->load('items.productVariant');
+            $productItems = $order->items->filter(fn ($item) => $item->isProduct());
+
+            if ($productItems->isNotEmpty()) {
+                $variantIds = $productItems->pluck('product_variant_id')->toArray();
+
+                $locations = InventoryLocation::query()
+                    ->where('location_type', Shop::class)
+                    ->where('location_id', $shop->id)
+                    ->whereIn('product_variant_id', $variantIds)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('product_variant_id');
+
+                foreach ($productItems as $item) {
+                    $location = $locations->get($item->product_variant_id);
+
+                    if (! $location) {
+                        Log::warning('Inventory location not found during customer order cancellation', [
+                            'order_id' => $order->id,
+                            'variant_id' => $item->product_variant_id,
+                            'shop_id' => $shop->id,
+                        ]);
+                        continue;
+                    }
+
+                    $quantityBefore = $location->quantity;
+                    $location->quantity += $item->quantity;
+                    $location->save();
+
+                    $this->stockMovementService->recordMovement([
+                        'tenant_id' => $order->tenant_id,
+                        'shop_id' => $shop->id,
+                        'product_variant_id' => $item->product_variant_id,
+                        'to_location_id' => $location->id,
+                        'type' => StockMovementType::RETURN,
+                        'quantity' => $item->quantity,
+                        'quantity_before' => $quantityBefore,
+                        'quantity_after' => $location->quantity,
+                        'reference_number' => $order->order_number,
+                        'reason' => "Customer cancelled order {$order->order_number}",
+                    ]);
+                }
+            }
+
+            $order->forceFill([
+                'status' => OrderStatus::CANCELLED,
+                'cancellation_reason' => $reason,
+                'cancelled_at' => now(),
+            ])->save();
+        });
     }
 }
