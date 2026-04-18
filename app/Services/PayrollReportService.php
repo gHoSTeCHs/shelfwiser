@@ -85,7 +85,7 @@ class PayrollReportService
         return [
             'summary'      => $summary,
             'breakdown'    => $breakdown,
-            'period_info'  => $periodId ? Payslip::query()->find($payslips->first()?->payroll_period_id) : null,
+            'period_info'  => $periodId ? PayrollPeriod::query()->find($periodId) : null,
             'generated_at' => now()->toIso8601String(),
         ];
     }
@@ -266,13 +266,24 @@ class PayrollReportService
 
         $query->when($dateRange, fn ($q) => $q->whereBetween('completed_at', [$dateRange->start, $dateRange->end]));
 
-        $payRuns = $query->with(['payrollPeriod:id,period_name,start_date,end_date'])->get();
+        $payRuns = $query
+            ->with(['payrollPeriod:id,period_name,start_date,end_date'])
+            ->withSum('payslips as total_paye', 'income_tax')
+            ->withSum('payslips as total_pension_employee', 'pension_employee')
+            ->withSum('payslips as total_pension_employer', 'pension_employer')
+            ->withSum('payslips as total_nhf', 'nhf')
+            ->withSum('payslips as total_nhis', 'nhis')
+            ->get();
 
         $entries = [];
 
         foreach ($payRuns as $payRun) {
+            $totalPension = (float) $payRun->total_pension_employee + (float) $payRun->total_pension_employer;
+
+            $date = $payRun->completed_at?->format('Y-m-d') ?? $payRun->updated_at->format('Y-m-d');
+
             $entries[] = [
-                'date'        => $payRun->completed_at?->format('Y-m-d'),
+                'date'        => $date,
                 'reference'   => $payRun->reference,
                 'description' => "Salaries & Wages - {$payRun->payrollPeriod?->period_name}",
                 'account'     => 'Salaries Expense',
@@ -281,7 +292,7 @@ class PayrollReportService
             ];
 
             $entries[] = [
-                'date'        => $payRun->completed_at?->format('Y-m-d'),
+                'date'        => $date,
                 'reference'   => $payRun->reference,
                 'description' => 'Employer Pension Contribution',
                 'account'     => 'Pension Expense (Employer)',
@@ -290,31 +301,53 @@ class PayrollReportService
             ];
 
             $entries[] = [
-                'date'        => $payRun->completed_at?->format('Y-m-d'),
+                'date'        => $date,
                 'reference'   => $payRun->reference,
                 'description' => 'PAYE Tax Payable',
                 'account'     => 'PAYE Tax Liability',
                 'debit'       => 0,
-                'credit'      => $this->getTotalPAYE($payRun),
+                'credit'      => (float) $payRun->total_paye,
             ];
 
             $entries[] = [
-                'date'        => $payRun->completed_at?->format('Y-m-d'),
+                'date'        => $date,
                 'reference'   => $payRun->reference,
                 'description' => 'Pension Contribution Payable',
                 'account'     => 'Pension Liability',
                 'debit'       => 0,
-                'credit'      => $this->getTotalPension($payRun),
+                'credit'      => $totalPension,
             ];
 
             $entries[] = [
-                'date'        => $payRun->completed_at?->format('Y-m-d'),
+                'date'        => $date,
                 'reference'   => $payRun->reference,
                 'description' => 'Net Salaries Payable',
                 'account'     => 'Salaries Payable / Bank',
                 'debit'       => 0,
                 'credit'      => (float) $payRun->total_net,
             ];
+
+            if ((float) $payRun->total_nhf > 0) {
+                $entries[] = [
+                    'date'        => $date,
+                    'reference'   => $payRun->reference,
+                    'description' => 'NHF Contribution Payable',
+                    'account'     => 'NHF Liability',
+                    'debit'       => 0,
+                    'credit'      => (float) $payRun->total_nhf,
+                ];
+            }
+
+            if ((float) $payRun->total_nhis > 0) {
+                $entries[] = [
+                    'date'        => $date,
+                    'reference'   => $payRun->reference,
+                    'description' => 'NHIS Contribution Payable',
+                    'account'     => 'NHIS Liability',
+                    'debit'       => 0,
+                    'credit'      => (float) $payRun->total_nhis,
+                ];
+            }
         }
 
         $totalDebits  = collect($entries)->sum('debit');
@@ -330,17 +363,6 @@ class PayrollReportService
             'pay_runs_count' => $payRuns->count(),
             'generated_at'   => now()->toIso8601String(),
         ];
-    }
-
-    protected function getTotalPAYE(PayRun $payRun): float
-    {
-        return $payRun->payslips()->sum('income_tax');
-    }
-
-    protected function getTotalPension(PayRun $payRun): float
-    {
-        return $payRun->payslips()->sum('pension_employee')
-            + $payRun->payslips()->sum('pension_employer');
     }
 
     public function getPayRunStatistics(?int $year = null): array
