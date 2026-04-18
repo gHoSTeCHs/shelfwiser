@@ -185,6 +185,7 @@ class FundRequestService
     {
         $query = FundRequest::query()
             ->where('status', FundRequestStatus::PENDING)
+            ->where('user_id', '!=', $manager->id)
             ->with(['user', 'shop', 'approvedBy']);
 
         if ($shop) {
@@ -197,10 +198,6 @@ class FundRequestService
         $requests = $query->orderBy('requested_at', 'asc')->get();
 
         return $requests->filter(function ($request) use ($manager) {
-            if ($manager->id === $request->user_id) {
-                return false;
-            }
-
             if ($manager->is_tenant_owner) {
                 return true;
             }
@@ -281,39 +278,54 @@ class FundRequestService
     /**
      * Get fund request statistics
      */
-    public function getStatistics(?Shop $shop = null, ?Carbon $startDate = null, ?Carbon $endDate = null): array
+    public function getStatistics(int $tenantId, ?Shop $shop = null, ?Carbon $startDate = null, ?Carbon $endDate = null, ?array $shopIds = null): array
     {
-        $query = FundRequest::query();
+        $base = FundRequest::query()->where('tenant_id', $tenantId);
 
         if ($shop) {
-            $query->where('shop_id', $shop->id);
+            $base->where('shop_id', $shop->id);
+        } elseif ($shopIds !== null) {
+            $base->whereIn('shop_id', $shopIds);
         }
 
         if ($startDate) {
-            $query->where('requested_at', '>=', $startDate);
+            $base->where('requested_at', '>=', $startDate);
         }
 
         if ($endDate) {
-            $query->where('requested_at', '<=', $endDate);
+            $base->where('requested_at', '<=', $endDate);
         }
 
-        $all = $query->get();
+        $byStatus = (clone $base)
+            ->selectRaw('status, count(*) as total, sum(amount) as total_amount')
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
+        $byType = (clone $base)
+            ->selectRaw('request_type, count(*) as total, sum(amount) as total_amount')
+            ->groupBy('request_type')
+            ->get();
+
+        $pending   = $byStatus->get(FundRequestStatus::PENDING->value);
+        $approved  = $byStatus->get(FundRequestStatus::APPROVED->value);
+        $rejected  = $byStatus->get(FundRequestStatus::REJECTED->value);
+        $disbursed = $byStatus->get(FundRequestStatus::DISBURSED->value);
 
         return [
-            'total_requests' => $all->count(),
-            'pending_requests' => $all->where('status', FundRequestStatus::PENDING)->count(),
-            'approved_requests' => $all->where('status', FundRequestStatus::APPROVED)->count(),
-            'rejected_requests' => $all->where('status', FundRequestStatus::REJECTED)->count(),
-            'disbursed_requests' => $all->where('status', FundRequestStatus::DISBURSED)->count(),
-            'total_amount_requested' => $all->sum('amount'),
-            'total_amount_approved' => $all->whereIn('status', [
-                FundRequestStatus::APPROVED,
-                FundRequestStatus::DISBURSED,
-            ])->sum('amount'),
-            'total_amount_disbursed' => $all->where('status', FundRequestStatus::DISBURSED)->sum('amount'),
-            'by_type' => $all->groupBy('request_type')->map(fn ($items) => [
-                'count' => $items->count(),
-                'total_amount' => $items->sum('amount'),
+            'total_requests'         => $byStatus->sum('total'),
+            'pending_requests'       => (int) ($pending?->total ?? 0),
+            'approved_requests'      => (int) ($approved?->total ?? 0),
+            'rejected_requests'      => (int) ($rejected?->total ?? 0),
+            'disbursed_requests'     => (int) ($disbursed?->total ?? 0),
+            'total_amount_requested' => (float) $byStatus->sum('total_amount'),
+            'total_amount_approved'  => (float) (($approved?->total_amount ?? 0) + ($disbursed?->total_amount ?? 0)),
+            'total_amount_disbursed' => (float) ($disbursed?->total_amount ?? 0),
+            'by_type'                => $byType->mapWithKeys(fn ($row) => [
+                $row->request_type => [
+                    'count'        => (int) $row->total,
+                    'total_amount' => (float) $row->total_amount,
+                ],
             ])->toArray(),
         ];
     }

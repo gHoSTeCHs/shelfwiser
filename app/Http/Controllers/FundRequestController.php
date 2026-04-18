@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\DTOs\DateRange;
-use App\Enums\FundRequestStatus;
-use App\Enums\FundRequestType;
 use App\Http\Requests\ApproveFundRequestRequest;
+use App\Http\Requests\ApprovalQueueFundRequestRequest;
 use App\Http\Requests\CancelFundRequestRequest;
 use App\Http\Requests\DisburseFundRequestRequest;
+use App\Http\Requests\IndexFundRequestRequest;
 use App\Http\Requests\RejectFundRequestRequest;
 use App\Http\Requests\StoreFundRequestRequest;
 use App\Http\Requests\UpdateFundRequestRequest;
+use App\Enums\FundRequestType;
+use App\Enums\UserRole;
 use App\Models\FundRequest;
 use App\Models\Shop;
 use App\Services\FundRequestService;
@@ -26,66 +27,66 @@ class FundRequestController extends Controller
         private FundRequestService $fundRequestService
     ) {}
 
-    public function index(Request $request): Response
+    public function index(IndexFundRequestRequest $request): Response
     {
         Gate::authorize('viewAny', FundRequest::class);
 
-        $validated = $request->only(['shop_id', 'status', 'type', 'start_date', 'end_date']);
         $user = $request->user();
-
-        $shop = isset($validated['shop_id']) ? Shop::query()->findOrFail($validated['shop_id']) : null;
-        $statusEnum = isset($validated['status']) ? FundRequestStatus::from($validated['status']) : null;
-        $typeEnum = isset($validated['type']) ? FundRequestType::from($validated['type']) : null;
-        $dateRange = DateRange::fromRequest($validated, 'start_date', 'end_date');
+        $shop = $request->shopId() ? Shop::query()->findOrFail($request->shopId()) : null;
+        $dateRange = $request->dateRange();
 
         return Inertia::render('FundRequests/Index', [
             'fundRequests' => $this->fundRequestService->getUserRequests(
                 user: $user,
-                status: $statusEnum,
+                status: $request->status(),
                 shop: $shop,
                 startDate: $dateRange->start,
                 endDate: $dateRange->end,
-                type: $typeEnum,
+                type: $request->type(),
             ),
             'statistics' => $this->fundRequestService->getStatistics(
+                tenantId: $user->tenant_id,
                 shop: $shop,
                 startDate: $dateRange->start,
                 endDate: $dateRange->end,
+                shopIds: $shop === null && $user->role->level() < UserRole::GENERAL_MANAGER->level()
+                    ? $user->shops->pluck('id')->toArray()
+                    : null,
             ),
             'filters' => [
-                'shop_id' => $validated['shop_id'] ?? null,
-                'status' => $validated['status'] ?? null,
-                'type' => $validated['type'] ?? null,
+                'shop_id' => $request->shopId(),
+                'status' => $request->validated('status'),
+                'type' => $request->validated('type'),
                 'start_date' => $dateRange->start->toDateString(),
                 'end_date' => $dateRange->end->toDateString(),
             ],
             'shops' => $user->shops,
-            'statusOptions' => collect(FundRequestStatus::cases())->map(fn ($case) => [
+            'statusOptions' => collect(\App\Enums\FundRequestStatus::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
-            'typeOptions' => collect(FundRequestType::cases())->map(fn ($case) => [
+            'typeOptions' => collect(\App\Enums\FundRequestType::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'label' => $case->label(),
             ]),
         ]);
     }
 
-    public function approvalQueue(Request $request): Response
+    public function approvalQueue(ApprovalQueueFundRequestRequest $request): Response
     {
         Gate::authorize('viewAny', FundRequest::class);
 
         $user = $request->user();
-        $shopId = $request->input('shop_id');
-
-        $shop = $shopId ? Shop::query()->findOrFail($shopId) : null;
+        $shop = $request->shopId() ? Shop::query()->findOrFail($request->shopId()) : null;
 
         return Inertia::render('FundRequests/Approve', [
             'fundRequests' => $this->fundRequestService->getRequestsForApproval($user, $shop),
             'filters' => [
-                'shop_id' => $shopId,
+                'shop_id' => $request->shopId(),
             ],
-            'shops' => $user->is_tenant_owner ? Shop::query()->get() : $user->shops,
+            'shops' => $user->is_tenant_owner
+                ? Shop::query()->where('is_active', true)->get(['id', 'name', 'slug'])
+                : $user->shops,
         ]);
     }
 
