@@ -14,8 +14,7 @@ class FundRequestPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role->hasPermission('view_fund_requests') ||
-               $user->role->level() >= UserRole::ASSISTANT_MANAGER->level();
+        return $user->role->level() >= UserRole::ASSISTANT_MANAGER->level();
     }
 
     /**
