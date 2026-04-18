@@ -28,8 +28,10 @@ class OrderService
 
     /**
      * Get paginated orders with standard relations for the index page.
+     *
+     * @param array{search?: string|null, status?: string|null, payment_status?: string|null} $filters
      */
-    public function getPaginatedOrders(): LengthAwarePaginator
+    public function getPaginatedOrders(array $filters = []): LengthAwarePaginator
     {
         return Order::query()
             ->with([
@@ -38,8 +40,30 @@ class OrderService
                 'createdBy:id,first_name,last_name',
             ])
             ->withCount('items')
+            ->when(
+                ! empty($filters['search']),
+                fn ($query) => $query->where(function ($q) use ($filters) {
+                    $term = $filters['search'];
+                    $q->where('order_number', 'like', "%{$term}%")
+                        ->orWhereHas('customer', fn ($c) => $c->where(
+                            DB::raw("CONCAT(first_name, ' ', last_name)"),
+                            'like',
+                            "%{$term}%"
+                        ))
+                        ->orWhereHas('shop', fn ($s) => $s->where('name', 'like', "%{$term}%"));
+                })
+            )
+            ->when(
+                ! empty($filters['status']),
+                fn ($query) => $query->where('status', $filters['status'])
+            )
+            ->when(
+                ! empty($filters['payment_status']),
+                fn ($query) => $query->where('payment_status', $filters['payment_status'])
+            )
             ->latest()
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
     }
 
     /**
@@ -463,6 +487,37 @@ class OrderService
                             }
                         }
                         // Services don't have reserved inventory
+                    }
+                } elseif (in_array($order->status, [OrderStatus::PROCESSING, OrderStatus::PACKED, OrderStatus::SHIPPED])) {
+                    $order->load('items.productVariant');
+
+                    foreach ($order->items as $item) {
+                        if ($item->isProduct()) {
+                            $variant = $item->productVariant;
+                            $location = $variant->inventoryLocations()
+                                ->where('location_type', 'App\\Models\\Shop')
+                                ->where('location_id', $order->shop_id)
+                                ->lockForUpdate()
+                                ->first();
+
+                            if ($location) {
+                                $this->stockMovementService->adjustStock(
+                                    $variant,
+                                    $location,
+                                    $item->quantity,
+                                    StockMovementType::RETURN,
+                                    $user,
+                                    "Cancelled order #{$order->order_number}",
+                                    'Stock restored due to post-fulfillment cancellation'
+                                );
+                            } else {
+                                Log::warning('Inventory location not found during post-fulfillment cancellation', [
+                                    'order_id' => $order->id,
+                                    'variant_id' => $variant->id,
+                                    'shop_id' => $order->shop_id,
+                                ]);
+                            }
+                        }
                     }
                 }
 
