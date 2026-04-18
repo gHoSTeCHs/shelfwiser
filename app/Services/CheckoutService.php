@@ -13,6 +13,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\Shop;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -57,7 +58,7 @@ class CheckoutService
             if ($productItems->isNotEmpty()) {
                 $variantIds = $productItems->pluck('product_variant_id')->toArray();
 
-                $locations = InventoryLocation::where('location_type', Shop::class)
+                $locations = InventoryLocation::query()->where('location_type', Shop::class)
                     ->where('location_id', $cart->shop_id)
                     ->whereIn('product_variant_id', $variantIds)
                     ->lockForUpdate()
@@ -130,7 +131,7 @@ class CheckoutService
                     }
                 }
 
-                $orderItem = OrderItem::create($orderItemData);
+                $orderItem = OrderItem::query()->create($orderItemData);
 
                 if ($cartItem->isProduct()) {
                     $location = $locations->get($cartItem->product_variant_id);
@@ -182,7 +183,8 @@ class CheckoutService
      */
     public function verifyPaystackPayment(string $reference, Shop $shop): ?Order
     {
-        $order = Order::where('payment_reference', $reference)
+        $order = Order::query()
+            ->where('payment_reference', $reference)
             ->where('shop_id', $shop->id)
             ->first();
 
@@ -195,7 +197,7 @@ class CheckoutService
             return null;
         }
 
-        if ($order->payment_status === PaymentStatus::PAID->value) {
+        if ($order->payment_status === PaymentStatus::PAID) {
             return $order;
         }
 
@@ -298,7 +300,7 @@ class CheckoutService
 
                 $paymentAmount = $verifiedAmount;
 
-                OrderPayment::create([
+                OrderPayment::query()->create([
                     'tenant_id' => $order->tenant_id,
                     'order_id' => $order->id,
                     'amount' => $paymentAmount,
@@ -323,5 +325,43 @@ class CheckoutService
 
             return true;
         });
+    }
+
+    /**
+     * Find an existing order by idempotency key to prevent duplicate submissions.
+     */
+    public function findExistingOrderByIdempotencyKey(string $key, int $shopId, int $customerId): ?Order
+    {
+        return Order::query()
+            ->where('offline_id', $key)
+            ->where('shop_id', $shopId)
+            ->where('customer_id', $customerId)
+            ->first();
+    }
+
+    /**
+     * Cancel an order on behalf of a customer.
+     * Finds the order scoped to the customer and shop, validates it can be cancelled,
+     * then records the reason and timestamp.
+     *
+     * @throws \RuntimeException if the order cannot be cancelled
+     * @throws ModelNotFoundException if the order does not belong to the customer/shop
+     */
+    public function cancelByCustomer(int $orderId, Customer $customer, Shop $shop, ?string $reason): void
+    {
+        $order = $customer->orders()
+            ->where('shop_id', $shop->id)
+            ->where('order_type', OrderType::CUSTOMER->value)
+            ->findOrFail($orderId);
+
+        if (! $order->canCancel()) {
+            throw new \RuntimeException('This order cannot be cancelled.');
+        }
+
+        $order->forceFill([
+            'status' => OrderStatus::CANCELLED,
+            'cancellation_reason' => $reason,
+            'cancelled_at' => now(),
+        ])->save();
     }
 }

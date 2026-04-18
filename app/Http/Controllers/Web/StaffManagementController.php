@@ -88,6 +88,8 @@ class StaffManagementController extends Controller
      */
     public function store(CreateStaffWithPayrollRequest $request): RedirectResponse
     {
+        Gate::authorize('create', User::class);
+
         $staff = $this->onboardingService->createStaffWithPayroll(
             $request->validated(),
             $request->user()->tenant,
@@ -103,6 +105,8 @@ class StaffManagementController extends Controller
      */
     public function storeSimple(CreateStaffRequest $request): RedirectResponse
     {
+        Gate::authorize('create', User::class);
+
         $staff = $this->staffService->create(
             $request->validated(),
             $request->user()->tenant,
@@ -172,6 +176,8 @@ class StaffManagementController extends Controller
      */
     public function update(UpdateStaffWithPayrollRequest $request, User $staff): RedirectResponse
     {
+        Gate::authorize('update', $staff);
+
         $this->onboardingService->updateStaffWithPayroll(
             $staff,
             $request->validated()
