@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,7 +18,9 @@ class Cart extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'tenant_id',
         'shop_id',
+        'customer_id',
         'session_id',
         'expires_at',
     ];
@@ -49,7 +52,7 @@ class Cart extends Model
         return $this->hasMany(CartItem::class);
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where(function ($q) {
             $q->whereNull('expires_at')
@@ -57,12 +60,12 @@ class Cart extends Model
         });
     }
 
-    public function scopeForCustomer($query, int $customerId)
+    public function scopeForCustomer(Builder $query, int $customerId): Builder
     {
         return $query->where('customer_id', $customerId);
     }
 
-    public function scopeForSession($query, string $sessionId)
+    public function scopeForSession(Builder $query, string $sessionId): Builder
     {
         return $query->where('session_id', $sessionId);
     }
@@ -78,5 +81,15 @@ class Cart extends Model
                 ]);
             },
         ]);
+    }
+
+    /**
+     * Load relations needed by the storefront JSON API cart endpoints.
+     * Differs from loadOrderRelations() in that it includes product.images
+     * for image URLs in the serialized cart item response.
+     */
+    public function loadApiCartRelations(): static
+    {
+        return $this->load(['items.productVariant.product.images', 'items.sellable']);
     }
 }

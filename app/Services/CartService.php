@@ -61,28 +61,16 @@ class CartService
         $sessionId = Session::getId();
         $cacheKey = $this->getCartCacheKey($shop->tenant_id, $shop->id, null, $sessionId);
 
-        $existingCart = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($sessionId, $shop) {
-            return Cart::query()
-                ->where('session_id', $sessionId)
-                ->where('shop_id', $shop->id)
-                ->where('tenant_id', $shop->tenant_id)
-                ->first();
+        return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($sessionId, $shop) {
+            return Cart::query()->firstOrCreate(
+                [
+                    'session_id' => $sessionId,
+                    'shop_id' => $shop->id,
+                    'tenant_id' => $shop->tenant_id,
+                ],
+                ['expires_at' => now()->addDays(7)]
+            );
         });
-
-        if ($existingCart) {
-            return $existingCart;
-        }
-
-        $cart = Cart::query()->forceCreate([
-            'session_id' => $sessionId,
-            'shop_id' => $shop->id,
-            'tenant_id' => $shop->tenant_id,
-            'expires_at' => now()->addDays(7),
-        ]);
-
-        $this->invalidateCartCache($shop->tenant_id, $shop->id, null, $sessionId);
-
-        return $cart;
     }
 
     /**
