@@ -282,6 +282,24 @@ class OrderService
         try {
             return DB::transaction(function () use ($order, $data) {
                 if (isset($data['items'])) {
+                    if ($order->status === OrderStatus::CONFIRMED) {
+                        $order->load('items.productVariant');
+
+                        foreach ($order->items as $item) {
+                            if ($item->isProduct() && $item->productVariant) {
+                                $location = $item->productVariant->inventoryLocations()
+                                    ->where('location_type', 'App\\Models\\Shop')
+                                    ->where('location_id', $order->shop_id)
+                                    ->lockForUpdate()
+                                    ->first();
+
+                                if ($location && $location->reserved_quantity >= $item->quantity) {
+                                    $location->decrement('reserved_quantity', $item->quantity);
+                                }
+                            }
+                        }
+                    }
+
                     $order->items()->delete();
                     $this->createOrderItems($order, $data['items']);
                 }
