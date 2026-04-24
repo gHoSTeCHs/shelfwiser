@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\OrderReturnStatus;
+use App\Enums\OrderStatus;
 use App\Enums\StockMovementType;
 use App\Models\Order;
 use App\Models\OrderReturn;
 use App\Models\User;
 use Exception;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -18,50 +21,95 @@ class OrderReturnService
         private readonly OrderRefundService $refundService
     ) {}
 
+    public function getReturnsList(User $user, array $filters): LengthAwarePaginator
+    {
+        $query = OrderReturn::query()
+            ->where('tenant_id', $user->tenant_id)
+            ->with(['order', 'items.orderItem', 'createdByUser'])
+            ->latest();
+
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        return $query->paginate(20);
+    }
+
+    public function getOrderForReturnCreate(Order $order): Order
+    {
+        $order->load(['items.productVariant.product', 'customer']);
+
+        return $order;
+    }
+
     /**
      * Create a return request
      *
+     * @param  array<int, array{order_item_id: int|string, quantity: int, reason: ?string, condition_notes: ?string}>  $items
      * @throws Throwable
      */
     public function createReturn(
         Order $order,
         User $user,
-        array $items, // ['order_item_id' => ['quantity' => int, 'reason' => string, 'condition_notes' => string]]
+        array $items,
         string $reason,
         ?string $notes = null
     ): OrderReturn {
-        if (! in_array($order->status->value, ['delivered', 'completed'])) {
-            throw new Exception('Only delivered or completed orders can be returned');
+        if ($order->status !== OrderStatus::DELIVERED) {
+            throw new Exception('Only delivered orders can be returned');
         }
 
+        $mappedItems = collect($items)->mapWithKeys(fn ($item) => [
+            $item['order_item_id'] => [
+                'quantity' => $item['quantity'],
+                'reason' => $item['reason'] ?? null,
+                'condition_notes' => $item['condition_notes'] ?? null,
+            ],
+        ])->toArray();
+
+        $itemIds = array_keys($mappedItems);
+
         try {
-            return DB::transaction(function () use ($order, $user, $items, $reason, $notes) {
-                // Generate unique return number
+            return DB::transaction(function () use ($order, $user, $mappedItems, $reason, $notes, $itemIds) {
+                Order::query()->where('id', $order->id)->lockForUpdate()->first();
+
+                $orderItems = $order->items()
+                    ->whereIn('id', $itemIds)
+                    ->get()
+                    ->keyBy('id');
+
+                $alreadyReturnedMap = \App\Models\ReturnItem::query()
+                    ->whereIn('order_item_id', $itemIds)
+                    ->whereHas('return', fn ($q) => $q->whereIn('status', [
+                        OrderReturnStatus::PENDING->value,
+                        OrderReturnStatus::APPROVED->value,
+                        OrderReturnStatus::COMPLETED->value,
+                    ]))
+                    ->get()
+                    ->groupBy('order_item_id')
+                    ->map(fn ($rows) => $rows->sum('quantity'));
+
                 $returnNumber = 'RET-'.strtoupper(uniqid());
 
-                $return = OrderReturn::create([
+                $return = OrderReturn::query()->create([
                     'tenant_id' => $order->tenant_id,
                     'order_id' => $order->id,
                     'customer_id' => $order->customer_id,
                     'return_number' => $returnNumber,
-                    'status' => 'pending',
+                    'status' => OrderReturnStatus::PENDING,
                     'reason' => $reason,
                     'notes' => $notes,
                     'created_by' => $user->id,
                 ]);
 
-                // Create return items
-                foreach ($items as $orderItemId => $itemData) {
-                    $orderItem = $order->items()->find($orderItemId);
+                foreach ($mappedItems as $orderItemId => $itemData) {
+                    $orderItem = $orderItems->get($orderItemId);
 
                     if (! $orderItem) {
                         throw new Exception("Order item {$orderItemId} not found");
                     }
 
-                    $alreadyReturned = \App\Models\ReturnItem::query()
-                        ->where('order_item_id', $orderItemId)
-                        ->whereHas('return', fn ($q) => $q->whereIn('status', ['pending', 'approved', 'completed']))
-                        ->sum('quantity');
+                    $alreadyReturned = $alreadyReturnedMap->get($orderItemId, 0);
 
                     $remainingReturnable = $orderItem->quantity - $alreadyReturned;
 
@@ -114,17 +162,23 @@ class OrderReturnService
 
         try {
             return DB::transaction(function () use ($return, $user, $restockItems, $processRefund) {
-                $refundAmount = 0;
+                $return->loadMissing([
+                    'items.orderItem.productVariant.inventoryLocations',
+                    'order',
+                ]);
 
-                // Restock items if requested
+                $refundAmount = $return->items->sum(
+                    fn ($returnItem) => $returnItem->orderItem->unit_price * $returnItem->quantity
+                );
+
                 if ($restockItems) {
                     foreach ($return->items as $returnItem) {
                         $orderItem = $returnItem->orderItem;
 
                         if ($orderItem->isProduct()) {
                             $variant = $orderItem->productVariant;
-                            $location = $variant->inventoryLocations()
-                                ->where('location_type', 'App\\Models\\Shop')
+                            $location = $variant->inventoryLocations
+                                ->where('location_type', \App\Models\Shop::class)
                                 ->where('location_id', $return->order->shop_id)
                                 ->first();
 
@@ -140,15 +194,11 @@ class OrderReturnService
                                 );
                             }
                         }
-
-                        // Calculate refund amount
-                        $refundAmount += ($orderItem->unit_price * $returnItem->quantity);
                     }
 
                     $return->restocked = true;
                 }
 
-                // Process refund if requested
                 if ($processRefund && $refundAmount > 0) {
                     $this->refundService->partialRefund(
                         $return->order,
@@ -162,7 +212,7 @@ class OrderReturnService
                 }
 
                 // Update return status
-                $return->status = 'approved';
+                $return->status = OrderReturnStatus::APPROVED;
                 $return->approved_by = $user->id;
                 $return->approved_at = now();
                 $return->refund_amount = $refundAmount;
@@ -203,7 +253,7 @@ class OrderReturnService
 
         try {
             return DB::transaction(function () use ($return, $user, $rejectionReason) {
-                $return->status = 'rejected';
+                $return->status = OrderReturnStatus::REJECTED;
                 $return->rejected_by = $user->id;
                 $return->rejected_at = now();
 
@@ -246,7 +296,7 @@ class OrderReturnService
 
         try {
             return DB::transaction(function () use ($return, $user) {
-                $return->status = 'completed';
+                $return->status = OrderReturnStatus::COMPLETED;
                 $return->completed_by = $user->id;
                 $return->completed_at = now();
                 $return->save();

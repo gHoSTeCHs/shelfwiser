@@ -14,10 +14,12 @@ use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\ProductVariant;
 use App\Models\Shop;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class CheckoutService
 {
@@ -281,6 +283,10 @@ class CheckoutService
                 return false;
             }
 
+            if ($order->payment_status === PaymentStatus::PAID) {
+                return true;
+            }
+
             if ($status === PaymentStatus::PAID) {
                 $refNumber = $transactionId ?? $paymentReference;
 
@@ -352,6 +358,88 @@ class CheckoutService
             ->where('shop_id', $shopId)
             ->where('customer_id', $customerId)
             ->first();
+    }
+
+    public function generatePaymentReference(): string
+    {
+        return 'PAY-'.Str::uuid()->toString();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getCartStockIssues(array $cartSummary, Shop $shop): array
+    {
+        $productVariantIds = collect($cartSummary['items'])
+            ->filter(fn ($item) => $item->isProduct())
+            ->pluck('product_variant_id')
+            ->unique();
+
+        if ($productVariantIds->isEmpty()) {
+            return [];
+        }
+
+        $variants = ProductVariant::query()
+            ->whereIn('id', $productVariantIds)
+            ->whereHas('product', fn ($q) => $q->where('shop_id', $shop->id))
+            ->with(['inventoryLocations', 'product'])
+            ->get()
+            ->keyBy('id');
+
+        $issues = [];
+
+        foreach ($cartSummary['items'] as $item) {
+            if (! $item->isProduct()) {
+                continue;
+            }
+
+            $variant = $variants->get($item->product_variant_id);
+
+            if ($variant && $variant->available_stock < $item->quantity) {
+                $issues[] = "{$variant->product->name} - Only {$variant->available_stock} available (you have {$item->quantity} in cart)";
+            }
+        }
+
+        return $issues;
+    }
+
+    public function getCustomerAddresses(Customer $customer): Collection
+    {
+        return $customer->addresses()->get();
+    }
+
+    public function saveCustomerAddresses(
+        Customer $customer,
+        array $shippingAddress,
+        ?array $billingAddress,
+        bool $billingSameAsShipping
+    ): void {
+        $this->saveAddress($customer, $shippingAddress, 'shipping');
+
+        if (! $billingSameAsShipping && $billingAddress) {
+            $this->saveAddress($customer, $billingAddress, 'billing');
+        }
+    }
+
+    public function verifyWebhookSignature(string $payload, string $signature): bool
+    {
+        $secretKey = config('services.paystack.secret_key');
+
+        if (! $secretKey) {
+            Log::error('Paystack secret key not configured');
+            throw new \RuntimeException('Paystack secret key not configured');
+        }
+
+        return hash_equals(hash_hmac('sha512', $payload, $secretKey), $signature);
+    }
+
+    private function saveAddress(Customer $customer, array $addressData, string $type): void
+    {
+        $customer->addresses()->create([
+            ...$addressData,
+            'type' => $type,
+            'is_default' => $customer->addresses()->where('type', $type)->doesntExist(),
+        ]);
     }
 
     /**

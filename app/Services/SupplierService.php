@@ -9,6 +9,7 @@ use App\Models\SupplierPricingTier;
 use App\Models\SupplierProfile;
 use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -72,10 +73,32 @@ class SupplierService
         });
     }
 
-    public function addToCatalog(Tenant $supplierTenant, Product $product, array $data): SupplierCatalogItem
+    public function getCatalogItems(Tenant $tenant): LengthAwarePaginator
     {
-        return DB::transaction(function () use ($supplierTenant, $product, $data) {
-            $catalogItem = SupplierCatalogItem::create([
+        return SupplierCatalogItem::query()
+            ->forSupplier($tenant->id)
+            ->with(['product.variants', 'pricingTiers'])
+            ->latest()
+            ->paginate(20);
+    }
+
+    public function getProductsNotInCatalog(): Collection
+    {
+        return Product::query()
+            ->with(['variants', 'shop'])
+            ->whereDoesntHave('supplierCatalogItem')
+            ->latest()
+            ->get();
+    }
+
+    public function addToCatalog(Tenant $supplierTenant, array $data): SupplierCatalogItem
+    {
+        return DB::transaction(function () use ($supplierTenant, $data) {
+            $product = Product::query()
+                ->where('tenant_id', $supplierTenant->id)
+                ->findOrFail($data['product_id']);
+
+            $catalogItem = SupplierCatalogItem::query()->create([
                 'supplier_tenant_id' => $supplierTenant->id,
                 'product_id' => $product->id,
                 'is_available' => $data['is_available'] ?? true,
@@ -97,7 +120,7 @@ class SupplierService
                 'supplier_tenant_id' => $supplierTenant->id,
             ]);
 
-            return $catalogItem->fresh(['pricingTiers']);
+            return $catalogItem->fresh(['product', 'pricingTiers']);
         });
     }
 
@@ -137,7 +160,7 @@ class SupplierService
 
     public function addPricingTier(SupplierCatalogItem $catalogItem, array $data, ?int $connectionId = null): SupplierPricingTier
     {
-        return SupplierPricingTier::create([
+        return SupplierPricingTier::query()->create([
             'catalog_item_id' => $catalogItem->id,
             'connection_id' => $connectionId,
             'min_quantity' => $data['min_quantity'],
@@ -188,28 +211,43 @@ class SupplierService
             return $this->tierCache[$catalogItem->id][$cacheKey];
         }
 
-        $tiersQuery = $catalogItem->pricingTiers()
-            ->where('min_quantity', '<=', $quantity)
-            ->where(function ($query) use ($quantity) {
-                $query->whereNull('max_quantity')
-                    ->orWhere('max_quantity', '>=', $quantity);
-            })
-            ->orderBy('min_quantity', 'desc');
-
         $tier = null;
 
-        if ($connectionId) {
-            $connectionTier = (clone $tiersQuery)
-                ->where('connection_id', $connectionId)
-                ->first();
+        if (isset($this->tierCache[$catalogItem->id]['_tiers'])) {
+            $matching = $this->tierCache[$catalogItem->id]['_tiers']
+                ->filter(fn ($t) => $t->min_quantity <= $quantity &&
+                    (is_null($t->max_quantity) || $t->max_quantity >= $quantity))
+                ->sortByDesc('min_quantity');
 
-            if ($connectionTier) {
-                $tier = $connectionTier;
+            if ($connectionId) {
+                $tier = $matching->firstWhere('connection_id', $connectionId);
             }
-        }
 
-        if (! $tier) {
-            $tier = $tiersQuery->whereNull('connection_id')->first();
+            if (! $tier) {
+                $tier = $matching->first(fn ($t) => is_null($t->connection_id));
+            }
+        } else {
+            $tiersQuery = $catalogItem->pricingTiers()
+                ->where('min_quantity', '<=', $quantity)
+                ->where(function ($query) use ($quantity) {
+                    $query->whereNull('max_quantity')
+                        ->orWhere('max_quantity', '>=', $quantity);
+                })
+                ->orderBy('min_quantity', 'desc');
+
+            if ($connectionId) {
+                $connectionTier = (clone $tiersQuery)
+                    ->where('connection_id', $connectionId)
+                    ->first();
+
+                if ($connectionTier) {
+                    $tier = $connectionTier;
+                }
+            }
+
+            if (! $tier) {
+                $tier = $tiersQuery->whereNull('connection_id')->first();
+            }
         }
 
         if (! isset($this->tierCache[$catalogItem->id])) {
