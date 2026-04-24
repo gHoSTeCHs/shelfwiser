@@ -61,7 +61,7 @@ export default function Index({ categories }: Props) {
                         title="No categories found"
                         description="Get started by creating your first service category"
                         action={
-                            <Link href={'/service-categories/create'}>
+                            <Link href={ServiceCategoryController.create.url()}>
                                 <Button>
                                     <Plus className="mr-2 h-4 w-4" />
                                     Create Category

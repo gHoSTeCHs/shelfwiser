@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\PayFrequency;
+use App\Enums\TaxHandling;
 use App\Models\Shop;
 use App\Models\ShopTaxSetting;
 use App\Models\ShopType;
+use App\Models\TaxJurisdiction;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
@@ -66,6 +69,31 @@ class ShopService
         $shop->update(array_intersect_key($validated, array_flip($allowed)));
 
         return $shop->refresh();
+    }
+
+    public function getSettingsFormData(Shop $shop): array
+    {
+        $shop->load('taxSettings.taxJurisdiction');
+
+        $taxJurisdictions = TaxJurisdiction::query()
+            ->where('is_active', true)
+            ->orderBy('country_code')
+            ->orderBy('name')
+            ->get(['id', 'name', 'code', 'country_code']);
+
+        return [
+            'taxSettings' => $shop->taxSettings,
+            'taxJurisdictions' => $taxJurisdictions,
+            'taxHandlingOptions' => collect(TaxHandling::cases())->map(fn ($case) => [
+                'value' => $case->value,
+                'label' => $case->label(),
+                'description' => $case->description(),
+            ]),
+            'payFrequencyOptions' => collect(PayFrequency::cases())->map(fn ($case) => [
+                'value' => $case->value,
+                'label' => $case->label(),
+            ]),
+        ];
     }
 
     public function updateTaxSettings(Shop $shop, array $validated): void

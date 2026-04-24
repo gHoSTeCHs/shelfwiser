@@ -45,11 +45,27 @@ class ProductTemplateService
             $query->where('is_system', $filters['is_system']);
         }
 
-        $sortField = $filters['sort'] ?? 'name';
-        $sortDir = $filters['direction'] ?? 'asc';
+        $allowedTemplateSorts = ['name', 'created_at', 'updated_at'];
+        $sortField = in_array($filters['sort'] ?? 'name', $allowedTemplateSorts) ? ($filters['sort'] ?? 'name') : 'name';
+        $sortDir = in_array($filters['direction'] ?? 'asc', ['asc', 'desc']) ? $filters['direction'] : 'asc';
         $query->orderBy($sortField, $sortDir);
 
         return $query->paginate($filters['per_page'] ?? 20);
+    }
+
+    /**
+     * Get a lightweight, non-paginated list of templates for the tenant selection UI.
+     */
+    public function getAvailableForSelection(int $tenantId, ?string $search, ?int $productTypeId): Collection
+    {
+        return ProductTemplate::with(['productType', 'category'])
+            ->availableFor($tenantId)
+            ->active()
+            ->when($search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
+            ->when($productTypeId, fn ($q, $id) => $q->where('product_type_id', $id))
+            ->orderBy('name')
+            ->limit(50)
+            ->get();
     }
 
     /**

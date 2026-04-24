@@ -332,9 +332,10 @@ export interface StaffCreatePageProps {
     templates: EmployeeTemplate[];
 }
 
-export interface StaffEditPageProps extends StaffCreatePageProps {
+export interface StaffEditPageProps extends Omit<StaffCreatePageProps, 'templates'> {
     staff: StaffMember;
     canManagePayroll: boolean;
+    templates?: EmployeeTemplate[];
 }
 
 export function applyTemplateToForm(

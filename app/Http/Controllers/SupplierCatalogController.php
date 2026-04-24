@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Supplier\AddToCatalogRequest;
-use App\Models\Product;
 use App\Models\SupplierCatalogItem;
 use App\Models\Tenant;
 use App\Services\SupplierService;
@@ -18,62 +17,40 @@ class SupplierCatalogController extends Controller
 {
     public function __construct(private readonly SupplierService $supplierService) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        Gate::authorize('catalog.manage', auth()->user()->tenant);
-
-        $tenantId = auth()->user()->tenant_id;
-
-        $catalogItems = SupplierCatalogItem::forSupplier($tenantId)
-            ->with(['product.variants', 'pricingTiers'])
-            ->latest()
-            ->paginate(20);
+        Gate::authorize('catalog.manage', $request->user()->tenant);
 
         return Inertia::render('Supplier/Catalog/Index', [
-            'catalogItems' => $catalogItems,
+            'catalogItems' => $this->supplierService->getCatalogItems($request->user()->tenant),
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        Gate::authorize('catalog.manage', auth()->user()->tenant);
-
-        $tenantId = auth()->user()->tenant_id;
-
-        $products = Product::where('tenant_id', $tenantId)
-            ->with(['variants', 'shop'])
-            ->whereDoesntHave('supplierCatalogItem')
-            ->latest()
-            ->get();
+        Gate::authorize('catalog.manage', $request->user()->tenant);
 
         return Inertia::render('Supplier/Catalog/Create', [
-            'products' => $products,
+            'products' => $this->supplierService->getProductsNotInCatalog(),
         ]);
     }
 
     public function store(AddToCatalogRequest $request): RedirectResponse
     {
-        Gate::authorize('catalog.manage', auth()->user()->tenant);
+        Gate::authorize('catalog.manage', $request->user()->tenant);
 
-        $product = Product::findOrFail($request->input('product_id'));
-
-        $this->supplierService->addToCatalog(
-            auth()->user()->tenant,
-            $product,
+        $catalogItem = $this->supplierService->addToCatalog(
+            $request->user()->tenant,
             $request->validated()
         );
 
         return Redirect::route('supplier.catalog.index')
-            ->with('success', "Product '{$product->name}' added to catalog successfully.");
+            ->with('success', "Product '{$catalogItem->product->name}' added to catalog successfully.");
     }
 
-    public function edit(SupplierCatalogItem $catalogItem): Response
+    public function edit(Request $request, SupplierCatalogItem $catalogItem): Response
     {
-        Gate::authorize('catalog.manage', auth()->user()->tenant);
-
-        if ($catalogItem->supplier_tenant_id !== auth()->user()->tenant_id) {
-            abort(403);
-        }
+        Gate::authorize('catalog.manageCatalogItem', $catalogItem);
 
         $catalogItem->load(['product.variants', 'pricingTiers']);
 
@@ -84,11 +61,7 @@ class SupplierCatalogController extends Controller
 
     public function update(AddToCatalogRequest $request, SupplierCatalogItem $catalogItem): RedirectResponse
     {
-        Gate::authorize('catalog.manage', auth()->user()->tenant);
-
-        if ($catalogItem->supplier_tenant_id !== auth()->user()->tenant_id) {
-            abort(403);
-        }
+        Gate::authorize('catalog.manageCatalogItem', $catalogItem);
 
         $this->supplierService->updateCatalogItem($catalogItem, $request->validated());
 
@@ -96,13 +69,9 @@ class SupplierCatalogController extends Controller
             ->with('success', 'Catalog item updated successfully.');
     }
 
-    public function destroy(SupplierCatalogItem $catalogItem): RedirectResponse
+    public function destroy(Request $request, SupplierCatalogItem $catalogItem): RedirectResponse
     {
-        Gate::authorize('catalog.manage', auth()->user()->tenant);
-
-        if ($catalogItem->supplier_tenant_id !== auth()->user()->tenant_id) {
-            abort(403);
-        }
+        Gate::authorize('catalog.manageCatalogItem', $catalogItem);
 
         $this->supplierService->removeFromCatalog($catalogItem);
 
@@ -112,13 +81,13 @@ class SupplierCatalogController extends Controller
 
     public function browse(Request $request, ?Tenant $supplier = null): Response
     {
-        $buyerTenant = auth()->user()->tenant;
+        Gate::authorize('catalog.viewAny');
 
         if ($supplier) {
             Gate::authorize('catalog.viewCatalog', $supplier);
         }
 
-        $catalogItems = $this->supplierService->getAvailableCatalog($supplier, $buyerTenant);
+        $catalogItems = $this->supplierService->getAvailableCatalog($supplier, $request->user()->tenant);
 
         return Inertia::render('Supplier/Catalog/Browse', [
             'catalogItems' => $catalogItems,

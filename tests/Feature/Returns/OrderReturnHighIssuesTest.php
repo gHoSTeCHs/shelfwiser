@@ -107,14 +107,14 @@ it('createReturn rejects a second return when the combined quantity exceeds the 
     // First return: 3 of 5 units — should succeed
     $service->createReturn(
         $order, $owner,
-        [$orderItemId => ['quantity' => 3, 'reason' => 'Damaged']],
+        [['order_item_id' => $orderItemId, 'quantity' => 3, 'reason' => 'Damaged']],
         'Quality issue'
     );
 
     // Second return: 3 more — total would be 6, exceeding the ordered 5
     expect(fn () => $service->createReturn(
         $order, $owner,
-        [$orderItemId => ['quantity' => 3, 'reason' => 'Wrong item']],
+        [['order_item_id' => $orderItemId, 'quantity' => 3, 'reason' => 'Wrong item']],
         'Wrong item'
     ))->toThrow(\Exception::class);
 });

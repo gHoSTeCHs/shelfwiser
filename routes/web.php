@@ -366,7 +366,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Image Management Routes
     Route::prefix('images')->name('images.')->group(function () {
-        Route::post('/upload', [ImageController::class, 'upload'])->name('upload');
+        Route::post('/upload', [ImageController::class, 'upload'])->middleware('throttle:20,1')->name('upload');
         Route::put('/{image}', [ImageController::class, 'update'])->name('update');
         Route::delete('/{image}', [ImageController::class, 'destroy'])->name('destroy');
         Route::post('/{image}/set-primary', [ImageController::class, 'setPrimary'])->name('set-primary');

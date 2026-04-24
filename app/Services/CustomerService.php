@@ -56,7 +56,7 @@ class CustomerService
         }
 
         $sortField = $filters['sort'] ?? 'created_at';
-        $sortDirection = $filters['direction'] ?? 'desc';
+        $sortDirection = in_array($filters['direction'] ?? 'desc', ['asc', 'desc']) ? $filters['direction'] : 'desc';
         $allowedSorts = ['first_name', 'last_name', 'email', 'created_at', 'account_balance', 'total_purchases'];
 
         if (in_array($sortField, $allowedSorts)) {

@@ -12,7 +12,7 @@ class CreateServiceCategoryRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->role->hasPermission('manage_inventory');
+        return true;
     }
 
     /**

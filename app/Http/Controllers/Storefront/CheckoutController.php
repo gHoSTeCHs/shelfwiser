@@ -5,10 +5,7 @@ namespace App\Http\Controllers\Storefront;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Http\Requests\Storefront\ProcessCheckoutRequest;
-use App\Models\Customer;
 use App\Models\Order;
-use App\Models\ProductVariant;
-use App\Models\ServiceVariant;
 use App\Models\Shop;
 use App\Services\CartService;
 use App\Services\CheckoutService;
@@ -17,7 +14,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
@@ -30,9 +26,6 @@ class CheckoutController extends StorefrontBaseController
         protected CheckoutService $checkoutService
     ) {}
 
-    /**
-     * Display checkout page with cart summary and saved addresses.
-     */
     public function index(Shop $shop): Response|RedirectResponse
     {
         $customer = auth('customer')->user();
@@ -52,31 +45,7 @@ class CheckoutController extends StorefrontBaseController
                 ->with('error', 'Your cart is empty');
         }
 
-        $productVariantIds = $cartSummary['items']
-            ->filter(fn ($item) => $item->isProduct())
-            ->pluck('product_variant_id')
-            ->unique();
-
-        if ($productVariantIds->isNotEmpty()) {
-            $variants = ProductVariant::query()
-                ->whereIn('id', $productVariantIds)
-                ->whereHas('product', fn ($q) => $q->where('shop_id', $shop->id))
-                ->with(['inventoryLocations', 'product'])
-                ->get()
-                ->keyBy('id');
-        } else {
-            $variants = collect();
-        }
-
-        $stockIssues = [];
-        foreach ($cartSummary['items'] as $item) {
-            if ($item->isProduct()) {
-                $variant = $variants->get($item->product_variant_id);
-                if ($variant && $variant->available_stock < $item->quantity) {
-                    $stockIssues[] = "{$variant->product->name} - Only $variant->available_stock available (you have $item->quantity in cart)";
-                }
-            }
-        }
+        $stockIssues = $this->checkoutService->getCartStockIssues($cartSummary, $shop);
 
         if (! empty($stockIssues)) {
             return redirect()
@@ -84,40 +53,16 @@ class CheckoutController extends StorefrontBaseController
                 ->with('error', 'Some items in your cart are out of stock. Please update quantities: '.implode(', ', $stockIssues));
         }
 
-        $addresses = $customer->addresses()->get();
-        $paymentReference = $this->generatePaymentReference($shop);
-
         return Inertia::render('Storefront/Checkout', [
             'shop' => $shop,
-            'cart' => $cart->load([
-                'items.productVariant.product',
-                'items.packagingType',
-                'items.sellable' => function ($morphTo) {
-                    $morphTo->morphWith([
-                        ServiceVariant::class => ['service'],
-                    ]);
-                },
-            ]),
+            'cart' => $cart->loadOrderRelations(),
             'cartSummary' => $cartSummary,
-            'addresses' => $addresses,
+            'addresses' => $this->checkoutService->getCustomerAddresses($customer),
             'customer' => $customer,
-            'paymentReference' => $paymentReference,
+            'paymentReference' => $this->checkoutService->generatePaymentReference(),
         ]);
     }
 
-    /**
-     * Generate a unique payment reference for the order.
-     * Uses UUID for high entropy and unpredictability.
-     * Format: PAY-{UUID}
-     */
-    protected function generatePaymentReference(Shop $shop): string
-    {
-        return 'PAY-'.Str::uuid()->toString();
-    }
-
-    /**
-     * Process checkout request and create order.
-     */
     public function process(ProcessCheckoutRequest $request, Shop $shop): RedirectResponse
     {
         $customer = auth('customer')->user();
@@ -132,10 +77,11 @@ class CheckoutController extends StorefrontBaseController
             $idempotencyKey = $validated['idempotency_key'] ?? null;
 
             if ($idempotencyKey) {
-                $existingOrder = Order::query()->where('offline_id', $idempotencyKey)
-                    ->where('shop_id', $shop->id)
-                    ->where('customer_id', $customer->id)
-                    ->first();
+                $existingOrder = $this->checkoutService->findExistingOrderByIdempotencyKey(
+                    $idempotencyKey,
+                    $shop->id,
+                    $customer->id
+                );
 
                 if ($existingOrder) {
                     $paymentMethod = PaymentMethod::from($validated['payment_method']);
@@ -159,7 +105,7 @@ class CheckoutController extends StorefrontBaseController
                 : $validated['billing_address'];
 
             $paymentMethod = PaymentMethod::from($validated['payment_method']);
-            $paymentReference = $this->generatePaymentReference($shop);
+            $paymentReference = $this->checkoutService->generatePaymentReference();
 
             $order = $this->checkoutService->createOrderFromCart(
                 $cart,
@@ -173,11 +119,12 @@ class CheckoutController extends StorefrontBaseController
             );
 
             if ($validated['save_addresses'] ?? false) {
-                $this->saveCustomerAddress($customer, $validated['shipping_address'], 'shipping');
-
-                if (! $validated['billing_same_as_shipping']) {
-                    $this->saveCustomerAddress($customer, $billingAddress, 'billing');
-                }
+                $this->checkoutService->saveCustomerAddresses(
+                    $customer,
+                    $validated['shipping_address'],
+                    $validated['billing_address'] ?? null,
+                    $validated['billing_same_as_shipping']
+                );
             }
 
             if ($paymentMethod->requiresOnlineProcessing()) {
@@ -200,55 +147,26 @@ class CheckoutController extends StorefrontBaseController
         }
     }
 
-    /**
-     * Display order confirmation page.
-     */
     public function success(Shop $shop, Order $order): Response
     {
         $this->authorizeOrderAccess($order, $shop);
 
-        $order->load([
-            'items.productVariant.product',
-            'items.packagingType',
-            'items.sellable' => function ($morphTo) {
-                $morphTo->morphWith([
-                    ServiceVariant::class => ['service'],
-                ]);
-            },
-        ]);
-
         return Inertia::render('Storefront/CheckoutSuccess', [
             'shop' => $shop,
-            'order' => $order,
+            'order' => $order->loadOrderRelations(),
         ]);
     }
 
-    /**
-     * Display payment pending page for orders awaiting payment confirmation.
-     */
     public function paymentPending(Shop $shop, Order $order): Response
     {
         $this->authorizeOrderAccess($order, $shop);
 
-        $order->load([
-            'items.productVariant.product',
-            'items.packagingType',
-            'items.sellable' => function ($morphTo) {
-                $morphTo->morphWith([
-                    ServiceVariant::class => ['service'],
-                ]);
-            },
-        ]);
-
         return Inertia::render('Storefront/CheckoutPending', [
             'shop' => $shop,
-            'order' => $order,
+            'order' => $order->loadOrderRelations(),
         ]);
     }
 
-    /**
-     * Handle Paystack payment callback (redirect from Paystack).
-     */
     public function paymentCallback(Request $request, Shop $shop): RedirectResponse
     {
         $reference = $request->query('reference');
@@ -294,9 +212,6 @@ class CheckoutController extends StorefrontBaseController
         }
     }
 
-    /**
-     * Handle Paystack webhook notifications.
-     */
     public function paymentWebhook(Request $request, Shop $shop): JsonResponse
     {
         $paystackSignature = $request->header('x-paystack-signature');
@@ -305,23 +220,14 @@ class CheckoutController extends StorefrontBaseController
             return response()->json(['error' => 'No signature'], 400);
         }
 
-        $payload = $request->getContent();
-        $secretKey = config('services.paystack.secret_key');
+        try {
+            if (! $this->checkoutService->verifyWebhookSignature($request->getContent(), $paystackSignature)) {
+                Log::warning('Invalid Paystack webhook signature', ['shop_id' => $shop->id]);
 
-        if (! $secretKey) {
-            Log::error('Paystack secret key not configured');
-
+                return response()->json(['error' => 'Invalid signature'], 400);
+            }
+        } catch (RuntimeException $e) {
             return response()->json(['error' => 'Configuration error'], 500);
-        }
-
-        $computedSignature = hash_hmac('sha512', $payload, $secretKey);
-
-        if (! hash_equals($computedSignature, $paystackSignature)) {
-            Log::warning('Invalid Paystack webhook signature', [
-                'shop_id' => $shop->id,
-            ]);
-
-            return response()->json(['error' => 'Invalid signature'], 400);
         }
 
         $event = $request->input('event');
@@ -364,20 +270,5 @@ class CheckoutController extends StorefrontBaseController
         }
 
         return response()->json(['status' => 'success']);
-    }
-
-    /**
-     * Save customer address for future use.
-     *
-     * @param  Customer  $customer
-     * @param  string  $type  Address type (shipping, billing, both)
-     */
-    protected function saveCustomerAddress($customer, array $addressData, string $type): void
-    {
-        $customer->addresses()->create([
-            ...$addressData,
-            'type' => $type,
-            'is_default' => $customer->addresses()->where('type', $type)->count() === 0,
-        ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Enums\PaymentStatus;
 use App\Http\Requests\Storefront\AddServiceToCartApiRequest;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Http\Requests\Storefront\AddToCartApiRequest;
 use App\Http\Requests\Storefront\CancelOrderApiRequest;
 use App\Http\Requests\Storefront\CustomerLoginRequest;
@@ -348,6 +349,8 @@ class StorefrontApiController extends StorefrontBaseController
 
         try {
             $this->checkoutService->cancelByCustomer($order, $customer, $shop, $request->validated('cancellation_reason'));
+        } catch (ModelNotFoundException) {
+            abort(404);
         } catch (\RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }

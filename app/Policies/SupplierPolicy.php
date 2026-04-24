@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\ConnectionStatus;
+use App\Models\SupplierCatalogItem;
 use App\Models\SupplierConnection;
 use App\Models\SupplierProfile;
 use App\Models\Tenant;
@@ -38,6 +39,12 @@ class SupplierPolicy
     public function manageCatalog(User $user, Tenant $tenant): bool
     {
         return $user->tenant_id === $tenant->id &&
+               $user->role->hasPermission('manage_supplier_catalog');
+    }
+
+    public function manageCatalogItem(User $user, SupplierCatalogItem $catalogItem): bool
+    {
+        return $user->tenant_id === $catalogItem->supplier_tenant_id &&
                $user->role->hasPermission('manage_supplier_catalog');
     }
 

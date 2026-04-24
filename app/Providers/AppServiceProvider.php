@@ -13,6 +13,7 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
+use App\Models\OrderReturn;
 use App\Models\PayrollPeriod;
 use App\Models\PayRun;
 use App\Models\Payslip;
@@ -41,6 +42,7 @@ use App\Policies\NotificationPolicy;
 use App\Policies\OrderItemPolicy;
 use App\Policies\OrderPaymentPolicy;
 use App\Policies\OrderPolicy;
+use App\Policies\OrderReturnPolicy;
 use App\Policies\PayrollPolicy;
 use App\Policies\PayRunPolicy;
 use App\Policies\PayslipPolicy;
@@ -114,6 +116,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ProductOption::class, ProductOptionPolicy::class);
         Gate::policy(ProductVariant::class, ProductVariantPolicy::class);
         Gate::policy(Order::class, OrderPolicy::class);
+        Gate::policy(OrderReturn::class, OrderReturnPolicy::class);
         Gate::policy(OrderItem::class, OrderItemPolicy::class);
         Gate::policy(OrderPayment::class, OrderPaymentPolicy::class);
         Gate::policy(Receipt::class, ReceiptPolicy::class);
@@ -155,6 +158,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('catalog.enableSupplierMode', [SupplierPolicy::class, 'enableSupplierMode']);
         Gate::define('catalog.updateProfile', [SupplierPolicy::class, 'updateProfile']);
         Gate::define('catalog.viewCatalog', [SupplierPolicy::class, 'viewCatalog']);
+        Gate::define('catalog.manageCatalogItem', [SupplierPolicy::class, 'manageCatalogItem']);
 
         // PurchaseOrder Polices
         Gate::define('purchaseOrder.viewAny', [PurchaseOrderPolicy::class, 'viewAny']);
@@ -206,5 +210,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('admin.tenants.create', fn (User $user) => $user->isSuperAdmin());
         Gate::define('admin.tenants.update', fn (User $user) => $user->isSuperAdmin());
         Gate::define('admin.tenants.delete', fn (User $user) => $user->isSuperAdmin());
+        Gate::define('admin.subscriptions.viewAny', fn (User $user) => $user->isSuperAdmin());
     }
 }

@@ -86,6 +86,41 @@ class CategoryService
         });
     }
 
+    public function getCategoriesForIndex(): \Illuminate\Database\Eloquent\Collection
+    {
+        return ProductCategory::query()
+            ->whereNull('parent_id')
+            ->with(['children' => function ($query) {
+                $query->with('children')->withCount('products');
+            }])
+            ->withCount('products')
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function getParentCategoriesForForm(?ProductCategory $excludeCategory = null): \Illuminate\Database\Eloquent\Collection
+    {
+        $query = ProductCategory::query()
+            ->where('is_active', true)
+            ->whereNull('parent_id')
+            ->orderBy('name');
+
+        if ($excludeCategory) {
+            if (! $excludeCategory->relationLoaded('children')) {
+                $excludeCategory->load('children');
+            }
+            $excludeIds = array_merge([$excludeCategory->id], $this->getDescendantIds($excludeCategory));
+            $query->whereNotIn('id', $excludeIds)
+                ->with(['children' => function ($q) use ($excludeIds) {
+                    $q->whereNotIn('id', $excludeIds);
+                }]);
+        } else {
+            $query->with('children');
+        }
+
+        return $query->get(['id', 'name', 'slug']);
+    }
+
     public function getCategoryTree(int $tenantId, ?int $parentId = null): array
     {
         $cacheKey = "tenant:$tenantId:category_tree:".($parentId ?? 'root');
@@ -130,6 +165,18 @@ class CategoryService
         }
 
         return $breadcrumbs;
+    }
+
+    protected function getDescendantIds(ProductCategory $category): array
+    {
+        $descendants = [];
+
+        foreach ($category->children as $child) {
+            $descendants[] = $child->id;
+            $descendants = array_merge($descendants, $this->getDescendantIds($child));
+        }
+
+        return $descendants;
     }
 
     protected function generateUniqueSlug(string $name, int $tenantId, ?int $excludeId = null): string

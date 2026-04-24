@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ApproveOrderReturnRequest;
 use App\Http\Requests\CompleteOrderReturnRequest;
+use App\Http\Requests\IndexOrderReturnRequest;
 use App\Http\Requests\RejectOrderReturnRequest;
 use App\Http\Requests\StoreOrderReturnRequest;
 use App\Models\Order;
 use App\Models\OrderReturn;
 use App\Services\OrderReturnService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -25,26 +25,12 @@ class OrderReturnController extends Controller
     /**
      * Display a listing of returns
      */
-    public function index(Request $request): Response
+    public function index(IndexOrderReturnRequest $request): Response
     {
         Gate::authorize('viewAny', OrderReturn::class);
 
-        $tenant = auth()->user()->tenant;
-
-        $query = OrderReturn::query()
-            ->where('tenant_id', $tenant->id)
-            ->with(['order', 'items.orderItem', 'createdByUser'])
-            ->latest();
-
-        // Filter by status
-        if ($request->has('status') && $request->status !== '') {
-            $query->where('status', $request->status);
-        }
-
-        $returns = $query->paginate(20);
-
         return Inertia::render('Returns/Index', [
-            'returns' => $returns,
+            'returns' => $this->returnService->getReturnsList($request->user(), $request->validated()),
             'filters' => $request->only(['status']),
         ]);
     }
@@ -56,10 +42,8 @@ class OrderReturnController extends Controller
     {
         Gate::authorize('view', $order);
 
-        $order->load(['items.productVariant.product', 'customer']);
-
         return Inertia::render('Returns/Create', [
-            'order' => $order,
+            'order' => $this->returnService->getOrderForReturnCreate($order),
         ]);
     }
 
@@ -72,18 +56,10 @@ class OrderReturnController extends Controller
 
         $validated = $request->validated();
 
-        $items = collect($validated['items'])->mapWithKeys(function ($item) {
-            return [$item['order_item_id'] => [
-                'quantity' => $item['quantity'],
-                'reason' => $item['reason'] ?? null,
-                'condition_notes' => $item['condition_notes'] ?? null,
-            ]];
-        })->toArray();
-
         $return = $this->returnService->createReturn(
             $order,
             $request->user(),
-            $items,
+            $validated['items'],
             $validated['reason'],
             $validated['notes'] ?? null
         );
@@ -96,19 +72,9 @@ class OrderReturnController extends Controller
      */
     public function show(OrderReturn $return): Response
     {
-        if ($return->tenant_id !== auth()->user()->tenant_id) {
-            abort(403, 'Unauthorized access to return');
-        }
+        Gate::authorize('view', $return);
 
-        $return->load([
-            'order.items.productVariant.product',
-            'order.customer',
-            'items.orderItem.productVariant.product',
-            'createdByUser',
-            'approvedByUser',
-            'rejectedByUser',
-            'completedByUser',
-        ]);
+        $return->loadShowRelations();
 
         return Inertia::render('Returns/Show', [
             'return' => $return,
