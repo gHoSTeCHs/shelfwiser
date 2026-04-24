@@ -8,7 +8,6 @@ use App\Enums\PayType;
 use App\Enums\TaxHandling;
 use App\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -16,7 +15,7 @@ class CreateStaffWithPayrollRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Gate::allows('create', \App\Models\User::class);
+        return true;
     }
 
     public function rules(): array
@@ -53,7 +52,7 @@ class CreateStaffWithPayrollRequest extends FormRequest
             ],
 
             'pay_type' => ['required', Rule::enum(PayType::class)],
-            'pay_amount' => ['required', 'numeric', 'min:0'],
+            'pay_amount' => ['required', 'numeric', 'min:1'],
             'pay_frequency' => ['required', Rule::enum(PayFrequency::class)],
             'pay_calendar_id' => [
                 'nullable',
@@ -108,7 +107,7 @@ class CreateStaffWithPayrollRequest extends FormRequest
             'end_date.required_if' => 'End date is required for contract, seasonal, and intern positions.',
             'pay_type.required' => 'Please select a pay type for this employee.',
             'pay_amount.required' => 'Please enter the employee\'s pay amount.',
-            'pay_amount.min' => 'Pay amount cannot be negative.',
+            'pay_amount.min' => 'Pay amount must be greater than zero.',
             'pay_frequency.required' => 'Please specify how often the employee will be paid.',
             'pay_calendar_id.exists' => 'The selected pay calendar does not exist.',
             'standard_hours_per_week.min' => 'Standard hours must be at least 1 hour per week.',

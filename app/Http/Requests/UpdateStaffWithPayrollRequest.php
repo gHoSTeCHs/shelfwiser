@@ -8,16 +8,26 @@ use App\Enums\PayType;
 use App\Enums\TaxHandling;
 use App\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class UpdateStaffWithPayrollRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $staff = $this->route('staff');
+        return true;
+    }
 
-        return Gate::allows('update', $staff);
+    protected function prepareForValidation(): void
+    {
+        $staff = $this->route('staff');
+        if ($staff && ! $this->has('start_date') && $this->has('end_date')) {
+            $existingStartDate = $staff->employeePayrollDetail?->start_date;
+            if ($existingStartDate) {
+                $this->merge(['start_date' => $existingStartDate instanceof \Carbon\Carbon
+                    ? $existingStartDate->format('Y-m-d')
+                    : $existingStartDate]);
+            }
+        }
     }
 
     public function rules(): array
@@ -49,7 +59,7 @@ class UpdateStaffWithPayrollRequest extends FormRequest
             'end_date' => ['nullable', 'date', 'after:start_date'],
 
             'pay_type' => ['sometimes', Rule::enum(PayType::class)],
-            'pay_amount' => ['sometimes', 'numeric', 'min:0'],
+            'pay_amount' => ['sometimes', 'numeric', 'min:1'],
             'pay_frequency' => ['sometimes', Rule::enum(PayFrequency::class)],
             'pay_calendar_id' => [
                 'nullable',
@@ -89,7 +99,7 @@ class UpdateStaffWithPayrollRequest extends FormRequest
             'shop_ids.*.exists' => 'One or more selected shops do not exist or are not accessible.',
             'end_date.after' => 'End date must be after the start date.',
             'pay_amount.required' => 'Please enter the employee\'s pay amount.',
-            'pay_amount.min' => 'Pay amount cannot be negative.',
+            'pay_amount.min' => 'Pay amount must be greater than zero.',
             'pay_calendar_id.exists' => 'The selected pay calendar does not exist.',
             'standard_hours_per_week.min' => 'Standard hours must be at least 1 hour per week.',
             'standard_hours_per_week.max' => 'Standard hours cannot exceed 168 hours per week.',

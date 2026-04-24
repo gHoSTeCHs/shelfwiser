@@ -178,10 +178,14 @@ class StaffManagementController extends Controller
     {
         Gate::authorize('update', $staff);
 
-        $this->onboardingService->updateStaffWithPayroll(
-            $staff,
-            $request->validated()
-        );
+        $validated = $request->validated();
+
+        $payrollFields = ['pay_amount', 'pay_type', 'pay_frequency', 'pay_calendar_id', 'commission_rate', 'commission_cap', 'bank_name', 'bank_account_number', 'routing_number'];
+        if (array_intersect(array_keys($validated), $payrollFields)) {
+            Gate::authorize('updatePayrollDetails', $staff);
+        }
+
+        $this->onboardingService->updateStaffWithPayroll($staff, $validated);
 
         return Redirect::route('users.show', $staff)
             ->with('success', "Staff member '{$staff->name}' has been updated successfully.");
