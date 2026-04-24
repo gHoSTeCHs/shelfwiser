@@ -20,6 +20,7 @@ class OrderReturnService
 
     /**
      * Create a return request
+     *
      * @throws Throwable
      */
     public function createReturn(
@@ -29,14 +30,14 @@ class OrderReturnService
         string $reason,
         ?string $notes = null
     ): OrderReturn {
-        if (!in_array($order->status->value, ['delivered', 'completed'])) {
+        if (! in_array($order->status->value, ['delivered', 'completed'])) {
             throw new Exception('Only delivered or completed orders can be returned');
         }
 
         try {
             return DB::transaction(function () use ($order, $user, $items, $reason, $notes) {
                 // Generate unique return number
-                $returnNumber = 'RET-' . strtoupper(uniqid());
+                $returnNumber = 'RET-'.strtoupper(uniqid());
 
                 $return = OrderReturn::create([
                     'tenant_id' => $order->tenant_id,
@@ -53,12 +54,21 @@ class OrderReturnService
                 foreach ($items as $orderItemId => $itemData) {
                     $orderItem = $order->items()->find($orderItemId);
 
-                    if (!$orderItem) {
+                    if (! $orderItem) {
                         throw new Exception("Order item {$orderItemId} not found");
                     }
 
-                    if ($itemData['quantity'] > $orderItem->quantity) {
-                        throw new Exception("Return quantity cannot exceed ordered quantity");
+                    $alreadyReturned = \App\Models\ReturnItem::query()
+                        ->where('order_item_id', $orderItemId)
+                        ->whereHas('return', fn ($q) => $q->whereIn('status', ['pending', 'approved', 'completed']))
+                        ->sum('quantity');
+
+                    $remainingReturnable = $orderItem->quantity - $alreadyReturned;
+
+                    if ($itemData['quantity'] > $remainingReturnable) {
+                        throw new Exception(
+                            "Return quantity ({$itemData['quantity']}) exceeds returnable quantity ({$remainingReturnable}) for order item {$orderItemId}"
+                        );
                     }
 
                     $return->items()->create([
@@ -89,6 +99,7 @@ class OrderReturnService
 
     /**
      * Approve a return request
+     *
      * @throws Throwable
      */
     public function approveReturn(
@@ -97,7 +108,7 @@ class OrderReturnService
         bool $restockItems = true,
         bool $processRefund = true
     ): OrderReturn {
-        if (!$return->isPending()) {
+        if (! $return->isPending()) {
             throw new Exception('Only pending returns can be approved');
         }
 
@@ -178,6 +189,7 @@ class OrderReturnService
 
     /**
      * Reject a return request
+     *
      * @throws Throwable
      */
     public function rejectReturn(
@@ -185,7 +197,7 @@ class OrderReturnService
         User $user,
         ?string $rejectionReason = null
     ): OrderReturn {
-        if (!$return->isPending()) {
+        if (! $return->isPending()) {
             throw new Exception('Only pending returns can be rejected');
         }
 
@@ -196,7 +208,7 @@ class OrderReturnService
                 $return->rejected_at = now();
 
                 if ($rejectionReason) {
-                    $return->notes = ($return->notes ? $return->notes . "\n\n" : '') .
+                    $return->notes = ($return->notes ? $return->notes."\n\n" : '').
                         "Rejection Reason: {$rejectionReason}";
                 }
 
@@ -221,13 +233,14 @@ class OrderReturnService
 
     /**
      * Complete a return (after approval and refund processing)
+     *
      * @throws Throwable
      */
     public function completeReturn(
         OrderReturn $return,
         User $user
     ): OrderReturn {
-        if (!$return->isApproved()) {
+        if (! $return->isApproved()) {
             throw new Exception('Only approved returns can be completed');
         }
 

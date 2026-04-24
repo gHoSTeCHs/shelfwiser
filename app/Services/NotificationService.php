@@ -361,6 +361,26 @@ class NotificationService
     }
 
     /**
+     * Notify requester that their fund request was cancelled
+     */
+    public function notifyFundRequestCancelled($fundRequest, User $cancelledBy): void
+    {
+        $this->createForUser(
+            user: $fundRequest->user,
+            type: NotificationType::FUND_REQUEST_CANCELLED,
+            title: 'Fund Request Cancelled',
+            message: "Your {$fundRequest->request_type->label()} request for ₦".number_format($fundRequest->amount, 2)." has been cancelled by {$cancelledBy->name}.",
+            actionUrl: route('fund-requests.show', $fundRequest),
+            notifiable: $fundRequest,
+            data: [
+                'amount' => $fundRequest->amount,
+                'cancelled_by' => $cancelledBy->name,
+                'reason' => $fundRequest->rejection_reason,
+            ]
+        );
+    }
+
+    /**
      * Notify about wage advance request
      */
     public function notifyWageAdvanceRequested($wageAdvance): void

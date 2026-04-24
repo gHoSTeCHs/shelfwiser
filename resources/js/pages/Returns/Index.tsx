@@ -1,4 +1,4 @@
-import OrderReturnController from '@/actions/App/Http/Controllers/OrderReturnController';
+import { index, show } from '@/actions/App/Http/Controllers/OrderReturnController';
 import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
@@ -31,7 +31,7 @@ export default function Index({ returns, filters }: Props) {
     const handleFilterChange = (status: string) => {
         setStatusFilter(status);
         router.get(
-            OrderReturnController.index.url(),
+            index().url(),
             { status: status || undefined },
             { preserveState: true, preserveScroll: true },
         );
@@ -184,11 +184,7 @@ export default function Index({ returns, filters }: Props) {
                                             </td>
                                             <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
                                                 <Link
-                                                    href={OrderReturnController.show.url(
-                                                        {
-                                                            return: returnItem.id,
-                                                        },
-                                                    )}
+                                                    href={show({ return: returnItem.id }).url()}
                                                 >
                                                     <Button
                                                         variant="outline"
@@ -236,7 +232,11 @@ export default function Index({ returns, filters }: Props) {
                                                 size="sm"
                                                 onClick={() =>
                                                     router.get(
-                                                        `/returns?page=${returns.current_page - 1}${statusFilter ? `&status=${statusFilter}` : ''}`,
+                                                        index().url(),
+                                                        {
+                                                            page: returns.current_page - 1,
+                                                            status: statusFilter || undefined,
+                                                        },
                                                     )
                                                 }
                                             >
@@ -250,7 +250,11 @@ export default function Index({ returns, filters }: Props) {
                                                 size="sm"
                                                 onClick={() =>
                                                     router.get(
-                                                        `/returns?page=${returns.current_page + 1}${statusFilter ? `&status=${statusFilter}` : ''}`,
+                                                        index().url(),
+                                                        {
+                                                            page: returns.current_page + 1,
+                                                            status: statusFilter || undefined,
+                                                        },
                                                     )
                                                 }
                                             >

@@ -5,6 +5,11 @@ import { router } from '@inertiajs/react';
 import { MoveDown, MoveUp, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+function getCsrfToken(): string {
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : '';
+}
+
 interface ImageGalleryProps {
     images: ImageType[];
     modelType: 'Product' | 'ProductVariant' | 'Service';
@@ -48,10 +53,7 @@ export default function ImageGallery({
             await fetch(`/images/${imageId}`, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRF-TOKEN':
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute('content') || '',
+                    'X-XSRF-TOKEN': getCsrfToken(),
                     Accept: 'application/json',
                 },
             });
@@ -70,10 +72,7 @@ export default function ImageGallery({
             await fetch(`/images/${imageId}/set-primary`, {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN':
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute('content') || '',
+                    'X-XSRF-TOKEN': getCsrfToken(),
                     Accept: 'application/json',
                     'Content-Type': 'application/json',
                 },
@@ -104,10 +103,7 @@ export default function ImageGallery({
             await fetch('/images/reorder', {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN':
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute('content') || '',
+                    'X-XSRF-TOKEN': getCsrfToken(),
                     Accept: 'application/json',
                     'Content-Type': 'application/json',
                 },

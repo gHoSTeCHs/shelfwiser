@@ -147,10 +147,7 @@ class CheckoutService
                         $quantityBefore = $location->quantity;
                         $reservedBefore = $location->reserved_quantity;
 
-                        if ($location->reserved_quantity >= $cartItem->quantity) {
-                            $location->reserved_quantity -= $cartItem->quantity;
-                        }
-
+                        $location->reserved_quantity = max(0, $location->reserved_quantity - $cartItem->quantity);
                         $location->quantity -= $cartItem->quantity;
                         $location->save();
 
@@ -401,6 +398,7 @@ class CheckoutService
                             'variant_id' => $item->product_variant_id,
                             'shop_id' => $shop->id,
                         ]);
+
                         continue;
                     }
 
@@ -417,14 +415,14 @@ class CheckoutService
                         'quantity' => $item->quantity,
                         'quantity_before' => $quantityBefore,
                         'quantity_after' => $location->quantity,
-                        'reference_number' => $order->order_number,
+                        'reference_number' => $order->order_number.'-CANCEL',
                         'reason' => "Customer cancelled order {$order->order_number}",
                     ]);
                 }
             }
 
             $order->forceFill([
-                'status' => OrderStatus::CANCELLED,
+                'status' => OrderStatus::CANCELLED->value,
                 'cancellation_reason' => $reason,
                 'cancelled_at' => now(),
             ])->save();

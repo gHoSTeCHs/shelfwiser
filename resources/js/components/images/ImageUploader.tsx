@@ -6,6 +6,11 @@ import { Upload, X } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 
+function getCsrfToken(): string {
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : '';
+}
+
 interface ImageUploaderProps {
     modelType: 'Product' | 'ProductVariant' | 'Service';
     modelId: number;
@@ -83,10 +88,7 @@ export default function ImageUploader({
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-CSRF-TOKEN':
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute('content') || '',
+                    'X-XSRF-TOKEN': getCsrfToken(),
                     Accept: 'application/json',
                 },
             });

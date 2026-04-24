@@ -2,12 +2,7 @@
 
 namespace App\Http\Controllers\Storefront;
 
-use App\Enums\MaterialOption;
-use App\Enums\OrderStatus;
-use App\Enums\OrderType;
-use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
-use App\Http\Controllers\Controller;
 use App\Http\Requests\Storefront\AddServiceToCartApiRequest;
 use App\Http\Requests\Storefront\AddToCartApiRequest;
 use App\Http\Requests\Storefront\CancelOrderApiRequest;
@@ -18,36 +13,34 @@ use App\Http\Requests\Storefront\CustomerSendResetLinkRequest;
 use App\Http\Requests\Storefront\ProcessCheckoutRequest;
 use App\Http\Requests\Storefront\UpdateCartItemApiRequest;
 use App\Http\Requests\Storefront\UpdateCustomerProfileRequest;
-use App\Models\CartItem;
-use App\Models\Customer;
-use App\Models\Order;
 use App\Models\Shop;
 use App\Services\CartService;
 use App\Services\CheckoutService;
-use Illuminate\Auth\Events\Registered;
+use App\Services\CustomerAuthService;
+use App\Services\CustomerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 
-class StorefrontApiController extends Controller
+class StorefrontApiController extends StorefrontBaseController
 {
     public function __construct(
         private readonly CartService $cartService,
         private readonly CheckoutService $checkoutService,
+        private readonly CustomerAuthService $customerAuthService,
+        private readonly CustomerService $customerService,
     ) {}
 
     public function getCart(Shop $shop): JsonResponse
     {
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
-        $cart->load(['items.productVariant.product.images', 'items.sellable']);
+        $cart->loadApiCartRelations();
         $summary = $this->cartService->getCartSummary($cart);
 
         return response()->json([
-            'items' => $cart->items->map(fn ($item) => $this->serializeCartItem($item))->all(),
+            'items' => $cart->items->map(fn ($item) => $this->cartService->buildCartItemArray($item))->all(),
             'summary' => [
                 'item_count' => $summary['item_count'],
                 'subtotal' => $summary['subtotal'],
@@ -68,12 +61,10 @@ class StorefrontApiController extends Controller
                 $request->validated('packaging_type_id')
             );
 
-            $cartItem->load(['productVariant.product', 'sellable']);
-
             $summary = $this->cartService->getCartSummary($cart);
 
             return response()->json([
-                'item' => $this->serializeCartItem($cartItem),
+                'item' => $this->cartService->buildCartItemArray($cartItem),
                 'summary' => [
                     'item_count' => $summary['item_count'],
                     'subtotal' => $summary['subtotal'],
@@ -95,23 +86,17 @@ class StorefrontApiController extends Controller
     {
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
 
-        $materialOption = $request->validated('material_option')
-            ? MaterialOption::from($request->validated('material_option'))
-            : null;
-
         try {
             $cartItem = $this->cartService->addServiceItem(
                 $cart,
                 $request->validated('service_variant_id'),
                 $request->validated('quantity', 1),
-                $materialOption,
+                $request->materialOption(),
                 $request->validated('selected_addons', [])
             );
 
-            $cartItem->load(['productVariant.product', 'sellable']);
-
             return response()->json([
-                'item' => $this->serializeCartItem($cartItem),
+                'item' => $this->cartService->buildCartItemArray($cartItem),
                 'message' => 'Service added to cart',
             ]);
         } catch (\Exception $e) {
@@ -153,22 +138,6 @@ class StorefrontApiController extends Controller
         return $this->cartDetailResponse($cart, 'Item removed');
     }
 
-    private function cartDetailResponse(\App\Models\Cart $cart, string $message): JsonResponse
-    {
-        $cart->load(['items.productVariant.product.images', 'items.sellable']);
-        $summary = $this->cartService->getCartSummary($cart);
-
-        return response()->json([
-            'items' => $cart->items->map(fn ($item) => $this->serializeCartItem($item))->all(),
-            'summary' => [
-                'item_count' => $summary['item_count'],
-                'subtotal' => $summary['subtotal'],
-                'total' => $summary['total'],
-            ],
-            'message' => $message,
-        ]);
-    }
-
     public function cartSummary(Shop $shop): JsonResponse
     {
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
@@ -185,13 +154,13 @@ class StorefrontApiController extends Controller
 
     public function login(CustomerLoginRequest $request, Shop $shop): JsonResponse
     {
-        $customer = Customer::query()
-            ->where('email', $request->validated('email'))
-            ->where('tenant_id', $shop->tenant_id)
-            ->where('is_active', true)
-            ->first();
+        $customer = $this->customerAuthService->attemptLogin(
+            $request->validated('email'),
+            $request->validated('password'),
+            $shop->tenant_id
+        );
 
-        if (! $customer || ! Hash::check($request->validated('password'), $customer->password)) {
+        if (! $customer) {
             return response()->json([
                 'message' => 'The provided credentials do not match our records.',
                 'errors' => ['email' => ['The provided credentials do not match our records.']],
@@ -221,18 +190,7 @@ class StorefrontApiController extends Controller
     {
         $oldSessionId = session()->getId();
 
-        $customer = Customer::query()->create([
-            'tenant_id' => $shop->tenant_id,
-            'preferred_shop_id' => $shop->id,
-            'first_name' => $request->validated('first_name'),
-            'last_name' => $request->validated('last_name'),
-            'email' => $request->validated('email'),
-            'phone' => $request->validated('phone'),
-            'password' => Hash::make($request->validated('password')),
-            'marketing_opt_in' => (bool) $request->validated('marketing_opt_in', false),
-        ]);
-
-        event(new Registered($customer));
+        $customer = $this->customerAuthService->register($shop, $request->validated());
 
         Auth::guard('customer')->login($customer);
 
@@ -271,17 +229,12 @@ class StorefrontApiController extends Controller
 
     public function resetPassword(CustomerResetPasswordRequest $request, Shop $shop): JsonResponse
     {
-        $status = Password::broker('customers')->reset(
+        $credentials = array_merge(
             $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($customer, $password) {
-                $customer->forceFill([
-                    'password' => Hash::make($password),
-                ])->setRememberToken(Str::random(60));
-                $customer->save();
-
-                event(new \Illuminate\Auth\Events\PasswordReset($customer));
-            }
+            ['tenant_id' => $shop->tenant_id]
         );
+
+        $status = $this->customerAuthService->resetPassword($credentials);
 
         if ($status === Password::PASSWORD_RESET) {
             return response()->json(['message' => 'Password has been reset.']);
@@ -308,15 +261,15 @@ class StorefrontApiController extends Controller
 
     public function processCheckout(ProcessCheckoutRequest $request, Shop $shop): JsonResponse
     {
-        $customer = auth('customer')->user();
+        $customer = $this->customerForShop($shop);
         $validated = $request->validated();
 
         if (! empty($validated['idempotency_key'])) {
-            $existingOrder = Order::query()
-                ->where('offline_id', $validated['idempotency_key'])
-                ->where('shop_id', $shop->id)
-                ->where('customer_id', $customer->id)
-                ->first();
+            $existingOrder = $this->checkoutService->findExistingOrderByIdempotencyKey(
+                $validated['idempotency_key'],
+                $shop->id,
+                $customer->id
+            );
 
             if ($existingOrder) {
                 return response()->json([
@@ -332,15 +285,11 @@ class StorefrontApiController extends Controller
 
         $cart = $this->cartService->getCart($shop, $customer->id);
 
-        if ($cart->items()->count() === 0) {
-            return response()->json(['message' => 'Your cart is empty.'], 422);
-        }
-
         $billingAddress = $validated['billing_same_as_shipping']
             ? $validated['shipping_address']
             : $validated['billing_address'];
 
-        $paymentMethod = PaymentMethod::from($validated['payment_method']);
+        $paymentMethod = \App\Enums\PaymentMethod::from($validated['payment_method']);
 
         try {
             $order = $this->checkoutService->createOrderFromCart(
@@ -376,12 +325,9 @@ class StorefrontApiController extends Controller
 
     public function updateProfile(UpdateCustomerProfileRequest $request, Shop $shop): JsonResponse
     {
-        $customer = auth('customer')->user();
-        abort_unless($customer->tenant_id === $shop->tenant_id, 403);
+        $customer = $this->customerForShop($shop);
 
-        $customer->update($request->validated());
-
-        $customer->refresh();
+        $customer = $this->customerService->updateStorefrontProfile($customer, $request->validated());
 
         return response()->json([
             'customer' => [
@@ -398,42 +344,34 @@ class StorefrontApiController extends Controller
 
     public function cancelOrder(CancelOrderApiRequest $request, Shop $shop, int $order): JsonResponse
     {
-        $customer = auth('customer')->user();
+        $customer = $this->customerForShop($shop);
 
-        $orderModel = $customer->orders()
-            ->where('shop_id', $shop->id)
-            ->where('order_type', OrderType::CUSTOMER->value)
-            ->findOrFail($order);
-
-        if (! $orderModel->canCancel()) {
-            return response()->json(['message' => 'This order cannot be cancelled.'], 422);
+        try {
+            $this->checkoutService->cancelByCustomer($order, $customer, $shop, $request->validated('cancellation_reason'));
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
-
-        $orderModel->forceFill([
-            'status' => OrderStatus::CANCELLED,
-            'cancellation_reason' => $request->validated('cancellation_reason'),
-            'cancelled_at' => now(),
-        ])->save();
 
         return response()->json(['message' => 'Order cancelled']);
     }
 
-    private function serializeCartItem(CartItem $item): array
+    private function cartDetailResponse(\App\Models\Cart $cart, string $message): JsonResponse
     {
-        $item->loadMissing(['productVariant.product', 'sellable']);
+        $cart->loadApiCartRelations();
+        $summary = $this->cartService->getCartSummary($cart);
 
-        return [
-            'id' => $item->id,
-            'name' => $item->productVariant?->product?->name ?? $item->sellable?->name ?? '',
-            'variant_name' => $item->productVariant?->name,
-            'price' => (float) $item->price,
-            'quantity' => $item->quantity,
-            'image' => $item->productVariant?->product?->primary_image_url ?? null,
-            'max_quantity' => $item->productVariant?->stock_quantity,
-        ];
+        return response()->json([
+            'items' => $cart->items->map(fn ($item) => $this->cartService->buildCartItemArray($item))->all(),
+            'summary' => [
+                'item_count' => $summary['item_count'],
+                'subtotal' => $summary['subtotal'],
+                'total' => $summary['total'],
+            ],
+            'message' => $message,
+        ]);
     }
 
-    private function getCheckoutRedirectUrl(Order $order, Shop $shop): string
+    private function getCheckoutRedirectUrl(\App\Models\Order $order, Shop $shop): string
     {
         if ($order->payment_status === PaymentStatus::PAID) {
             return route('storefront.checkout.success', [$shop->slug, $order]);

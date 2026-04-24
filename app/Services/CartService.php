@@ -189,20 +189,24 @@ class CartService
             return null;
         }
 
-        if ($item->isProduct()) {
-            $this->validateStockAvailabilityForStorefront($item->productVariant, $quantity, $cart->shop_id);
-        }
+        return DB::transaction(function () use ($item, $quantity, $cart) {
+            $locked = CartItem::query()->where('id', $item->id)->lockForUpdate()->firstOrFail();
 
-        $item->update(['quantity' => $quantity]);
-        $cart->touch();
+            if ($locked->isProduct()) {
+                $this->validateStockAvailabilityForStorefront($locked->productVariant, $quantity, $cart->shop_id);
+            }
 
-        $this->invalidateCartCache($cart->tenant_id, $cart->shop_id, $cart->customer_id, $cart->session_id);
+            $locked->update(['quantity' => $quantity]);
+            $cart->touch();
 
-        if ($item->isProduct()) {
-            return $item->fresh(['productVariant.product', 'packagingType']);
-        } else {
-            return $item->fresh(['sellable']);
-        }
+            $this->invalidateCartCache($cart->tenant_id, $cart->shop_id, $cart->customer_id, $cart->session_id);
+
+            if ($locked->isProduct()) {
+                return $locked->fresh(['productVariant.product', 'packagingType']);
+            }
+
+            return $locked->fresh(['sellable']);
+        });
     }
 
     /**
@@ -272,10 +276,10 @@ class CartService
      */
     public function mergeGuestCartIntoCustomerCart(string $sessionId, int $customerId, int $shopId): Cart
     {
-        return DB::transaction(function () use ($sessionId, $customerId, $shopId) {
-            $shop = Shop::query()->findOrFail($shopId);
-            $customerCart = $this->getCart($shop, $customerId);
+        $shop = Shop::query()->findOrFail($shopId);
+        $customerCart = $this->getCart($shop, $customerId);
 
+        return DB::transaction(function () use ($sessionId, $customerId, $shopId, $shop, $customerCart) {
             $guestCart = Cart::query()
                 ->where('session_id', $sessionId)
                 ->where('shop_id', $shopId)
@@ -304,6 +308,7 @@ class CartService
             foreach ($guestCart->items as $guestItem) {
                 if (! $guestItem->isProduct()) {
                     $guestItem->update(['cart_id' => $customerCart->id]);
+
                     continue;
                 }
 
@@ -312,6 +317,7 @@ class CartService
 
                 if (! $existingItem) {
                     $guestItem->update(['cart_id' => $customerCart->id]);
+
                     continue;
                 }
 

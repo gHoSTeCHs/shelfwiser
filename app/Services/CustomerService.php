@@ -100,7 +100,7 @@ class CustomerService
 
         try {
             return DB::transaction(function () use ($data, $tenant) {
-                $customer = Customer::create([
+                $customer = Customer::query()->create([
                     'tenant_id' => $tenant->id,
                     'preferred_shop_id' => $data['preferred_shop_id'] ?? null,
                     'first_name' => $data['first_name'],
@@ -212,25 +212,24 @@ class CustomerService
      */
     public function getStatistics(Tenant $tenant): array
     {
-        $baseQuery = Customer::query()->where('tenant_id', $tenant->id);
-
-        $totalCustomers = (clone $baseQuery)->count();
-        $activeCustomers = (clone $baseQuery)->where('is_active', true)->count();
-        $customersWithCredit = (clone $baseQuery)
-            ->whereNotNull('credit_limit')
-            ->where('credit_limit', '>', 0)
-            ->count();
-        $totalCreditBalance = (clone $baseQuery)->sum('account_balance');
-        $newThisMonth = (clone $baseQuery)
-            ->where('created_at', '>=', now()->startOfMonth())
-            ->count();
+        $stats = Customer::query()
+            ->where('tenant_id', $tenant->id)
+            ->selectRaw(
+                'count(*) as total_customers,
+                sum(case when is_active = 1 then 1 else 0 end) as active_customers,
+                sum(case when credit_limit > 0 then 1 else 0 end) as customers_with_credit,
+                coalesce(sum(account_balance), 0) as total_credit_balance,
+                sum(case when created_at >= ? then 1 else 0 end) as new_this_month',
+                [now()->startOfMonth()]
+            )
+            ->first();
 
         return [
-            'total_customers' => $totalCustomers,
-            'active_customers' => $activeCustomers,
-            'customers_with_credit' => $customersWithCredit,
-            'total_credit_balance' => number_format($totalCreditBalance, 2),
-            'new_this_month' => $newThisMonth,
+            'total_customers' => (int) $stats->total_customers,
+            'active_customers' => (int) $stats->active_customers,
+            'customers_with_credit' => (int) $stats->customers_with_credit,
+            'total_credit_balance' => number_format((float) $stats->total_credit_balance, 2),
+            'new_this_month' => (int) $stats->new_this_month,
         ];
     }
 
@@ -331,6 +330,18 @@ class CustomerService
         }
 
         return $this->createAddress($customer, $addressData);
+    }
+
+    /**
+     * Update storefront-facing profile fields for an authenticated customer.
+     */
+    public function updateStorefrontProfile(Customer $customer, array $validated): Customer
+    {
+        $customer->update(array_intersect_key($validated, array_flip([
+            'first_name', 'last_name', 'phone', 'marketing_opt_in',
+        ])));
+
+        return $customer->refresh();
     }
 
     /**

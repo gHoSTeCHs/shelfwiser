@@ -1,4 +1,4 @@
-import StockMovementController from '@/actions/App/Http/Controllers/StockMovementController';
+import { index as stockMovementsIndex, recordPurchase } from '@/actions/App/Http/Controllers/StockMovementController';
 import TextArea from '@/components/form/input/TextArea';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
@@ -62,7 +62,7 @@ export default function Create({ products, locations }: Props) {
                 <div className="flex items-center justify-between">
                     <div>
                         <Link
-                            href={StockMovementController.index.url()}
+                            href={stockMovementsIndex().url()}
                             className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -78,7 +78,7 @@ export default function Create({ products, locations }: Props) {
                 </div>
 
                 <Form
-                    action="/stock-movements/record-purchase"
+                    action={recordPurchase().url()}
                     method="post"
                     className="space-y-6"
                     transform={(data) => ({

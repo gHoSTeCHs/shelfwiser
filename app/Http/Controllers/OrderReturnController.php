@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ApproveOrderReturnRequest;
+use App\Http\Requests\CompleteOrderReturnRequest;
+use App\Http\Requests\RejectOrderReturnRequest;
+use App\Http\Requests\StoreOrderReturnRequest;
 use App\Models\Order;
 use App\Models\OrderReturn;
 use App\Services\OrderReturnService;
@@ -23,6 +27,8 @@ class OrderReturnController extends Controller
      */
     public function index(Request $request): Response
     {
+        Gate::authorize('viewAny', OrderReturn::class);
+
         $tenant = auth()->user()->tenant;
 
         $query = OrderReturn::query()
@@ -60,21 +66,12 @@ class OrderReturnController extends Controller
     /**
      * Store a newly created return
      */
-    public function store(Request $request, Order $order): RedirectResponse
+    public function store(StoreOrderReturnRequest $request, Order $order): RedirectResponse
     {
-        Gate::authorize('view', $order);
+        Gate::authorize('create', OrderReturn::class);
 
-        $validated = $request->validate([
-            'reason' => 'required|string|max:1000',
-            'notes' => 'nullable|string|max:2000',
-            'items' => 'required|array|min:1',
-            'items.*.order_item_id' => 'required|exists:order_items,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.reason' => 'nullable|string|max:500',
-            'items.*.condition_notes' => 'nullable|string|max:1000',
-        ]);
+        $validated = $request->validated();
 
-        // Transform items array to the format expected by the service
         $items = collect($validated['items'])->mapWithKeys(function ($item) {
             return [$item['order_item_id'] => [
                 'quantity' => $item['quantity'],
@@ -122,18 +119,11 @@ class OrderReturnController extends Controller
     /**
      * Approve a return request
      */
-    public function approve(Request $request, OrderReturn $return): RedirectResponse
+    public function approve(ApproveOrderReturnRequest $request, OrderReturn $return): RedirectResponse
     {
-        if ($return->tenant_id !== auth()->user()->tenant_id) {
-            abort(403, 'Unauthorized access to return');
-        }
+        Gate::authorize('manage', $return);
 
-        Gate::authorize('manage', $return->order->shop);
-
-        $validated = $request->validate([
-            'restock_items' => 'boolean',
-            'process_refund' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $this->returnService->approveReturn(
             $return,
@@ -148,17 +138,11 @@ class OrderReturnController extends Controller
     /**
      * Reject a return request
      */
-    public function reject(Request $request, OrderReturn $return): RedirectResponse
+    public function reject(RejectOrderReturnRequest $request, OrderReturn $return): RedirectResponse
     {
-        if ($return->tenant_id !== auth()->user()->tenant_id) {
-            abort(403, 'Unauthorized access to return');
-        }
+        Gate::authorize('manage', $return);
 
-        Gate::authorize('manage', $return->order->shop);
-
-        $validated = $request->validate([
-            'rejection_reason' => 'nullable|string|max:1000',
-        ]);
+        $validated = $request->validated();
 
         $this->returnService->rejectReturn(
             $return,
@@ -172,13 +156,9 @@ class OrderReturnController extends Controller
     /**
      * Complete a return
      */
-    public function complete(Request $request, OrderReturn $return): RedirectResponse
+    public function complete(CompleteOrderReturnRequest $request, OrderReturn $return): RedirectResponse
     {
-        if ($return->tenant_id !== auth()->user()->tenant_id) {
-            abort(403, 'Unauthorized access to return');
-        }
-
-        Gate::authorize('manage', $return->order->shop);
+        Gate::authorize('manage', $return);
 
         $this->returnService->completeReturn(
             $return,

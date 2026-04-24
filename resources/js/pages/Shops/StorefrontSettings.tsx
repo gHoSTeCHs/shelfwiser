@@ -94,7 +94,7 @@ export default function StorefrontSettings({
                                 </p>
                             </div>
                         </div>
-                        {storefrontEnabled && (
+                        {storefrontEnabled && /^[a-z0-9-]+$/.test(shop.slug ?? '') && (
                             <a
                                 href={`/store/${shop.slug}`}
                                 target="_blank"

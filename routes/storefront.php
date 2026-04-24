@@ -57,10 +57,12 @@ Route::prefix('store/{shop:slug}')->middleware('storefront.enabled')->name('stor
     });
 
     // Cart mutations (existing Inertia controllers — kept during transition)
-    Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
-    Route::post('/cart/service', [CartController::class, 'storeService'])->name('cart.store-service');
-    Route::patch('/cart/{item}', [CartController::class, 'update'])->name('cart.update');
-    Route::delete('/cart/{item}', [CartController::class, 'destroy'])->name('cart.destroy');
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
+        Route::post('/cart/service', [CartController::class, 'storeService'])->name('cart.store-service');
+        Route::patch('/cart/{item}', [CartController::class, 'update'])->name('cart.update');
+        Route::delete('/cart/{item}', [CartController::class, 'destroy'])->name('cart.destroy');
+    });
 
     // === JSON API (for themed storefront pages via storefrontFetch) ===
     Route::prefix('api')->group(function () {
@@ -84,7 +86,7 @@ Route::prefix('store/{shop:slug}')->middleware('storefront.enabled')->name('stor
                 ->middleware('throttle:3,1');
         });
 
-        Route::middleware('auth:customer')->group(function () {
+        Route::middleware(['auth:customer', 'customer.active'])->group(function () {
             Route::post('/auth/logout', [StorefrontApiController::class, 'logout']);
             Route::post('/auth/verify-email/resend', [StorefrontApiController::class, 'resendVerification'])
                 ->middleware('throttle:6,1');
@@ -95,10 +97,7 @@ Route::prefix('store/{shop:slug}')->middleware('storefront.enabled')->name('stor
     });
 
     // Payment gateway callbacks
-    Route::get('/payment/callback', [CheckoutController::class, 'paymentCallback'])->name('payment.callback');
-    Route::post('/payment/webhook', [CheckoutController::class, 'paymentWebhook'])
-        ->withoutMiddleware(['storefront.enabled', \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
-        ->name('payment.webhook');
+    Route::get('/payment/callback', [CheckoutController::class, 'paymentCallback'])->middleware('throttle:30,1')->name('payment.callback');
 
     // Email verification (signed URL — outside auth group)
     Route::get('/verify-email/{id}/{hash}', [CustomerAuthController::class, 'verifyEmail'])
@@ -106,7 +105,7 @@ Route::prefix('store/{shop:slug}')->middleware('storefront.enabled')->name('stor
         ->name('verification.verify');
 
     // Authenticated customer pages
-    Route::middleware('auth:customer')->group(function () {
+    Route::middleware(['auth:customer', 'customer.active'])->group(function () {
         Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
 
         Route::get('/verify-email', [StorefrontRenderController::class, 'verifyEmail'])->name('verification.notice');
@@ -129,3 +128,19 @@ Route::prefix('store/{shop:slug}')->middleware('storefront.enabled')->name('stor
         });
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Payment Webhooks (server-to-server — no web middleware, no CSRF)
+|--------------------------------------------------------------------------
+|
+| Paystack calls this endpoint directly. It must not inherit the web
+| middleware group (which includes CSRF verification and session handling).
+| HMAC-SHA512 signature validation inside the controller is the sole
+| authentication mechanism.
+|
+*/
+Route::post(
+    'store/{shop:slug}/payment/webhook',
+    [CheckoutController::class, 'paymentWebhook']
+)->middleware('throttle:60,1')->name('storefront.payment.webhook');

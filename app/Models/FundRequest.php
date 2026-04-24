@@ -25,6 +25,8 @@ class FundRequest extends Model
         'requested_at',
         'approved_by_user_id',
         'approved_at',
+        'rejected_by_user_id',
+        'rejected_at',
         'rejection_reason',
         'disbursed_by_user_id',
         'disbursed_at',
@@ -38,6 +40,7 @@ class FundRequest extends Model
         'amount' => 'decimal:2',
         'requested_at' => 'datetime',
         'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'disbursed_at' => 'datetime',
         'receipt_uploaded' => 'boolean',
     ];
@@ -72,6 +75,14 @@ class FundRequest extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by_user_id');
+    }
+
+    /**
+     * User who rejected the request
+     */
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by_user_id');
     }
 
     /**

@@ -52,22 +52,27 @@ class FundRequestService
      */
     public function approve(FundRequest $fundRequest, User $approver, ?string $notes = null): FundRequest
     {
-        if (! $fundRequest->status->canApprove()) {
-            throw new \RuntimeException('Fund request cannot be approved in current status');
-        }
-
         $freshRequest = DB::transaction(function () use ($fundRequest, $approver, $notes) {
-            $fundRequest->update([
+            $locked = FundRequest::query()
+                ->where('id', $fundRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $locked->status->canApprove()) {
+                throw new \RuntimeException('Fund request cannot be approved in current status');
+            }
+
+            $locked->update([
                 'status' => FundRequestStatus::APPROVED,
                 'approved_by_user_id' => $approver->id,
                 'approved_at' => now(),
                 'rejection_reason' => null,
-                'notes' => $notes ?? $fundRequest->notes,
+                'notes' => $notes ?? $locked->notes,
             ]);
 
-            $this->clearCache($fundRequest->tenant_id);
+            $this->clearCache($locked->tenant_id);
 
-            return $fundRequest->fresh(['user', 'shop', 'approvedBy']);
+            return $locked->fresh(['user', 'shop', 'approvedBy']);
         });
 
         $this->notificationService->notifyFundRequestApproved($freshRequest, $approver);
@@ -82,21 +87,26 @@ class FundRequestService
      */
     public function reject(FundRequest $fundRequest, User $rejector, string $reason): FundRequest
     {
-        if (! $fundRequest->status->canReject()) {
-            throw new \RuntimeException('Fund request cannot be rejected in current status');
-        }
-
         $freshRequest = DB::transaction(function () use ($fundRequest, $rejector, $reason) {
-            $fundRequest->update([
+            $locked = FundRequest::query()
+                ->where('id', $fundRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $locked->status->canReject()) {
+                throw new \RuntimeException('Fund request cannot be rejected in current status');
+            }
+
+            $locked->update([
                 'status' => FundRequestStatus::REJECTED,
-                'approved_by_user_id' => $rejector->id,
-                'approved_at' => now(),
+                'rejected_by_user_id' => $rejector->id,
+                'rejected_at' => now(),
                 'rejection_reason' => $reason,
             ]);
 
-            $this->clearCache($fundRequest->tenant_id);
+            $this->clearCache($locked->tenant_id);
 
-            return $fundRequest->fresh(['user', 'shop', 'approvedBy']);
+            return $locked->fresh(['user', 'shop', 'approvedBy', 'rejectedBy']);
         });
 
         $this->notificationService->notifyFundRequestRejected($freshRequest, $rejector, $reason);
@@ -142,7 +152,7 @@ class FundRequestService
             throw new \RuntimeException('Fund request cannot be cancelled in current status');
         }
 
-        return DB::transaction(function () use ($fundRequest, $user, $reason) {
+        $freshRequest = DB::transaction(function () use ($fundRequest, $user, $reason) {
             $fundRequest->update([
                 'status' => FundRequestStatus::CANCELLED,
                 'rejection_reason' => $reason,
@@ -154,6 +164,10 @@ class FundRequestService
 
             return $fundRequest->fresh();
         });
+
+        $this->notificationService->notifyFundRequestCancelled($freshRequest, $user);
+
+        return $freshRequest;
     }
 
     /**
@@ -174,6 +188,8 @@ class FundRequestService
     public function updateDescription(FundRequest $fundRequest, string $description): FundRequest
     {
         $fundRequest->update(['description' => $description]);
+
+        $this->clearCache($fundRequest->tenant_id);
 
         return $fundRequest->fresh();
     }
@@ -307,23 +323,23 @@ class FundRequestService
             ->groupBy('request_type')
             ->get();
 
-        $pending   = $byStatus->get(FundRequestStatus::PENDING->value);
-        $approved  = $byStatus->get(FundRequestStatus::APPROVED->value);
-        $rejected  = $byStatus->get(FundRequestStatus::REJECTED->value);
+        $pending = $byStatus->get(FundRequestStatus::PENDING->value);
+        $approved = $byStatus->get(FundRequestStatus::APPROVED->value);
+        $rejected = $byStatus->get(FundRequestStatus::REJECTED->value);
         $disbursed = $byStatus->get(FundRequestStatus::DISBURSED->value);
 
         return [
-            'total_requests'         => $byStatus->sum('total'),
-            'pending_requests'       => (int) ($pending?->total ?? 0),
-            'approved_requests'      => (int) ($approved?->total ?? 0),
-            'rejected_requests'      => (int) ($rejected?->total ?? 0),
-            'disbursed_requests'     => (int) ($disbursed?->total ?? 0),
+            'total_requests' => $byStatus->sum('total'),
+            'pending_requests' => (int) ($pending?->total ?? 0),
+            'approved_requests' => (int) ($approved?->total ?? 0),
+            'rejected_requests' => (int) ($rejected?->total ?? 0),
+            'disbursed_requests' => (int) ($disbursed?->total ?? 0),
             'total_amount_requested' => (float) $byStatus->sum('total_amount'),
-            'total_amount_approved'  => (float) (($approved?->total_amount ?? 0) + ($disbursed?->total_amount ?? 0)),
+            'total_amount_approved' => (float) (($approved?->total_amount ?? 0) + ($disbursed?->total_amount ?? 0)),
             'total_amount_disbursed' => (float) ($disbursed?->total_amount ?? 0),
-            'by_type'                => $byType->mapWithKeys(fn ($row) => [
+            'by_type' => $byType->mapWithKeys(fn ($row) => [
                 $row->request_type => [
-                    'count'        => (int) $row->total,
+                    'count' => (int) $row->total,
                     'total_amount' => (float) $row->total_amount,
                 ],
             ])->toArray(),

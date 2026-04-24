@@ -13,6 +13,10 @@ import { getPayrollStatusColor } from '@/lib/status-configs';
 import type { User } from '@/types';
 import type {
     AppliedRelief,
+    DeductionBreakdownItem,
+    DeductionsBreakdown,
+    EarningBreakdownItem,
+    EarningsBreakdown,
     PayrollPeriod,
     TaxLawVersion,
 } from '@/types/payroll';
@@ -68,8 +72,8 @@ interface Payslip {
     other_deductions: string;
     total_deductions: string;
     net_pay: string;
-    earnings_breakdown?: any;
-    deductions_breakdown?: any;
+    earnings_breakdown?: EarningsBreakdown | EarningBreakdownItem[];
+    deductions_breakdown?: DeductionsBreakdown | DeductionBreakdownItem[];
     tax_breakdown?: TaxBreakdown;
     user: User;
     shop?: Shop;

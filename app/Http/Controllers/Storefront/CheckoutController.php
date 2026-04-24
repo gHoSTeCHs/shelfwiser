@@ -26,11 +26,9 @@ use Throwable;
 class CheckoutController extends StorefrontBaseController
 {
     public function __construct(
-        protected CartService     $cartService,
+        protected CartService $cartService,
         protected CheckoutService $checkoutService
-    )
-    {
-    }
+    ) {}
 
     /**
      * Display checkout page with cart summary and saved addresses.
@@ -39,7 +37,7 @@ class CheckoutController extends StorefrontBaseController
     {
         $customer = auth('customer')->user();
 
-        if (!$customer) {
+        if (! $customer) {
             return redirect()
                 ->route('storefront.login', $shop->slug)
                 ->with('info', 'Please login to continue with checkout');
@@ -55,12 +53,14 @@ class CheckoutController extends StorefrontBaseController
         }
 
         $productVariantIds = $cartSummary['items']
-            ->filter(fn($item) => $item->isProduct())
+            ->filter(fn ($item) => $item->isProduct())
             ->pluck('product_variant_id')
             ->unique();
 
         if ($productVariantIds->isNotEmpty()) {
-            $variants = ProductVariant::query()->whereIn('id', $productVariantIds)
+            $variants = ProductVariant::query()
+                ->whereIn('id', $productVariantIds)
+                ->whereHas('product', fn ($q) => $q->where('shop_id', $shop->id))
                 ->with(['inventoryLocations', 'product'])
                 ->get()
                 ->keyBy('id');
@@ -78,10 +78,10 @@ class CheckoutController extends StorefrontBaseController
             }
         }
 
-        if (!empty($stockIssues)) {
+        if (! empty($stockIssues)) {
             return redirect()
                 ->route('storefront.cart', $shop->slug)
-                ->with('error', 'Some items in your cart are out of stock. Please update quantities: ' . implode(', ', $stockIssues));
+                ->with('error', 'Some items in your cart are out of stock. Please update quantities: '.implode(', ', $stockIssues));
         }
 
         $addresses = $customer->addresses()->get();
@@ -112,7 +112,7 @@ class CheckoutController extends StorefrontBaseController
      */
     protected function generatePaymentReference(Shop $shop): string
     {
-        return 'PAY-' . Str::uuid()->toString();
+        return 'PAY-'.Str::uuid()->toString();
     }
 
     /**
@@ -122,7 +122,7 @@ class CheckoutController extends StorefrontBaseController
     {
         $customer = auth('customer')->user();
 
-        if (!$customer) {
+        if (! $customer) {
             return redirect()->route('storefront.login', $shop->slug);
         }
 
@@ -175,7 +175,7 @@ class CheckoutController extends StorefrontBaseController
             if ($validated['save_addresses'] ?? false) {
                 $this->saveCustomerAddress($customer, $validated['shipping_address'], 'shipping');
 
-                if (!$validated['billing_same_as_shipping']) {
+                if (! $validated['billing_same_as_shipping']) {
                     $this->saveCustomerAddress($customer, $billingAddress, 'billing');
                 }
             }
@@ -191,7 +191,8 @@ class CheckoutController extends StorefrontBaseController
                 ->with('success', 'Order placed successfully!');
 
         } catch (Exception $e) {
-            Log::error('Checkout failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            Log::error('Checkout failed', ['shop_id' => $shop->id, 'error_type' => get_class($e), 'error' => $e->getMessage()]);
+            report($e);
 
             return back()
                 ->with('error', 'Something went wrong while processing your order. Please try again.')
@@ -253,7 +254,7 @@ class CheckoutController extends StorefrontBaseController
         $reference = $request->query('reference');
         $trxref = $request->query('trxref');
 
-        if (!$reference && !$trxref) {
+        if (! $reference && ! $trxref) {
             return redirect()
                 ->route('storefront.index', $shop->slug)
                 ->with('error', 'Invalid payment callback');
@@ -300,14 +301,14 @@ class CheckoutController extends StorefrontBaseController
     {
         $paystackSignature = $request->header('x-paystack-signature');
 
-        if (!$paystackSignature) {
+        if (! $paystackSignature) {
             return response()->json(['error' => 'No signature'], 400);
         }
 
         $payload = $request->getContent();
         $secretKey = config('services.paystack.secret_key');
 
-        if (!$secretKey) {
+        if (! $secretKey) {
             Log::error('Paystack secret key not configured');
 
             return response()->json(['error' => 'Configuration error'], 500);
@@ -315,7 +316,7 @@ class CheckoutController extends StorefrontBaseController
 
         $computedSignature = hash_hmac('sha512', $payload, $secretKey);
 
-        if (!hash_equals($computedSignature, $paystackSignature)) {
+        if (! hash_equals($computedSignature, $paystackSignature)) {
             Log::warning('Invalid Paystack webhook signature', [
                 'shop_id' => $shop->id,
             ]);
@@ -330,7 +331,7 @@ class CheckoutController extends StorefrontBaseController
             $reference = $data['reference'] ?? null;
             $eventId = $data['id'] ?? null;
 
-            if (!$reference) {
+            if (! $reference) {
                 Log::warning('Paystack webhook missing reference', ['shop_id' => $shop->id]);
 
                 return response()->json(['error' => 'Missing reference'], 400);
@@ -368,8 +369,8 @@ class CheckoutController extends StorefrontBaseController
     /**
      * Save customer address for future use.
      *
-     * @param Customer $customer
-     * @param string $type Address type (shipping, billing, both)
+     * @param  Customer  $customer
+     * @param  string  $type  Address type (shipping, billing, both)
      */
     protected function saveCustomerAddress($customer, array $addressData, string $type): void
     {

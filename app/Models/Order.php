@@ -258,7 +258,8 @@ class Order extends Model
         $prefix = 'ORD';
         $date = $creationDate->format('Ymd');
 
-        $lastOrder = self::where('tenant_id', $tenantId)
+        $lastOrder = Order::query()
+            ->where('tenant_id', $tenantId)
             ->whereDate('created_at', $creationDate)
             ->orderBy('id', 'desc')
             ->lockForUpdate()

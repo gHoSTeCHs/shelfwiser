@@ -1,5 +1,8 @@
 import { router } from '@inertiajs/react';
 import axios from 'axios';
+
+axios.defaults.xsrfCookieName = 'XSRF-TOKEN';
+axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
 import {
     Bell,
     CheckCircle,
@@ -117,8 +120,12 @@ export default function NotificationDropdown() {
         }
 
         if (notification.action_url) {
-            closeDropdown();
-            router.visit(notification.action_url);
+            const isSafeUrl = (url: string) =>
+                url.startsWith('/') && !url.startsWith('//');
+            if (isSafeUrl(notification.action_url)) {
+                closeDropdown();
+                router.visit(notification.action_url);
+            }
         }
     };
 

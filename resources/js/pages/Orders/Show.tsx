@@ -1,6 +1,6 @@
-import OrderController from '@/actions/App/Http/Controllers/OrderController';
-import OrderReturnController from '@/actions/App/Http/Controllers/OrderReturnController';
-import ReceiptController from '@/actions/App/Http/Controllers/ReceiptController';
+import { index, updateStatus, updatePaymentStatus } from '@/actions/App/Http/Controllers/OrderController';
+import { create as createReturn } from '@/actions/App/Http/Controllers/OrderReturnController';
+import { viewOrderReceipt, downloadOrderReceipt } from '@/actions/App/Http/Controllers/ReceiptController';
 import InputError from '@/components/form/InputError';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
@@ -75,7 +75,7 @@ export default function Show({
                 <div className="flex items-center justify-between">
                     <div>
                         <Link
-                            href={'/orders'}
+                            href={index().url()}
                             className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -104,9 +104,7 @@ export default function Show({
 
                     <div className="flex gap-2">
                         <a
-                            href={ReceiptController.viewOrderReceipt.url({
-                                order: order.id,
-                            })}
+                            href={viewOrderReceipt({ order: order.id }).url()}
                             target="_blank"
                             rel="noopener noreferrer"
                         >
@@ -116,9 +114,7 @@ export default function Show({
                             </Button>
                         </a>
                         <a
-                            href={ReceiptController.downloadOrderReceipt.url({
-                                order: order.id,
-                            })}
+                            href={downloadOrderReceipt({ order: order.id }).url()}
                             target="_blank"
                             rel="noopener noreferrer"
                         >
@@ -161,9 +157,7 @@ export default function Show({
                                     )}
                                 {order.status === 'delivered' && (
                                     <Link
-                                        href={OrderReturnController.create.url({
-                                            order: order.id,
-                                        })}
+                                        href={createReturn({ order: order.id }).url()}
                                     >
                                         <Button
                                             variant="outline"
@@ -556,9 +550,7 @@ export default function Show({
                     onSubmit={(e: FormEvent) => {
                         e.preventDefault();
                         statusForm.post(
-                            OrderController.updateStatus.url({
-                                order: order.id,
-                            }),
+                            updateStatus({ order: order.id }).url(),
                             {
                                 onSuccess: () => {
                                     statusModal.closeModal();
@@ -626,9 +618,7 @@ export default function Show({
                     onSubmit={(e: FormEvent) => {
                         e.preventDefault();
                         paymentForm.post(
-                            OrderController.updatePaymentStatus.url({
-                                order: order.id,
-                            }),
+                            updatePaymentStatus({ order: order.id }).url(),
                             {
                                 onSuccess: () => {
                                     paymentModal.closeModal();
@@ -728,9 +718,7 @@ export default function Show({
                     onSubmit={(e: FormEvent) => {
                         e.preventDefault();
                         cancelForm.post(
-                            OrderController.updateStatus.url({
-                                order: order.id,
-                            }),
+                            updateStatus({ order: order.id }).url(),
                             {
                                 onSuccess: () => {
                                     cancelModal.closeModal();

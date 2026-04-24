@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Http\Requests\CreateOrderRequest;
+use App\Http\Requests\IndexOrderRequest;
 use App\Http\Requests\RefundOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Http\Requests\UpdateOrderStatusRequest;
@@ -30,15 +31,22 @@ class OrderController extends Controller
         private readonly OrderRefundService $refundService
     ) {}
 
-    public function index(): Response
+    public function index(IndexOrderRequest $request): Response
     {
         Gate::authorize('viewAny', Order::class);
 
+        $filters = $request->validated();
+
         return Inertia::render('Orders/Index', [
-            'orders' => $this->orderService->getPaginatedOrders(),
+            'orders' => $this->orderService->getPaginatedOrders($filters),
             'stats' => $this->orderService->getOrderStats(),
             'order_statuses' => OrderStatus::forSelect(),
             'payment_statuses' => PaymentStatus::forSelect(),
+            'filters' => [
+                'search' => $filters['search'] ?? null,
+                'status' => $filters['status'] ?? null,
+                'payment_status' => $filters['payment_status'] ?? null,
+            ],
         ]);
     }
 

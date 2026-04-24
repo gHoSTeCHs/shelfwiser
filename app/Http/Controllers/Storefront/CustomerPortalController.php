@@ -8,6 +8,7 @@ use App\Enums\PaymentStatus;
 use App\Http\Requests\Storefront\CancelOrderApiRequest;
 use App\Http\Requests\Storefront\UpdateCustomerProfileRequest;
 use App\Models\Shop;
+use App\Services\CustomerService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,6 +16,10 @@ use Inertia\Response;
 
 class CustomerPortalController extends StorefrontBaseController
 {
+    public function __construct(
+        private readonly CustomerService $customerService
+    ) {}
+
     /**
      * Display customer dashboard with stats and recent orders.
      */
@@ -117,7 +122,7 @@ class CustomerPortalController extends StorefrontBaseController
     {
         $customer = $this->customerForShop($shop);
 
-        $customer->update($request->validated());
+        $this->customerService->updateStorefrontProfile($customer, $request->validated());
 
         return back()->with('success', 'Profile updated successfully');
     }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Shop;
+use App\Models\ShopTaxSetting;
 use App\Models\ShopType;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -65,6 +66,19 @@ class ShopService
         $shop->update(array_intersect_key($validated, array_flip($allowed)));
 
         return $shop->refresh();
+    }
+
+    public function updateTaxSettings(Shop $shop, array $validated): void
+    {
+        if ($shop->taxSettings) {
+            $shop->taxSettings->update($validated);
+        } else {
+            ShopTaxSetting::query()->create([
+                ...$validated,
+                'shop_id' => $shop->id,
+                'tenant_id' => $shop->tenant_id,
+            ]);
+        }
     }
 
     public function updateStorefrontSettings(Shop $shop, array $validated): void
