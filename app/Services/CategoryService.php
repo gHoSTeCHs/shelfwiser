@@ -107,7 +107,7 @@ class CategoryService
 
         if ($excludeCategory) {
             if (! $excludeCategory->relationLoaded('children')) {
-                $excludeCategory->load('children');
+                $excludeCategory->load('children.children.children');
             }
             $excludeIds = array_merge([$excludeCategory->id], $this->getDescendantIds($excludeCategory));
             $query->whereNotIn('id', $excludeIds)

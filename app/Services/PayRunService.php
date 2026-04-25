@@ -77,7 +77,7 @@ class PayRunService
             'pending_approval' => (int) $counts->get(PayRunStatus::PENDING_APPROVAL->value, 0),
             'completed_this_month' => PayRun::query()
                 ->completed()
-                ->whereMonth('completed_at', now()->month)
+                ->whereBetween('completed_at', [now()->startOfMonth(), now()->endOfMonth()])
                 ->count(),
         ];
     }
@@ -179,8 +179,12 @@ class PayRunService
         });
     }
 
-    public function createPayRun(int $tenantId, PayrollPeriod $period, array $options = []): PayRun
+    public function createPayRun(int $tenantId, PayrollPeriod|int $period, array $options = []): PayRun
     {
+        if (is_int($period)) {
+            $period = PayrollPeriod::query()->findOrFail($period);
+        }
+
         return DB::transaction(function () use ($tenantId, $period, $options) {
             $payRun = PayRun::query()->create([
                 'tenant_id' => $tenantId,
@@ -193,13 +197,17 @@ class PayRunService
 
             $employees = $this->getEligibleEmployees($tenantId, $period, $options);
 
-            foreach ($employees as $employee) {
-                PayRunItem::query()->create([
+            $now = now();
+            PayRunItem::query()->insert(
+                $employees->map(fn ($e) => [
                     'pay_run_id' => $payRun->id,
-                    'user_id' => $employee->id,
-                    'status' => PayRunItemStatus::PENDING,
-                ]);
-            }
+                    'tenant_id' => $tenantId,
+                    'user_id' => $e->id,
+                    'status' => PayRunItemStatus::PENDING->value,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])->all()
+            );
 
             $payRun->update(['employee_count' => $employees->count()]);
 
@@ -223,12 +231,23 @@ class PayRunService
         $periodStart = Carbon::parse($period->start_date);
         $periodEnd = Carbon::parse($period->end_date);
 
-        foreach ($payRun->items()->processable()->with(['user.employeePayrollDetail'])->get() as $item) {
+        $processableItems = $payRun->items()->processable()->with(['user.employeePayrollDetail'])->get();
+
+        $timesheetsByUser = \App\Models\Timesheet::query()
+            ->whereIn('user_id', $processableItems->pluck('user_id'))
+            ->where('tenant_id', $payRun->tenant_id)
+            ->whereBetween('work_date', [$periodStart, $periodEnd])
+            ->where('status', 'approved')
+            ->get()
+            ->groupBy('user_id');
+
+        foreach ($processableItems as $item) {
             try {
                 $calculatedData = $this->calculateEmployeePay(
                     $item->user,
                     $periodStart,
-                    $periodEnd
+                    $periodEnd,
+                    $timesheetsByUser
                 );
 
                 $item->markAsCalculated($calculatedData);
@@ -280,7 +299,7 @@ class PayRunService
         return $item->fresh();
     }
 
-    public function calculateEmployeePay(User $employee, Carbon $periodStart, Carbon $periodEnd): array
+    public function calculateEmployeePay(User $employee, Carbon $periodStart, Carbon $periodEnd, ?\Illuminate\Support\Collection $timesheetsByUser = null): array
     {
         $payrollDetail = $employee->employeePayrollDetail;
 
@@ -297,7 +316,7 @@ class PayRunService
             $context = [
                 'period_start' => $periodStart,
                 'period_end' => $periodEnd,
-                'hours_worked' => $this->getHoursWorked($employee, $periodStart, $periodEnd),
+                'hours_worked' => $this->getHoursWorked($employee, $periodStart, $periodEnd, $timesheetsByUser),
             ];
 
             $earnings = $this->earningsService->calculateEmployeeEarnings(
@@ -458,6 +477,8 @@ class PayRunService
                 ->get()
                 ->groupBy('user_id');
 
+            $itemPayslipMap = [];
+
             foreach ($items as $item) {
                 $ytdData = $ytdDataByUser->get($item->user_id, $emptyYtd);
 
@@ -493,7 +514,7 @@ class PayRunService
                     'status' => 'approved',
                 ]);
 
-                $item->update(['payslip_id' => $payslip->id]);
+                $itemPayslipMap[$item->id] = $payslip->id;
 
                 $this->updateDeductionRecords($item, $employeeDeductions);
 
@@ -504,6 +525,14 @@ class PayRunService
                         $this->wageAdvanceService->recordRepayment($advance, $installmentAmount);
                     }
                 }
+            }
+
+            if (! empty($itemPayslipMap)) {
+                $rows = collect($itemPayslipMap)
+                    ->map(fn ($payslipId, $itemId) => ['id' => (int) $itemId, 'payslip_id' => (int) $payslipId])
+                    ->values()
+                    ->all();
+                PayRunItem::query()->upsert($rows, ['id'], ['payslip_id']);
             }
 
             $payRun->update([
@@ -622,16 +651,18 @@ class PayRunService
         return $query->get();
     }
 
-    protected function getHoursWorked(User $employee, Carbon $start, Carbon $end): float
+    protected function getHoursWorked(User $employee, Carbon $start, Carbon $end, ?\Illuminate\Support\Collection $timesheetsByUser = null): float
     {
-        $timesheets = $employee->timesheets()
-            ->where('tenant_id', $employee->tenant_id)
-            ->whereBetween('work_date', [$start, $end])
-            ->where('status', 'approved')
-            ->get();
+        $timesheets = $timesheetsByUser !== null
+            ? ($timesheetsByUser->get($employee->id) ?? collect())
+            : $employee->timesheets()
+                ->where('tenant_id', $employee->tenant_id)
+                ->whereBetween('work_date', [$start, $end])
+                ->where('status', 'approved')
+                ->get();
 
         if ($timesheets->isNotEmpty()) {
-            return $timesheets->sum('total_hours');
+            return (float) $timesheets->sum('total_hours');
         }
 
         $payrollDetail = $employee->employeePayrollDetail;
@@ -672,22 +703,6 @@ class PayRunService
                 'employer_costs' => $payRun->total_employer_costs,
             ],
         ];
-    }
-
-    /**
-     * Record wage advance repayments for an employee during payroll completion
-     */
-    protected function recordWageAdvanceRepayments(PayRunItem $item, Carbon $payrollDate): void
-    {
-        $employee = $item->user;
-        $activeAdvances = $this->wageAdvanceService->getActiveAdvancesForPayroll($employee, $payrollDate);
-
-        foreach ($activeAdvances as $advance) {
-            $installmentAmount = $advance->getInstallmentAmount();
-            if ($installmentAmount > 0) {
-                $this->wageAdvanceService->recordRepayment($advance, $installmentAmount);
-            }
-        }
     }
 
     /**
@@ -756,13 +771,15 @@ class PayRunService
 
         $taxYearStart = $this->getTaxYearStart($periodEnd);
 
+        $eligiblePeriodIds = PayrollPeriod::query()
+            ->where('payment_date', '>=', $taxYearStart)
+            ->where('payment_date', '<', $periodEnd)
+            ->pluck('id');
+
         return Payslip::query()
             ->whereIn('user_id', $userIds)
             ->where('tenant_id', $tenantId)
-            ->whereHas('payrollPeriod', fn ($q) => $q
-                ->where('payment_date', '>=', $taxYearStart)
-                ->where('payment_date', '<', $periodEnd)
-            )
+            ->whereIn('payroll_period_id', $eligiblePeriodIds)
             ->where('status', '!=', 'cancelled')
             ->selectRaw('user_id,
                 COALESCE(SUM(gross_pay), 0) as ytd_gross,
@@ -778,36 +795,6 @@ class PayRunService
                 'ytd_pension' => (float) $row->ytd_pension,
                 'ytd_net' => (float) $row->ytd_net,
             ]);
-    }
-
-    /**
-     * Calculate Year-To-Date values for an employee
-     */
-    protected function calculateYTDValues(int $userId, Carbon $periodEnd, int $tenantId): array
-    {
-        $taxYearStart = $this->getTaxYearStart($periodEnd);
-
-        $ytdData = Payslip::query()->where('user_id', $userId)
-            ->where('tenant_id', $tenantId)
-            ->whereHas('payrollPeriod', function ($query) use ($taxYearStart, $periodEnd) {
-                $query->where('payment_date', '>=', $taxYearStart)
-                    ->where('payment_date', '<', $periodEnd);
-            })
-            ->where('status', '!=', 'cancelled')
-            ->selectRaw('
-                COALESCE(SUM(gross_pay), 0) as ytd_gross,
-                COALESCE(SUM(income_tax), 0) as ytd_tax,
-                COALESCE(SUM(pension_employee), 0) as ytd_pension,
-                COALESCE(SUM(net_pay), 0) as ytd_net
-            ')
-            ->first();
-
-        return [
-            'ytd_gross' => (float) ($ytdData->ytd_gross ?? 0),
-            'ytd_tax' => (float) ($ytdData->ytd_tax ?? 0),
-            'ytd_pension' => (float) ($ytdData->ytd_pension ?? 0),
-            'ytd_net' => (float) ($ytdData->ytd_net ?? 0),
-        ];
     }
 
     /**

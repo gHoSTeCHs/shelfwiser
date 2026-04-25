@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { sanitizeUrl } from '../../lib/sanitize-html';
 
 interface BackgroundProps {
     heading?: string;
@@ -26,6 +27,7 @@ export function Background({
 }: BackgroundProps) {
     const isDirect = isDirectVideo(video_url);
     const [ctaHovered, setCtaHovered] = useState(false);
+    const safeCtaLink = sanitizeUrl(cta_link);
 
     return (
         <div
@@ -151,9 +153,9 @@ export function Background({
                     </p>
                 )}
 
-                {cta_text && cta_link && (
+                {cta_text && safeCtaLink && (
                     <a
-                        href={cta_link}
+                        href={safeCtaLink}
                         className="inline-block px-8 py-4 text-sm font-bold"
                         style={{
                             marginTop: 32,

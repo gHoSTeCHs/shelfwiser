@@ -57,8 +57,10 @@ class StockMovementService
 
     /**
      * Get stock movements for export, optionally filtered by variant.
+     *
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function getMovementsForExport(?int $variantId): Collection
+    public function getMovementsForExport(?int $variantId, User $user): Collection
     {
         $query = StockMovement::query()
             ->with([
@@ -69,7 +71,13 @@ class StockMovementService
             ])
             ->latest();
 
-        if ($variantId) {
+        if ($variantId !== null) {
+            $variant = ProductVariant::query()->with('product')->findOrFail($variantId);
+
+            if (! $user->accessibleShopIds()->contains($variant->product->shop_id)) {
+                throw new \Illuminate\Auth\Access\AuthorizationException('You do not have access to this variant.');
+            }
+
             $query->where('product_variant_id', $variantId);
         }
 
@@ -801,16 +809,141 @@ class StockMovementService
 
     public function setupLocations(ProductVariant $variant, array $shopIds): void
     {
-        foreach ($shopIds as $shopId) {
-            InventoryLocation::query()->firstOrCreate([
+        if (empty($shopIds)) {
+            return;
+        }
+
+        $existing = InventoryLocation::query()
+            ->where('product_variant_id', $variant->id)
+            ->where('location_type', 'App\\Models\\Shop')
+            ->whereIn('location_id', $shopIds)
+            ->pluck('location_id');
+
+        $now = now();
+        $toInsert = collect($shopIds)
+            ->diff($existing)
+            ->values()
+            ->map(fn ($shopId) => [
                 'product_variant_id' => $variant->id,
+                'tenant_id' => $variant->tenant_id,
                 'location_type' => 'App\\Models\\Shop',
                 'location_id' => $shopId,
-            ], [
                 'quantity' => 0,
                 'reserved_quantity' => 0,
-            ]);
+                'created_at' => $now,
+                'updated_at' => $now,
+            ])
+            ->all();
+
+        if (! empty($toInsert)) {
+            InventoryLocation::query()->insertOrIgnore($toInsert);
         }
+    }
+
+    public function getVariantHistory(ProductVariant $variant, int $perPage = 20): LengthAwarePaginator
+    {
+        return StockMovement::query()
+            ->forVariant($variant->id)
+            ->with([
+                'fromLocation.location',
+                'toLocation.location',
+                'createdBy:id,first_name',
+            ])
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function adjustStockFromValidated(array $validated, User $user): StockMovement
+    {
+        $location = InventoryLocation::query()->findOrFail($validated['inventory_location_id']);
+
+        if (! $user->shops()->where('shops.id', $location->shop_id)->exists()) {
+            throw new \Illuminate\Auth\Access\AuthorizationException('You do not have access to this shop\'s inventory.');
+        }
+
+        $variant = ProductVariant::query()->findOrFail($validated['product_variant_id']);
+        $type = StockMovementType::from($validated['type']);
+
+        return $this->adjustStock(
+            variant: $variant,
+            location: $location,
+            quantity: $validated['quantity'],
+            type: $type,
+            user: $user,
+            reason: $validated['reason'] ?? null,
+            notes: $validated['notes'] ?? null,
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function transferStockFromValidated(array $validated, User $user): array
+    {
+        $fromLocation = InventoryLocation::query()->findOrFail($validated['from_location_id']);
+        $toLocation = InventoryLocation::query()->findOrFail($validated['to_location_id']);
+
+        $userShops = $user->shops()->pluck('shops.id');
+        if (! $userShops->contains($fromLocation->shop_id) || ! $userShops->contains($toLocation->shop_id)) {
+            throw new \Illuminate\Auth\Access\AuthorizationException('You do not have access to this shop\'s inventory.');
+        }
+
+        $variant = ProductVariant::query()->findOrFail($validated['product_variant_id']);
+
+        return $this->transferStock(
+            variant: $variant,
+            fromLocation: $fromLocation,
+            toLocation: $toLocation,
+            quantity: $validated['quantity'],
+            user: $user,
+            reason: $validated['reason'] ?? null,
+            notes: $validated['notes'] ?? null,
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function stockTakeFromValidated(array $validated, User $user): ?StockMovement
+    {
+        $location = InventoryLocation::query()->findOrFail($validated['inventory_location_id']);
+
+        if (! $user->shops()->where('shops.id', $location->shop_id)->exists()) {
+            throw new \Illuminate\Auth\Access\AuthorizationException('You do not have access to this shop\'s inventory.');
+        }
+
+        $variant = ProductVariant::query()->findOrFail($validated['product_variant_id']);
+
+        return $this->stockTake(
+            variant: $variant,
+            location: $location,
+            actualQuantity: $validated['actual_quantity'],
+            user: $user,
+            notes: $validated['notes'] ?? null,
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function recordPurchaseFromValidated(array $validated, User $user): StockMovement
+    {
+        $variant = ProductVariant::query()->findOrFail($validated['product_variant_id']);
+        $location = InventoryLocation::query()->findOrFail($validated['location_id']);
+        $packagingType = ProductPackagingType::query()->findOrFail($validated['product_packaging_type_id']);
+
+        return $this->recordPurchase(
+            variant: $variant,
+            location: $location,
+            packageQuantity: $validated['package_quantity'],
+            packagingType: $packagingType,
+            costPerPackage: $validated['cost_per_package'],
+            user: $user,
+            notes: $validated['notes'] ?? null,
+        );
     }
 
     private function generateReferenceNumber(StockMovementType $type): string

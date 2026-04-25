@@ -11,6 +11,7 @@ use App\Models\ProductVariant;
 use App\Models\Shop;
 use App\Models\StockMovement;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -353,13 +354,22 @@ class ProductService
     private function generateUniqueSlug(string $name, Tenant $tenant): string
     {
         $base = Str::slug($name);
-        $slug = $base;
 
-        for ($counter = 1; Product::query()->where('tenant_id', $tenant->id)->where('slug', $slug)->exists(); $counter++) {
-            $slug = "$base-$counter";
+        $existing = Product::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('slug', 'like', "{$base}%")
+            ->pluck('slug');
+
+        if (! $existing->contains($base)) {
+            return $base;
         }
 
-        return $slug;
+        $counter = 1;
+        while ($existing->contains("{$base}-{$counter}")) {
+            $counter++;
+        }
+
+        return "{$base}-{$counter}";
     }
 
     private function createDefaultPackagingType(ProductVariant $variant, Shop $shop): ProductPackagingType
@@ -405,6 +415,30 @@ class ProductService
     }
 
     /**
+     * Filter a list of variant IDs to only those the user is authorized to manage.
+     * Owners and General Managers get tenant-wide access; all other roles are
+     * restricted to variants belonging to their assigned shops.
+     *
+     * @param  array<int>  $ids
+     * @return array<int>
+     */
+    public function filterVariantsByOwnership(array $ids, User $user): array
+    {
+        $query = ProductVariant::query()
+            ->whereIn('id', $ids)
+            ->whereHas('product', fn ($q) => $q->where('tenant_id', $user->tenant_id));
+
+        $tenantWideRoles = [\App\Enums\UserRole::OWNER->value, \App\Enums\UserRole::GENERAL_MANAGER->value];
+
+        if (! in_array($user->role->value, $tenantWideRoles, true)) {
+            $accessibleShopIds = $user->shops()->pluck('shops.id');
+            $query->whereHas('product', fn ($q) => $q->whereIn('shop_id', $accessibleShopIds));
+        }
+
+        return $query->pluck('id')->all();
+    }
+
+    /**
      * Update a product variant
      *
      * @throws Throwable
@@ -438,9 +472,10 @@ class ProductService
                     if ($basePackaging) {
                         $basePackaging->update(['price' => $data['price']]);
 
+                        $safePrice = (float) $data['price'];
                         $variant->packagingTypes()
                             ->where('is_base_unit', false)
-                            ->update(['price' => DB::raw('units_per_package * '.(float) $data['price'])]);
+                            ->update(['price' => DB::raw("units_per_package * {$safePrice}")]);
                     }
                 }
 
@@ -452,9 +487,10 @@ class ProductService
                     if ($basePackaging && $data['cost_price'] !== null) {
                         $basePackaging->update(['cost_price' => $data['cost_price']]);
 
+                        $safeCostPrice = (float) $data['cost_price'];
                         $variant->packagingTypes()
                             ->where('is_base_unit', false)
-                            ->update(['cost_price' => DB::raw('units_per_package * '.(float) $data['cost_price'])]);
+                            ->update(['cost_price' => DB::raw("units_per_package * {$safeCostPrice}")]);
                     }
                 }
 
