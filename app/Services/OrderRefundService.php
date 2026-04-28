@@ -41,12 +41,38 @@ class OrderRefundService
 
         try {
             return DB::transaction(function () use ($order, $user, $reason, $restockItems) {
+                $lockedOrder = Order::query()->lockForUpdate()->find($order->id);
+
+                if ($lockedOrder->payment_status === PaymentStatus::REFUNDED) {
+                    throw new Exception('Order has already been refunded');
+                }
+
+                if ($lockedOrder->status !== OrderStatus::DELIVERED) {
+                    throw new Exception('Only delivered orders can be refunded');
+                }
+
                 $refundResults = [];
 
+                $lockedOrder->load('payments');
+
                 // Process refunds through payment gateways
-                foreach ($order->payments as $payment) {
+                foreach ($lockedOrder->payments as $payment) {
                     if ($payment->amount > 0) {
-                        $gateway = $this->paymentGatewayManager->gateway($payment->payment_method);
+                        $methodIdentifier = $payment->payment_method instanceof \UnitEnum
+                            ? $payment->payment_method->value
+                            : (string) $payment->payment_method;
+
+                        if (! $this->paymentGatewayManager->has($methodIdentifier)) {
+                            $payment->update([
+                                'refund_status' => 'pending',
+                                'refund_reason' => $reason,
+                                'refund_notes' => 'Manual refund required - no gateway registered for '.$methodIdentifier,
+                            ]);
+
+                            continue;
+                        }
+
+                        $gateway = $this->paymentGatewayManager->gateway($methodIdentifier);
 
                         if ($gateway->supportsRefunds()) {
                             $refundResult = $gateway->refund($payment, null, $reason);
@@ -74,11 +100,13 @@ class OrderRefundService
 
                 // Restock items if requested
                 if ($restockItems) {
+                    $order->loadMissing('items.productVariant.inventoryLocations');
+
                     foreach ($order->items as $item) {
                         if ($item->isProduct()) {
                             $variant = $item->productVariant;
-                            $location = $variant->inventoryLocations()
-                                ->where('location_type', 'App\\Models\\Shop')
+                            $location = $variant->inventoryLocations
+                                ->where('location_type', \App\Models\Shop::class)
                                 ->where('location_id', $order->shop_id)
                                 ->first();
 
@@ -120,7 +148,7 @@ class OrderRefundService
         } catch (Throwable $e) {
             Log::error('Order refund failed.', [
                 'order_id' => $order->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -145,11 +173,24 @@ class OrderRefundService
 
         try {
             return DB::transaction(function () use ($order, $user, $items, $reason, $restockItems) {
+                $lockedOrder = Order::query()->lockForUpdate()->find($order->id);
+
+                if ($lockedOrder->status !== OrderStatus::DELIVERED) {
+                    throw new Exception('Only delivered orders can be partially refunded');
+                }
+
                 $refundAmount = 0;
+
+                $itemIds = array_keys($items);
+                $orderItems = $order->items()
+                    ->whereIn('id', $itemIds)
+                    ->with('productVariant.inventoryLocations')
+                    ->get()
+                    ->keyBy('id');
 
                 // Calculate refund amount and process restocking
                 foreach ($items as $itemId => $quantity) {
-                    $orderItem = $order->items()->find($itemId);
+                    $orderItem = $orderItems->get($itemId);
 
                     if (! $orderItem) {
                         throw new Exception("Order item {$itemId} not found");
@@ -166,8 +207,8 @@ class OrderRefundService
                     // Restock if requested
                     if ($restockItems && $orderItem->isProduct()) {
                         $variant = $orderItem->productVariant;
-                        $location = $variant->inventoryLocations()
-                            ->where('location_type', 'App\\Models\\Shop')
+                        $location = $variant->inventoryLocations
+                            ->where('location_type', \App\Models\Shop::class)
                             ->where('location_id', $order->shop_id)
                             ->first();
 
@@ -188,25 +229,37 @@ class OrderRefundService
                 // Process partial refund through payment gateway
                 if ($refundAmount > 0 && $order->payments->count() > 0) {
                     $payment = $order->payments()->orderBy('created_at', 'desc')->first();
-                    $gateway = $this->paymentGatewayManager->gateway($payment->payment_method);
+                    $methodIdentifier = $payment->payment_method instanceof \UnitEnum
+                        ? $payment->payment_method->value
+                        : (string) $payment->payment_method;
 
-                    if ($gateway->supportsRefunds()) {
-                        $newRefundTotal = ($payment->refund_amount ?? 0) + $refundAmount;
-                        if ($newRefundTotal > $payment->amount) {
-                            throw new Exception(
-                                "Refund amount ({$refundAmount}) would exceed original payment ({$payment->amount}). "
-                                ."Already refunded: {$payment->refund_amount}"
-                            );
-                        }
-
-                        $refundResult = $gateway->refund($payment, $refundAmount, $reason);
-
+                    if (! $this->paymentGatewayManager->has($methodIdentifier)) {
                         $payment->update([
-                            'refund_amount' => $newRefundTotal,
-                            'refund_status' => $refundResult->status,
-                            'refund_reference' => $refundResult->refundReference,
+                            'refund_status' => 'pending',
                             'refund_reason' => $reason,
+                            'refund_notes' => 'Manual refund required - no gateway registered for '.$methodIdentifier,
                         ]);
+                    } else {
+                        $gateway = $this->paymentGatewayManager->gateway($methodIdentifier);
+
+                        if ($gateway->supportsRefunds()) {
+                            $newRefundTotal = ($payment->refund_amount ?? 0) + $refundAmount;
+                            if ($newRefundTotal > $payment->amount) {
+                                throw new Exception(
+                                    "Refund amount ({$refundAmount}) would exceed original payment ({$payment->amount}). "
+                                    ."Already refunded: {$payment->refund_amount}"
+                                );
+                            }
+
+                            $refundResult = $gateway->refund($payment, $refundAmount, $reason);
+
+                            $payment->update([
+                                'refund_amount' => $newRefundTotal,
+                                'refund_status' => $refundResult->status,
+                                'refund_reference' => $refundResult->refundReference,
+                                'refund_reason' => $reason,
+                            ]);
+                        }
                     }
                 }
 
@@ -228,7 +281,7 @@ class OrderRefundService
         } catch (Throwable $e) {
             Log::error('Partial refund failed.', [
                 'order_id' => $order->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;

@@ -23,8 +23,13 @@ class OrderReturnPolicy
             return false;
         }
 
+        $shopId = $return->order?->shop_id;
+        if ($shopId === null) {
+            return false;
+        }
+
         return $user->role->canAccessMultipleStores() ||
-               $user->shops()->where('shops.id', $return->order->shop_id)->exists();
+               $user->shops()->where('shops.id', $shopId)->exists();
     }
 
     public function create(User $user): bool
@@ -47,8 +52,13 @@ class OrderReturnPolicy
             return false;
         }
 
+        $shopId = $return->order?->shop_id;
+        if ($shopId === null) {
+            return false;
+        }
+
         return $user->role->canAccessMultipleStores() ||
-               $user->shops()->where('shops.id', $return->order->shop_id)->exists();
+               $user->shops()->where('shops.id', $shopId)->exists();
     }
 
     public function delete(User $user, OrderReturn $return): bool

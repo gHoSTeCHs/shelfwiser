@@ -20,7 +20,7 @@ class UpdateShopSettingsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tax_jurisdiction_id' => ['nullable', 'exists:tax_jurisdictions,id'],
+            'tax_jurisdiction_id' => ['nullable', 'integer', 'exists:tax_jurisdictions,id'],
             'enable_tax_calculations' => ['required', 'boolean'],
             'default_tax_handling' => ['required', Rule::in(array_column(TaxHandling::cases(), 'value'))],
             'overtime_threshold_hours' => ['required', 'numeric', 'min:0', 'max:168'],

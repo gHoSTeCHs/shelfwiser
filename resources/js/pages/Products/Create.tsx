@@ -178,7 +178,7 @@ export default function Create({
     const selectedShop = shops.find((shop) => shop.id === shopId);
     const showPackagingTypes =
         selectedShop &&
-        ['wholesale_only', 'hybrid'].includes(selectedShop.inventory_model);
+        !!selectedShop.inventory_model && ['wholesale_only', 'hybrid'].includes(selectedShop.inventory_model);
 
     useEffect(() => {
         if (selectedType?.config_schema?.properties) {

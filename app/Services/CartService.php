@@ -182,8 +182,10 @@ class CartService
         $cart = $item->cart;
 
         if ($quantity <= 0) {
-            $item->delete();
-            $cart->touch();
+            DB::transaction(function () use ($item, $cart) {
+                $item->delete();
+                $cart->touch();
+            });
             $this->invalidateCartCache($cart->tenant_id, $cart->shop_id, $cart->customer_id, $cart->session_id);
 
             return null;
@@ -277,9 +279,24 @@ class CartService
     public function mergeGuestCartIntoCustomerCart(string $sessionId, int $customerId, int $shopId): Cart
     {
         $shop = Shop::query()->findOrFail($shopId);
-        $customerCart = $this->getCart($shop, $customerId);
 
-        return DB::transaction(function () use ($sessionId, $customerId, $shopId, $shop, $customerCart) {
+        return DB::transaction(function () use ($sessionId, $customerId, $shopId, $shop) {
+            $customerCart = Cart::query()
+                ->where('customer_id', $customerId)
+                ->where('shop_id', $shopId)
+                ->where('tenant_id', $shop->tenant_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $customerCart) {
+                $customerCart = Cart::query()->forceCreate([
+                    'tenant_id' => $shop->tenant_id,
+                    'shop_id' => $shopId,
+                    'customer_id' => $customerId,
+                    'expires_at' => now()->addDays(30),
+                ]);
+            }
+
             $guestCart = Cart::query()
                 ->where('session_id', $sessionId)
                 ->where('shop_id', $shopId)
@@ -307,6 +324,12 @@ class CartService
 
             foreach ($guestCart->items as $guestItem) {
                 if (! $guestItem->isProduct()) {
+                    $variant = $guestItem->sellable;
+                    if (! $variant || ! $variant->is_active || ! $variant->service?->is_available_online) {
+                        $guestItem->delete();
+
+                        continue;
+                    }
                     $guestItem->update(['cart_id' => $customerCart->id]);
 
                     continue;

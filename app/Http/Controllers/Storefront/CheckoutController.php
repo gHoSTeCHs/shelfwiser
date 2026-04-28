@@ -28,13 +28,7 @@ class CheckoutController extends StorefrontBaseController
 
     public function index(Shop $shop): Response|RedirectResponse
     {
-        $customer = auth('customer')->user();
-
-        if (! $customer) {
-            return redirect()
-                ->route('storefront.login', $shop->slug)
-                ->with('info', 'Please login to continue with checkout');
-        }
+        $customer = $this->customerForShop($shop);
 
         $cart = $this->cartService->getCart($shop, $customer->id);
         $cartSummary = $this->cartService->getCartSummary($cart);
@@ -65,11 +59,7 @@ class CheckoutController extends StorefrontBaseController
 
     public function process(ProcessCheckoutRequest $request, Shop $shop): RedirectResponse
     {
-        $customer = auth('customer')->user();
-
-        if (! $customer) {
-            return redirect()->route('storefront.login', $shop->slug);
-        }
+        $customer = $this->customerForShop($shop);
 
         $validated = $request->validated();
 
@@ -89,7 +79,8 @@ class CheckoutController extends StorefrontBaseController
                     if ($paymentMethod->requiresOnlineProcessing()) {
                         return redirect()
                             ->route('storefront.checkout.pending', [$shop->slug, $existingOrder])
-                            ->with('info', 'Please complete your payment.');
+                            ->with('info', 'Please complete your payment.')
+                            ->with('paymentReference', $existingOrder->payment_reference);
                     }
 
                     return redirect()
@@ -169,6 +160,8 @@ class CheckoutController extends StorefrontBaseController
 
     public function paymentCallback(Request $request, Shop $shop): RedirectResponse
     {
+        $customer = $this->customerForShop($shop);
+
         $reference = $request->query('reference');
         $trxref = $request->query('trxref');
 
@@ -183,13 +176,15 @@ class CheckoutController extends StorefrontBaseController
         try {
             $order = $this->checkoutService->verifyPaystackPayment($paymentReference, $shop);
 
-            if ($order && $order->payment_status === PaymentStatus::PAID) {
-                return redirect()
-                    ->route('storefront.checkout.success', [$shop->slug, $order])
-                    ->with('success', 'Payment successful! Your order has been confirmed.');
-            }
-
             if ($order) {
+                abort_unless($order->customer_id === $customer->id, 403, 'Unauthorized');
+
+                if ($order->payment_status === PaymentStatus::PAID) {
+                    return redirect()
+                        ->route('storefront.checkout.success', [$shop->slug, $order])
+                        ->with('success', 'Payment successful! Your order has been confirmed.');
+                }
+
                 return redirect()
                     ->route('storefront.checkout.pending', [$shop->slug, $order])
                     ->with('info', 'Payment is being processed. We will notify you once confirmed.');
@@ -257,7 +252,7 @@ class CheckoutController extends StorefrontBaseController
                     'reason' => $e->getMessage(),
                 ]);
 
-                return response()->json(['error' => $e->getMessage()], 422);
+                return response()->json(['status' => 'acknowledged']);
             } catch (Throwable $e) {
                 Log::error('Paystack webhook processing error', [
                     'event' => $event,

@@ -1,4 +1,4 @@
-import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
+import { accountOrderDetail, accountOrders, accountProfile } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import useCurrency from '@/hooks/useCurrency';
@@ -133,7 +133,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                             {recentOrders.map((order) => (
                                 <Link
                                     key={order.id}
-                                    href={CustomerPortalController.orderDetail.url(
+                                    href={accountOrderDetail.url(
                                         {
                                             shop: shop.slug,
                                             order: order.id,
@@ -188,7 +188,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
 
                             <div className="p-4 sm:p-5">
                                 <Link
-                                    href={CustomerPortalController.orders.url({
+                                    href={accountOrders.url({
                                         shop: shop.slug,
                                     })}
                                 >
@@ -221,7 +221,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                 {/* Quick Links */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <Link
-                        href={CustomerPortalController.orders.url({
+                        href={accountOrders.url({
                             shop: shop.slug,
                         })}
                     >
@@ -248,7 +248,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                     </Link>
 
                     <Link
-                        href={CustomerPortalController.profile.url({
+                        href={accountProfile.url({
                             shop: shop.slug,
                         })}
                     >

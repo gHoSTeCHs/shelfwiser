@@ -14,9 +14,7 @@ use Inertia\Response;
 
 class SupplierProfileController extends Controller
 {
-    public function __construct(private readonly SupplierService $supplierService)
-    {
-    }
+    public function __construct(private readonly SupplierService $supplierService) {}
 
     public function index(): Response
     {
@@ -35,6 +33,8 @@ class SupplierProfileController extends Controller
     {
         $tenant = auth()->user()->tenant;
 
+        Gate::authorize('catalog.enableSupplierMode', $tenant);
+
         $profile = $this->supplierService->enableSupplierMode($tenant, $request->validated());
 
         return Redirect::route('supplier.profile.index')
@@ -43,6 +43,8 @@ class SupplierProfileController extends Controller
 
     public function update(UpdateSupplierProfileRequest $request, SupplierProfile $profile): RedirectResponse
     {
+        Gate::authorize('catalog.updateProfile', $profile);
+
         $this->supplierService->updateSupplierProfile($profile, $request->validated());
 
         return Redirect::route('supplier.profile.index')

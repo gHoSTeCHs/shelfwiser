@@ -64,8 +64,7 @@ class StaffManagementService
         } catch (Throwable $e) {
             Log::error('Staff creation failed.', [
                 'tenant_id' => $tenant->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -86,14 +85,25 @@ class StaffManagementService
 
         try {
             return DB::transaction(function () use ($staff, $data) {
-                $updateData = array_filter([
-                    'first_name' => $data['first_name'] ?? null,
-                    'last_name' => $data['last_name'] ?? null,
-                    'email' => $data['email'] ?? null,
-                    'role' => isset($data['role']) ? $this->normalizeRole($data['role']) : null,
-                ], fn ($value) => $value !== null);
+                $updateData = [];
 
-                if (isset($data['is_active'])) {
+                if (array_key_exists('first_name', $data)) {
+                    $updateData['first_name'] = $data['first_name'];
+                }
+
+                if (array_key_exists('last_name', $data)) {
+                    $updateData['last_name'] = $data['last_name'];
+                }
+
+                if (array_key_exists('email', $data)) {
+                    $updateData['email'] = $data['email'];
+                }
+
+                if (array_key_exists('role', $data)) {
+                    $updateData['role'] = $this->normalizeRole($data['role']);
+                }
+
+                if (array_key_exists('is_active', $data)) {
                     $updateData['is_active'] = $data['is_active'];
                 }
 
@@ -116,8 +126,7 @@ class StaffManagementService
         } catch (Throwable $e) {
             Log::error('Staff update failed.', [
                 'staff_id' => $staff->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -237,8 +246,13 @@ class StaffManagementService
      */
     public function getStatistics(Tenant $tenant): array
     {
-        $totalStaff = User::query()->where('tenant_id', $tenant->id)->count();
-        $activeStaff = User::query()->where('tenant_id', $tenant->id)->where('is_active', true)->count();
+        $staffCounts = User::query()
+            ->where('tenant_id', $tenant->id)
+            ->selectRaw('count(*) as total_staff, sum(case when is_active = 1 then 1 else 0 end) as active_staff')
+            ->first();
+
+        $totalStaff = (int) $staffCounts->total_staff;
+        $activeStaff = (int) $staffCounts->active_staff;
 
         $roleDistribution = User::query()
             ->where('tenant_id', $tenant->id)

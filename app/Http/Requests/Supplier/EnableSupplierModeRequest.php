@@ -4,14 +4,13 @@ namespace App\Http\Requests\Supplier;
 
 use App\Enums\ConnectionApprovalMode;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class EnableSupplierModeRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Gate::allows('enableSupplierMode', [auth()->user()->tenant, auth()->user()->tenant]);
+        return true;
     }
 
     public function rules(): array
@@ -23,7 +22,8 @@ class EnableSupplierModeRequest extends FormRequest
             'lead_time_days' => ['nullable', 'integer', 'min:1', 'max:365'],
             'minimum_order_value' => ['nullable', 'numeric', 'min:0'],
             'connection_approval_mode' => ['required', Rule::enum(ConnectionApprovalMode::class)],
-            'settings' => ['nullable', 'array'],
+            'settings' => ['nullable', 'array', 'max:20'],
+            'settings.*' => ['nullable'],
         ];
     }
 

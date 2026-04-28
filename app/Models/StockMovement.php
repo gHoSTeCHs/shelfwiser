@@ -33,15 +33,18 @@ class StockMovement extends Model
         'created_by',
     ];
 
-    protected $casts = [
-        'type' => StockMovementType::class,
-        'quantity' => 'integer',
-        'package_quantity' => 'integer',
-        'cost_per_package' => 'decimal:2',
-        'cost_per_base_unit' => 'decimal:2',
-        'quantity_before' => 'integer',
-        'quantity_after' => 'integer',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'type' => StockMovementType::class,
+            'quantity' => 'integer',
+            'package_quantity' => 'integer',
+            'cost_per_package' => 'decimal:2',
+            'cost_per_base_unit' => 'decimal:2',
+            'quantity_before' => 'integer',
+            'quantity_after' => 'integer',
+        ];
+    }
 
     public function tenant(): BelongsTo
     {
@@ -136,5 +139,16 @@ class StockMovement extends Model
     public function scopeOfType($query, StockMovementType $type)
     {
         return $query->where('type', $type);
+    }
+
+    public function loadRelations(): static
+    {
+        return $this->load([
+            'productVariant.product',
+            'packagingType',
+            'fromLocation.location',
+            'toLocation.location',
+            'createdBy',
+        ]);
     }
 }

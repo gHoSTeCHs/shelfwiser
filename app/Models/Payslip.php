@@ -187,6 +187,11 @@ class Payslip extends Model
     /**
      * Check if this payslip is cancelled
      */
+    public function loadShowRelations(): static
+    {
+        return $this->load(['user', 'shop', 'payrollPeriod']);
+    }
+
     public function isCancelled(): bool
     {
         return $this->status === 'cancelled' || $this->trashed();

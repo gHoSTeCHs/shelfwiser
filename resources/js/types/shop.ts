@@ -49,6 +49,7 @@ export interface Shop {
     tenant_id: number;
     name: string;
     slug: string;
+    description?: string | null;
     address: string | null;
     city: string | null;
     state: string | null;
@@ -57,9 +58,20 @@ export interface Shop {
     email: string | null;
     type: ShopType | null;
     config: Record<string, SchemaPropertyValue> | null;
+    inventory_model: InventoryModelType | null;
+    shop_offering_type: ShopOfferingType;
+    currency: string;
+    currency_symbol: string;
+    currency_decimals: number;
+    vat_enabled: boolean;
+    vat_rate: number;
+    vat_inclusive: boolean;
+    allow_retail_sales: boolean;
     is_active: boolean;
     storefront_enabled: boolean;
+    storefront_settings: StorefrontSettings | null;
     users_count?: number;
+    products_count?: number;
     can_manage: boolean;
     created_at: string;
     updated_at: string;

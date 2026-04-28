@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Webhooks;
 
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderPayment;
@@ -98,6 +99,10 @@ class PaymentWebhookController extends Controller
             }
 
             $lockedOrder = Order::query()->where('id', $order->id)->lockForUpdate()->first();
+
+            if ($lockedOrder->payment_status === PaymentStatus::PAID) {
+                return;
+            }
 
             if ($event->amount < $lockedOrder->remainingBalance() * 0.99) {
                 Log::warning('Payment amount less than expected — payment not recorded, reconciliation required', [

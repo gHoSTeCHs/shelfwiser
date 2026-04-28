@@ -13,7 +13,6 @@ use App\Http\Resources\StorefrontPageResource;
 use App\Http\Resources\StorefrontThemeResource;
 use App\Models\Shop;
 use App\Models\StorefrontPage;
-use App\Models\StorefrontTheme;
 use App\Services\Storefront\SectionTypeRegistry;
 use App\Services\Storefront\StorefrontBuilderService;
 use Illuminate\Http\JsonResponse;
@@ -32,16 +31,15 @@ class StorefrontBuilderController extends Controller
     {
         Gate::authorize('configureSettings', $shop);
 
-        $config = $shop->storefrontConfig?->load(['theme.template', 'pages']);
-        $themes = StorefrontTheme::query()
-            ->where('is_active', true)
-            ->with('template')
-            ->get();
+        $config = $shop->storefrontConfig?->loadBuilderRelations();
 
         return Inertia::render('Admin/Storefront/Builder', [
             'shop' => $shop,
             'config' => $config ? new StorefrontConfigResource($config) : null,
-            'themes' => StorefrontThemeResource::collection($themes),
+            'themes' => $this->builderService->getActiveThemes()
+                ->map(fn ($theme) => (new StorefrontThemeResource($theme))->resolve())
+                ->values()
+                ->all(),
         ]);
     }
 
@@ -55,7 +53,7 @@ class StorefrontBuilderController extends Controller
             return response()->json(['config' => null, 'pages' => [], 'sectionManifest' => []]);
         }
 
-        $config->load(['theme.template', 'pages']);
+        $config->loadBuilderRelations();
 
         $manifest = $config->theme?->template
             ? $this->sectionRegistry->getBuilderManifest($config->theme->template)
@@ -72,10 +70,10 @@ class StorefrontBuilderController extends Controller
     {
         Gate::authorize('configureSettings', $shop);
 
-        $theme = StorefrontTheme::query()->find($request->validated('theme_id'));
+        $theme = $this->builderService->findTheme($request->validated('theme_id'));
         abort_unless($theme, 422, 'Selected theme is no longer available.');
         $config = $this->builderService->initializeStorefront($shop, $theme);
-        $config->load(['theme.template', 'pages']);
+        $config->loadBuilderRelations();
 
         return response()->json([
             'config' => new StorefrontConfigResource($config),
@@ -90,10 +88,10 @@ class StorefrontBuilderController extends Controller
         $config = $shop->storefrontConfig;
         abort_unless($config, 404, 'Storefront not initialized.');
 
-        $config->update($request->validated());
+        $config = $this->builderService->updateStorefrontConfig($config, $request->validated());
 
         return response()->json([
-            'config' => new StorefrontConfigResource($config->fresh(['theme.template'])),
+            'config' => new StorefrontConfigResource($config),
             'message' => 'Configuration updated.',
         ]);
     }
@@ -105,10 +103,7 @@ class StorefrontBuilderController extends Controller
         $type = StorefrontPageType::tryFrom($pageType);
         abort_unless($type, 404, 'Invalid page type.');
 
-        $page = StorefrontPage::query()
-            ->where('shop_id', $shop->id)
-            ->where('page_type', $type)
-            ->firstOrFail();
+        $page = $this->builderService->getPageByType($shop, $type);
 
         return response()->json(['page' => new StorefrontPageResource($page)]);
     }
@@ -268,11 +263,7 @@ class StorefrontBuilderController extends Controller
         $config = $shop->storefrontConfig;
         abort_unless($config, 404, 'Storefront not initialized.');
 
-        return StorefrontPage::query()
-            ->where('shop_id', $shop->id)
-            ->where('storefront_config_id', $config->id)
-            ->where('page_type', $type)
-            ->firstOrFail();
+        return $this->builderService->resolveConfigPage($config, $type);
     }
 
     private function validateSectionId(string $sectionId): void

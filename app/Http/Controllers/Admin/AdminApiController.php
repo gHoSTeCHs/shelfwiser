@@ -3,61 +3,47 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\StoreApiKeyRequest;
+use App\Services\AdminApiService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AdminApiController extends Controller
 {
-    /**
-     * Display API management page.
-     */
+    public function __construct(
+        private readonly AdminApiService $adminApiService
+    ) {}
+
     public function index(): Response
     {
-        // TODO: Implement actual API key management when API is fully built
-        $apiKeys = [];
-
-        $stats = [
-            'total_api_keys' => 0,
-            'active_keys' => 0,
-            'total_requests_today' => 0,
-            'total_requests_month' => 0,
-        ];
+        Gate::authorize('admin.api.viewAny');
 
         return Inertia::render('Admin/Api/Index', [
-            'apiKeys' => $apiKeys,
-            'stats' => $stats,
+            'apiKeys' => $this->adminApiService->getApiKeys(),
+            'stats' => $this->adminApiService->getStats(),
             'webhooks' => [],
-            'rateLimits' => [
-                'default' => '60 requests per minute',
-                'authenticated' => '1000 requests per hour',
-            ],
+            'rateLimits' => $this->adminApiService->getRateLimits(),
         ]);
     }
 
-    /**
-     * Store a new API key.
-     */
-    public function store(Request $request)
+    public function store(StoreApiKeyRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'permissions' => 'nullable|array',
-        ]);
+        Gate::authorize('admin.api.create');
 
-        // TODO: Implement API key creation
+        $this->adminApiService->createApiKey($request->validated());
 
         return redirect()
             ->route('admin.api.index')
             ->with('success', 'API key created successfully.');
     }
 
-    /**
-     * Revoke an API key.
-     */
-    public function destroy(string $id)
+    public function destroy(string $id): RedirectResponse
     {
-        // TODO: Implement API key revocation
+        Gate::authorize('admin.api.delete');
+
+        $this->adminApiService->revokeApiKey($id);
 
         return redirect()
             ->route('admin.api.index')

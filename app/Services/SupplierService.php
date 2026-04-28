@@ -11,6 +11,7 @@ use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 
 class SupplierService
@@ -127,7 +128,9 @@ class SupplierService
     public function updateCatalogItem(SupplierCatalogItem $catalogItem, array $data): SupplierCatalogItem
     {
         return DB::transaction(function () use ($catalogItem, $data) {
-            $catalogItem->update($data);
+            $catalogItem->update(Arr::only($data, [
+                'is_available', 'base_wholesale_price', 'min_order_quantity', 'visibility', 'description',
+            ]));
 
             if (isset($data['pricing_tiers']) && is_array($data['pricing_tiers'])) {
                 $catalogItem->pricingTiers()->whereNull('connection_id')->delete();

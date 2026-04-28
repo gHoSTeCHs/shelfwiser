@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\OrderReturnStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +19,7 @@ class IndexOrderReturnRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['sometimes', 'nullable', 'string', Rule::in(['pending', 'approved', 'rejected', 'completed'])],
+            'status' => ['sometimes', 'nullable', Rule::enum(OrderReturnStatus::class)],
         ];
     }
 }

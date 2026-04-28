@@ -64,7 +64,7 @@ class ProductTemplateController extends Controller
     {
         Gate::authorize('saveAsTemplate', ProductTemplate::class);
 
-        $template = $this->templateService->create($request->validated(), $request->user()->tenant);
+        $template = $this->templateService->create($request->validated(), $request->user()->tenant, $request->user());
 
         return back()->with('success', "Template '{$template->name}' saved successfully.");
     }

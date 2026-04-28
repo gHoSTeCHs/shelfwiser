@@ -55,7 +55,7 @@ export default function Index({
     useEffect(() => {
         const timer = setTimeout(() => {
             router.get(
-                index().url(),
+                index.url(),
                 {
                     search: search || undefined,
                     status: selectedStatus || undefined,

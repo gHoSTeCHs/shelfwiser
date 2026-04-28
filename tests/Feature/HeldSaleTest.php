@@ -355,7 +355,7 @@ test('cannot retrieve already retrieved held sale', function () {
     $response = $this->actingAs($this->user)
         ->postJson(route('pos.held-sales.retrieve', [$this->shop, $heldSale]));
 
-    $response->assertStatus(400)
+    $response->assertStatus(422)
         ->assertJson(['error' => 'This held sale has already been retrieved.']);
 });
 

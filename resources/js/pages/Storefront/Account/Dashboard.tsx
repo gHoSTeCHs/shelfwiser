@@ -1,5 +1,4 @@
-import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
-import { products } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
+import { accountOrderDetail, accountOrders, products } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Badge from '@/components/ui/badge/Badge';
 import { Card } from '@/components/ui/card';
 import useCurrency from '@/hooks/useCurrency';
@@ -83,7 +82,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                     <div className="mb-6 flex items-center justify-between">
                         <h2 className="text-xl font-semibold">Recent Orders</h2>
                         <Link
-                            href={CustomerPortalController.orders.url({
+                            href={accountOrders.url({
                                 shop: shop.slug,
                             })}
                             className="text-sm font-medium text-brand-600 hover:text-brand-700"
@@ -110,7 +109,7 @@ const Dashboard: React.FC<AccountDashboardProps> = ({
                             {recentOrders.map((order) => (
                                 <Link
                                     key={order.id}
-                                    href={CustomerPortalController.orderDetail.url(
+                                    href={accountOrderDetail.url(
                                         { shop: shop.slug, order: order.id },
                                     )}
                                     className="block rounded-lg border border-gray-200 p-4 transition hover:border-brand-300 hover:shadow-sm"

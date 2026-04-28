@@ -1,8 +1,5 @@
 import { router } from '@inertiajs/react';
 import axios from 'axios';
-
-axios.defaults.xsrfCookieName = 'XSRF-TOKEN';
-axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
 import {
     Bell,
     CheckCircle,

@@ -149,8 +149,12 @@ class CheckoutService
                         $quantityBefore = $location->quantity;
                         $reservedBefore = $location->reserved_quantity;
 
-                        $location->reserved_quantity = max(0, $location->reserved_quantity - $cartItem->quantity);
                         $location->quantity -= $cartItem->quantity;
+
+                        if ($paymentMethod === 'paystack') {
+                            $location->reserved_quantity += $cartItem->quantity;
+                        }
+
                         $location->save();
 
                         $this->stockMovementService->recordMovement([
@@ -250,6 +254,13 @@ class CheckoutService
 
             return $order;
 
+        } catch (\RuntimeException $e) {
+            Log::error('Paystack verification exception', [
+                'reference' => $reference,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Paystack verification exception', [
                 'reference' => $reference,

@@ -5,41 +5,32 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RecordOrderPaymentRequest;
 use App\Models\Order;
 use App\Models\OrderPayment;
+use App\Services\OrderPaymentService;
 use Illuminate\Support\Facades\Gate;
 
 class OrderPaymentController extends Controller
 {
-    /**
-     * Record a new payment for an order
-     */
-    public function store(RecordOrderPaymentRequest $request, Order $order)
+    public function __construct(
+        private readonly OrderPaymentService $orderPaymentService,
+    ) {}
+
+    public function store(RecordOrderPaymentRequest $request, Order $order): \Illuminate\Http\RedirectResponse
     {
-        $validated = $request->validated();
+        Gate::authorize('create', [OrderPayment::class, $order]);
 
-        OrderPayment::create([
-            'order_id' => $order->id,
-            'tenant_id' => $order->tenant_id,
-            'shop_id' => $order->shop_id,
-            'amount' => $validated['amount'],
-            'payment_method' => $validated['payment_method'],
-            'payment_date' => $validated['payment_date'],
-            'reference_number' => $validated['reference_number'] ?? null,
-            'notes' => $validated['notes'] ?? null,
-            'recorded_by' => auth()->id(),
-        ]);
+        $payment = $this->orderPaymentService->recordPayment($order, $request->validated(), $request->user()->id);
 
-        return back()->with('success', 'Payment of ₦'.number_format($validated['amount'], 2).' recorded successfully');
+        return back()->with('success', 'Payment of ₦'.number_format($payment->amount, 2).' recorded successfully');
     }
 
     /**
      * Delete a payment record
      */
-    public function destroy(OrderPayment $orderPayment)
+    public function destroy(OrderPayment $orderPayment): \Illuminate\Http\RedirectResponse
     {
         Gate::authorize('delete', $orderPayment);
 
-        $amount = $orderPayment->amount;
-        $orderPayment->delete();
+        $amount = $this->orderPaymentService->deletePayment($orderPayment);
 
         return back()->with('success', 'Payment of ₦'.number_format($amount, 2).' deleted successfully');
     }

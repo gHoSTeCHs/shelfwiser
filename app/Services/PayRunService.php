@@ -27,8 +27,111 @@ class PayRunService
         protected DeductionsService $deductionsService,
         protected TaxCalculationService $taxService,
         protected NotificationService $notificationService,
-        protected WageAdvanceService $wageAdvanceService
+        protected WageAdvanceService $wageAdvanceService,
+        protected PayrollAuditService $auditService
     ) {}
+
+    /**
+     * Create a payroll period and its associated pay run, then log the audit event.
+     * Consolidates the two-step creation used by the legacy PayrollController.
+     */
+    public function createPayrollPeriodWithPayRun(int $tenantId, array $validated, User $user): PayRun
+    {
+        return DB::transaction(function () use ($tenantId, $validated, $user) {
+            $payrollPeriod = $this->createPayrollPeriod(
+                $tenantId,
+                $validated['shop_id'] ?? null,
+                $validated['start_date'],
+                $validated['end_date'],
+                $validated['payment_date'],
+                $validated['period_name'] ?? null
+            );
+
+            $payRun = $this->createPayRun($tenantId, $payrollPeriod, [
+                'name' => $validated['period_name'] ?? null,
+            ]);
+
+            $this->auditService->logPayRunCreated($payRun, $user);
+
+            return $payRun;
+        });
+    }
+
+    /**
+     * Process a legacy payroll period: create a PayRun if one does not exist, then calculate it.
+     */
+    public function processForPayrollPeriod(PayrollPeriod $period, User $user): PayRun
+    {
+        $payRun = $this->findByPayrollPeriod($period);
+
+        if (! $payRun) {
+            $payRun = $this->createPayRun(
+                $period->tenant_id,
+                $period,
+                ['name' => $period->period_name]
+            );
+            $this->auditService->logPayRunCreated($payRun, $user);
+        }
+
+        $payRun = $this->calculatePayRun($payRun, $user);
+        $this->auditService->logPayRunCalculated($payRun, $user);
+
+        return $payRun;
+    }
+
+    /**
+     * Approve the PayRun associated with a legacy payroll period.
+     * Returns null if no PayRun exists (caller handles legacy fallback).
+     */
+    public function approveForPayrollPeriod(PayrollPeriod $period, User $user): ?PayRun
+    {
+        $payRun = $this->findByPayrollPeriod($period);
+
+        if (! $payRun) {
+            return null;
+        }
+
+        $payRun = $this->approvePayRun($payRun, $user);
+        $this->auditService->logPayRunApproved($payRun, $user);
+
+        return $payRun;
+    }
+
+    /**
+     * Complete the PayRun associated with a legacy payroll period.
+     * Returns null if no PayRun exists (caller handles legacy fallback).
+     */
+    public function completeForPayrollPeriod(PayrollPeriod $period, User $user): ?PayRun
+    {
+        $payRun = $this->findByPayrollPeriod($period);
+
+        if (! $payRun) {
+            return null;
+        }
+
+        $payRun = $this->completePayRun($payRun, $user);
+        $this->auditService->logPayRunCompleted($payRun, $user);
+
+        return $payRun;
+    }
+
+    /**
+     * Cancel the PayRun associated with a legacy payroll period.
+     * Returns null if no PayRun exists (caller handles legacy fallback).
+     */
+    public function cancelForPayrollPeriod(PayrollPeriod $period, string $reason, User $user): ?PayRun
+    {
+        $payRun = $this->findByPayrollPeriod($period);
+
+        if (! $payRun) {
+            return null;
+        }
+
+        $payRun = $this->cancelPayRun($payRun, $reason);
+        $this->auditService->logPayRunCancelled($payRun, $user, $reason);
+
+        return $payRun;
+    }
 
     /**
      * Get filtered, paginated pay runs for the index page.
@@ -42,7 +145,7 @@ class PayRunService
             ->orderByDesc('created_at');
 
         if (! empty($filters['status'])) {
-            $query->withStatus($filters['status']);
+            $query->withStatus(\App\Enums\PayRunStatus::from($filters['status']));
         }
 
         if (! empty($filters['pay_calendar_id'])) {
@@ -65,9 +168,10 @@ class PayRunService
      *
      * @return array{total: int, pending_approval: int, completed_this_month: int}
      */
-    public function getPayRunStats(): array
+    public function getPayRunStats(int $tenantId): array
     {
         $counts = PayRun::query()
+            ->where('tenant_id', $tenantId)
             ->selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
@@ -76,6 +180,7 @@ class PayRunService
             'total' => (int) $counts->sum(),
             'pending_approval' => (int) $counts->get(PayRunStatus::PENDING_APPROVAL->value, 0),
             'completed_this_month' => PayRun::query()
+                ->where('tenant_id', $tenantId)
                 ->completed()
                 ->whereBetween('completed_at', [now()->startOfMonth(), now()->endOfMonth()])
                 ->count(),
@@ -146,7 +251,11 @@ class PayRunService
         return DB::transaction(function () use ($tenantId, $shopId, $startDate, $endDate, $paymentDate, $periodName) {
             $overlapping = PayrollPeriod::query()
                 ->where('tenant_id', $tenantId)
-                ->where('shop_id', $shopId)
+                ->when(
+                    is_null($shopId),
+                    fn ($q) => $q->whereNull('shop_id'),
+                    fn ($q) => $q->where('shop_id', $shopId)
+                )
                 ->where(function ($query) use ($startDate, $endDate) {
                     $query->whereBetween('start_date', [$startDate, $endDate])
                         ->orWhereBetween('end_date', [$startDate, $endDate])
@@ -155,6 +264,7 @@ class PayRunService
                                 ->where('end_date', '>=', $endDate);
                         });
                 })
+                ->lockForUpdate()
                 ->exists();
 
             if ($overlapping) {
@@ -227,43 +337,58 @@ class PayRunService
             throw new \Exception("PayRun cannot be calculated in current status: {$payRun->status->value}");
         }
 
-        $period = $payRun->payrollPeriod;
-        $periodStart = Carbon::parse($period->start_date);
-        $periodEnd = Carbon::parse($period->end_date);
+        try {
+            DB::transaction(function () use ($payRun, $calculatedBy) {
+                $period = $payRun->payrollPeriod;
+                $periodStart = Carbon::parse($period->start_date);
+                $periodEnd = Carbon::parse($period->end_date);
 
-        $processableItems = $payRun->items()->processable()->with(['user.employeePayrollDetail'])->get();
+                $processableItems = $payRun->items()->processable()->with(['user.employeePayrollDetail'])->get();
 
-        $timesheetsByUser = \App\Models\Timesheet::query()
-            ->whereIn('user_id', $processableItems->pluck('user_id'))
-            ->where('tenant_id', $payRun->tenant_id)
-            ->whereBetween('work_date', [$periodStart, $periodEnd])
-            ->where('status', 'approved')
-            ->get()
-            ->groupBy('user_id');
+                $timesheetsByUser = \App\Models\Timesheet::query()
+                    ->whereIn('user_id', $processableItems->pluck('user_id'))
+                    ->where('tenant_id', $payRun->tenant_id)
+                    ->whereBetween('date', [$periodStart, $periodEnd])
+                    ->where('status', 'approved')
+                    ->get()
+                    ->groupBy('user_id');
 
-        foreach ($processableItems as $item) {
-            try {
-                $calculatedData = $this->calculateEmployeePay(
-                    $item->user,
-                    $periodStart,
-                    $periodEnd,
-                    $timesheetsByUser
-                );
+                foreach ($processableItems as $item) {
+                    try {
+                        $calculatedData = $this->calculateEmployeePay(
+                            $item->user,
+                            $periodStart,
+                            $periodEnd,
+                            $timesheetsByUser
+                        );
 
-                $item->markAsCalculated($calculatedData);
-            } catch (\Exception $e) {
-                $item->markAsError($e->getMessage());
-            }
+                        if (! ($calculatedData['success'] ?? true)) {
+                            $item->markAsError($calculatedData['error'] ?? 'Unknown calculation error');
+                        } else {
+                            $item->markAsCalculated($calculatedData);
+                        }
+                    } catch (\Exception $e) {
+                        $item->markAsError($e->getMessage());
+                    }
+                }
+
+                $payRun->updateTotals();
+                $payRun->update([
+                    'status' => PayRunStatus::PENDING_REVIEW,
+                    'calculated_by' => $calculatedBy->id,
+                    'calculated_at' => now(),
+                ]);
+
+                Cache::tags(["tenant:{$payRun->tenant_id}:payroll"])->flush();
+            });
+        } catch (\Throwable $e) {
+            PayRun::query()
+                ->where('id', $payRun->id)
+                ->where('status', PayRunStatus::CALCULATING)
+                ->update(['status' => PayRunStatus::DRAFT]);
+
+            throw $e;
         }
-
-        $payRun->updateTotals();
-        $payRun->update([
-            'status' => PayRunStatus::PENDING_REVIEW,
-            'calculated_by' => $calculatedBy->id,
-            'calculated_at' => now(),
-        ]);
-
-        Cache::tags(["tenant:{$payRun->tenant_id}:payroll"])->flush();
 
         return $payRun->fresh(['items']);
     }
@@ -441,6 +566,14 @@ class PayRunService
         }
 
         return DB::transaction(function () use ($payRun, $completedBy) {
+            $lockedPayRun = PayRun::query()->where('id', $payRun->id)->lockForUpdate()->firstOrFail();
+
+            if (! $lockedPayRun->canBeCompleted()) {
+                throw new \RuntimeException("Pay run cannot be completed in its current state.");
+            }
+
+            $payRun = $lockedPayRun;
+
             $uncalculatedCount = $payRun->items()
                 ->whereNotIn('status', [PayRunItemStatus::CALCULATED->value, PayRunItemStatus::EXCLUDED->value])
                 ->count();
@@ -520,9 +653,14 @@ class PayRunService
 
                 $activeAdvances = $advancesByUser->get($item->user_id, collect());
                 foreach ($activeAdvances as $advance) {
-                    $installmentAmount = $advance->getInstallmentAmount();
+                    $remaining = $advance->getRemainingBalance();
+                    if ($remaining <= 0) {
+                        continue;
+                    }
+                    $installmentAmount = min($advance->getInstallmentAmount(), $remaining);
                     if ($installmentAmount > 0) {
                         $this->wageAdvanceService->recordRepayment($advance, $installmentAmount);
+                        $advance->refresh();
                     }
                 }
             }
@@ -597,6 +735,7 @@ class PayRunService
 
         $item = PayRunItem::query()->create([
             'pay_run_id' => $payRun->id,
+            'tenant_id' => $payRun->tenant_id,
             'user_id' => $employee->id,
             'status' => PayRunItemStatus::PENDING,
         ]);
@@ -657,7 +796,7 @@ class PayRunService
             ? ($timesheetsByUser->get($employee->id) ?? collect())
             : $employee->timesheets()
                 ->where('tenant_id', $employee->tenant_id)
-                ->whereBetween('work_date', [$start, $end])
+                ->whereBetween('date', [$start, $end])
                 ->where('status', 'approved')
                 ->get();
 

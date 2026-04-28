@@ -71,8 +71,8 @@ class ProductService
                 if ($hasVariants && isset($data['variants'])) {
                     foreach ($data['variants'] as $variantData) {
                         $variant = $this->createVariant($product, $variantData);
+                        $variant->setRelation('product', $product);
 
-                        // Create packaging types for this variant
                         if (isset($variantData['packaging_types'])) {
                             $this->createPackagingTypes($variant, $variantData['packaging_types']);
                         } else {
@@ -81,8 +81,8 @@ class ProductService
                     }
                 } else {
                     $variant = $this->createDefaultVariant($product, $data);
+                    $variant->setRelation('product', $product);
 
-                    // Create packaging types for simple products
                     if (isset($data['packaging_types'])) {
                         $this->createPackagingTypes($variant, $data['packaging_types']);
                     } else {
@@ -102,7 +102,7 @@ class ProductService
                 'tenant_id' => $tenant->id,
                 'shop_id' => $shop->id,
                 'product_name' => $data['name'] ?? null,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -156,7 +156,7 @@ class ProductService
         } catch (Throwable $e) {
             Log::error('Product update failed.', [
                 'product_id' => $product->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -189,7 +189,7 @@ class ProductService
 
         Log::info('Product deleted', ['product_id' => $product->id, 'name' => $product->name]);
 
-        Cache::tags(["tenant:{$product->tenant_id}:products"])->flush();
+        Cache::tags(["tenant:{$product->tenant_id}:products:list"])->flush();
     }
 
     public function getProductsForIndex(): LengthAwarePaginator
@@ -354,22 +354,21 @@ class ProductService
     private function generateUniqueSlug(string $name, Tenant $tenant): string
     {
         $base = Str::slug($name);
-
-        $existing = Product::query()
-            ->where('tenant_id', $tenant->id)
-            ->where('slug', 'like', "{$base}%")
-            ->pluck('slug');
-
-        if (! $existing->contains($base)) {
-            return $base;
-        }
-
+        $slug = $base;
         $counter = 1;
-        while ($existing->contains("{$base}-{$counter}")) {
+
+        while (
+            Product::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('slug', $slug)
+                ->lockForUpdate()
+                ->exists()
+        ) {
+            $slug = $base.'-'.$counter;
             $counter++;
         }
 
-        return "{$base}-{$counter}";
+        return $slug;
     }
 
     private function createDefaultPackagingType(ProductVariant $variant, Shop $shop): ProductPackagingType
@@ -513,7 +512,7 @@ class ProductService
             Log::error('Product variant update failed.', [
                 'variant_id' => $variant->id,
                 'product_id' => $variant->product_id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;

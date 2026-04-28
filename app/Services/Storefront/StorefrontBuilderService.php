@@ -8,6 +8,7 @@ use App\Models\Shop;
 use App\Models\StorefrontConfig;
 use App\Models\StorefrontPage;
 use App\Models\StorefrontTheme;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -16,6 +17,43 @@ class StorefrontBuilderService
     public function __construct(
         private readonly StorefrontBuilderCache $cache
     ) {}
+
+    public function getActiveThemes(): Collection
+    {
+        return StorefrontTheme::query()
+            ->where('is_active', true)
+            ->with('template')
+            ->get();
+    }
+
+    public function findTheme(string $themeId): ?StorefrontTheme
+    {
+        return StorefrontTheme::query()->find($themeId);
+    }
+
+    public function getPageByType(Shop $shop, StorefrontPageType $type): StorefrontPage
+    {
+        return StorefrontPage::query()
+            ->where('shop_id', $shop->id)
+            ->where('page_type', $type)
+            ->firstOrFail();
+    }
+
+    public function resolveConfigPage(StorefrontConfig $config, StorefrontPageType $type): StorefrontPage
+    {
+        return StorefrontPage::query()
+            ->where('shop_id', $config->shop_id)
+            ->where('storefront_config_id', $config->id)
+            ->where('page_type', $type)
+            ->firstOrFail();
+    }
+
+    public function updateStorefrontConfig(StorefrontConfig $config, array $validated): StorefrontConfig
+    {
+        $config->update($validated);
+
+        return $config->fresh(['theme.template']);
+    }
 
     public function initializeStorefront(Shop $shop, StorefrontTheme $theme): StorefrontConfig
     {

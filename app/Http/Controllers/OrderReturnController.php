@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ApproveOrderReturnRequest;
-use App\Http\Requests\CompleteOrderReturnRequest;
+use Illuminate\Http\Request;
 use App\Http\Requests\IndexOrderReturnRequest;
 use App\Http\Requests\RejectOrderReturnRequest;
 use App\Http\Requests\StoreOrderReturnRequest;
@@ -78,7 +78,7 @@ class OrderReturnController extends Controller
 
         return Inertia::render('Returns/Show', [
             'return' => $return,
-            'can_approve' => Gate::allows('manage', $return->order->shop),
+            'can_approve' => Gate::allows('manage', $return->order?->shop),
         ]);
     }
 
@@ -113,7 +113,7 @@ class OrderReturnController extends Controller
         $this->returnService->rejectReturn(
             $return,
             $request->user(),
-            $validated['rejection_reason'] ?? null
+            $validated['rejection_reason']
         );
 
         return Redirect::back()->with('success', 'Return rejected.');
@@ -122,7 +122,7 @@ class OrderReturnController extends Controller
     /**
      * Complete a return
      */
-    public function complete(CompleteOrderReturnRequest $request, OrderReturn $return): RedirectResponse
+    public function complete(Request $request, OrderReturn $return): RedirectResponse
     {
         Gate::authorize('manage', $return);
 

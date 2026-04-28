@@ -34,16 +34,19 @@ class FundRequest extends Model
         'notes',
     ];
 
-    protected $casts = [
-        'request_type' => FundRequestType::class,
-        'status' => FundRequestStatus::class,
-        'amount' => 'decimal:2',
-        'requested_at' => 'datetime',
-        'approved_at' => 'datetime',
-        'rejected_at' => 'datetime',
-        'disbursed_at' => 'datetime',
-        'receipt_uploaded' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'request_type' => FundRequestType::class,
+            'status' => FundRequestStatus::class,
+            'amount' => 'decimal:2',
+            'requested_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
+            'disbursed_at' => 'datetime',
+            'receipt_uploaded' => 'boolean',
+        ];
+    }
 
     /**
      * Employee who requested the funds
@@ -96,6 +99,11 @@ class FundRequest extends Model
     /**
      * Check if request is pending
      */
+    public function loadDetailRelations(): static
+    {
+        return $this->load(['user', 'shop', 'approvedBy', 'disbursedBy']);
+    }
+
     public function isPending(): bool
     {
         return $this->status === FundRequestStatus::PENDING;

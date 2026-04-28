@@ -138,7 +138,8 @@ class StockMovementService
         StockMovementType $type,
         User $user,
         ?string $reason = null,
-        ?string $notes = null
+        ?string $notes = null,
+        bool $clearReorderCache = true
     ): StockMovement {
         Log::info('Stock adjustment process started.', [
             'variant_id' => $variant->id,
@@ -156,7 +157,9 @@ class StockMovementService
 
                 $quantityBefore = $location->quantity;
 
-                if ($type->isIncrease()) {
+                if ($type === StockMovementType::STOCK_TAKE) {
+                    $location->quantity += $quantity;
+                } elseif ($type->isIncrease()) {
                     $location->quantity += $quantity;
                 } elseif ($type->isDecrease()) {
                     if ($location->quantity < $quantity) {
@@ -191,14 +194,16 @@ class StockMovementService
                 return $movement;
             });
 
-            $this->reorderAlertService->clearCache($user->tenant, null);
+            if ($clearReorderCache) {
+                $this->reorderAlertService->clearCache($user->tenant, null);
+            }
 
             return $movement;
         } catch (Throwable $e) {
             Log::error('Stock adjustment failed.', [
                 'variant_id' => $variant->id,
                 'location_id' => $location->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -323,7 +328,7 @@ class StockMovementService
                 'variant_id' => $variant->id,
                 'from_location_id' => $fromLocation->id,
                 'to_location_id' => $toLocation->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -418,7 +423,7 @@ class StockMovementService
             Log::error('Purchase recording failed.', [
                 'variant_id' => $variant->id,
                 'location_id' => $location->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -515,7 +520,7 @@ class StockMovementService
             Log::error('Sale recording failed.', [
                 'variant_id' => $variant->id,
                 'location_id' => $location->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -557,27 +562,37 @@ class StockMovementService
                 $location->quantity = $actualQuantity;
                 $location->save();
 
-                //                $type = $difference > 0 ? StockMovementType::ADJUSTMENT_IN : StockMovementType::ADJUSTMENT_OUT;
-                $quantity = abs($difference);
+                if ($difference > 0) {
+                    $movementData = [
+                        'to_location_id' => $location->id,
+                        'from_location_id' => null,
+                        'quantity' => $difference,
+                        'reason' => 'Stock take - surplus found',
+                    ];
+                } else {
+                    $movementData = [
+                        'from_location_id' => $location->id,
+                        'to_location_id' => null,
+                        'quantity' => abs($difference),
+                        'reason' => 'Stock take - shortage found',
+                    ];
+                }
 
                 $shopId = $location->location_type === \App\Models\Shop::class
                     ? $location->location_id
                     : $variant->product->shop_id;
 
-                $movement = StockMovement::query()->create([
+                $movement = StockMovement::query()->create(array_merge([
                     'tenant_id' => $user->tenant_id,
                     'shop_id' => $shopId,
                     'product_variant_id' => $variant->id,
-                    'to_location_id' => $location->id,
                     'type' => StockMovementType::STOCK_TAKE,
-                    'quantity' => $quantity,
                     'quantity_before' => $quantityBefore,
                     'quantity_after' => $actualQuantity,
                     'reference_number' => $this->generateReferenceNumber(StockMovementType::STOCK_TAKE),
-                    'reason' => $difference > 0 ? 'Stock take - surplus found' : 'Stock take - shortage found',
                     'notes' => $notes,
                     'created_by' => $user->id,
-                ]);
+                ], $movementData));
 
                 Log::info('Stock take completed successfully.', ['movement_id' => $movement->id]);
 
@@ -593,7 +608,7 @@ class StockMovementService
             Log::error('Stock take failed.', [
                 'variant_id' => $variant->id,
                 'location_id' => $location->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -683,6 +698,7 @@ class StockMovementService
                         user: $user,
                         reason: $reason,
                         notes: $notes ?? 'Stock take conducted',
+                        clearReorderCache: false,
                     );
 
                     $adjustments[] = [
@@ -693,6 +709,10 @@ class StockMovementService
                 }
             }
         });
+
+        if (! empty($adjustments)) {
+            $this->reorderAlertService->clearCache($user->tenant, null);
+        }
 
         return $adjustments;
     }
@@ -860,7 +880,7 @@ class StockMovementService
     {
         $location = InventoryLocation::query()->findOrFail($validated['inventory_location_id']);
 
-        if (! $user->shops()->where('shops.id', $location->shop_id)->exists()) {
+        if ($location->shop_id !== null && ! $user->shops()->where('shops.id', $location->shop_id)->exists()) {
             throw new \Illuminate\Auth\Access\AuthorizationException('You do not have access to this shop\'s inventory.');
         }
 
@@ -960,6 +980,8 @@ class StockMovementService
             StockMovementType::STOCK_TAKE => 'STK',
             StockMovementType::PURCHASE_ORDER_SHIPPED => 'PO-SHIP',
             StockMovementType::PURCHASE_ORDER_RECEIVED => 'PO-RCV',
+            StockMovementType::PURCHASE_ORDER_RESERVED => 'PO-RSV',
+            StockMovementType::PURCHASE_ORDER_RESERVATION_RELEASED => 'PO-RLS',
         };
 
         return $prefix.'-'.strtoupper(Str::ulid());

@@ -217,6 +217,24 @@ class User extends Authenticatable
     /**
      * Get shop models the user can access (for dropdown/filter UI).
      */
+    public function loadStaffShowRelations(): static
+    {
+        return $this->load([
+            'shops',
+            'tenant',
+            'employeePayrollDetail',
+            'taxSettings',
+            'customDeductions' => function ($query) {
+                $query->latest();
+            },
+        ]);
+    }
+
+    public function loadStaffEditRelations(): static
+    {
+        return $this->load(['shops', 'employeePayrollDetail', 'taxSettings', 'customDeductions']);
+    }
+
     public function accessibleShops(): \Illuminate\Support\Collection
     {
         if ($this->isTenantOwner() || $this->role->canAccessMultipleStores()) {

@@ -1,3 +1,4 @@
+import { index as supplierConnectionsIndex } from '@/actions/App/Http/Controllers/SupplierConnectionController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
@@ -54,7 +55,7 @@ export default function Browse({ catalogItems, supplier }: Props) {
                         }
                         action={
                             <Link
-                                href={SupplierConnectionController.index.url()}
+                                href={supplierConnectionsIndex.url()}
                             >
                                 <Button>
                                     <Store className="mr-2 h-4 w-4" />

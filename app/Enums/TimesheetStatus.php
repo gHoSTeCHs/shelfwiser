@@ -56,6 +56,14 @@ enum TimesheetStatus: string
         };
     }
 
+    public function canReject(): bool
+    {
+        return match ($this) {
+            self::SUBMITTED => true,
+            default => false,
+        };
+    }
+
     public static function options(): array
     {
         return collect(self::cases())->map(fn ($case) => [

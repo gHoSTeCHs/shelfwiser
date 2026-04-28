@@ -28,6 +28,8 @@ export function Background({
     const isDirect = isDirectVideo(video_url);
     const [ctaHovered, setCtaHovered] = useState(false);
     const safeCtaLink = sanitizeUrl(cta_link);
+    const safeVideoUrl = sanitizeUrl(video_url);
+    const safePosterImage = sanitizeUrl(poster_image);
 
     return (
         <div
@@ -40,17 +42,17 @@ export function Background({
             {/* Video / poster / fallback */}
             {isDirect ? (
                 <video
-                    src={video_url}
-                    poster={poster_image}
+                    src={safeVideoUrl}
+                    poster={safePosterImage}
                     autoPlay
                     loop
                     muted={muted !== false}
                     playsInline
                     className="absolute inset-0 h-full w-full object-cover"
                 />
-            ) : poster_image ? (
+            ) : safePosterImage ? (
                 <img
-                    src={poster_image}
+                    src={safePosterImage}
                     alt=""
                     className="absolute inset-0 h-full w-full object-cover"
                 />

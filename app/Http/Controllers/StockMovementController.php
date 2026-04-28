@@ -10,8 +10,6 @@ use App\Http\Requests\StockMovementExportRequest;
 use App\Http\Requests\StockMovementIndexRequest;
 use App\Http\Requests\StockTakeRequest;
 use App\Http\Requests\TransferStockRequest;
-use App\Models\InventoryLocation;
-use App\Models\ProductPackagingType;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Services\ExportService;
@@ -61,13 +59,7 @@ class StockMovementController extends Controller
     {
         Gate::authorize('view', $stockMovement);
 
-        $stockMovement->load([
-            'productVariant.product',
-            'packagingType',
-            'fromLocation.location',
-            'toLocation.location',
-            'createdBy',
-        ]);
+        $stockMovement->loadRelations();
 
         return Inertia::render('StockMovements/Show', [
             'movement' => $stockMovement,
@@ -78,23 +70,10 @@ class StockMovementController extends Controller
     {
         Gate::authorize('adjustStock', StockMovement::class);
 
-        $location = InventoryLocation::query()->findOrFail($request->input('inventory_location_id'));
-        if (! $request->user()->shops()->where('shops.id', $location->shop_id)->exists()) {
-            abort(403, 'You do not have access to this shop\'s inventory.');
-        }
-
         try {
-            $variant = ProductVariant::query()->findOrFail($request->input('product_variant_id'));
-            $type = StockMovementType::from($request->input('type'));
-
-            $movement = $this->stockMovementService->adjustStock(
-                variant: $variant,
-                location: $location,
-                quantity: $request->input('quantity'),
-                type: $type,
-                user: $request->user(),
-                reason: $request->input('reason'),
-                notes: $request->input('notes')
+            $movement = $this->stockMovementService->adjustStockFromValidated(
+                $request->validated(),
+                $request->user(),
             );
 
             if ($request->wantsJson()) {
@@ -106,6 +85,12 @@ class StockMovementController extends Controller
             }
 
             return Redirect::back()->with('success', 'Stock adjusted successfully.');
+        } catch (AuthorizationException $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
+            }
+
+            abort(403, $e->getMessage());
         } catch (\RuntimeException $e) {
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
@@ -130,25 +115,10 @@ class StockMovementController extends Controller
     {
         Gate::authorize('transferStock', StockMovement::class);
 
-        $fromLocation = InventoryLocation::query()->findOrFail($request->input('from_location_id'));
-        $toLocation = InventoryLocation::query()->findOrFail($request->input('to_location_id'));
-
-        $userShops = $request->user()->shops()->pluck('shops.id');
-        if (! $userShops->contains($fromLocation->shop_id) || ! $userShops->contains($toLocation->shop_id)) {
-            abort(403, 'You do not have access to this shop\'s inventory.');
-        }
-
         try {
-            $variant = ProductVariant::query()->findOrFail($request->input('product_variant_id'));
-
-            $movements = $this->stockMovementService->transferStock(
-                variant: $variant,
-                fromLocation: $fromLocation,
-                toLocation: $toLocation,
-                quantity: $request->input('quantity'),
-                user: $request->user(),
-                reason: $request->input('reason'),
-                notes: $request->input('notes')
+            $movements = $this->stockMovementService->transferStockFromValidated(
+                $request->validated(),
+                $request->user(),
             );
 
             if ($request->wantsJson()) {
@@ -163,6 +133,12 @@ class StockMovementController extends Controller
             }
 
             return Redirect::back()->with('success', 'Stock transferred successfully.');
+        } catch (AuthorizationException $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
+            }
+
+            abort(403, $e->getMessage());
         } catch (\RuntimeException $e) {
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
@@ -187,20 +163,10 @@ class StockMovementController extends Controller
     {
         Gate::authorize('stockTake', StockMovement::class);
 
-        $location = InventoryLocation::query()->findOrFail($request->input('inventory_location_id'));
-        if (! $request->user()->shops()->where('shops.id', $location->shop_id)->exists()) {
-            abort(403, 'You do not have access to this shop\'s inventory.');
-        }
-
         try {
-            $variant = ProductVariant::query()->findOrFail($request->input('product_variant_id'));
-
-            $movement = $this->stockMovementService->stockTake(
-                variant: $variant,
-                location: $location,
-                actualQuantity: $request->input('actual_quantity'),
-                user: $request->user(),
-                notes: $request->input('notes')
+            $movement = $this->stockMovementService->stockTakeFromValidated(
+                $request->validated(),
+                $request->user(),
             );
 
             $message = $movement
@@ -216,6 +182,12 @@ class StockMovementController extends Controller
             }
 
             return Redirect::back()->with('success', $message);
+        } catch (AuthorizationException $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
+            }
+
+            abort(403, $e->getMessage());
         } catch (\RuntimeException $e) {
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
@@ -245,16 +217,9 @@ class StockMovementController extends Controller
             403
         );
 
-        $movements = StockMovement::forVariant($variant->id)
-            ->with([
-                'fromLocation.location',
-                'toLocation.location',
-                'createdBy:id,first_name',
-            ])
-            ->latest()
-            ->paginate(20);
+        $movements = $this->stockMovementService->getVariantHistory($variant);
 
-        if (request()->wantsJson()) {
+        if ($request->wantsJson()) {
             return response()->json($movements);
         }
 
@@ -265,8 +230,6 @@ class StockMovementController extends Controller
     }
 
     /**
-     * Record a purchase with packaging
-     *
      * @throws Throwable
      */
     public function recordPurchase(RecordPurchaseRequest $request): RedirectResponse|JsonResponse
@@ -274,18 +237,9 @@ class StockMovementController extends Controller
         Gate::authorize('recordPurchase', StockMovement::class);
 
         try {
-            $variant = ProductVariant::query()->findOrFail($request->input('product_variant_id'));
-            $location = InventoryLocation::query()->findOrFail($request->input('location_id'));
-            $packagingType = ProductPackagingType::query()->findOrFail($request->input('product_packaging_type_id'));
-
-            $movement = $this->stockMovementService->recordPurchase(
-                variant: $variant,
-                location: $location,
-                packageQuantity: $request->input('package_quantity'),
-                packagingType: $packagingType,
-                costPerPackage: $request->input('cost_per_package'),
-                user: $request->user(),
-                notes: $request->input('notes')
+            $movement = $this->stockMovementService->recordPurchaseFromValidated(
+                $request->validated(),
+                $request->user(),
             );
 
             if ($request->wantsJson()) {
@@ -341,18 +295,9 @@ class StockMovementController extends Controller
 
         $variantId = $request->validated('variant_id');
 
-        if ($variantId !== null) {
-            $variant = ProductVariant::query()->with('product')->findOrFail($variantId);
-
-            abort_unless(
-                $request->user()->accessibleShopIds()->contains($variant->product->shop_id),
-                403,
-                'You do not have access to this variant.'
-            );
-        }
-
         $movements = $this->stockMovementService->getMovementsForExport(
-            $variantId !== null ? (int) $variantId : null
+            $variantId !== null ? (int) $variantId : null,
+            $request->user(),
         );
         $formatted = $this->stockMovementService->formatMovementsExport($movements);
         $filename = 'stock-movements-'.now()->format('Y-m-d-His').'.csv';

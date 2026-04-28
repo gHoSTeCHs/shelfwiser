@@ -10,6 +10,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateStaffRequest;
 use App\Http\Requests\CreateStaffWithPayrollRequest;
+use App\Http\Requests\IndexStaffRequest;
 use App\Http\Requests\UpdateStaffWithPayrollRequest;
 use App\Models\User;
 use App\Services\StaffManagementService;
@@ -28,11 +29,11 @@ class StaffManagementController extends Controller
         protected StaffOnboardingService $onboardingService
     ) {}
 
-    public function index(Request $request): Response
+    public function index(IndexStaffRequest $request): Response
     {
         Gate::authorize('viewAny', User::class);
 
-        $filters = $request->only(['role', 'shop_id', 'is_active']);
+        $filters = $request->validated();
 
         return Inertia::render('StaffManagement/Index', [
             'staff' => $this->staffService->list($request->user()->tenant, $request->user(), $filters),
@@ -92,19 +93,17 @@ class StaffManagementController extends Controller
     {
         Gate::authorize('view', $staff);
 
-        $staff->load([
-            'shops',
-            'tenant',
-            'employeePayrollDetail',
-            'taxSettings',
-            'customDeductions' => function ($query) {
-                $query->latest();
-            },
-        ]);
+        $staff->loadStaffShowRelations();
+
+        $canManagePayroll = Gate::allows('updatePayrollDetails', $staff);
+
+        if ($canManagePayroll) {
+            $staff->employeePayrollDetail?->makeVisible(['bank_account_number', 'routing_number', 'tax_id_number']);
+        }
 
         return Inertia::render('StaffManagement/Show', [
             'staff' => $staff,
-            'canManagePayroll' => Gate::allows('updatePayrollDetails', $staff),
+            'canManagePayroll' => $canManagePayroll,
             'canManageDeductions' => Gate::allows('updateDeductionPreferences', $staff),
             'taxConfigurationStatus' => $this->staffService->getTaxConfigurationStatus($staff),
         ]);
@@ -114,7 +113,11 @@ class StaffManagementController extends Controller
     {
         Gate::authorize('update', $staff);
 
-        $staff->load(['shops', 'employeePayrollDetail', 'taxSettings', 'customDeductions']);
+        $staff->loadStaffEditRelations();
+
+        if (Gate::allows('updatePayrollDetails', $staff)) {
+            $staff->employeePayrollDetail?->makeVisible(['bank_account_number', 'routing_number', 'tax_id_number']);
+        }
 
         return Inertia::render('StaffManagement/Edit', [
             'staff' => $staff,

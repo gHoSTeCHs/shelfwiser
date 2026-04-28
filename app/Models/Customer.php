@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentStatus;
 use App\Traits\BelongsToTenant;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -46,21 +47,19 @@ class Customer extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'is_active' => 'boolean',
-        'marketing_opt_in' => 'boolean',
-        'password' => 'hashed',
-        'account_balance' => 'decimal:2',
-        'credit_limit' => 'decimal:2',
-        'total_purchases' => 'decimal:2',
-        'last_purchase_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'is_active' => 'boolean',
+            'marketing_opt_in' => 'boolean',
+            'password' => 'hashed',
+            'account_balance' => 'decimal:2',
+            'credit_limit' => 'decimal:2',
+            'total_purchases' => 'decimal:2',
+            'last_purchase_at' => 'datetime',
+        ];
+    }
 
     protected $appends = [
         'full_name',
@@ -215,12 +214,20 @@ class Customer extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Load the standard set of relations needed for the edit/create form.
+     */
+    public function loadEditRelations(): static
+    {
+        return $this->load(['preferredShop', 'addresses']);
+    }
+
+    /**
      * Get all unpaid orders for customer
      */
-    public function unpaidOrders()
+    public function unpaidOrders(): HasMany
     {
         return $this->orders()
-            ->whereIn('payment_status', ['unpaid', 'partial'])
+            ->whereIn('payment_status', [PaymentStatus::UNPAID->value, PaymentStatus::PARTIAL->value])
             ->orderBy('created_at');
     }
 

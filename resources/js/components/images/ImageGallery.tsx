@@ -2,13 +2,9 @@ import Button from '@/components/ui/button/Button';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import { Image as ImageType } from '@/types/image';
 import { router } from '@inertiajs/react';
+import axios from 'axios';
 import { MoveDown, MoveUp, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-
-function getCsrfToken(): string {
-    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
-    return match ? decodeURIComponent(match[1]) : '';
-}
 
 interface ImageGalleryProps {
     images: ImageType[];
@@ -50,14 +46,7 @@ export default function ImageGallery({
         setDeleting(imageId);
 
         try {
-            await fetch(`/images/${imageId}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-XSRF-TOKEN': getCsrfToken(),
-                    Accept: 'application/json',
-                },
-            });
-
+            await axios.delete(`/images/${imageId}`);
             router.reload();
         } catch (err) {
             console.error('Failed to delete image:', err);
@@ -69,15 +58,7 @@ export default function ImageGallery({
 
     const handleSetPrimary = async (imageId: number) => {
         try {
-            await fetch(`/images/${imageId}/set-primary`, {
-                method: 'POST',
-                headers: {
-                    'X-XSRF-TOKEN': getCsrfToken(),
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
-            });
-
+            await axios.post(`/images/${imageId}/set-primary`);
             router.reload();
         } catch (err) {
             console.error('Failed to set primary image:', err);
@@ -100,20 +81,11 @@ export default function ImageGallery({
         ];
 
         try {
-            await fetch('/images/reorder', {
-                method: 'POST',
-                headers: {
-                    'X-XSRF-TOKEN': getCsrfToken(),
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    model_type: modelType,
-                    model_id: modelId,
-                    image_ids: reorderedImages.map((img) => img.id),
-                }),
+            await axios.post('/images/reorder', {
+                model_type: modelType,
+                model_id: modelId,
+                image_ids: reorderedImages.map((img) => img.id),
             });
-
             router.reload();
         } catch (err) {
             console.error('Failed to reorder images:', err);

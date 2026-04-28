@@ -169,12 +169,14 @@ class WageAdvanceService
      */
     public function reject(WageAdvance $wageAdvance, User $rejector, string $reason): WageAdvance
     {
-        if (! $wageAdvance->status->canReject()) {
-            throw new \RuntimeException('Wage advance cannot be rejected in current status');
-        }
-
         return DB::transaction(function () use ($wageAdvance, $rejector, $reason) {
-            $wageAdvance->update([
+            $locked = WageAdvance::query()->lockForUpdate()->find($wageAdvance->id);
+
+            if (! $locked->status->canReject()) {
+                throw new \RuntimeException('Wage advance cannot be rejected in current status');
+            }
+
+            $locked->update([
                 'status' => WageAdvanceStatus::REJECTED,
                 'approved_by_user_id' => $rejector->id,
                 'approved_at' => now(),
@@ -241,9 +243,15 @@ class WageAdvanceService
         }
 
         return DB::transaction(function () use ($wageAdvance, $amount) {
-            $newAmountRepaid = (float) $wageAdvance->amount_repaid + $amount;
             $approvedAmount = (float) ($wageAdvance->amount_approved ?? $wageAdvance->amount_requested);
+            $remaining = max(0, $approvedAmount - (float) $wageAdvance->amount_repaid);
+            $cappedAmount = min($amount, $remaining);
 
+            if ($cappedAmount <= 0) {
+                return $wageAdvance->fresh();
+            }
+
+            $newAmountRepaid = (float) $wageAdvance->amount_repaid + $cappedAmount;
             $fullyRepaid = $newAmountRepaid >= $approvedAmount;
 
             $wageAdvance->update([
@@ -263,15 +271,17 @@ class WageAdvanceService
      */
     public function cancel(WageAdvance $wageAdvance, User $user, string $reason): WageAdvance
     {
-        if (! $wageAdvance->status->canCancel()) {
-            throw new \RuntimeException('Wage advance cannot be cancelled in current status');
-        }
-
         return DB::transaction(function () use ($wageAdvance, $user, $reason) {
-            $wageAdvance->update([
+            $locked = WageAdvance::query()->lockForUpdate()->find($wageAdvance->id);
+
+            if (! $locked->status->canCancel()) {
+                throw new \RuntimeException('Wage advance cannot be cancelled in current status');
+            }
+
+            $locked->update([
                 'status' => WageAdvanceStatus::CANCELLED,
                 'rejection_reason' => $reason,
-                'notes' => ($wageAdvance->notes ? $wageAdvance->notes."\n\n" : '').
+                'notes' => ($locked->notes ? $locked->notes."\n\n" : '').
                           "Cancelled by {$user->name}: {$reason}",
             ]);
 
@@ -412,6 +422,24 @@ class WageAdvanceService
             'total_amount_disbursed' => (float) $totalDisbursed,
             'total_amount_outstanding' => (float) $totalOutstanding,
         ];
+    }
+
+    /**
+     * Get the first shop assigned to a user, or null if none.
+     */
+    public function getUserPrimaryShop(User $user): ?Shop
+    {
+        return $user->shops()->first();
+    }
+
+    /**
+     * Delete a wage advance and clear related cache.
+     */
+    public function delete(WageAdvance $wageAdvance): void
+    {
+        $tenantId = $wageAdvance->tenant_id;
+        $wageAdvance->delete();
+        $this->clearCache($tenantId);
     }
 
     /**

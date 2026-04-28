@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Enums\PaymentStatus;
 use App\Http\Requests\Storefront\AddServiceToCartApiRequest;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Http\Requests\Storefront\AddToCartApiRequest;
 use App\Http\Requests\Storefront\CancelOrderApiRequest;
 use App\Http\Requests\Storefront\CustomerLoginRequest;
@@ -19,6 +18,7 @@ use App\Services\CartService;
 use App\Services\CheckoutService;
 use App\Services\CustomerAuthService;
 use App\Services\CustomerService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,6 +36,7 @@ class StorefrontApiController extends StorefrontBaseController
 
     public function getCart(Shop $shop): JsonResponse
     {
+        $this->ensureCustomerCanAccessShop($shop);
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
         $cart->loadApiCartRelations();
         $summary = $this->cartService->getCartSummary($cart);
@@ -52,6 +53,7 @@ class StorefrontApiController extends StorefrontBaseController
 
     public function addToCart(AddToCartApiRequest $request, Shop $shop): JsonResponse
     {
+        $this->ensureCustomerCanAccessShop($shop);
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
 
         try {
@@ -85,6 +87,7 @@ class StorefrontApiController extends StorefrontBaseController
 
     public function addServiceToCart(AddServiceToCartApiRequest $request, Shop $shop): JsonResponse
     {
+        $this->ensureCustomerCanAccessShop($shop);
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
 
         try {
@@ -112,6 +115,7 @@ class StorefrontApiController extends StorefrontBaseController
 
     public function updateCartItem(UpdateCartItemApiRequest $request, Shop $shop, int $item): JsonResponse
     {
+        $this->ensureCustomerCanAccessShop($shop);
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
         $cartItem = $cart->items()->findOrFail($item);
 
@@ -131,6 +135,7 @@ class StorefrontApiController extends StorefrontBaseController
 
     public function removeCartItem(Shop $shop, int $item): JsonResponse
     {
+        $this->ensureCustomerCanAccessShop($shop);
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
         $cartItem = $cart->items()->findOrFail($item);
 
@@ -141,6 +146,7 @@ class StorefrontApiController extends StorefrontBaseController
 
     public function cartSummary(Shop $shop): JsonResponse
     {
+        $this->ensureCustomerCanAccessShop($shop);
         $cart = $this->cartService->getCart($shop, auth('customer')->id());
         $summary = $this->cartService->getCartSummary($cart);
 
@@ -231,7 +237,7 @@ class StorefrontApiController extends StorefrontBaseController
     public function resetPassword(CustomerResetPasswordRequest $request, Shop $shop): JsonResponse
     {
         $credentials = array_merge(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
+            $request->validated(),
             ['tenant_id' => $shop->tenant_id]
         );
 
@@ -288,7 +294,7 @@ class StorefrontApiController extends StorefrontBaseController
 
         $billingAddress = $validated['billing_same_as_shipping']
             ? $validated['shipping_address']
-            : $validated['billing_address'];
+            : ($validated['billing_address'] ?? $validated['shipping_address']);
 
         $paymentMethod = \App\Enums\PaymentMethod::from($validated['payment_method']);
 

@@ -69,6 +69,8 @@ export interface ProductVariant {
     base_unit_name: string;
     image_url: string | null;
     image?: Image | null;
+    images?: Image[];
+    expiry_date?: string | null;
     batch_number?: string;
     serial_number?: string;
     is_active: boolean;

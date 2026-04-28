@@ -1,4 +1,5 @@
 import PayRunController from '@/actions/App/Http/Controllers/PayRunController';
+import PayrollReportController from '@/actions/App/Http/Controllers/PayrollReportController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';

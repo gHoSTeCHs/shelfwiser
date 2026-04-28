@@ -109,8 +109,8 @@ function makeCheckoutScaffold(int $stock = 10, int $reservedQty = 0, float $pric
 
 // ── Issue 5: reserved_quantity release skipped when reserved < ordered ────────
 
-it('createOrderFromCart clamps reserved_quantity to zero when reserved is less than ordered quantity', function () {
-    // reserved_quantity=3, cart item quantity=5 — the conditional guard skips deduction
+it('createOrderFromCart does not touch reserved_quantity for cash_on_delivery orders', function () {
+    // reserved_quantity=3 comes from external holds (purchase orders, POS). Checkout must not modify it.
     [
         'shop' => $shop,
         'customer' => $customer,
@@ -137,7 +137,7 @@ it('createOrderFromCart clamps reserved_quantity to zero when reserved is less t
         'cash_on_delivery'
     );
 
-    expect($location->fresh()->reserved_quantity)->toBe(0);
+    expect($location->fresh()->reserved_quantity)->toBe(3);
 });
 
 // ── Issue 6: updateQuantity stock check and write not atomic ─────────────────
@@ -198,10 +198,10 @@ it('mergeGuestCartIntoCustomerCart returns a valid customer cart when there is n
         ->and($result->shop_id)->toBe($shop->id);
 });
 
-it('mergeGuestCartIntoCustomerCart creates the customer cart before opening the transaction', function () {
+it('mergeGuestCartIntoCustomerCart creates the customer cart inside the transaction with a row lock', function () {
     ['shop' => $shop, 'customer' => $customer, 'cart' => $existingCart] = makeCheckoutScaffold();
 
-    // Delete the scaffold cart so getCart() must INSERT a new one (no existing DB row).
+    // Delete the scaffold cart so the merge must INSERT a new one (no existing DB row).
     $existingCart->forceDelete();
 
     $transactionLevelAtCartCreation = null;
@@ -219,9 +219,9 @@ it('mergeGuestCartIntoCustomerCart creates the customer cart before opening the 
     );
 
     // RefreshDatabase holds the outer transaction at level 1.
-    // Before fix: getCart() runs inside DB::transaction() → INSERT fires at level 2.
-    // After fix:  getCart() runs before DB::transaction() → INSERT fires at level 1.
-    expect($transactionLevelAtCartCreation)->toBe(1);
+    // The merge opens its own DB::transaction() → level 2.
+    // Cart creation happens inside that transaction so concurrent merges cannot race.
+    expect($transactionLevelAtCartCreation)->toBe(2);
 });
 
 // ── Issue 9: cancelByCustomer passes enum instance rather than ->value ────────

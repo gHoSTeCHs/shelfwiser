@@ -66,7 +66,7 @@ class ShopCreationService
                 'tenant_id' => $tenant->id,
                 'creator_id' => $creator->id,
                 'data' => $data,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -90,8 +90,9 @@ class ShopCreationService
      */
     private function enforceTenantLimits(Tenant $tenant): void
     {
-        $currentCount = $tenant->shops()->count();
-        $maxAllowed = $tenant->max_shops;
+        $lockedTenant = Tenant::query()->lockForUpdate()->find($tenant->id);
+        $currentCount = $lockedTenant->shops()->count();
+        $maxAllowed = $lockedTenant->max_shops;
 
         if ($currentCount >= $maxAllowed) {
             throw new TenantLimitExceededException(
@@ -104,9 +105,11 @@ class ShopCreationService
     {
         $base = Str::slug($name);
         $slug = $base;
+        $counter = 1;
 
-        for ($counter = 1; Shop::query()->where('tenant_id', $tenant->id)->where('slug', $slug)->exists(); $counter++) {
-            $slug = "$base-$counter";
+        while (Shop::query()->where('tenant_id', $tenant->id)->where('slug', $slug)->lockForUpdate()->exists()) {
+            $slug = "{$base}-{$counter}";
+            $counter++;
         }
 
         return $slug;

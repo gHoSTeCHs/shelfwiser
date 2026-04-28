@@ -1,6 +1,5 @@
-import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
 import CheckoutController from '@/actions/App/Http/Controllers/Storefront/CheckoutController';
-import { home } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
+import { cart as cartRoute, home } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
@@ -196,7 +195,7 @@ const Checkout: React.FC<CheckoutProps> = ({
                         },
                         {
                             label: 'Cart',
-                            href: CartController.index.url({ shop: shop.slug }),
+                            href: cartRoute.url({ shop: shop.slug }),
                         },
                         { label: 'Checkout' },
                     ]}

@@ -39,17 +39,20 @@ class PayRun extends Model
         'metadata',
     ];
 
-    protected $casts = [
-        'status' => PayRunStatus::class,
-        'calculated_at' => 'datetime',
-        'approved_at' => 'datetime',
-        'completed_at' => 'datetime',
-        'metadata' => 'array',
-        'total_gross' => 'decimal:2',
-        'total_deductions' => 'decimal:2',
-        'total_net' => 'decimal:2',
-        'total_employer_costs' => 'decimal:2',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'status' => PayRunStatus::class,
+            'calculated_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'metadata' => 'array',
+            'total_gross' => 'decimal:2',
+            'total_deductions' => 'decimal:2',
+            'total_net' => 'decimal:2',
+            'total_employer_costs' => 'decimal:2',
+        ];
+    }
 
     protected static function booted(): void
     {
@@ -66,7 +69,8 @@ class PayRun extends Model
         $date = now()->format('Ymd');
 
         return DB::transaction(function () use ($prefix, $date, $tenantId) {
-            $lastPayRun = self::where('tenant_id', $tenantId)
+            $lastPayRun = self::query()
+                ->where('tenant_id', $tenantId)
                 ->whereDate('created_at', today())
                 ->lockForUpdate()
                 ->orderByDesc('id')
@@ -188,14 +192,23 @@ class PayRun extends Model
 
     public function updateTotals(): void
     {
-        $items = $this->items()->where('status', PayRunItemStatus::CALCULATED)->get();
+        $agg = $this->items()
+            ->where('status', PayRunItemStatus::CALCULATED)
+            ->selectRaw('
+                COUNT(*) as employee_count,
+                COALESCE(SUM(gross_earnings), 0) as total_gross,
+                COALESCE(SUM(total_deductions), 0) as total_deductions,
+                COALESCE(SUM(net_pay), 0) as total_net,
+                COALESCE(SUM(total_employer_cost), 0) as total_employer_costs
+            ')
+            ->first();
 
         $this->update([
-            'employee_count' => $items->count(),
-            'total_gross' => $items->sum('gross_earnings'),
-            'total_deductions' => $items->sum('total_deductions'),
-            'total_net' => $items->sum('net_pay'),
-            'total_employer_costs' => $items->sum('total_employer_cost'),
+            'employee_count' => (int) $agg->employee_count,
+            'total_gross' => (float) $agg->total_gross,
+            'total_deductions' => (float) $agg->total_deductions,
+            'total_net' => (float) $agg->total_net,
+            'total_employer_costs' => (float) $agg->total_employer_costs,
         ]);
     }
 
@@ -207,5 +220,19 @@ class PayRun extends Model
     public function getStatusColorAttribute(): string
     {
         return $this->status->color();
+    }
+
+    public function loadShowRelations(): static
+    {
+        return $this->load([
+            'payrollPeriod:id,period_name,start_date,end_date',
+            'payCalendar:id,name',
+            'items' => function ($q) {
+                $q->with(['user:id,name,email', 'user.employeePayrollDetail:id,user_id,position_title,department']);
+            },
+            'calculatedBy:id,name',
+            'approvedBy:id,name',
+            'completedBy:id,name',
+        ]);
     }
 }

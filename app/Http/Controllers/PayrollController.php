@@ -6,7 +6,6 @@ use App\Http\Requests\CancelPayrollPeriodRequest;
 use App\Http\Requests\StorePayrollPeriodRequest;
 use App\Models\PayrollPeriod;
 use App\Models\Payslip;
-use App\Services\PayrollAuditService;
 use App\Services\PayrollService;
 use App\Services\PayRunService;
 use Illuminate\Http\RedirectResponse;
@@ -24,8 +23,7 @@ class PayrollController extends Controller
      */
     public function __construct(
         private PayrollService $payrollService,
-        private PayRunService $payRunService,
-        private PayrollAuditService $auditService
+        private PayRunService $payRunService
     ) {}
 
     /**
@@ -56,23 +54,11 @@ class PayrollController extends Controller
     {
         Gate::authorize('create', PayrollPeriod::class);
 
-        $validated = $request->validated();
-        $tenantId = $request->user()->tenant_id;
-
-        $payrollPeriod = $this->payRunService->createPayrollPeriod(
-            $tenantId,
-            $validated['shop_id'] ?? null,
-            $validated['start_date'],
-            $validated['end_date'],
-            $validated['payment_date'],
-            $validated['period_name'] ?? null
+        $payRun = $this->payRunService->createPayrollPeriodWithPayRun(
+            $request->user()->tenant_id,
+            $request->validated(),
+            $request->user()
         );
-
-        $payRun = $this->payRunService->createPayRun($tenantId, $payrollPeriod, [
-            'name' => $validated['period_name'] ?? null,
-        ]);
-
-        $this->auditService->logPayRunCreated($payRun, auth()->user());
 
         return redirect()
             ->route('pay-runs.show', $payRun)
@@ -111,27 +97,11 @@ class PayrollController extends Controller
         Gate::authorize('process', $payrollPeriod);
 
         try {
-            $payRun = $this->payRunService->findByPayrollPeriod($payrollPeriod);
+            $payRun = $this->payRunService->processForPayrollPeriod($payrollPeriod, auth()->user());
 
-            if (! $payRun) {
-                $payRun = $this->payRunService->createPayRun(
-                    $payrollPeriod->tenant_id,
-                    $payrollPeriod,
-                    ['name' => $payrollPeriod->period_name]
-                );
-                $this->auditService->logPayRunCreated($payRun, auth()->user());
-            }
-
-            $payRun = $this->payRunService->calculatePayRun($payRun);
-            $this->auditService->logPayRunCalculated($payRun, auth()->user());
-
-            return redirect()
-                ->route('pay-runs.show', $payRun)
-                ->with('success', 'Payroll processed successfully');
+            return redirect()->route('pay-runs.show', $payRun)->with('success', 'Payroll processed successfully');
         } catch (\RuntimeException|\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
@@ -143,26 +113,17 @@ class PayrollController extends Controller
         Gate::authorize('approve', $payrollPeriod);
 
         try {
-            $payRun = $this->payRunService->findByPayrollPeriod($payrollPeriod);
+            $payRun = $this->payRunService->approveForPayrollPeriod($payrollPeriod, auth()->user());
 
             if ($payRun) {
-                $payRun = $this->payRunService->approvePayRun($payRun);
-                $this->auditService->logPayRunApproved($payRun, auth()->user());
-
-                return redirect()
-                    ->route('pay-runs.show', $payRun)
-                    ->with('success', 'Payroll approved successfully');
+                return redirect()->route('pay-runs.show', $payRun)->with('success', 'Payroll approved successfully');
             }
 
             $this->payrollService->approvePayroll($payrollPeriod, auth()->user());
 
-            return redirect()
-                ->route('payroll.show', $payrollPeriod)
-                ->with('success', 'Payroll approved successfully');
+            return redirect()->route('payroll.show', $payrollPeriod)->with('success', 'Payroll approved successfully');
         } catch (\RuntimeException|\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
@@ -174,26 +135,17 @@ class PayrollController extends Controller
         Gate::authorize('markAsPaid', $payrollPeriod);
 
         try {
-            $payRun = $this->payRunService->findByPayrollPeriod($payrollPeriod);
+            $payRun = $this->payRunService->completeForPayrollPeriod($payrollPeriod, auth()->user());
 
             if ($payRun) {
-                $payRun = $this->payRunService->completePayRun($payRun);
-                $this->auditService->logPayRunCompleted($payRun, auth()->user());
-
-                return redirect()
-                    ->route('pay-runs.show', $payRun)
-                    ->with('success', 'Payroll marked as paid');
+                return redirect()->route('pay-runs.show', $payRun)->with('success', 'Payroll marked as paid');
             }
 
             $this->payrollService->markAsPaid($payrollPeriod);
 
-            return redirect()
-                ->route('payroll.show', $payrollPeriod)
-                ->with('success', 'Payroll marked as paid');
+            return redirect()->route('payroll.show', $payrollPeriod)->with('success', 'Payroll marked as paid');
         } catch (\RuntimeException|\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
@@ -205,26 +157,18 @@ class PayrollController extends Controller
         Gate::authorize('cancel', $payrollPeriod);
 
         try {
-            $payRun = $this->payRunService->findByPayrollPeriod($payrollPeriod);
+            $reason = $request->validated('reason');
+            $payRun = $this->payRunService->cancelForPayrollPeriod($payrollPeriod, $reason, $request->user());
 
-            if ($payRun) {
-                $payRun = $this->payRunService->cancelPayRun($payRun, $request->validated()['reason']);
-                $this->auditService->logPayRunCancelled($payRun, auth()->user(), $request->validated()['reason']);
-
-                return redirect()
-                    ->route('pay-runs.index')
-                    ->with('success', 'Payroll cancelled');
+            if (! $payRun) {
+                $this->payrollService->cancelPayroll($payrollPeriod, $reason, $request->user()->id);
             }
 
-            $this->payrollService->cancelPayroll($payrollPeriod, $request->validated()['reason'], auth()->id());
-
             return redirect()
-                ->route('payroll.index')
+                ->route($payRun ? 'pay-runs.index' : 'payroll.index')
                 ->with('success', 'Payroll cancelled');
         } catch (\RuntimeException|\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
@@ -265,7 +209,7 @@ class PayrollController extends Controller
     {
         Gate::authorize('view', $payslip);
 
-        $payslip->load(['user', 'shop', 'payrollPeriod']);
+        $payslip->loadShowRelations();
 
         return Inertia::render('Payroll/Payslip', [
             'payslip' => $payslip,

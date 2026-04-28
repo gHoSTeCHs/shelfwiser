@@ -62,7 +62,7 @@ export default function Create({ products, locations }: Props) {
                 <div className="flex items-center justify-between">
                     <div>
                         <Link
-                            href={stockMovementsIndex().url()}
+                            href={stockMovementsIndex.url()}
                             className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -78,7 +78,7 @@ export default function Create({ products, locations }: Props) {
                 </div>
 
                 <Form
-                    action={recordPurchase().url()}
+                    action={recordPurchase.url()}
                     method="post"
                     className="space-y-6"
                     transform={(data) => ({

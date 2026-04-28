@@ -78,4 +78,9 @@ class StorefrontConfig extends Model
     {
         return $this->hasMany(StorefrontPage::class, 'storefront_config_id');
     }
+
+    public function loadBuilderRelations(): static
+    {
+        return $this->load(['theme.template', 'pages']);
+    }
 }

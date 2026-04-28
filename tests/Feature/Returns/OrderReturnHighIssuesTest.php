@@ -85,6 +85,8 @@ function returnScaffold(): array
     $orderItem = DB::table('order_items')->insertGetId([
         'order_id' => $order->id,
         'tenant_id' => $tenant->id,
+        'sellable_type' => \App\Models\ProductVariant::class,
+        'sellable_id' => 1,
         'quantity' => 5,
         'unit_price' => 1000,
         'discount_amount' => 0,

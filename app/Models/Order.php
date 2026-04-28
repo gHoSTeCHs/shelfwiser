@@ -246,10 +246,14 @@ class Order extends Model
 
     public function calculateTotals(): void
     {
+        if (! $this->relationLoaded('items')) {
+            $this->load('items');
+        }
+
         $this->subtotal = $this->items->sum(fn ($item) => $item->unit_price * $item->quantity);
         $this->tax_amount = $this->items->sum('tax_amount');
         $this->discount_amount = $this->items->sum('discount_amount');
-        $this->total_amount = $this->subtotal + $this->tax_amount - $this->discount_amount + $this->shipping_cost;
+        $this->total_amount = max(0, $this->subtotal + $this->tax_amount - $this->discount_amount + $this->shipping_cost);
     }
 
     public static function generateOrderNumber(int $tenantId, $createdAt = null): string
@@ -314,6 +318,11 @@ class Order extends Model
                 ]);
             },
         ]);
+    }
+
+    public function loadEditRelations(): static
+    {
+        return $this->load(['shop', 'customer', 'items.productVariant.product']);
     }
 
     public function loadForShow(): static

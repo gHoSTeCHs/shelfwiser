@@ -221,7 +221,7 @@ export default function Edit({ shop, shopTypes, inventoryModels }: Props) {
                                             onChange={(value) =>
                                                 setSelectedInventoryModel(value)
                                             }
-                                            defaultValue={shop.inventory_model}
+                                            defaultValue={shop.inventory_model ?? undefined}
                                         />
                                         <input
                                             type="hidden"

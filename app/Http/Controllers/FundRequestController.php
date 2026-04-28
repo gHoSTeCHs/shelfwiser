@@ -2,18 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ApproveFundRequestRequest;
+use App\Enums\FundRequestType;
 use App\Http\Requests\ApprovalQueueFundRequestRequest;
+use App\Http\Requests\ApproveFundRequestRequest;
 use App\Http\Requests\CancelFundRequestRequest;
 use App\Http\Requests\DisburseFundRequestRequest;
 use App\Http\Requests\IndexFundRequestRequest;
 use App\Http\Requests\RejectFundRequestRequest;
 use App\Http\Requests\StoreFundRequestRequest;
 use App\Http\Requests\UpdateFundRequestRequest;
-use App\Enums\FundRequestType;
-use App\Enums\UserRole;
 use App\Models\FundRequest;
-use App\Models\Shop;
 use App\Services\FundRequestService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,7 +30,7 @@ class FundRequestController extends Controller
         Gate::authorize('viewAny', FundRequest::class);
 
         $user = $request->user();
-        $shop = $request->shopId() ? Shop::query()->findOrFail($request->shopId()) : null;
+        $shop = $this->fundRequestService->resolveShop($request->shopId());
         $dateRange = $request->dateRange();
 
         return Inertia::render('FundRequests/Index', [
@@ -45,13 +43,10 @@ class FundRequestController extends Controller
                 type: $request->type(),
             ),
             'statistics' => $this->fundRequestService->getStatistics(
-                tenantId: $user->tenant_id,
+                user: $user,
                 shop: $shop,
                 startDate: $dateRange->start,
                 endDate: $dateRange->end,
-                shopIds: $shop === null && $user->role->level() < UserRole::GENERAL_MANAGER->level()
-                    ? $user->shops->pluck('id')->toArray()
-                    : null,
             ),
             'filters' => [
                 'shop_id' => $request->shopId(),
@@ -61,14 +56,8 @@ class FundRequestController extends Controller
                 'end_date' => $dateRange->end->toDateString(),
             ],
             'shops' => $user->shops,
-            'statusOptions' => collect(\App\Enums\FundRequestStatus::cases())->map(fn ($case) => [
-                'value' => $case->value,
-                'label' => $case->label(),
-            ]),
-            'typeOptions' => collect(\App\Enums\FundRequestType::cases())->map(fn ($case) => [
-                'value' => $case->value,
-                'label' => $case->label(),
-            ]),
+            'statusOptions' => $this->fundRequestService->getStatusOptions(),
+            'typeOptions' => $this->fundRequestService->getTypeOptions(),
         ]);
     }
 
@@ -77,16 +66,14 @@ class FundRequestController extends Controller
         Gate::authorize('viewAny', FundRequest::class);
 
         $user = $request->user();
-        $shop = $request->shopId() ? Shop::query()->findOrFail($request->shopId()) : null;
+        $shop = $this->fundRequestService->resolveShop($request->shopId());
 
         return Inertia::render('FundRequests/Approve', [
             'fundRequests' => $this->fundRequestService->getRequestsForApproval($user, $shop),
             'filters' => [
                 'shop_id' => $request->shopId(),
             ],
-            'shops' => $user->is_tenant_owner
-                ? Shop::query()->where('is_active', true)->get(['id', 'name', 'slug'])
-                : $user->shops,
+            'shops' => $user->accessibleShops(),
         ]);
     }
 
@@ -109,7 +96,7 @@ class FundRequestController extends Controller
     {
         Gate::authorize('create', FundRequest::class);
 
-        $shop = Shop::query()->findOrFail($request->validated('shop_id'));
+        $shop = $this->fundRequestService->resolveShop($request->validated('shop_id'));
 
         try {
             $fundRequest = $this->fundRequestService->create(
@@ -133,7 +120,7 @@ class FundRequestController extends Controller
     {
         Gate::authorize('view', $fundRequest);
 
-        $fundRequest->load(['user', 'shop', 'approvedBy', 'disbursedBy']);
+        $fundRequest->loadDetailRelations();
 
         return Inertia::render('FundRequests/Show', [
             'fundRequest' => $fundRequest,
@@ -245,7 +232,7 @@ class FundRequestController extends Controller
     {
         Gate::authorize('delete', $fundRequest);
 
-        $fundRequest->delete();
+        $this->fundRequestService->delete($fundRequest);
 
         return redirect()
             ->route('fund-requests.index')

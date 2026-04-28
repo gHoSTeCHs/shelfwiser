@@ -12,25 +12,42 @@ use Illuminate\Support\Str;
 class ImageService
 {
     /**
+     * Resolve a polymorphic imageable model from its type name and ID.
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function resolveImageable(string $modelType, int $modelId): Model
+    {
+        $allowed = ['Product', 'ProductVariant', 'Service', 'User'];
+
+        if (! in_array($modelType, $allowed, true)) {
+            throw new \InvalidArgumentException("Invalid model type: {$modelType}");
+        }
+
+        $modelClass = 'App\\Models\\'.$modelType;
+
+        return $modelClass::query()->findOrFail($modelId);
+    }
+
+    /**
      * Upload an image for a model
      */
     public function upload(
         Model $model,
         UploadedFile $file,
+        int $tenantId,
         array $additionalData = []
     ): Image {
-        return DB::transaction(function () use ($model, $file, $additionalData) {
-            $tenantId = $model->tenant_id ?? auth()->user()->tenant_id;
+        return DB::transaction(function () use ($model, $file, $tenantId, $additionalData) {
 
-            $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
+            $filename = Str::uuid().'.'.$file->extension();
             $modelType = class_basename($model);
             $path = "tenants/{$tenantId}/".Str::plural(strtolower($modelType))."/{$model->id}/{$filename}";
 
-            $disk = config('images.disk', 'public');
-            Storage::disk($disk)->put($path, file_get_contents($file));
-
+            $disk = $modelType === 'User'
+                ? config('images.private_disk', 'local')
+                : config('images.disk', 'public');
             $dimensions = $this->getImageDimensions($file);
-
             $isPrimary = $additionalData['is_primary'] ?? ! $model->images()->exists();
 
             if ($isPrimary) {
@@ -39,7 +56,9 @@ class ImageService
 
             $sortOrder = $additionalData['sort_order'] ?? $model->images()->max('sort_order') + 1;
 
-            return $model->images()->create([
+            $fileContents = file_get_contents($file);
+
+            $image = $model->images()->create([
                 'tenant_id' => $tenantId,
                 'filename' => $filename,
                 'path' => $path,
@@ -55,6 +74,10 @@ class ImageService
                 'sort_order' => $sortOrder,
                 'metadata' => $additionalData['metadata'] ?? null,
             ]);
+
+            Storage::disk($disk)->put($path, $fileContents);
+
+            return $image;
         });
     }
 
@@ -64,16 +87,75 @@ class ImageService
     public function uploadMultiple(
         Model $model,
         array $files,
+        int $tenantId,
         array $additionalData = []
     ): array {
-        $uploadedImages = [];
-
-        foreach ($files as $index => $file) {
-            $data = $additionalData[$index] ?? [];
-            $uploadedImages[] = $this->upload($model, $file, $data);
+        if (empty($files)) {
+            return [];
         }
 
-        return $uploadedImages;
+        return DB::transaction(function () use ($model, $files, $tenantId, $additionalData) {
+            $files = array_values($files);
+            $additionalData = array_values($additionalData);
+            $modelType = class_basename($model);
+            $disk = $modelType === 'User'
+                ? config('images.private_disk', 'local')
+                : config('images.disk', 'public');
+
+            $hasExistingImages = $model->images()->exists();
+            $baseOrder = (int) ($model->images()->max('sort_order') ?? -1);
+
+            $primaryIndex = null;
+            foreach ($files as $i => $file) {
+                $data = $additionalData[$i] ?? [];
+                if ($data['is_primary'] ?? ($i === 0 && ! $hasExistingImages)) {
+                    $primaryIndex = $i;
+                    break;
+                }
+            }
+
+            if ($primaryIndex !== null) {
+                $model->images()->update(['is_primary' => false]);
+            }
+
+            $uploadedImages = [];
+            $pendingStorageWrites = [];
+
+            foreach ($files as $index => $file) {
+                $data = $additionalData[$index] ?? [];
+
+                $filename = Str::uuid().'.'.$file->extension();
+                $path = "tenants/{$tenantId}/".Str::plural(strtolower($modelType))."/{$model->id}/{$filename}";
+                $dimensions = $this->getImageDimensions($file);
+                $fileContents = file_get_contents($file);
+
+                $image = $model->images()->create([
+                    'tenant_id' => $tenantId,
+                    'filename' => $filename,
+                    'path' => $path,
+                    'disk' => $disk,
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                    'width' => $dimensions['width'],
+                    'height' => $dimensions['height'],
+                    'alt_text' => $data['alt_text'] ?? null,
+                    'title' => $data['title'] ?? null,
+                    'caption' => $data['caption'] ?? null,
+                    'is_primary' => $data['is_primary'] ?? ($index === $primaryIndex),
+                    'sort_order' => $data['sort_order'] ?? $baseOrder + $index + 1,
+                    'metadata' => $data['metadata'] ?? null,
+                ]);
+
+                $pendingStorageWrites[] = ['path' => $path, 'contents' => $fileContents];
+                $uploadedImages[] = $image;
+            }
+
+            foreach ($pendingStorageWrites as $write) {
+                Storage::disk($disk)->put($write['path'], $write['contents']);
+            }
+
+            return $uploadedImages;
+        });
     }
 
     /**
@@ -115,11 +197,15 @@ class ImageService
      */
     public function reorder(Model $model, array $imageIds): void
     {
+        if (empty($imageIds)) {
+            return;
+        }
+
         DB::transaction(function () use ($model, $imageIds) {
-            foreach ($imageIds as $index => $imageId) {
-                $model->images()
-                    ->where('id', $imageId)
-                    ->update(['sort_order' => $index]);
+            $ids = array_map('intval', array_values($imageIds));
+
+            foreach ($ids as $sortOrder => $id) {
+                $model->images()->where('id', $id)->update(['sort_order' => $sortOrder]);
             }
         });
     }

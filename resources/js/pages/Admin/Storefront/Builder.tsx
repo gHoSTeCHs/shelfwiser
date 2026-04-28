@@ -52,8 +52,7 @@ const PAGE_TYPE_LABELS: Record<PageType, string> = {
     custom: 'Custom',
 };
 
-export default function Builder({ shop, config: initialConfig, themes: rawThemes }: BuilderPageProps) {
-    const themes = Array.isArray(rawThemes) ? rawThemes : (rawThemes as unknown as { data: typeof rawThemes }).data ?? [];
+export default function Builder({ shop, config: initialConfig, themes }: BuilderPageProps) {
     const initialConfigUnwrapped = initialConfig && 'data' in initialConfig
         ? (initialConfig as unknown as { data: typeof initialConfig }).data
         : initialConfig;

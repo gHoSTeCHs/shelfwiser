@@ -1,5 +1,5 @@
 import CustomerAuthController from '@/actions/App/Http/Controllers/Storefront/CustomerAuthController';
-import { home } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
+import { home, register } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Checkbox from '@/components/form/input/Checkbox';
 import Input from '@/components/form/input/InputField';
 import InputError from '@/components/form/InputError';
@@ -124,7 +124,7 @@ const Login: React.FC<AuthLoginProps> = ({ shop }) => {
                                     <p className="text-sm text-gray-600">
                                         Don't have an account?{' '}
                                         <Link
-                                            href={CustomerAuthController.showRegister.url(
+                                            href={register.url(
                                                 { shop: shop.slug },
                                             )}
                                             className="font-medium text-brand-600 hover:text-brand-700"

@@ -1,4 +1,4 @@
-import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
+import { cart } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import useCurrency from '@/hooks/useCurrency';
 import { Service, ServiceVariant } from '@/types/service';
 import { Shop } from '@/types/shop';
@@ -138,7 +138,7 @@ const MiniCartPreview: React.FC<MiniCartPreviewProps> = ({
                                     </span>
                                 </div>
                                 <Link
-                                    href={CartController.index.url({
+                                    href={cart.url({
                                         shop: shop.slug,
                                     })}
                                     className="block w-full rounded-lg bg-brand-500 py-2 text-center text-sm font-medium text-white transition hover:bg-brand-600"

@@ -1,6 +1,6 @@
 import { useAppearance } from '@/hooks/use-appearance';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
-import { dashboard, login, register } from '@/routes';
+import { dashboard, home, login, register } from '@/routes';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { Menu, Moon, Sun, X } from 'lucide-react';

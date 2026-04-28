@@ -4,9 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\PaymentMethod;
 use App\Models\Order;
-use App\Models\OrderPayment;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class RecordOrderPaymentRequest extends FormRequest
@@ -16,13 +14,7 @@ class RecordOrderPaymentRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $order = $this->route('order');
-
-        if (! $order instanceof Order) {
-            return false;
-        }
-
-        return Gate::allows('create', [OrderPayment::class, $order]);
+        return true;
     }
 
     /**
@@ -35,7 +27,7 @@ class RecordOrderPaymentRequest extends FormRequest
         return [
             'amount' => ['bail', 'required', 'numeric', 'min:0.01'],
             'payment_method' => ['bail', 'required', 'string', Rule::enum(PaymentMethod::class)],
-            'payment_date' => ['bail', 'required', 'date'],
+            'payment_date' => ['bail', 'required', 'date_format:Y-m-d', 'before_or_equal:today'],
             'reference_number' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];

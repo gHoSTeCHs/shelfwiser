@@ -46,6 +46,7 @@ class OrderReturnService
      * Create a return request
      *
      * @param  array<int, array{order_item_id: int|string, quantity: int, reason: ?string, condition_notes: ?string}>  $items
+     *
      * @throws Throwable
      */
     public function createReturn(
@@ -85,11 +86,12 @@ class OrderReturnService
                         OrderReturnStatus::APPROVED->value,
                         OrderReturnStatus::COMPLETED->value,
                     ]))
+                    ->lockForUpdate()
                     ->get()
                     ->groupBy('order_item_id')
                     ->map(fn ($rows) => $rows->sum('quantity'));
 
-                $returnNumber = 'RET-'.strtoupper(uniqid());
+                $returnNumber = 'RET-'.\Illuminate\Support\Str::ulid()->toString();
 
                 $return = OrderReturn::query()->create([
                     'tenant_id' => $order->tenant_id,
@@ -107,6 +109,10 @@ class OrderReturnService
 
                     if (! $orderItem) {
                         throw new Exception("Order item {$orderItemId} not found");
+                    }
+
+                    if (! $orderItem->isProduct()) {
+                        throw new \InvalidArgumentException("Only product items can be returned. Service item {$orderItem->id} is not returnable.");
                     }
 
                     $alreadyReturned = $alreadyReturnedMap->get($orderItemId, 0);
@@ -138,7 +144,7 @@ class OrderReturnService
         } catch (Throwable $e) {
             Log::error('Return request creation failed.', [
                 'order_id' => $order->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -162,24 +168,22 @@ class OrderReturnService
 
         try {
             return DB::transaction(function () use ($return, $user, $restockItems, $processRefund) {
-                $return->loadMissing([
-                    'items.orderItem.productVariant.inventoryLocations',
-                    'order',
-                ]);
+                $lockedReturn = OrderReturn::query()->where('id', $return->id)->lockForUpdate()->firstOrFail();
+                $lockedReturn->load('items.orderItem.productVariant.inventoryLocations', 'order');
 
-                $refundAmount = $return->items->sum(
+                $refundAmount = $lockedReturn->items->sum(
                     fn ($returnItem) => $returnItem->orderItem->unit_price * $returnItem->quantity
                 );
 
-                if ($restockItems) {
-                    foreach ($return->items as $returnItem) {
+                if ($restockItems && ! $lockedReturn->restocked) {
+                    foreach ($lockedReturn->items as $returnItem) {
                         $orderItem = $returnItem->orderItem;
 
                         if ($orderItem->isProduct()) {
                             $variant = $orderItem->productVariant;
                             $location = $variant->inventoryLocations
                                 ->where('location_type', \App\Models\Shop::class)
-                                ->where('location_id', $return->order->shop_id)
+                                ->where('location_id', $lockedReturn->order->shop_id)
                                 ->first();
 
                             if ($location) {
@@ -189,48 +193,48 @@ class OrderReturnService
                                     $returnItem->quantity,
                                     StockMovementType::RETURN,
                                     $user,
-                                    "Return #{$return->return_number}",
-                                    "Restocked from approved return. Reason: {$return->reason}"
+                                    "Return #{$lockedReturn->return_number}",
+                                    "Restocked from approved return. Reason: {$lockedReturn->reason}"
                                 );
                             }
                         }
                     }
 
-                    $return->restocked = true;
+                    $lockedReturn->restocked = true;
+                    $lockedReturn->save();
                 }
 
                 if ($processRefund && $refundAmount > 0) {
                     $this->refundService->partialRefund(
-                        $return->order,
+                        $lockedReturn->order,
                         $user,
-                        $return->items->mapWithKeys(function ($item) {
+                        $lockedReturn->items->mapWithKeys(function ($item) {
                             return [$item->order_item_id => $item->quantity];
                         })->toArray(),
-                        "Return #{$return->return_number}: {$return->reason}",
+                        "Return #{$lockedReturn->return_number}: {$lockedReturn->reason}",
                         false // Don't restock again, we already did it above
                     );
                 }
 
-                // Update return status
-                $return->status = OrderReturnStatus::APPROVED;
-                $return->approved_by = $user->id;
-                $return->approved_at = now();
-                $return->refund_amount = $refundAmount;
-                $return->save();
+                $lockedReturn->status = OrderReturnStatus::APPROVED;
+                $lockedReturn->approved_by = $user->id;
+                $lockedReturn->approved_at = now();
+                $lockedReturn->refund_amount = $refundAmount;
+                $lockedReturn->save();
 
                 Log::info('Return approved.', [
-                    'return_id' => $return->id,
+                    'return_id' => $lockedReturn->id,
                     'approved_by' => $user->id,
                     'refund_amount' => $refundAmount,
                     'restocked' => $restockItems,
                 ]);
 
-                return $return;
+                return $lockedReturn;
             });
         } catch (Throwable $e) {
             Log::error('Return approval failed.', [
                 'return_id' => $return->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -274,7 +278,7 @@ class OrderReturnService
         } catch (Throwable $e) {
             Log::error('Return rejection failed.', [
                 'return_id' => $return->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -311,7 +315,7 @@ class OrderReturnService
         } catch (Throwable $e) {
             Log::error('Return completion failed.', [
                 'return_id' => $return->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\CustomerAddress;
+use App\Models\Shop;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -123,7 +124,7 @@ class CustomerService
 
                 Log::info('Customer created successfully.', ['customer_id' => $customer->id]);
 
-                return $customer->load(['preferredShop', 'addresses']);
+                return $customer->loadEditRelations();
             });
         } catch (Throwable $e) {
             Log::error('Customer creation failed.', [
@@ -150,9 +151,12 @@ class CustomerService
                     'last_name' => $data['last_name'] ?? null,
                     'email' => $data['email'] ?? null,
                     'phone' => $data['phone'] ?? null,
-                    'preferred_shop_id' => array_key_exists('preferred_shop_id', $data) ? $data['preferred_shop_id'] : null,
                     'marketing_opt_in' => $data['marketing_opt_in'] ?? null,
                 ], fn ($value) => $value !== null);
+
+                if (array_key_exists('preferred_shop_id', $data)) {
+                    $updateData['preferred_shop_id'] = $data['preferred_shop_id'];
+                }
 
                 if (isset($data['is_active'])) {
                     $updateData['is_active'] = $data['is_active'];
@@ -186,25 +190,14 @@ class CustomerService
     /**
      * Soft delete a customer.
      */
-    public function delete(Customer $customer): bool
+    public function delete(Customer $customer): void
     {
         Log::info('Customer deletion started.', ['customer_id' => $customer->id]);
 
-        try {
-            $customer->delete();
-            $this->invalidateCustomerCache($customer);
+        $customer->delete();
+        $this->invalidateCustomerCache($customer);
 
-            Log::info('Customer deleted successfully.', ['customer_id' => $customer->id]);
-
-            return true;
-        } catch (Throwable $e) {
-            Log::error('Customer deletion failed.', [
-                'customer_id' => $customer->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
+        Log::info('Customer deleted successfully.', ['customer_id' => $customer->id]);
     }
 
     /**
@@ -292,6 +285,38 @@ class CustomerService
             'marketing_opt_in' => false,
             'credit_limit' => null,
         ];
+    }
+
+    /**
+     * Get all active shops for customer form dropdowns (preferred shop selection).
+     */
+    public function getActiveShops(): \Illuminate\Support\Collection
+    {
+        return Shop::query()
+            ->where('is_active', true)
+            ->select('id', 'name', 'slug')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Get the 5 most recent orders for a customer's profile page.
+     */
+    public function getRecentOrders(Customer $customer): \Illuminate\Support\Collection
+    {
+        return $customer->orders()
+            ->with(['shop:id,name', 'items:id,order_id,product_name,quantity,unit_price'])
+            ->latest()
+            ->limit(5)
+            ->get();
+    }
+
+    /**
+     * Load edit-form relations onto a customer and return it.
+     */
+    public function getForEdit(Customer $customer): Customer
+    {
+        return $customer->loadEditRelations();
     }
 
     /**

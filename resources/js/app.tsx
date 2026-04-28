@@ -1,5 +1,10 @@
 import '../css/app.css';
 
+import axios from 'axios';
+axios.defaults.withCredentials = true;
+axios.defaults.xsrfCookieName = 'XSRF-TOKEN';
+axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
+
 import { ChunkLoadErrorFallback, ErrorBoundary } from '@/components/error';
 import { ErrorProvider } from '@/context/ErrorContext';
 import { ThemeProvider } from '@/context/ThemeContext.tsx';

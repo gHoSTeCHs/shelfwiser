@@ -17,6 +17,8 @@ class EmployeePayrollDetail extends Model
 {
     use BelongsToTenant, HasFactory, SoftDeletes;
 
+    protected $hidden = ['bank_account_number', 'routing_number', 'tax_id_number'];
+
     protected $fillable = [
         'user_id',
         'tenant_id',
@@ -54,33 +56,36 @@ class EmployeePayrollDetail extends Model
         'end_date',
     ];
 
-    protected $casts = [
-        'employment_type' => EmploymentType::class,
-        'pay_type' => PayType::class,
-        'pay_amount' => 'decimal:2',
-        'pay_frequency' => PayFrequency::class,
-        'standard_hours_per_week' => 'decimal:2',
-        'overtime_multiplier' => 'decimal:2',
-        'weekend_multiplier' => 'decimal:2',
-        'holiday_multiplier' => 'decimal:2',
-        'commission_rate' => 'decimal:2',
-        'commission_cap' => 'decimal:2',
-        'tax_handling' => TaxHandling::class,
-        'enable_tax_calculations' => 'boolean',
-        'tax_id_number' => 'encrypted',
-        'pension_enabled' => 'boolean',
-        'pension_employee_rate' => 'decimal:2',
-        'pension_employer_rate' => 'decimal:2',
-        'nhf_enabled' => 'boolean',
-        'nhf_rate' => 'decimal:2',
-        'nhis_enabled' => 'boolean',
-        'nhis_amount' => 'decimal:2',
-        'other_deductions_enabled' => 'boolean',
-        'bank_account_number' => 'encrypted',
-        'routing_number' => 'encrypted',
-        'start_date' => 'date',
-        'end_date' => 'date',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'employment_type' => EmploymentType::class,
+            'pay_type' => PayType::class,
+            'pay_amount' => 'decimal:2',
+            'pay_frequency' => PayFrequency::class,
+            'standard_hours_per_week' => 'decimal:2',
+            'overtime_multiplier' => 'decimal:2',
+            'weekend_multiplier' => 'decimal:2',
+            'holiday_multiplier' => 'decimal:2',
+            'commission_rate' => 'decimal:2',
+            'commission_cap' => 'decimal:2',
+            'tax_handling' => TaxHandling::class,
+            'enable_tax_calculations' => 'boolean',
+            'tax_id_number' => 'encrypted',
+            'pension_enabled' => 'boolean',
+            'pension_employee_rate' => 'decimal:2',
+            'pension_employer_rate' => 'decimal:2',
+            'nhf_enabled' => 'boolean',
+            'nhf_rate' => 'decimal:2',
+            'nhis_enabled' => 'boolean',
+            'nhis_amount' => 'decimal:2',
+            'other_deductions_enabled' => 'boolean',
+            'bank_account_number' => 'encrypted',
+            'routing_number' => 'encrypted',
+            'start_date' => 'date',
+            'end_date' => 'date',
+        ];
+    }
 
     public function user(): BelongsTo
     {
@@ -109,6 +114,7 @@ class EmployeePayrollDetail extends Model
     {
         $weeksPerMonth = 4.33;
         $standardHours = $this->standard_hours_per_week ?? 40;
+
         return $standardHours * $weeksPerMonth;
     }
 
@@ -122,6 +128,7 @@ class EmployeePayrollDetail extends Model
         }
 
         $monthlyHours = $this->getMonthlyHours();
+
         return $monthlyHours > 0 ? (float) $this->pay_amount / $monthlyHours : 0;
     }
 
@@ -130,7 +137,7 @@ class EmployeePayrollDetail extends Model
      */
     public function calculateCommission(float $salesAmount): float
     {
-        if (!$this->commission_rate || $this->commission_rate <= 0) {
+        if (! $this->commission_rate || $this->commission_rate <= 0) {
             return 0;
         }
 
@@ -150,6 +157,7 @@ class EmployeePayrollDetail extends Model
     {
         $hourlyRate = $this->calculateHourlyRate();
         $multiplier = $this->overtime_multiplier ?? 1.5;
+
         return $overtimeHours * $hourlyRate * $multiplier;
     }
 
@@ -160,6 +168,7 @@ class EmployeePayrollDetail extends Model
     {
         $hourlyRate = $this->calculateHourlyRate();
         $multiplier = $this->weekend_multiplier ?? 2.0;
+
         return $weekendHours * $hourlyRate * $multiplier;
     }
 
@@ -170,6 +179,7 @@ class EmployeePayrollDetail extends Model
     {
         $hourlyRate = $this->calculateHourlyRate();
         $multiplier = $this->holiday_multiplier ?? 2.5;
+
         return $holidayHours * $hourlyRate * $multiplier;
     }
 }

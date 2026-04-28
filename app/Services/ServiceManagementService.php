@@ -123,7 +123,7 @@ class ServiceManagementService
                 'tenant_id' => $tenant->id,
                 'shop_id' => $shop->id,
                 'name' => $data['name'] ?? null,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -165,7 +165,7 @@ class ServiceManagementService
             Log::error('Service update failed.', [
                 'service_id' => $service->id,
                 'name' => $data['name'] ?? null,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -206,7 +206,7 @@ class ServiceManagementService
         } catch (Throwable $e) {
             Log::error('Service deletion failed.', [
                 'service_id' => $service->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -253,7 +253,7 @@ class ServiceManagementService
             Log::error('Service variant creation failed.', [
                 'service_id' => $service->id,
                 'name' => $data['name'] ?? null,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -288,7 +288,7 @@ class ServiceManagementService
             Log::error('Service variant update failed.', [
                 'variant_id' => $variant->id,
                 'name' => $data['name'] ?? null,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -322,7 +322,7 @@ class ServiceManagementService
         } catch (Throwable $e) {
             Log::error('Service variant deletion failed.', [
                 'variant_id' => $variant->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -375,7 +375,7 @@ class ServiceManagementService
                 'service_id' => $service?->id,
                 'category_id' => $category?->id,
                 'name' => $data['name'] ?? null,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -414,7 +414,7 @@ class ServiceManagementService
             Log::error('Service addon update failed.', [
                 'addon_id' => $addon->id,
                 'name' => $data['name'] ?? null,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -455,7 +455,7 @@ class ServiceManagementService
         } catch (Throwable $e) {
             Log::error('Service addon deletion failed.', [
                 'addon_id' => $addon->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;

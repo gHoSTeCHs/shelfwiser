@@ -35,18 +35,21 @@ class WageAdvance extends Model
         'notes',
     ];
 
-    protected $casts = [
-        'status' => WageAdvanceStatus::class,
-        'amount_requested' => 'decimal:2',
-        'amount_approved' => 'decimal:2',
-        'amount_repaid' => 'decimal:2',
-        'requested_at' => 'datetime',
-        'approved_at' => 'datetime',
-        'disbursed_at' => 'datetime',
-        'repayment_start_date' => 'date',
-        'repayment_installments' => 'integer',
-        'fully_repaid_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'status' => WageAdvanceStatus::class,
+            'amount_requested' => 'decimal:2',
+            'amount_approved' => 'decimal:2',
+            'amount_repaid' => 'decimal:2',
+            'requested_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'disbursed_at' => 'datetime',
+            'repayment_start_date' => 'date',
+            'repayment_installments' => 'integer',
+            'fully_repaid_at' => 'datetime',
+        ];
+    }
 
     /**
      * Employee who requested the advance
@@ -193,5 +196,10 @@ class WageAdvance extends Model
             WageAdvanceStatus::DISBURSED,
             WageAdvanceStatus::REPAYING,
         ]);
+    }
+
+    public function loadDetailRelations(): static
+    {
+        return $this->load(['user', 'shop', 'approvedBy', 'disbursedBy']);
     }
 }

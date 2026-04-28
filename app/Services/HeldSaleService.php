@@ -7,6 +7,7 @@ use App\Models\InventoryLocation;
 use App\Models\ProductPackagingType;
 use App\Models\ProductVariant;
 use App\Models\Shop;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -21,12 +22,13 @@ class HeldSaleService
      * @throws \Throwable
      */
     public function holdSale(
+        User $user,
         Shop $shop,
         array $items,
         ?int $customerId = null,
         ?string $notes = null
     ): HeldSale {
-        return DB::transaction(function () use ($shop, $items, $customerId, $notes) {
+        return DB::transaction(function () use ($user, $shop, $items, $customerId, $notes) {
             $variantIds = collect($items)->pluck('variant_id')->unique()->all();
 
             $variants = ProductVariant::query()
@@ -91,13 +93,13 @@ class HeldSaleService
             $holdReference = $this->generateHoldReference($shop->id);
 
             return HeldSale::query()->create([
-                'tenant_id' => auth()->user()->tenant_id,
+                'tenant_id' => $user->tenant_id,
                 'shop_id' => $shop->id,
                 'hold_reference' => $holdReference,
                 'customer_id' => $customerId,
                 'items' => $snapshotItems,
                 'notes' => $notes,
-                'held_by' => auth()->id(),
+                'held_by' => $user->id,
             ]);
         });
     }
@@ -108,7 +110,7 @@ class HeldSaleService
      */
     protected function generateHoldReference(int $shopId): string
     {
-        $lastHold = HeldSale::where('shop_id', $shopId)
+        $lastHold = HeldSale::query()->where('shop_id', $shopId)
             ->orderBy('id', 'desc')
             ->lockForUpdate()
             ->first();
@@ -124,23 +126,41 @@ class HeldSaleService
     /**
      * Retrieve a held sale and mark it as retrieved
      */
-    public function retrieveHeldSale(HeldSale $heldSale): HeldSale
+    public function retrieveHeldSale(HeldSale $heldSale, User $user): HeldSale
     {
         if ($heldSale->isRetrieved()) {
-            throw new \Exception('This held sale has already been retrieved.');
+            throw new \RuntimeException('This held sale has already been retrieved.');
         }
 
         if ($heldSale->isExpired()) {
             $this->deleteHeldSale($heldSale);
-            throw new \Exception('This held sale has expired and the reserved stock has been released.');
+            throw new \RuntimeException('This held sale has expired and the reserved stock has been released.');
         }
 
-        $heldSale->update([
-            'retrieved_at' => now(),
-            'retrieved_by' => auth()->id(),
-        ]);
+        return DB::transaction(function () use ($heldSale, $user) {
+            $heldSale->update([
+                'retrieved_at' => now(),
+                'retrieved_by' => $user->id,
+            ]);
 
-        return $heldSale->fresh();
+            $variantIds = collect($heldSale->items)->pluck('variant_id')->toArray();
+            $locations = InventoryLocation::query()
+                ->where('location_type', Shop::class)
+                ->where('location_id', $heldSale->shop_id)
+                ->whereIn('product_variant_id', $variantIds)
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('product_variant_id');
+
+            foreach ($heldSale->items as $item) {
+                $location = $locations->get($item['variant_id']);
+                if ($location && $location->reserved_quantity >= $item['quantity']) {
+                    $location->decrement('reserved_quantity', $item['quantity']);
+                }
+            }
+
+            return $heldSale->fresh();
+        });
     }
 
     /**
@@ -151,7 +171,7 @@ class HeldSaleService
         return DB::transaction(function () use ($heldSale) {
             $variantIds = collect($heldSale->items)->pluck('variant_id')->toArray();
 
-            $locations = InventoryLocation::where('location_type', Shop::class)
+            $locations = InventoryLocation::query()->where('location_type', Shop::class)
                 ->where('location_id', $heldSale->shop_id)
                 ->whereIn('product_variant_id', $variantIds)
                 ->lockForUpdate()
@@ -173,11 +193,11 @@ class HeldSaleService
     /**
      * Get all active (not retrieved) held sales for a shop
      */
-    public function getActiveHeldSales(Shop $shop): Collection
+    public function getActiveHeldSales(Shop $shop, int $tenantId): Collection
     {
         $this->cleanupExpiredHeldSalesForShop($shop);
 
-        return HeldSale::forTenant(auth()->user()->tenant_id)
+        return HeldSale::forTenant($tenantId)
             ->forShop($shop->id)
             ->active()
             ->notExpired()
@@ -189,9 +209,9 @@ class HeldSaleService
     /**
      * Get count of active held sales for a shop
      */
-    public function getActiveCount(Shop $shop): int
+    public function getActiveCount(Shop $shop, int $tenantId): int
     {
-        return HeldSale::forTenant(auth()->user()->tenant_id)
+        return HeldSale::forTenant($tenantId)
             ->forShop($shop->id)
             ->active()
             ->notExpired()
@@ -201,9 +221,9 @@ class HeldSaleService
     /**
      * Get a single held sale by ID with relationships loaded
      */
-    public function getHeldSale(int $heldSaleId): ?HeldSale
+    public function getHeldSale(int $heldSaleId, int $tenantId): ?HeldSale
     {
-        return HeldSale::forTenant(auth()->user()->tenant_id)
+        return HeldSale::forTenant($tenantId)
             ->notExpired()
             ->with(['customer', 'heldByUser'])
             ->find($heldSaleId);
@@ -214,7 +234,7 @@ class HeldSaleService
      */
     private function cleanupExpiredHeldSalesForShop(Shop $shop): void
     {
-        $expiredSales = HeldSale::forShop($shop->id)
+        $expiredSales = HeldSale::query()->forShop($shop->id)
             ->expired()
             ->limit(10)
             ->get();
@@ -233,7 +253,7 @@ class HeldSaleService
 
     public function cleanupExpiredHeldSales(): int
     {
-        $expiredSales = HeldSale::expired()->get();
+        $expiredSales = HeldSale::query()->expired()->limit(100)->get();
         $deletedCount = 0;
 
         foreach ($expiredSales as $heldSale) {
@@ -241,7 +261,7 @@ class HeldSaleService
                 DB::transaction(function () use ($heldSale) {
                     $variantIds = collect($heldSale->items)->pluck('variant_id')->toArray();
 
-                    $locations = InventoryLocation::where('location_type', Shop::class)
+                    $locations = InventoryLocation::query()->where('location_type', Shop::class)
                         ->where('location_id', $heldSale->shop_id)
                         ->whereIn('product_variant_id', $variantIds)
                         ->lockForUpdate()

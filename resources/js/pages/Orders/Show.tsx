@@ -75,7 +75,7 @@ export default function Show({
                 <div className="flex items-center justify-between">
                     <div>
                         <Link
-                            href={index().url()}
+                            href={index.url()}
                             className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -104,7 +104,7 @@ export default function Show({
 
                     <div className="flex gap-2">
                         <a
-                            href={viewOrderReceipt({ order: order.id }).url()}
+                            href={viewOrderReceipt.url({ order: order.id })}
                             target="_blank"
                             rel="noopener noreferrer"
                         >
@@ -114,7 +114,7 @@ export default function Show({
                             </Button>
                         </a>
                         <a
-                            href={downloadOrderReceipt({ order: order.id }).url()}
+                            href={downloadOrderReceipt.url({ order: order.id })}
                             target="_blank"
                             rel="noopener noreferrer"
                         >
@@ -157,7 +157,7 @@ export default function Show({
                                     )}
                                 {order.status === 'delivered' && (
                                     <Link
-                                        href={createReturn({ order: order.id }).url()}
+                                        href={createReturn.url({ order: order.id })}
                                     >
                                         <Button
                                             variant="outline"
@@ -550,7 +550,7 @@ export default function Show({
                     onSubmit={(e: FormEvent) => {
                         e.preventDefault();
                         statusForm.post(
-                            updateStatus({ order: order.id }).url(),
+                            updateStatus.url({ order: order.id }),
                             {
                                 onSuccess: () => {
                                     statusModal.closeModal();
@@ -618,7 +618,7 @@ export default function Show({
                     onSubmit={(e: FormEvent) => {
                         e.preventDefault();
                         paymentForm.post(
-                            updatePaymentStatus({ order: order.id }).url(),
+                            updatePaymentStatus.url({ order: order.id }),
                             {
                                 onSuccess: () => {
                                     paymentModal.closeModal();
@@ -718,7 +718,7 @@ export default function Show({
                     onSubmit={(e: FormEvent) => {
                         e.preventDefault();
                         cancelForm.post(
-                            updateStatus({ order: order.id }).url(),
+                            updateStatus.url({ order: order.id }),
                             {
                                 onSuccess: () => {
                                     cancelModal.closeModal();

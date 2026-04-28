@@ -95,6 +95,7 @@ class OrderReturn extends Model
         return $this->load([
             'order.items.productVariant.product',
             'order.customer',
+            'order.shop',
             'items.orderItem.productVariant.product',
             'createdByUser',
             'approvedByUser',

@@ -31,7 +31,7 @@ export default function Index({ returns, filters }: Props) {
     const handleFilterChange = (status: string) => {
         setStatusFilter(status);
         router.get(
-            index().url(),
+            index.url(),
             { status: status || undefined },
             { preserveState: true, preserveScroll: true },
         );
@@ -184,7 +184,7 @@ export default function Index({ returns, filters }: Props) {
                                             </td>
                                             <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
                                                 <Link
-                                                    href={show({ return: returnItem.id }).url()}
+                                                    href={show.url({ return: returnItem.id })}
                                                 >
                                                     <Button
                                                         variant="outline"
@@ -232,7 +232,7 @@ export default function Index({ returns, filters }: Props) {
                                                 size="sm"
                                                 onClick={() =>
                                                     router.get(
-                                                        index().url(),
+                                                        index.url(),
                                                         {
                                                             page: returns.current_page - 1,
                                                             status: statusFilter || undefined,
@@ -250,7 +250,7 @@ export default function Index({ returns, filters }: Props) {
                                                 size="sm"
                                                 onClick={() =>
                                                     router.get(
-                                                        index().url(),
+                                                        index.url(),
                                                         {
                                                             page: returns.current_page + 1,
                                                             status: statusFilter || undefined,

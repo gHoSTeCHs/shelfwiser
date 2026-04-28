@@ -143,4 +143,6 @@ Route::prefix('store/{shop:slug}')->middleware('storefront.enabled')->name('stor
 Route::post(
     'store/{shop:slug}/payment/webhook',
     [CheckoutController::class, 'paymentWebhook']
-)->middleware('throttle:60,1')->name('storefront.payment.webhook');
+)->middleware('throttle:60,1')
+    ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)
+    ->name('storefront.payment.webhook');

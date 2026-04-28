@@ -29,7 +29,9 @@ class PayrollReportService
 
     public function getPayRun(int $id): PayRun
     {
-        return PayRun::query()->findOrFail($id);
+        return PayRun::query()
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->findOrFail($id);
     }
 
     public function getPayrollSummary(

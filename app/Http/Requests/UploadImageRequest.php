@@ -3,39 +3,50 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class UploadImageRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        if (! auth()->check()) {
-            return false;
-        }
+        return true;
+    }
 
-        $modelType = $this->input('model_type');
-        $modelId = $this->input('model_id');
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $v) {
+            if ($v->errors()->isNotEmpty()) {
+                return;
+            }
 
-        if (! $modelType || ! $modelId) {
-            return false;
-        }
+            $modelType = $this->input('model_type');
+            $modelId = $this->input('model_id');
+            $tenantId = $this->user()?->tenant_id;
 
-        $tenantId = auth()->user()->tenant_id;
+            if (! $modelType || ! $modelId || ! $tenantId) {
+                return;
+            }
 
-        return match ($modelType) {
-            'Product' => \App\Models\Product::where('id', $modelId)
+            $modelClasses = [
+                'Product' => \App\Models\Product::class,
+                'ProductVariant' => \App\Models\ProductVariant::class,
+                'Service' => \App\Models\Service::class,
+            ];
+
+            $modelClass = $modelClasses[$modelType] ?? null;
+            if (! $modelClass) {
+                return;
+            }
+
+            $exists = $modelClass::query()
+                ->where('id', $modelId)
                 ->where('tenant_id', $tenantId)
-                ->exists(),
-            'ProductVariant' => \App\Models\ProductVariant::where('id', $modelId)
-                ->whereHas('product', fn ($q) => $q->where('tenant_id', $tenantId))
-                ->exists(),
-            'Service' => \App\Models\Service::where('id', $modelId)
-                ->where('tenant_id', $tenantId)
-                ->exists(),
-            'User' => \App\Models\User::where('id', $modelId)
-                ->where('tenant_id', $tenantId)
-                ->exists(),
-            default => false,
-        };
+                ->exists();
+
+            if (! $exists) {
+                $v->errors()->add('model_id', 'The selected model does not belong to your account.');
+            }
+        });
     }
 
     /**
@@ -58,7 +69,7 @@ class UploadImageRequest extends FormRequest
 
         return [
             'model_type' => ['required', 'string', 'in:Product,ProductVariant,Service,User'],
-            'model_id' => ['required', 'integer'],
+            'model_id' => ['required', 'integer', 'min:1'],
             'image' => [
                 'nullable',
                 'file',
@@ -68,7 +79,7 @@ class UploadImageRequest extends FormRequest
                 'image',
                 $dimensionRule,
             ],
-            'images' => ['nullable', 'array'],
+            'images' => ['nullable', 'array', 'max:'.config('images.max_images_per_model', 10)],
             'images.*' => [
                 'file',
                 'mimes:'.$allowedExtensions,

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateServiceCategoryRequest;
 use App\Http\Requests\UpdateServiceCategoryRequest;
-use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Services\ServiceCategoryService;
 use Illuminate\Http\RedirectResponse;
@@ -21,7 +20,7 @@ class ServiceCategoryController extends Controller
 
     public function index(): Response
     {
-        Gate::authorize('viewAny', Service::class);
+        Gate::authorize('viewAny', ServiceCategory::class);
 
         return Inertia::render('ServiceCategories/Index', [
             'categories' => $this->serviceCategoryService->getRootCategories(),
@@ -30,7 +29,7 @@ class ServiceCategoryController extends Controller
 
     public function create(): Response
     {
-        Gate::authorize('create', Service::class);
+        Gate::authorize('create', ServiceCategory::class);
 
         return Inertia::render('ServiceCategories/Create', [
             'parentCategories' => $this->serviceCategoryService->getParentCategories(),
@@ -39,7 +38,7 @@ class ServiceCategoryController extends Controller
 
     public function store(CreateServiceCategoryRequest $request): RedirectResponse
     {
-        Gate::authorize('create', Service::class);
+        Gate::authorize('create', ServiceCategory::class);
 
         $category = $this->serviceCategoryService->createCategory(
             $request->user()->tenant_id,
@@ -52,7 +51,7 @@ class ServiceCategoryController extends Controller
 
     public function edit(ServiceCategory $category): Response
     {
-        Gate::authorize('viewAny', Service::class);
+        Gate::authorize('update', $category);
 
         return Inertia::render('ServiceCategories/Edit', [
             'category' => $category,
@@ -62,7 +61,7 @@ class ServiceCategoryController extends Controller
 
     public function update(UpdateServiceCategoryRequest $request, ServiceCategory $category): RedirectResponse
     {
-        Gate::authorize('create', Service::class);
+        Gate::authorize('update', $category);
 
         $this->serviceCategoryService->updateCategory($category, $request->validated());
 
@@ -72,7 +71,7 @@ class ServiceCategoryController extends Controller
 
     public function destroy(ServiceCategory $category): RedirectResponse
     {
-        Gate::authorize('create', Service::class);
+        Gate::authorize('delete', $category);
 
         $categoryName = $category->name;
         $this->serviceCategoryService->deleteCategory($category);

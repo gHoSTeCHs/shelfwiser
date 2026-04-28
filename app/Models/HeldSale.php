@@ -25,11 +25,14 @@ class HeldSale extends Model
         'retrieved_by',
     ];
 
-    protected $casts = [
-        'items' => 'array',
-        'expires_at' => 'datetime',
-        'retrieved_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'items' => 'array',
+            'expires_at' => 'datetime',
+            'retrieved_at' => 'datetime',
+        ];
+    }
 
     protected static function boot(): void
     {
@@ -104,6 +107,11 @@ class HeldSale extends Model
     public function isExpired(): bool
     {
         return $this->expires_at !== null && $this->expires_at->isPast();
+    }
+
+    public function loadHeldSaleRelations(): static
+    {
+        return $this->load(['customer', 'heldByUser']);
     }
 
     public function getItemCount(): int

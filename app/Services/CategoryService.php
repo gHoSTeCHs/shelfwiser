@@ -123,35 +123,40 @@ class CategoryService
 
     public function getCategoryTree(int $tenantId, ?int $parentId = null): array
     {
-        $cacheKey = "tenant:$tenantId:category_tree:".($parentId ?? 'root');
+        $cacheKey = "tenant:$tenantId:category_tree";
 
-        return Cache::tags(["tenant:$tenantId:categories"])
-            ->remember($cacheKey, 3600, function () use ($tenantId, $parentId) {
-                $categories = ProductCategory::query()->where('tenant_id', $tenantId)
-                    ->where('parent_id', $parentId)
+        $allCategories = Cache::tags(["tenant:$tenantId:categories"])
+            ->remember($cacheKey, 3600, function () use ($tenantId) {
+                return ProductCategory::query()
+                    ->where('tenant_id', $tenantId)
                     ->where('is_active', true)
-                    ->with(['children' => function ($query) {
-                        $query->where('is_active', true)->withCount('products');
-                    }])
                     ->withCount('products')
                     ->orderBy('name')
-                    ->get();
-
-                return $categories->map(function ($category) use ($tenantId) {
-                    return [
-                        'id' => $category->id,
-                        'name' => $category->name,
-                        'slug' => $category->slug,
-                        'description' => $category->description,
-                        'products_count' => $category->products_count,
-                        'children' => $this->getCategoryTree($tenantId, $category->id),
-                    ];
-                })->toArray();
+                    ->get(['id', 'name', 'slug', 'description', 'parent_id', 'products_count'])
+                    ->toArray();
             });
+
+        return $this->buildTreeFromFlat($allCategories, $parentId);
+    }
+
+    private function buildTreeFromFlat(array $allCategories, ?int $parentId): array
+    {
+        $result = [];
+
+        foreach ($allCategories as $category) {
+            if ($category['parent_id'] === $parentId) {
+                $category['children'] = $this->buildTreeFromFlat($allCategories, $category['id']);
+                $result[] = $category;
+            }
+        }
+
+        return $result;
     }
 
     public function getBreadcrumbs(ProductCategory $category): array
     {
+        $category->loadMissing('parent.parent.parent.parent');
+
         $breadcrumbs = [];
         $current = $category;
 
