@@ -1,12 +1,21 @@
 import PayRunController from '@/actions/App/Http/Controllers/PayRunController';
+import PayrollReportController from '@/actions/App/Http/Controllers/PayrollReportController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
-import { formatCurrency, formatDateTime, formatPercentage } from '@/lib/formatters';
-import { getPayRunItemStatusColor, getPayRunStatusColor, getPayRunStatusLabel } from '@/lib/status-configs';
+import {
+    formatCurrency,
+    formatDateTime,
+    formatPercentage,
+} from '@/lib/formatters';
+import {
+    getPayRunItemStatusColor,
+    getPayRunStatusColor,
+    getPayRunStatusLabel,
+} from '@/lib/status-configs';
 import type { PayRun, PayRunItem, PayRunSummary } from '@/types/payroll';
 import { Form, Head, Link, router } from '@inertiajs/react';
 import {
@@ -60,7 +69,8 @@ export default function Show({ payRun, summary }: Props) {
             {
                 onError: (errors) => {
                     setErrorMessage(
-                        Object.values(errors).flat().join(', ') || 'Failed to cancel pay run',
+                        Object.values(errors).flat().join(', ') ||
+                            'Failed to cancel pay run',
                     );
                 },
                 onFinish: () => setCancelling(false),
@@ -108,7 +118,10 @@ export default function Show({ payRun, summary }: Props) {
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                             {payRun.reference}
                         </h1>
-                        <Badge color={getPayRunStatusColor(payRun.status)} size="md">
+                        <Badge
+                            color={getPayRunStatusColor(payRun.status)}
+                            size="md"
+                        >
                             {getPayRunStatusLabel(payRun.status)}
                         </Badge>
                         {taxLawLabel && (
@@ -233,7 +246,9 @@ export default function Show({ payRun, summary }: Props) {
 
                     {payRun.status === 'completed' && (
                         <a
-                            href={`/pay-runs/${payRun.id}/download-payslips`}
+                            href={PayrollReportController.downloadBulkPayslips.url(
+                                { payRun: payRun.id },
+                            )}
                             className="contents"
                         >
                             <Button
@@ -415,28 +430,52 @@ export default function Show({ payRun, summary }: Props) {
                     <table className="w-full">
                         <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                <th
+                                    scope="col"
+                                    className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                >
                                     Employee
                                 </th>
-                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                <th
+                                    scope="col"
+                                    className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                >
                                     Basic
                                 </th>
-                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                <th
+                                    scope="col"
+                                    className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                >
                                     Gross
                                 </th>
-                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                <th
+                                    scope="col"
+                                    className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                >
                                     Deductions
                                 </th>
-                                <th scope="col" className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase lg:table-cell dark:text-gray-400">
+                                <th
+                                    scope="col"
+                                    className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase lg:table-cell dark:text-gray-400"
+                                >
                                     PAYE Tax
                                 </th>
-                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                <th
+                                    scope="col"
+                                    className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                >
                                     Net Pay
                                 </th>
-                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                <th
+                                    scope="col"
+                                    className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                >
                                     Status
                                 </th>
-                                <th scope="col" className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                <th
+                                    scope="col"
+                                    className="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                >
                                     Actions
                                 </th>
                             </tr>
@@ -855,7 +894,8 @@ export default function Show({ payRun, summary }: Props) {
                                         <span>Effective Rate</span>
                                         <span>
                                             {formatPercentage(
-                                                selectedItem.tax_calculation.effective_rate || 0,
+                                                selectedItem.tax_calculation
+                                                    .effective_rate || 0,
                                                 2,
                                             )}
                                         </span>

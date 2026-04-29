@@ -20,19 +20,8 @@ class ProductCategoryController extends Controller
     {
         Gate::authorize('viewAny', ProductCategory::class);
 
-        $tenantId = auth()->user()->tenant_id;
-
-        $categories = ProductCategory::where('tenant_id', $tenantId)
-            ->whereNull('parent_id')
-            ->with(['children' => function ($query) {
-                $query->with('children')->withCount('products');
-            }])
-            ->withCount('products')
-            ->orderBy('name')
-            ->get();
-
         return Inertia::render('Categories/Index', [
-            'categories' => $categories,
+            'categories' => $this->categoryService->getCategoriesForIndex(),
         ]);
     }
 
@@ -40,22 +29,15 @@ class ProductCategoryController extends Controller
     {
         Gate::authorize('create', ProductCategory::class);
 
-        $tenantId = auth()->user()->tenant_id;
-
-        $parentCategories = ProductCategory::query()->where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->whereNull('parent_id')
-            ->with('children')
-            ->orderBy('name')
-            ->get(['id', 'name', 'slug']);
-
         return Inertia::render('Categories/Create', [
-            'parentCategories' => $parentCategories,
+            'parentCategories' => $this->categoryService->getParentCategoriesForForm(),
         ]);
     }
 
     public function store(CreateCategoryRequest $request): RedirectResponse
     {
+        Gate::authorize('create', ProductCategory::class);
+
         $category = $this->categoryService->create(
             $request->validated(),
             $request->user()->tenant
@@ -81,11 +63,9 @@ class ProductCategoryController extends Controller
 
         $category->loadCount('products');
 
-        $breadcrumbs = $this->categoryService->getBreadcrumbs($category);
-
         return Inertia::render('Categories/Show', [
             'category' => $category,
-            'breadcrumbs' => $breadcrumbs,
+            'breadcrumbs' => $this->categoryService->getBreadcrumbs($category),
         ]);
     }
 
@@ -93,31 +73,18 @@ class ProductCategoryController extends Controller
     {
         Gate::authorize('update', $category);
 
-        $tenantId = auth()->user()->tenant_id;
-
         $category->load('parent', 'children');
-
-        $descendantIds = $this->getDescendantIds($category);
-        $excludeIds = array_merge([$category->id], $descendantIds);
-
-        $parentCategories = ProductCategory::where('tenant_id', $tenantId)
-            ->where('is_active', true)
-            ->whereNotIn('id', $excludeIds)
-            ->whereNull('parent_id')
-            ->with(['children' => function ($query) use ($excludeIds) {
-                $query->whereNotIn('id', $excludeIds);
-            }])
-            ->orderBy('name')
-            ->get(['id', 'name', 'slug']);
 
         return Inertia::render('Categories/Edit', [
             'category' => $category,
-            'parentCategories' => $parentCategories,
+            'parentCategories' => $this->categoryService->getParentCategoriesForForm($category),
         ]);
     }
 
     public function update(UpdateCategoryRequest $request, ProductCategory $category): RedirectResponse
     {
+        Gate::authorize('update', $category);
+
         try {
             $category = $this->categoryService->update($category, $request->validated());
 
@@ -143,17 +110,5 @@ class ProductCategoryController extends Controller
             return Redirect::back()
                 ->with('error', $e->getMessage());
         }
-    }
-
-    protected function getDescendantIds(ProductCategory $category): array
-    {
-        $descendants = [];
-
-        foreach ($category->children as $child) {
-            $descendants[] = $child->id;
-            $descendants = array_merge($descendants, $this->getDescendantIds($child));
-        }
-
-        return $descendants;
     }
 }

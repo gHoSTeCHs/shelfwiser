@@ -13,6 +13,13 @@ class AddServiceToCartApiRequest extends FormRequest
         return true;
     }
 
+    public function materialOption(): ?MaterialOption
+    {
+        $value = $this->validated('material_option');
+
+        return $value ? MaterialOption::from($value) : null;
+    }
+
     /**
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */

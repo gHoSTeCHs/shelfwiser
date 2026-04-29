@@ -1,6 +1,4 @@
-import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
-import CheckoutController from '@/actions/App/Http/Controllers/Storefront/CheckoutController';
-import { products as storefrontProducts } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
+import { cart, checkout, products as storefrontProducts } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Button from '@/components/ui/button/Button';
 import useCart from '@/hooks/useCart';
 import useCurrency from '@/hooks/useCurrency';
@@ -154,7 +152,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
 
                                     <div className="space-y-2">
                                         <Link
-                                            href={CheckoutController.index.url({
+                                            href={checkout.url({
                                                 shop: shop.slug,
                                             })}
                                             onClick={closeDrawer}
@@ -170,7 +168,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
                                         </Link>
 
                                         <Link
-                                            href={CartController.index.url({
+                                            href={cart.url({
                                                 shop: shop.slug,
                                             })}
                                             onClick={closeDrawer}

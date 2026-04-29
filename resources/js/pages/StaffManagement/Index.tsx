@@ -66,7 +66,7 @@ const StaffManagement = ({
         if (selectedShop) params.shop_id = selectedShop;
         if (activeFilter) params.is_active = activeFilter;
 
-        router.get('/staff', params, {
+        router.get(StaffManagementController.index.url(), params, {
             preserveState: true,
             preserveScroll: true,
         });
@@ -76,7 +76,11 @@ const StaffManagement = ({
         setSelectedRole('');
         setSelectedShop('');
         setActiveFilter('');
-        router.get('/staff', {}, { preserveState: true, preserveScroll: true });
+        router.get(
+            StaffManagementController.index.url(),
+            {},
+            { preserveState: true, preserveScroll: true },
+        );
     };
 
     return (
@@ -249,19 +253,34 @@ const StaffManagement = ({
                         <table className="w-full">
                             <thead className="border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Staff Member
                                     </th>
-                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Role
                                     </th>
-                                    <th scope="col" className="hidden px-6 py-4 text-left text-sm font-semibold text-gray-900 md:table-cell dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="hidden px-6 py-4 text-left text-sm font-semibold text-gray-900 md:table-cell dark:text-white"
+                                    >
                                         Assigned Shops
                                     </th>
-                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Status
                                     </th>
-                                    <th scope="col" className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Actions
                                     </th>
                                 </tr>
@@ -319,8 +338,14 @@ const StaffManagement = ({
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <Badge color={getStaffRoleColor(member.role)}>
-                                                    {getStaffRoleLabel(member.role)}
+                                                <Badge
+                                                    color={getStaffRoleColor(
+                                                        member.role,
+                                                    )}
+                                                >
+                                                    {getStaffRoleLabel(
+                                                        member.role,
+                                                    )}
                                                 </Badge>
                                             </td>
                                             <td className="hidden px-6 py-4 md:table-cell">

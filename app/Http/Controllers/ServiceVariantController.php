@@ -8,6 +8,7 @@ use App\Models\Service;
 use App\Models\ServiceVariant;
 use App\Services\ServiceManagementService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 
 class ServiceVariantController extends Controller
@@ -21,6 +22,8 @@ class ServiceVariantController extends Controller
      */
     public function store(CreateServiceVariantRequest $request, Service $service): RedirectResponse
     {
+        Gate::authorize('manage', $service);
+
         $this->serviceManagementService->createVariant($service, $request->validated());
 
         return Redirect::route('services.show', $service)
@@ -35,6 +38,9 @@ class ServiceVariantController extends Controller
         Service $service,
         ServiceVariant $variant
     ): RedirectResponse {
+        abort_unless($variant->service_id === $service->id, 404);
+        Gate::authorize('manage', $service);
+
         $this->serviceManagementService->updateVariant($variant, $request->validated());
 
         return Redirect::route('services.show', $service)
@@ -46,15 +52,11 @@ class ServiceVariantController extends Controller
      */
     public function destroy(Service $service, ServiceVariant $variant): RedirectResponse
     {
-        // Ensure variant belongs to service
         if ($variant->service_id !== $service->id) {
             abort(404);
         }
 
-        // Check authorization
-        if (! auth()->user()->can('manage', $service)) {
-            abort(403);
-        }
+        Gate::authorize('manage', $service);
 
         $this->serviceManagementService->deleteVariant($variant);
 

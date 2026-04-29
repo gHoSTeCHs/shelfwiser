@@ -1,5 +1,4 @@
-import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
-import { products } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
+import { accountOrderDetail, accountOrders, products } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
@@ -20,7 +19,7 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
     const { formatCurrency } = useCurrency(shop);
     const handlePageChange = (page: number) => {
         router.get(
-            CustomerPortalController.orders.url({ shop: shop.slug }),
+            accountOrders.url({ shop: shop.slug }),
             { page },
             { preserveState: true, preserveScroll: true },
         );
@@ -62,7 +61,7 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
                                     <div className="mb-4 flex items-start justify-between">
                                         <div>
                                             <Link
-                                                href={CustomerPortalController.orderDetail.url(
+                                                href={accountOrderDetail.url(
                                                     {
                                                         shop: shop.slug,
                                                         order: order.id,
@@ -138,7 +137,7 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
                                                 Total: {formatCurrency(order.total_amount)}
                                             </div>
                                             <Link
-                                                href={CustomerPortalController.orderDetail.url(
+                                                href={accountOrderDetail.url(
                                                     {
                                                         shop: shop.slug,
                                                         order: order.id,

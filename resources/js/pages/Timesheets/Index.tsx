@@ -99,7 +99,7 @@ const TimesheetsIndex = ({
         if (startDate) params.start_date = startDate;
         if (endDate) params.end_date = endDate;
 
-        router.get('/timesheets', params, {
+        router.get(TimesheetController.index.url(), params, {
             preserveState: true,
             preserveScroll: true,
         });
@@ -293,7 +293,10 @@ const TimesheetsIndex = ({
                                     Regular Hours
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                    {formatNumber(summary.total_regular_hours, 2)}
+                                    {formatNumber(
+                                        summary.total_regular_hours,
+                                        2,
+                                    )}
                                 </p>
                             </div>
                             <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
@@ -309,7 +312,10 @@ const TimesheetsIndex = ({
                                     Overtime Hours
                                 </p>
                                 <p className="mt-2 text-3xl font-bold text-orange-600 dark:text-orange-400">
-                                    {formatNumber(summary.total_overtime_hours, 2)}
+                                    {formatNumber(
+                                        summary.total_overtime_hours,
+                                        2,
+                                    )}
                                 </p>
                             </div>
                             <div className="rounded-lg bg-orange-50 p-3 dark:bg-orange-900/20">
@@ -438,22 +444,40 @@ const TimesheetsIndex = ({
                         <table className="w-full">
                             <thead className="border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Date
                                     </th>
-                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Shop
                                     </th>
-                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Clock In / Out
                                     </th>
-                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Hours
                                     </th>
-                                    <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Status
                                     </th>
-                                    <th scope="col" className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
                                         Actions
                                     </th>
                                 </tr>
@@ -480,7 +504,9 @@ const TimesheetsIndex = ({
                                         >
                                             <td className="px-6 py-4">
                                                 <p className="font-medium text-gray-900 dark:text-white">
-                                                    {formatDateShort(timesheet.date)}
+                                                    {formatDateShort(
+                                                        timesheet.date,
+                                                    )}
                                                 </p>
                                             </td>
                                             <td className="px-6 py-4">
@@ -531,9 +557,16 @@ const TimesheetsIndex = ({
                                             </td>
                                             <td className="px-6 py-4">
                                                 <Badge
-                                                    color={timesheetStatusConfig[timesheet.status]?.color || 'light'}
+                                                    color={
+                                                        timesheetStatusConfig[
+                                                            timesheet.status
+                                                        ]?.color || 'light'
+                                                    }
                                                 >
-                                                    {timesheetStatusConfig[timesheet.status]?.label || timesheet.status}
+                                                    {timesheetStatusConfig[
+                                                        timesheet.status
+                                                    ]?.label ||
+                                                        timesheet.status}
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4 text-right">

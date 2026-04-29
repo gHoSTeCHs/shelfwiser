@@ -37,7 +37,7 @@ class ProductVariantPolicy
             return false;
         }
 
-        if (!$user->role->hasPermission('manage_products')) {
+        if (! $user->role->hasPermission('manage_products')) {
             return false;
         }
 
@@ -46,6 +46,14 @@ class ProductVariantPolicy
         }
 
         return $user->shops()->where('shops.id', $product->shop_id)->exists();
+    }
+
+    /**
+     * Determine if the user can batch-update variants (e.g., generate barcodes in bulk)
+     */
+    public function batchUpdate(User $user): bool
+    {
+        return $user->role->hasPermission('manage_products');
     }
 
     /**

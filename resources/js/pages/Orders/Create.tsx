@@ -1,4 +1,4 @@
-import OrderController from '@/actions/App/Http/Controllers/OrderController';
+import { index, store } from '@/actions/App/Http/Controllers/OrderController';
 import Input from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
 import InputError from '@/components/form/InputError';
@@ -174,7 +174,7 @@ export default function Create({ shops, products }: Props) {
                 <div className="flex items-center justify-between">
                     <div>
                         <Link
-                            href={'/orders'}
+                            href={index.url()}
                             className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -190,7 +190,7 @@ export default function Create({ shops, products }: Props) {
                 </div>
 
                 <Form
-                    action={OrderController.store.url()}
+                    action={store.url()}
                     method="post"
                     className="space-y-6"
                     transform={(data) => ({
@@ -466,6 +466,7 @@ export default function Create({ shops, products }: Props) {
                                         </Label>
                                         <TextArea
                                             id="customer_notes"
+                                            name="customer_notes"
                                             value={customerNotes}
                                             onChange={(value) =>
                                                 setCustomerNotes(value)
@@ -481,6 +482,7 @@ export default function Create({ shops, products }: Props) {
                                         </Label>
                                         <TextArea
                                             id="internal_notes"
+                                            name="internal_notes"
                                             value={internalNotes}
                                             onChange={(value) =>
                                                 setInternalNotes(value)
@@ -496,6 +498,7 @@ export default function Create({ shops, products }: Props) {
                                         </Label>
                                         <TextArea
                                             id="shipping_address"
+                                            name="shipping_address"
                                             value={shippingAddress}
                                             onChange={(value) =>
                                                 setShippingAddress(value)
@@ -511,6 +514,7 @@ export default function Create({ shops, products }: Props) {
                                         </Label>
                                         <TextArea
                                             id="billing_address"
+                                            name="billing_address"
                                             value={billingAddress}
                                             onChange={(value) =>
                                                 setBillingAddress(value)

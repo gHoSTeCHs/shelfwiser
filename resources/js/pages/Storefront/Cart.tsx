@@ -1,6 +1,5 @@
 import CartController from '@/actions/App/Http/Controllers/Storefront/CartController';
-import CheckoutController from '@/actions/App/Http/Controllers/Storefront/CheckoutController';
-import { home, products, services } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
+import { cart, checkout, home, products, services } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import OrderSummary from '@/components/storefront/OrderSummary';
 import QuantitySelector from '@/components/storefront/QuantitySelector';
@@ -20,7 +19,7 @@ import {
     ShoppingCart,
     Trash2,
 } from 'lucide-react';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 /**
  * Shopping cart page for viewing and managing cart items (products and services).
@@ -57,7 +56,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
     };
 
     // Cleanup timeout on unmount
-    React.useEffect(() => {
+    useEffect(() => {
         return () => {
             if (updateTimeoutRef.current) {
                 clearTimeout(updateTimeoutRef.current);
@@ -422,7 +421,7 @@ const Cart: React.FC<StorefrontCartProps> = ({ shop, cart, cartSummary }) => {
                                 />
 
                                 <Link
-                                    href={CheckoutController.index.url({
+                                    href={checkout.url({
                                         shop: shop.slug,
                                     })}
                                     className="mt-6 block"

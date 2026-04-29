@@ -7,19 +7,9 @@ use Illuminate\Validation\Rule;
 
 class UpdateEmployeeTaxSettingsRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to update employee tax settings.
-     * Only users who can manage staff can update tax settings.
-     */
     public function authorize(): bool
     {
-        $staff = $this->route('user');
-
-        if (! $staff) {
-            return false;
-        }
-
-        return $this->user()->can('update', $staff);
+        return true;
     }
 
     /**

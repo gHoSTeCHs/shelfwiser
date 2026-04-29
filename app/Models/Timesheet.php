@@ -33,19 +33,22 @@ class Timesheet extends Model
         'rejection_reason',
     ];
 
-    protected $casts = [
-        'date' => 'date',
-        'clock_in' => 'datetime',
-        'clock_out' => 'datetime',
-        'break_start' => 'datetime',
-        'break_end' => 'datetime',
-        'break_duration_minutes' => 'integer',
-        'regular_hours' => 'decimal:2',
-        'overtime_hours' => 'decimal:2',
-        'total_hours' => 'decimal:2',
-        'status' => TimesheetStatus::class,
-        'approved_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'date' => 'date',
+            'clock_in' => 'datetime',
+            'clock_out' => 'datetime',
+            'break_start' => 'datetime',
+            'break_end' => 'datetime',
+            'break_duration_minutes' => 'integer',
+            'regular_hours' => 'decimal:2',
+            'overtime_hours' => 'decimal:2',
+            'total_hours' => 'decimal:2',
+            'status' => TimesheetStatus::class,
+            'approved_at' => 'datetime',
+        ];
+    }
 
     public function user(): BelongsTo
     {
@@ -70,6 +73,11 @@ class Timesheet extends Model
     /**
      * Check if the timesheet is currently clocked in
      */
+    public function loadShowRelations(): static
+    {
+        return $this->load(['user', 'shop', 'approvedBy']);
+    }
+
     public function isClockedIn(): bool
     {
         return $this->clock_in !== null && $this->clock_out === null;
@@ -92,7 +100,7 @@ class Timesheet extends Model
             return 0;
         }
 
-        $totalMinutes = $this->clock_out->diffInMinutes($this->clock_in);
+        $totalMinutes = $this->clock_in->diffInMinutes($this->clock_out);
 
         return max(0, $totalMinutes - $this->break_duration_minutes);
     }

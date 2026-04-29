@@ -12,10 +12,14 @@ use App\Models\InventoryLocation;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
+use App\Models\ProductVariant;
 use App\Models\Shop;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class CheckoutService
 {
@@ -46,18 +50,21 @@ class CheckoutService
         ) {
             $cartSummary = $this->cartService->getCartSummary($cart);
 
-            if (empty($cartSummary['items'])) {
-                throw new \Exception('Cannot checkout with empty cart');
+            if ($cartSummary['items']->isEmpty()) {
+                throw new \Exception('Your cart is empty.');
             }
 
             $productItems = collect($cartSummary['items'])->filter(fn ($item) => $item->isProduct());
+
+            $productVariantIds = $productItems->pluck('product_variant_id')->toArray();
+            $currentPrices = ProductVariant::query()->whereIn('id', $productVariantIds)->pluck('price', 'id');
 
             $locations = collect();
 
             if ($productItems->isNotEmpty()) {
                 $variantIds = $productItems->pluck('product_variant_id')->toArray();
 
-                $locations = InventoryLocation::where('location_type', Shop::class)
+                $locations = InventoryLocation::query()->where('location_type', Shop::class)
                     ->where('location_id', $cart->shop_id)
                     ->whereIn('product_variant_id', $variantIds)
                     ->lockForUpdate()
@@ -98,12 +105,16 @@ class CheckoutService
             ]);
 
             foreach ($cartSummary['items'] as $cartItem) {
+                $currentPrice = $cartItem->isProduct()
+                    ? (float) ($currentPrices->get($cartItem->product_variant_id) ?? $cartItem->price)
+                    : (float) $cartItem->price;
+
                 $orderItemData = [
                     'order_id' => $order->id,
                     'tenant_id' => $cart->tenant_id,
                     'quantity' => $cartItem->quantity,
-                    'unit_price' => $cartItem->price,
-                    'total_amount' => $cartItem->price * $cartItem->quantity,
+                    'unit_price' => $currentPrice,
+                    'total_amount' => $currentPrice * $cartItem->quantity,
                 ];
 
                 if ($cartItem->isProduct()) {
@@ -130,7 +141,7 @@ class CheckoutService
                     }
                 }
 
-                $orderItem = OrderItem::create($orderItemData);
+                $orderItem = OrderItem::query()->create($orderItemData);
 
                 if ($cartItem->isProduct()) {
                     $location = $locations->get($cartItem->product_variant_id);
@@ -138,11 +149,12 @@ class CheckoutService
                         $quantityBefore = $location->quantity;
                         $reservedBefore = $location->reserved_quantity;
 
-                        if ($location->reserved_quantity >= $cartItem->quantity) {
-                            $location->reserved_quantity -= $cartItem->quantity;
+                        $location->quantity -= $cartItem->quantity;
+
+                        if ($paymentMethod === 'paystack') {
+                            $location->reserved_quantity += $cartItem->quantity;
                         }
 
-                        $location->quantity -= $cartItem->quantity;
                         $location->save();
 
                         $this->stockMovementService->recordMovement([
@@ -161,6 +173,13 @@ class CheckoutService
                     }
                 }
             }
+
+            $order->load('items');
+            $recalculatedSubtotal = $order->items->sum(fn ($item) => $item->unit_price * $item->quantity);
+            $order->forceFill([
+                'subtotal' => round($recalculatedSubtotal, 2),
+                'total_amount' => round($recalculatedSubtotal + (float) $order->tax_amount + (float) $order->shipping_cost, 2),
+            ])->save();
 
             $cart->items()->delete();
             $cart->delete();
@@ -182,7 +201,8 @@ class CheckoutService
      */
     public function verifyPaystackPayment(string $reference, Shop $shop): ?Order
     {
-        $order = Order::where('payment_reference', $reference)
+        $order = Order::query()
+            ->where('payment_reference', $reference)
             ->where('shop_id', $shop->id)
             ->first();
 
@@ -195,7 +215,7 @@ class CheckoutService
             return null;
         }
 
-        if ($order->payment_status === PaymentStatus::PAID->value) {
+        if ($order->payment_status === PaymentStatus::PAID) {
             return $order;
         }
 
@@ -234,6 +254,13 @@ class CheckoutService
 
             return $order;
 
+        } catch (\RuntimeException $e) {
+            Log::error('Paystack verification exception', [
+                'reference' => $reference,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Paystack verification exception', [
                 'reference' => $reference,
@@ -267,12 +294,12 @@ class CheckoutService
                 return false;
             }
 
+            if ($order->payment_status === PaymentStatus::PAID) {
+                return true;
+            }
+
             if ($status === PaymentStatus::PAID) {
                 $refNumber = $transactionId ?? $paymentReference;
-
-                if (OrderPayment::query()->where('reference_number', $refNumber)->exists()) {
-                    return true;
-                }
 
                 $expectedAmount = $order->remainingBalance();
 
@@ -296,18 +323,25 @@ class CheckoutService
                     'confirmed_at' => now(),
                 ])->save();
 
-                $paymentAmount = $verifiedAmount;
+                try {
+                    OrderPayment::query()->create([
+                        'tenant_id' => $order->tenant_id,
+                        'order_id' => $order->id,
+                        'amount' => $verifiedAmount,
+                        'payment_method' => $order->payment_method,
+                        'reference_number' => $refNumber,
+                        'status' => 'completed',
+                        'paid_at' => now(),
+                        'notes' => 'Payment verified via Paystack',
+                    ]);
+                } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+                    Log::info('Duplicate payment reference — idempotent success', [
+                        'reference' => $refNumber,
+                        'order_id' => $order->id,
+                    ]);
 
-                OrderPayment::create([
-                    'tenant_id' => $order->tenant_id,
-                    'order_id' => $order->id,
-                    'amount' => $paymentAmount,
-                    'payment_method' => $order->payment_method,
-                    'reference_number' => $refNumber,
-                    'status' => 'completed',
-                    'paid_at' => now(),
-                    'notes' => 'Payment verified via Paystack',
-                ]);
+                    return true;
+                }
             } else {
                 $order->forceFill([
                     'payment_status' => $status->value,
@@ -322,6 +356,182 @@ class CheckoutService
             ]);
 
             return true;
+        });
+    }
+
+    /**
+     * Find an existing order by idempotency key to prevent duplicate submissions.
+     */
+    public function findExistingOrderByIdempotencyKey(string $key, int $shopId, int $customerId): ?Order
+    {
+        return Order::query()
+            ->where('offline_id', $key)
+            ->where('shop_id', $shopId)
+            ->where('customer_id', $customerId)
+            ->first();
+    }
+
+    public function generatePaymentReference(): string
+    {
+        return 'PAY-'.Str::uuid()->toString();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getCartStockIssues(array $cartSummary, Shop $shop): array
+    {
+        $productVariantIds = collect($cartSummary['items'])
+            ->filter(fn ($item) => $item->isProduct())
+            ->pluck('product_variant_id')
+            ->unique();
+
+        if ($productVariantIds->isEmpty()) {
+            return [];
+        }
+
+        $variants = ProductVariant::query()
+            ->whereIn('id', $productVariantIds)
+            ->whereHas('product', fn ($q) => $q->where('shop_id', $shop->id))
+            ->with(['inventoryLocations', 'product'])
+            ->get()
+            ->keyBy('id');
+
+        $issues = [];
+
+        foreach ($cartSummary['items'] as $item) {
+            if (! $item->isProduct()) {
+                continue;
+            }
+
+            $variant = $variants->get($item->product_variant_id);
+
+            if ($variant && $variant->available_stock < $item->quantity) {
+                $issues[] = "{$variant->product->name} - Only {$variant->available_stock} available (you have {$item->quantity} in cart)";
+            }
+        }
+
+        return $issues;
+    }
+
+    public function getCustomerAddresses(Customer $customer): Collection
+    {
+        return $customer->addresses()->get();
+    }
+
+    public function saveCustomerAddresses(
+        Customer $customer,
+        array $shippingAddress,
+        ?array $billingAddress,
+        bool $billingSameAsShipping
+    ): void {
+        $this->saveAddress($customer, $shippingAddress, 'shipping');
+
+        if (! $billingSameAsShipping && $billingAddress) {
+            $this->saveAddress($customer, $billingAddress, 'billing');
+        }
+    }
+
+    public function verifyWebhookSignature(string $payload, string $signature): bool
+    {
+        $secretKey = config('services.paystack.secret_key');
+
+        if (! $secretKey) {
+            Log::error('Paystack secret key not configured');
+            throw new \RuntimeException('Paystack secret key not configured');
+        }
+
+        return hash_equals(hash_hmac('sha512', $payload, $secretKey), $signature);
+    }
+
+    private function saveAddress(Customer $customer, array $addressData, string $type): void
+    {
+        DB::transaction(function () use ($customer, $addressData, $type) {
+            $isDefault = $customer->addresses()
+                ->where('type', $type)
+                ->lockForUpdate()
+                ->doesntExist();
+
+            $customer->addresses()->create([
+                ...$addressData,
+                'type' => $type,
+                'is_default' => $isDefault,
+            ]);
+        });
+    }
+
+    /**
+     * Cancel an order on behalf of a customer.
+     * Finds the order scoped to the customer and shop, validates it can be cancelled,
+     * restores inventory for any product items, then records the cancellation.
+     *
+     * @throws \RuntimeException if the order cannot be cancelled
+     * @throws ModelNotFoundException if the order does not belong to the customer/shop
+     */
+    public function cancelByCustomer(int $orderId, Customer $customer, Shop $shop, ?string $reason): void
+    {
+        DB::transaction(function () use ($orderId, $customer, $shop, $reason) {
+            $order = $customer->orders()
+                ->where('shop_id', $shop->id)
+                ->where('order_type', OrderType::CUSTOMER->value)
+                ->lockForUpdate()
+                ->findOrFail($orderId);
+
+            if (! $order->canCancel()) {
+                throw new \RuntimeException('This order cannot be cancelled.');
+            }
+
+            $order->load('items.productVariant');
+            $productItems = $order->items->filter(fn ($item) => $item->isProduct());
+
+            if ($productItems->isNotEmpty()) {
+                $variantIds = $productItems->pluck('product_variant_id')->toArray();
+
+                $locations = InventoryLocation::query()
+                    ->where('location_type', Shop::class)
+                    ->where('location_id', $shop->id)
+                    ->whereIn('product_variant_id', $variantIds)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('product_variant_id');
+
+                foreach ($productItems as $item) {
+                    $location = $locations->get($item->product_variant_id);
+
+                    if (! $location) {
+                        Log::warning('Inventory location not found during customer order cancellation', [
+                            'order_id' => $order->id,
+                            'variant_id' => $item->product_variant_id,
+                            'shop_id' => $shop->id,
+                        ]);
+
+                        continue;
+                    }
+
+                    $quantityBefore = $location->quantity;
+                    $location->quantity += $item->quantity;
+                    $location->save();
+
+                    $this->stockMovementService->recordMovement([
+                        'tenant_id' => $order->tenant_id,
+                        'shop_id' => $shop->id,
+                        'product_variant_id' => $item->product_variant_id,
+                        'to_location_id' => $location->id,
+                        'type' => StockMovementType::RETURN,
+                        'quantity' => $item->quantity,
+                        'quantity_before' => $quantityBefore,
+                        'quantity_after' => $location->quantity,
+                        'reference_number' => $order->order_number.'-CANCEL',
+                        'reason' => "Customer cancelled order {$order->order_number}",
+                    ]);
+                }
+            }
+
+            $order->forceFill([
+                'status' => OrderStatus::CANCELLED->value,
+                'cancellation_reason' => $reason,
+                'cancelled_at' => now(),
+            ])->save();
         });
     }
 }

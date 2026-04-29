@@ -1,3 +1,4 @@
+import OrderController from '@/actions/App/Http/Controllers/OrderController';
 import OrderReturnController from '@/actions/App/Http/Controllers/OrderReturnController';
 import Input from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
@@ -93,7 +94,7 @@ export default function Create({ order }: Props) {
             <div className="space-y-6">
                 <div>
                     <Link
-                        href={`/orders/${order.id}`}
+                        href={OrderController.show.url({ order: order.id })}
                         className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />
@@ -122,22 +123,40 @@ export default function Create({ order }: Props) {
                                     <table className="w-full">
                                         <thead className="border-b border-gray-200 dark:border-gray-700">
                                             <tr className="text-left text-sm text-gray-500 dark:text-gray-400">
-                                                <th scope="col" className="pb-3 font-medium">
+                                                <th
+                                                    scope="col"
+                                                    className="pb-3 font-medium"
+                                                >
                                                     Product
                                                 </th>
-                                                <th scope="col" className="pb-3 font-medium">
+                                                <th
+                                                    scope="col"
+                                                    className="pb-3 font-medium"
+                                                >
                                                     SKU
                                                 </th>
-                                                <th scope="col" className="pb-3 text-right font-medium">
+                                                <th
+                                                    scope="col"
+                                                    className="pb-3 text-right font-medium"
+                                                >
                                                     Ordered Qty
                                                 </th>
-                                                <th scope="col" className="pb-3 text-right font-medium">
+                                                <th
+                                                    scope="col"
+                                                    className="pb-3 text-right font-medium"
+                                                >
                                                     Return Qty
                                                 </th>
-                                                <th scope="col" className="pb-3 font-medium">
+                                                <th
+                                                    scope="col"
+                                                    className="pb-3 font-medium"
+                                                >
                                                     Reason
                                                 </th>
-                                                <th scope="col" className="pb-3 font-medium">
+                                                <th
+                                                    scope="col"
+                                                    className="pb-3 font-medium"
+                                                >
                                                     Condition
                                                 </th>
                                             </tr>
@@ -305,7 +324,11 @@ export default function Create({ order }: Props) {
 
                             {/* Actions */}
                             <div className="flex justify-end gap-3">
-                                <Link href={`/orders/${order.id}`}>
+                                <Link
+                                    href={OrderController.show.url({
+                                        order: order.id,
+                                    })}
+                                >
                                     <Button variant="outline">Cancel</Button>
                                 </Link>
                                 <Button

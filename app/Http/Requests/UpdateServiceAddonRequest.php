@@ -11,15 +11,7 @@ class UpdateServiceAddonRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $addon = $this->route('addon');
-
-        // Check if this is service-specific
-        if ($addon->service_id) {
-            return $this->user()->can('manage', $addon->service);
-        }
-
-        // For category-wide addons, check if user has inventory management permission
-        return $this->user()->role->hasPermission('manage_inventory');
+        return true;
     }
 
     /**
@@ -32,7 +24,7 @@ class UpdateServiceAddonRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'price' => ['sometimes', 'required', 'numeric', 'min:0'],
             'allows_quantity' => ['sometimes', 'boolean'],
-            'max_quantity' => ['nullable', 'integer', 'min:1'],
+            'max_quantity' => ['nullable', 'integer', 'min:1', 'required_if:allows_quantity,true'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],
         ];

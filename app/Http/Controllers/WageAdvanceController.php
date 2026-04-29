@@ -11,6 +11,8 @@ use App\Http\Requests\RecordWageAdvanceRepaymentRequest;
 use App\Http\Requests\RejectWageAdvanceRequest;
 use App\Http\Requests\StoreWageAdvanceRequest;
 use App\Http\Requests\UpdateWageAdvanceRequest;
+use App\Http\Requests\WageAdvanceApprovalQueueRequest;
+use App\Http\Requests\WageAdvanceIndexRequest;
 use App\Models\WageAdvance;
 use App\Models\WageAdvanceRepayment;
 use App\Services\WageAdvanceRepaymentService;
@@ -31,13 +33,13 @@ class WageAdvanceController extends Controller
     /**
      * Display a listing of wage advances
      */
-    public function index(Request $request): Response
+    public function index(WageAdvanceIndexRequest $request): Response
     {
         Gate::authorize('viewAny', WageAdvance::class);
 
         $user = $request->user();
         $dateRange = DateRange::fromRequest($request->only(['start_date', 'end_date']), 'start_date', 'end_date');
-        $status = $request->input('status');
+        $status = $request->validated('status');
         $statusEnum = $status ? WageAdvanceStatus::from($status) : null;
 
         $wageAdvances = $this->wageAdvanceService->getUserAdvances(
@@ -54,7 +56,7 @@ class WageAdvanceController extends Controller
             $dateRange->end
         );
 
-        $shop = $user->shops()->first();
+        $shop = $this->wageAdvanceService->getUserPrimaryShop($user);
         $eligibility = $shop ? $this->wageAdvanceService->calculateEligibility($user, $shop) : null;
 
         return Inertia::render('WageAdvances/Index', [
@@ -76,12 +78,12 @@ class WageAdvanceController extends Controller
     /**
      * Display pending wage advances awaiting approval
      */
-    public function approvalQueue(Request $request): Response
+    public function approvalQueue(WageAdvanceApprovalQueueRequest $request): Response
     {
         Gate::authorize('viewAny', WageAdvance::class);
 
         $user = $request->user();
-        $shopId = $request->input('shop_id');
+        $shopId = $request->validated('shop_id');
 
         $wageAdvances = $this->wageAdvanceService->getAdvancesForApproval($user, $shopId ? (int) $shopId : null);
 
@@ -97,12 +99,12 @@ class WageAdvanceController extends Controller
     /**
      * Show the form for creating a new wage advance
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
         Gate::authorize('create', WageAdvance::class);
 
-        $user = auth()->user();
-        $shop = $user->shops()->first();
+        $user = $request->user();
+        $shop = $this->wageAdvanceService->getUserPrimaryShop($user);
 
         if (! $shop) {
             abort(403, 'You must be assigned to a shop to request a wage advance');
@@ -148,7 +150,7 @@ class WageAdvanceController extends Controller
     {
         Gate::authorize('view', $wageAdvance);
 
-        $wageAdvance->load(['user', 'shop', 'approvedBy', 'disbursedBy']);
+        $wageAdvance->loadDetailRelations();
 
         $repayments = $this->repaymentService->getRepayments($wageAdvance);
         $repaymentStatistics = $this->repaymentService->getRepaymentStatistics($wageAdvance);
@@ -292,7 +294,7 @@ class WageAdvanceController extends Controller
     /**
      * Delete a repayment record
      */
-    public function deleteRepayment(WageAdvance $wageAdvance, WageAdvanceRepayment $repayment): RedirectResponse
+    public function deleteRepayment(Request $request, WageAdvance $wageAdvance, WageAdvanceRepayment $repayment): RedirectResponse
     {
         Gate::authorize('deleteRepayment', $wageAdvance);
 
@@ -301,7 +303,7 @@ class WageAdvanceController extends Controller
         }
 
         try {
-            $this->repaymentService->deleteRepayment($repayment, auth()->user());
+            $this->repaymentService->deleteRepayment($repayment, $request->user());
 
             return redirect()
                 ->route('wage-advances.show', $wageAdvance)
@@ -344,7 +346,7 @@ class WageAdvanceController extends Controller
     {
         Gate::authorize('delete', $wageAdvance);
 
-        $wageAdvance->delete();
+        $this->wageAdvanceService->delete($wageAdvance);
 
         return redirect()
             ->route('wage-advances.index')

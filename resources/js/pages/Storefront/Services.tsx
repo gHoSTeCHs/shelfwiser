@@ -1,4 +1,4 @@
-import { home, services } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
+import { home, services as servicesRoute } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import ServiceCard from '@/components/storefront/ServiceCard';
 import ServiceFilter from '@/components/storefront/ServiceFilter';
@@ -61,7 +61,7 @@ const Services: React.FC<StorefrontServicesProps> = ({
         if (filters.sort) params.sort = filters.sort;
 
         router.get(
-            services({ shop: shop.slug }).url,
+            servicesRoute({ shop: shop.slug }).url,
             params,
             { preserveState: true },
         );
@@ -69,7 +69,7 @@ const Services: React.FC<StorefrontServicesProps> = ({
 
     const handlePageChange = (page: number) => {
         router.get(
-            services({ shop: shop.slug }).url,
+            servicesRoute({ shop: shop.slug }).url,
             { ...filters, page },
             { preserveState: true, preserveScroll: true },
         );

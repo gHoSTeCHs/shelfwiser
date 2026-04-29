@@ -1,3 +1,4 @@
+import { home } from '@/routes';
 import { Head, Link } from '@inertiajs/react';
 
 export default function Error404() {
@@ -24,7 +25,7 @@ export default function Error404() {
 
                     <div className="space-x-4">
                         <Link
-                            href="/"
+                            href={home.url()}
                             className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-white transition hover:bg-blue-700"
                         >
                             Go Home

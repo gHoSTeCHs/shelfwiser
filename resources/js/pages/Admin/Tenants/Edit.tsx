@@ -56,7 +56,11 @@ export default function Edit({ tenant, subscriptionPlans }: Props) {
 
             <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                    <Link href={`/admin/tenants/${tenant.id}`}>
+                    <Link
+                        href={AdminTenantController.show.url({
+                            tenant: tenant.id,
+                        })}
+                    >
                         <Button variant="ghost" size="sm">
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
@@ -369,7 +373,11 @@ export default function Edit({ tenant, subscriptionPlans }: Props) {
                             </Card>
 
                             <div className="flex justify-end gap-3">
-                                <Link href={`/admin/tenants/${tenant.id}`}>
+                                <Link
+                                    href={AdminTenantController.show.url({
+                                        tenant: tenant.id,
+                                    })}
+                                >
                                     <Button variant="outline">Cancel</Button>
                                 </Link>
                                 <Button

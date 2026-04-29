@@ -1,5 +1,4 @@
-import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
-import { home } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
+import { accountOrders, home } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
@@ -265,7 +264,7 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ shop, order }) => {
                     className="flex flex-col justify-center gap-3 sm:flex-row"
                 >
                     <Link
-                        href={CustomerPortalController.orders.url({
+                        href={accountOrders.url({
                             shop: shop.slug,
                         })}
                     >

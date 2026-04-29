@@ -117,8 +117,12 @@ export default function NotificationDropdown() {
         }
 
         if (notification.action_url) {
-            closeDropdown();
-            router.visit(notification.action_url);
+            const isSafeUrl = (url: string) =>
+                url.startsWith('/') && !url.startsWith('//');
+            if (isSafeUrl(notification.action_url)) {
+                closeDropdown();
+                router.visit(notification.action_url);
+            }
         }
     };
 

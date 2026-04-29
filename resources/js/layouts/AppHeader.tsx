@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
+import { home } from '@/routes';
 import { Link } from '@inertiajs/react';
 import { ThemeToggleButton } from '../components/common/ThemeToggleButton';
 import NotificationDropdown from '../components/header/NotificationDropdown';
@@ -83,7 +84,7 @@ const AppHeader: React.FC = () => {
                         {/* Cross Icon */}
                     </button>
 
-                    <Link href="/" className="lg:hidden">
+                    <Link href={home.url()} className="lg:hidden">
                         <img
                             className="dark:hidden"
                             src={'./images/logo/logo.svg'}

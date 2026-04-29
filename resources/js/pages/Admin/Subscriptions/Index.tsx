@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { formatCurrency, formatDateShort } from '@/lib/formatters';
 import { getSubscriptionPlanColor } from '@/lib/status-configs';
+import type { PaginatedResponse } from '@/types';
 import { Head } from '@inertiajs/react';
 import {
     CreditCard,
@@ -25,10 +26,7 @@ interface Subscription {
 }
 
 interface Props {
-    subscriptions: {
-        data: Subscription[];
-        total: number;
-    };
+    subscriptions: PaginatedResponse<Subscription>;
     stats: {
         total_subscriptions: number;
         active_subscriptions: number;

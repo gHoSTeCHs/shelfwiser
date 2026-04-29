@@ -1,3 +1,4 @@
+import { index, show } from '@/actions/App/Http/Controllers/OrderReturnController';
 import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
@@ -30,7 +31,7 @@ export default function Index({ returns, filters }: Props) {
     const handleFilterChange = (status: string) => {
         setStatusFilter(status);
         router.get(
-            '/returns',
+            index.url(),
             { status: status || undefined },
             { preserveState: true, preserveScroll: true },
         );
@@ -102,25 +103,46 @@ export default function Index({ returns, filters }: Props) {
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Return #
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Order #
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Status
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Reason
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Refund Amount
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Created
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Actions
                                         </th>
                                     </tr>
@@ -162,7 +184,7 @@ export default function Index({ returns, filters }: Props) {
                                             </td>
                                             <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
                                                 <Link
-                                                    href={`/returns/${returnItem.id}`}
+                                                    href={show.url({ return: returnItem.id })}
                                                 >
                                                     <Button
                                                         variant="outline"
@@ -210,7 +232,11 @@ export default function Index({ returns, filters }: Props) {
                                                 size="sm"
                                                 onClick={() =>
                                                     router.get(
-                                                        `/returns?page=${returns.current_page - 1}${statusFilter ? `&status=${statusFilter}` : ''}`,
+                                                        index.url(),
+                                                        {
+                                                            page: returns.current_page - 1,
+                                                            status: statusFilter || undefined,
+                                                        },
                                                     )
                                                 }
                                             >
@@ -224,7 +250,11 @@ export default function Index({ returns, filters }: Props) {
                                                 size="sm"
                                                 onClick={() =>
                                                     router.get(
-                                                        `/returns?page=${returns.current_page + 1}${statusFilter ? `&status=${statusFilter}` : ''}`,
+                                                        index.url(),
+                                                        {
+                                                            page: returns.current_page + 1,
+                                                            status: statusFilter || undefined,
+                                                        },
                                                     )
                                                 }
                                             >

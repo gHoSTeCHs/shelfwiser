@@ -55,6 +55,10 @@ class PayrollSettingsService
 
     public function updateEarningType(EarningType $earningType, array $validated, User $actor): void
     {
+        if ($earningType->is_system) {
+            throw new \RuntimeException('System earning types cannot be modified.');
+        }
+
         $oldValues = $earningType->only(array_keys($validated));
 
         $earningType->update($validated);
@@ -64,6 +68,14 @@ class PayrollSettingsService
 
     public function deleteEarningType(EarningType $earningType, User $actor): void
     {
+        if ($earningType->is_system) {
+            throw new \RuntimeException('System earning types cannot be deleted.');
+        }
+
+        if ($earningType->employeeEarnings()->exists()) {
+            throw new \RuntimeException('Cannot delete earning type that is in use.');
+        }
+
         $this->auditService->logEarningTypeDeleted($earningType, $actor);
 
         $earningType->delete();
@@ -107,6 +119,10 @@ class PayrollSettingsService
 
     public function updateDeductionType(DeductionTypeModel $deductionType, array $validated, User $actor): void
     {
+        if ($deductionType->is_system) {
+            throw new \RuntimeException('System deduction types cannot be modified.');
+        }
+
         $oldValues = $deductionType->only(array_keys($validated));
 
         $deductionType->update($validated);
@@ -116,6 +132,14 @@ class PayrollSettingsService
 
     public function deleteDeductionType(DeductionTypeModel $deductionType, User $actor): void
     {
+        if ($deductionType->is_system) {
+            throw new \RuntimeException('System deduction types cannot be deleted.');
+        }
+
+        if ($deductionType->employeeDeductions()->exists()) {
+            throw new \RuntimeException('Cannot delete deduction type that is in use.');
+        }
+
         $this->auditService->logDeductionTypeDeleted($deductionType, $actor);
 
         $deductionType->delete();
@@ -169,6 +193,14 @@ class PayrollSettingsService
 
     public function deletePayCalendar(PayCalendar $payCalendar, User $actor): void
     {
+        if ($payCalendar->employees()->exists()) {
+            throw new \RuntimeException('Cannot delete pay calendar with assigned employees.');
+        }
+
+        if ($payCalendar->payPeriods()->exists()) {
+            throw new \RuntimeException('Cannot delete pay calendar with existing pay periods.');
+        }
+
         $this->auditService->logPayCalendarDeleted($payCalendar, $actor);
 
         $payCalendar->delete();
@@ -210,6 +242,14 @@ class PayrollSettingsService
             $tenantId,
             $effectiveDate
         );
+    }
+
+    public function prepareTaxTableForShow(TaxTable $taxTable): TaxTable
+    {
+        $taxTable->load(['bands' => fn ($q) => $q->orderBy('band_order'), 'reliefs']);
+        $taxTable->tax_law_version_label = $taxTable->getTaxLawVersion()?->shortLabel();
+
+        return $taxTable;
     }
 
     private function isCurrentTaxTable(TaxTable $table): bool

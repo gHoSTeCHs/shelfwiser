@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\CustomerAddress;
+use App\Models\Shop;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -56,7 +57,7 @@ class CustomerService
         }
 
         $sortField = $filters['sort'] ?? 'created_at';
-        $sortDirection = $filters['direction'] ?? 'desc';
+        $sortDirection = in_array($filters['direction'] ?? 'desc', ['asc', 'desc']) ? $filters['direction'] : 'desc';
         $allowedSorts = ['first_name', 'last_name', 'email', 'created_at', 'account_balance', 'total_purchases'];
 
         if (in_array($sortField, $allowedSorts)) {
@@ -100,7 +101,7 @@ class CustomerService
 
         try {
             return DB::transaction(function () use ($data, $tenant) {
-                $customer = Customer::create([
+                $customer = Customer::query()->create([
                     'tenant_id' => $tenant->id,
                     'preferred_shop_id' => $data['preferred_shop_id'] ?? null,
                     'first_name' => $data['first_name'],
@@ -123,7 +124,7 @@ class CustomerService
 
                 Log::info('Customer created successfully.', ['customer_id' => $customer->id]);
 
-                return $customer->load(['preferredShop', 'addresses']);
+                return $customer->loadEditRelations();
             });
         } catch (Throwable $e) {
             Log::error('Customer creation failed.', [
@@ -150,9 +151,12 @@ class CustomerService
                     'last_name' => $data['last_name'] ?? null,
                     'email' => $data['email'] ?? null,
                     'phone' => $data['phone'] ?? null,
-                    'preferred_shop_id' => array_key_exists('preferred_shop_id', $data) ? $data['preferred_shop_id'] : null,
                     'marketing_opt_in' => $data['marketing_opt_in'] ?? null,
                 ], fn ($value) => $value !== null);
+
+                if (array_key_exists('preferred_shop_id', $data)) {
+                    $updateData['preferred_shop_id'] = $data['preferred_shop_id'];
+                }
 
                 if (isset($data['is_active'])) {
                     $updateData['is_active'] = $data['is_active'];
@@ -186,25 +190,14 @@ class CustomerService
     /**
      * Soft delete a customer.
      */
-    public function delete(Customer $customer): bool
+    public function delete(Customer $customer): void
     {
         Log::info('Customer deletion started.', ['customer_id' => $customer->id]);
 
-        try {
-            $customer->delete();
-            $this->invalidateCustomerCache($customer);
+        $customer->delete();
+        $this->invalidateCustomerCache($customer);
 
-            Log::info('Customer deleted successfully.', ['customer_id' => $customer->id]);
-
-            return true;
-        } catch (Throwable $e) {
-            Log::error('Customer deletion failed.', [
-                'customer_id' => $customer->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
+        Log::info('Customer deleted successfully.', ['customer_id' => $customer->id]);
     }
 
     /**
@@ -212,25 +205,24 @@ class CustomerService
      */
     public function getStatistics(Tenant $tenant): array
     {
-        $baseQuery = Customer::query()->where('tenant_id', $tenant->id);
-
-        $totalCustomers = (clone $baseQuery)->count();
-        $activeCustomers = (clone $baseQuery)->where('is_active', true)->count();
-        $customersWithCredit = (clone $baseQuery)
-            ->whereNotNull('credit_limit')
-            ->where('credit_limit', '>', 0)
-            ->count();
-        $totalCreditBalance = (clone $baseQuery)->sum('account_balance');
-        $newThisMonth = (clone $baseQuery)
-            ->where('created_at', '>=', now()->startOfMonth())
-            ->count();
+        $stats = Customer::query()
+            ->where('tenant_id', $tenant->id)
+            ->selectRaw(
+                'count(*) as total_customers,
+                sum(case when is_active = 1 then 1 else 0 end) as active_customers,
+                sum(case when credit_limit > 0 then 1 else 0 end) as customers_with_credit,
+                coalesce(sum(account_balance), 0) as total_credit_balance,
+                sum(case when created_at >= ? then 1 else 0 end) as new_this_month',
+                [now()->startOfMonth()]
+            )
+            ->first();
 
         return [
-            'total_customers' => $totalCustomers,
-            'active_customers' => $activeCustomers,
-            'customers_with_credit' => $customersWithCredit,
-            'total_credit_balance' => number_format($totalCreditBalance, 2),
-            'new_this_month' => $newThisMonth,
+            'total_customers' => (int) $stats->total_customers,
+            'active_customers' => (int) $stats->active_customers,
+            'customers_with_credit' => (int) $stats->customers_with_credit,
+            'total_credit_balance' => number_format((float) $stats->total_credit_balance, 2),
+            'new_this_month' => (int) $stats->new_this_month,
         ];
     }
 
@@ -296,6 +288,38 @@ class CustomerService
     }
 
     /**
+     * Get all active shops for customer form dropdowns (preferred shop selection).
+     */
+    public function getActiveShops(): \Illuminate\Support\Collection
+    {
+        return Shop::query()
+            ->where('is_active', true)
+            ->select('id', 'name', 'slug')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Get the 5 most recent orders for a customer's profile page.
+     */
+    public function getRecentOrders(Customer $customer): \Illuminate\Support\Collection
+    {
+        return $customer->orders()
+            ->with(['shop:id,name', 'items:id,order_id,product_name,quantity,unit_price'])
+            ->latest()
+            ->limit(5)
+            ->get();
+    }
+
+    /**
+     * Load edit-form relations onto a customer and return it.
+     */
+    public function getForEdit(Customer $customer): Customer
+    {
+        return $customer->loadEditRelations();
+    }
+
+    /**
      * Create an address for the customer.
      */
     protected function createAddress(Customer $customer, array $addressData): CustomerAddress
@@ -331,6 +355,18 @@ class CustomerService
         }
 
         return $this->createAddress($customer, $addressData);
+    }
+
+    /**
+     * Update storefront-facing profile fields for an authenticated customer.
+     */
+    public function updateStorefrontProfile(Customer $customer, array $validated): Customer
+    {
+        $customer->update(array_intersect_key($validated, array_flip([
+            'first_name', 'last_name', 'phone', 'marketing_opt_in',
+        ])));
+
+        return $customer->refresh();
     }
 
     /**

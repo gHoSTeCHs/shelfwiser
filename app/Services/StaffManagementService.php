@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
+use App\Models\EmployeePayrollDetail;
+use App\Models\EmployeeTemplate;
+use App\Models\PayCalendar;
 use App\Models\Shop;
 use App\Models\Tenant;
 use App\Models\User;
@@ -61,8 +64,7 @@ class StaffManagementService
         } catch (Throwable $e) {
             Log::error('Staff creation failed.', [
                 'tenant_id' => $tenant->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -83,14 +85,25 @@ class StaffManagementService
 
         try {
             return DB::transaction(function () use ($staff, $data) {
-                $updateData = array_filter([
-                    'first_name' => $data['first_name'] ?? null,
-                    'last_name' => $data['last_name'] ?? null,
-                    'email' => $data['email'] ?? null,
-                    'role' => isset($data['role']) ? $this->normalizeRole($data['role']) : null,
-                ], fn ($value) => $value !== null);
+                $updateData = [];
 
-                if (isset($data['is_active'])) {
+                if (array_key_exists('first_name', $data)) {
+                    $updateData['first_name'] = $data['first_name'];
+                }
+
+                if (array_key_exists('last_name', $data)) {
+                    $updateData['last_name'] = $data['last_name'];
+                }
+
+                if (array_key_exists('email', $data)) {
+                    $updateData['email'] = $data['email'];
+                }
+
+                if (array_key_exists('role', $data)) {
+                    $updateData['role'] = $this->normalizeRole($data['role']);
+                }
+
+                if (array_key_exists('is_active', $data)) {
                     $updateData['is_active'] = $data['is_active'];
                 }
 
@@ -113,8 +126,7 @@ class StaffManagementService
         } catch (Throwable $e) {
             Log::error('Staff update failed.', [
                 'staff_id' => $staff->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -168,35 +180,25 @@ class StaffManagementService
 
     /**
      * Delete a staff member (soft delete by deactivating).
+     *
+     * @throws Throwable
      */
-    public function delete(User $staff): bool
+    public function delete(User $staff): void
     {
         Log::info('Staff deletion process started.', ['staff_id' => $staff->id]);
 
-        try {
-            DB::transaction(function () use ($staff) {
-                $staff->shops()->detach();
+        DB::transaction(function () use ($staff) {
+            $staff->shops()->detach();
 
-                $staff->forceFill(['is_active' => false])->save();
+            $staff->forceFill(['is_active' => false])->save();
 
-                // Invalidate specific staff cache and list cache
-                Cache::tags([
-                    "tenant:$staff->tenant_id:staff:list",
-                    "tenant:$staff->tenant_id:staff:$staff->id",
-                ])->flush();
-            });
+            Cache::tags([
+                "tenant:$staff->tenant_id:staff:list",
+                "tenant:$staff->tenant_id:staff:$staff->id",
+            ])->flush();
+        });
 
-            Log::info('Staff member deleted successfully.', ['staff_id' => $staff->id]);
-
-            return true;
-        } catch (Throwable $e) {
-            Log::error('Staff deletion failed.', [
-                'staff_id' => $staff->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
+        Log::info('Staff member deleted successfully.', ['staff_id' => $staff->id]);
     }
 
     /**
@@ -234,8 +236,13 @@ class StaffManagementService
      */
     public function getStatistics(Tenant $tenant): array
     {
-        $totalStaff = User::query()->where('tenant_id', $tenant->id)->count();
-        $activeStaff = User::query()->where('tenant_id', $tenant->id)->where('is_active', true)->count();
+        $staffCounts = User::query()
+            ->where('tenant_id', $tenant->id)
+            ->selectRaw('count(*) as total_staff, sum(case when is_active = 1 then 1 else 0 end) as active_staff')
+            ->first();
+
+        $totalStaff = (int) $staffCounts->total_staff;
+        $activeStaff = (int) $staffCounts->active_staff;
 
         $roleDistribution = User::query()
             ->where('tenant_id', $tenant->id)
@@ -270,5 +277,91 @@ class StaffManagementService
         }
 
         return UserRole::from($role);
+    }
+
+    public function getAssignableRoles(User $currentUser): \Illuminate\Support\Collection
+    {
+        return collect(UserRole::cases())
+            ->filter(fn ($role) => $role !== UserRole::OWNER && $currentUser->role->level() > $role->level())
+            ->map(fn ($role) => [
+                'value' => $role->value,
+                'label' => $role->label(),
+                'description' => $role->description(),
+                'level' => $role->level(),
+                'can_access_multiple_shops' => $role->canAccessMultipleStores(),
+            ])
+            ->values();
+    }
+
+    public function getShopsForForm(Tenant $tenant): Collection
+    {
+        return Shop::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->select('id', 'name', 'slug', 'city', 'state')
+            ->get();
+    }
+
+    public function getShopsForIndex(Tenant $tenant): Collection
+    {
+        return Shop::query()
+            ->where('tenant_id', $tenant->id)
+            ->select('id', 'name', 'slug')
+            ->get();
+    }
+
+    public function getPayCalendars(): array
+    {
+        return PayCalendar::query()
+            ->where('is_active', true)
+            ->select('id', 'name', 'frequency', 'pay_day', 'is_default')
+            ->get()
+            ->toArray();
+    }
+
+    public function getDepartments(): array
+    {
+        return EmployeePayrollDetail::query()
+            ->whereNotNull('department')
+            ->distinct()
+            ->pluck('department')
+            ->filter()
+            ->values()
+            ->toArray();
+    }
+
+    public function getTemplates(int $tenantId): array
+    {
+        return EmployeeTemplate::availableFor($tenantId)
+            ->orderByDesc('is_system')
+            ->orderByDesc('usage_count')
+            ->orderBy('name')
+            ->get()
+            ->toArray();
+    }
+
+    public function getTaxConfigurationStatus(User $staff): array
+    {
+        $taxSettings = $staff->taxSettings;
+
+        if (! $taxSettings) {
+            return [
+                'status' => 'not_configured',
+                'label' => 'Not Configured',
+                'color' => 'warning',
+                'is_homeowner' => null,
+                'has_rent_proof' => false,
+            ];
+        }
+
+        $isComplete = $taxSettings->tax_id_number !== null;
+
+        return [
+            'status' => $isComplete ? 'complete' : 'partial',
+            'label' => $isComplete ? 'Configured' : 'Needs Attention',
+            'color' => $isComplete ? 'success' : 'info',
+            'is_homeowner' => $taxSettings->is_homeowner,
+            'has_rent_proof' => $taxSettings->hasValidRentProof(),
+        ];
     }
 }

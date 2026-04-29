@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Middleware\EnsureCustomerIsActive;
 use App\Http\Middleware\EnsureStorefrontEnabled;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\HandleSecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -29,11 +31,13 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            HandleSecurityHeaders::class,
         ]);
 
         $middleware->alias([
             'super_admin' => EnsureSuperAdmin::class,
             'storefront.enabled' => EnsureStorefrontEnabled::class,
+            'customer.active' => EnsureCustomerIsActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

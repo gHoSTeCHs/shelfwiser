@@ -42,7 +42,7 @@ export default function Create({ parentCategories }: Props) {
 
             <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                    <Link href="/service-categories">
+                    <Link href={ServiceCategoryController.index.url()}>
                         <Button variant="outline" size="sm">
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Back
@@ -242,7 +242,9 @@ export default function Create({ parentCategories }: Props) {
 
                             {/* Actions */}
                             <div className="flex justify-end gap-4">
-                                <Link href="/service-categories">
+                                <Link
+                                    href={ServiceCategoryController.index.url()}
+                                >
                                     <Button type="button" variant="outline">
                                         Cancel
                                     </Button>

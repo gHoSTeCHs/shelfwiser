@@ -246,10 +246,14 @@ class Order extends Model
 
     public function calculateTotals(): void
     {
+        if (! $this->relationLoaded('items')) {
+            $this->load('items');
+        }
+
         $this->subtotal = $this->items->sum(fn ($item) => $item->unit_price * $item->quantity);
         $this->tax_amount = $this->items->sum('tax_amount');
         $this->discount_amount = $this->items->sum('discount_amount');
-        $this->total_amount = $this->subtotal + $this->tax_amount - $this->discount_amount + $this->shipping_cost;
+        $this->total_amount = max(0, $this->subtotal + $this->tax_amount - $this->discount_amount + $this->shipping_cost);
     }
 
     public static function generateOrderNumber(int $tenantId, $createdAt = null): string
@@ -258,7 +262,8 @@ class Order extends Model
         $prefix = 'ORD';
         $date = $creationDate->format('Ymd');
 
-        $lastOrder = self::where('tenant_id', $tenantId)
+        $lastOrder = Order::query()
+            ->where('tenant_id', $tenantId)
             ->whereDate('created_at', $creationDate)
             ->orderBy('id', 'desc')
             ->lockForUpdate()
@@ -287,8 +292,15 @@ class Order extends Model
     }
 
     /**
-     * Update payment status based on paid_amount
-     * Called automatically by OrderPayment model events
+     * Recalculates and persists `payment_status` from the current `paid_amount`.
+     *
+     * Called by three `OrderPayment` model events defined in `OrderPayment::booted()`:
+     * `created`, `deleted`, and `restored`. Each event first updates `paid_amount`
+     * by summing `order_payments.amount` for this order, then calls this method.
+     *
+     * Note: `OrderService::updatePaymentStatus()` and `CheckoutService::updatePaymentStatus()`
+     * are separate service-layer helpers that update payment status via `forceFill` and do NOT
+     * call this model method. They operate independently on different code paths.
      */
     public function updatePaymentStatus(): void
     {
@@ -313,6 +325,11 @@ class Order extends Model
                 ]);
             },
         ]);
+    }
+
+    public function loadEditRelations(): static
+    {
+        return $this->load(['shop', 'customer', 'items.productVariant.product']);
     }
 
     public function loadForShow(): static

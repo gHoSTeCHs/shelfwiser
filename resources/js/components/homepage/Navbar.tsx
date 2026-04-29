@@ -1,6 +1,6 @@
 import { useAppearance } from '@/hooks/use-appearance';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
-import { dashboard, login, register } from '@/routes';
+import { dashboard, home, login, register } from '@/routes';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { Menu, Moon, Sun, X } from 'lucide-react';
@@ -52,7 +52,7 @@ export default function Navbar() {
             }`}
         >
             <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-                <Link href="/" className="flex items-center gap-2.5">
+                <Link href={home.url()} className="flex items-center gap-2.5">
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 shadow-md">
                         <span className="text-lg font-bold text-white">S</span>
                     </div>

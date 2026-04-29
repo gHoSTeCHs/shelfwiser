@@ -68,9 +68,10 @@ export interface ProductVariant {
     attributes: Record<string, ProductAttributeValue> | null;
     base_unit_name: string;
     image_url: string | null;
+    image?: Image | null;
     images?: Image[];
+    expiry_date?: string | null;
     batch_number?: string;
-    expiry_date?: string;
     serial_number?: string;
     is_active: boolean;
     is_available_online?: boolean;

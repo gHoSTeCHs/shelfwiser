@@ -1,3 +1,4 @@
+import { home } from '@/routes';
 import { Link } from '@inertiajs/react';
 import React from 'react';
 
@@ -19,7 +20,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle }) => {
                     <li>
                         <Link
                             className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400"
-                            href="/"
+                            href={home.url()}
                         >
                             Home
                             <svg

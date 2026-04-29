@@ -11,6 +11,7 @@ use App\Models\ProductVariant;
 use App\Models\Shop;
 use App\Models\StockMovement;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -70,8 +71,8 @@ class ProductService
                 if ($hasVariants && isset($data['variants'])) {
                     foreach ($data['variants'] as $variantData) {
                         $variant = $this->createVariant($product, $variantData);
+                        $variant->setRelation('product', $product);
 
-                        // Create packaging types for this variant
                         if (isset($variantData['packaging_types'])) {
                             $this->createPackagingTypes($variant, $variantData['packaging_types']);
                         } else {
@@ -80,8 +81,8 @@ class ProductService
                     }
                 } else {
                     $variant = $this->createDefaultVariant($product, $data);
+                    $variant->setRelation('product', $product);
 
-                    // Create packaging types for simple products
                     if (isset($data['packaging_types'])) {
                         $this->createPackagingTypes($variant, $data['packaging_types']);
                     } else {
@@ -101,7 +102,7 @@ class ProductService
                 'tenant_id' => $tenant->id,
                 'shop_id' => $shop->id,
                 'product_name' => $data['name'] ?? null,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -155,7 +156,7 @@ class ProductService
         } catch (Throwable $e) {
             Log::error('Product update failed.', [
                 'product_id' => $product->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -184,11 +185,11 @@ class ProductService
         DB::transaction(function () use ($product) {
             $product->variants()->delete();
             $product->delete();
+
+            Cache::tags(["tenant:{$product->tenant_id}:products:list"])->flush();
         });
 
         Log::info('Product deleted', ['product_id' => $product->id, 'name' => $product->name]);
-
-        Cache::tags(["tenant:{$product->tenant_id}:products"])->flush();
     }
 
     public function getProductsForIndex(): LengthAwarePaginator
@@ -354,9 +355,17 @@ class ProductService
     {
         $base = Str::slug($name);
         $slug = $base;
+        $counter = 1;
 
-        for ($counter = 1; Product::query()->where('tenant_id', $tenant->id)->where('slug', $slug)->exists(); $counter++) {
-            $slug = "$base-$counter";
+        while (
+            Product::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('slug', $slug)
+                ->lockForUpdate()
+                ->exists()
+        ) {
+            $slug = $base.'-'.$counter;
+            $counter++;
         }
 
         return $slug;
@@ -405,6 +414,30 @@ class ProductService
     }
 
     /**
+     * Filter a list of variant IDs to only those the user is authorized to manage.
+     * Owners and General Managers get tenant-wide access; all other roles are
+     * restricted to variants belonging to their assigned shops.
+     *
+     * @param  array<int>  $ids
+     * @return array<int>
+     */
+    public function filterVariantsByOwnership(array $ids, User $user): array
+    {
+        $query = ProductVariant::query()
+            ->whereIn('id', $ids)
+            ->whereHas('product', fn ($q) => $q->where('tenant_id', $user->tenant_id));
+
+        $tenantWideRoles = [\App\Enums\UserRole::OWNER->value, \App\Enums\UserRole::GENERAL_MANAGER->value];
+
+        if (! in_array($user->role->value, $tenantWideRoles, true)) {
+            $accessibleShopIds = $user->shops()->pluck('shops.id');
+            $query->whereHas('product', fn ($q) => $q->whereIn('shop_id', $accessibleShopIds));
+        }
+
+        return $query->pluck('id')->all();
+    }
+
+    /**
      * Update a product variant
      *
      * @throws Throwable
@@ -438,9 +471,10 @@ class ProductService
                     if ($basePackaging) {
                         $basePackaging->update(['price' => $data['price']]);
 
+                        $safePrice = (float) $data['price'];
                         $variant->packagingTypes()
                             ->where('is_base_unit', false)
-                            ->update(['price' => DB::raw('units_per_package * '.(float) $data['price'])]);
+                            ->update(['price' => DB::raw("units_per_package * {$safePrice}")]);
                     }
                 }
 
@@ -452,9 +486,10 @@ class ProductService
                     if ($basePackaging && $data['cost_price'] !== null) {
                         $basePackaging->update(['cost_price' => $data['cost_price']]);
 
+                        $safeCostPrice = (float) $data['cost_price'];
                         $variant->packagingTypes()
                             ->where('is_base_unit', false)
-                            ->update(['cost_price' => DB::raw('units_per_package * '.(float) $data['cost_price'])]);
+                            ->update(['cost_price' => DB::raw("units_per_package * {$safeCostPrice}")]);
                     }
                 }
 
@@ -477,7 +512,7 @@ class ProductService
             Log::error('Product variant update failed.', [
                 'variant_id' => $variant->id,
                 'product_id' => $variant->product_id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;

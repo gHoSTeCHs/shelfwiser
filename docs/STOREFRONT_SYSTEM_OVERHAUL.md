@@ -1,10 +1,20 @@
 # ShelfWiser Dynamic Storefront Builder — Technical Spec
 
+## Related Specs
+
+- **Solo-tier templates & themes:** See [Solo Templates & Themes Spec](superpowers/specs/2026-04-14-solo-templates-and-themes.md) for the Bio and Drop template designs plus six named themes (Sable, Sugarush, Parchment, Monument, Atelier, Neon Lagos). Those run on the same engine defined here but use a separate simplified admin builder (see launch strategy doc for architecture).
+- **Launch strategy:** [Launch Strategy & Positioning](superpowers/strategy/2026-04-14-launch-strategy-and-positioning.md) — template roadmap, builder architecture, pre-launch scope.
+
 ## Vision
 
-Every shop on ShelfWiser gets a storefront that looks and feels like it was custom-built. In a thousand shops, no two should look the same. Shop owners pick a template (structural layout system), choose a theme (complete aesthetic identity), customize within guardrails (curated colors, fonts, effects), compose their pages from section types, and publish — all without writing code.
+Every shop on ShelfWiser gets a storefront that looks and feels like it was custom-built. In a thousand shops, no two
+should look the same. Shop owners pick a template (structural layout system), choose a theme (complete aesthetic
+identity), customize within guardrails (curated colors, fonts, effects), compose their pages from section types, and
+publish — all without writing code.
 
-The system draws architectural patterns from **Amoriie**, which implements a template/theme/customization hierarchy: Templates define structure, Themes define aesthetic identity within that structure, and Customization lets users personalize within theme-safe guardrails. The same pattern applies here at e-commerce scale.
+The system draws architectural patterns from **Amoriie**, which implements a template/theme/customization hierarchy:
+Templates define structure, Themes define aesthetic identity within that structure, and Customization lets users
+personalize within theme-safe guardrails. The same pattern applies here at e-commerce scale.
 
 ## Tech Stack
 
@@ -19,13 +29,17 @@ The system draws architectural patterns from **Amoriie**, which implements a tem
 
 1. **No Docker.** All services run natively.
 2. **Service layer architecture.** Controllers are thin, business logic in services.
-3. **Template → Theme → Customization hierarchy.** Three distinct layers. Template = structural skeleton. Theme = complete aesthetic package. Customization = user overrides within theme guardrails.
-4. **Shared scaffold, theme-driven variation.** One set of section components serves all themes within a template. The theme config object drives all visual/behavioral differences. Minimal code duplication.
-5. **Guardrailed customization.** Users feel unlimited freedom, but every choice stays within the theme's curated palette, font list, and style options. Ugly combinations are structurally impossible.
+3. **Template → Theme → Customization hierarchy.** Three distinct layers. Template = structural skeleton. Theme =
+   complete aesthetic package. Customization = user overrides within theme guardrails.
+4. **Shared scaffold, theme-driven variation.** One set of section components serves all themes within a template. The
+   theme config object drives all visual/behavioral differences. Minimal code duplication.
+5. **Guardrailed customization.** Users feel unlimited freedom, but every choice stays within the theme's curated
+   palette, font list, and style options. Ugly combinations are structurally impossible.
 6. **Multi-tenancy via global scopes.** All tenant-scoped models use `BelongsToTenant` trait.
 7. **Admin dashboard stays on Inertia.** Builder UI is part of the Inertia admin.
 8. **Public storefront is decoupled from Inertia.** Blade view bootstraps standalone React app with JSON page data.
-9. **One template at a time.** Build each template end-to-end with full quality before starting the next. No half-implementations.
+9. **One template at a time.** Build each template end-to-end with full quality before starting the next. No
+   half-implementations.
 
 ## How the System Works — High Level
 
@@ -72,7 +86,8 @@ TEMPLATE (structural skeleton)
 
 **Templates alone** = structural diversity but visually monotonous within a template.
 **Themes alone** (current spec) = visual variety but structurally identical sites.
-**Templates + Themes + Guardrailed Customization** = structural diversity × aesthetic diversity × personal branding = effectively infinite unique combinations.
+**Templates + Themes + Guardrailed Customization** = structural diversity × aesthetic diversity × personal branding =
+effectively infinite unique combinations.
 
 **The math:**
 
@@ -92,7 +107,8 @@ TEMPLATE (structural skeleton)
 
 ### StorefrontTemplate (NEW)
 
-Platform-level structural skeletons. Each template defines a fundamentally different layout system, navigation pattern, scroll behavior, and animation capability.
+Platform-level structural skeletons. Each template defines a fundamentally different layout system, navigation pattern,
+scroll behavior, and animation capability.
 
 **Table:** `storefront_templates`
 
@@ -120,7 +136,7 @@ updated_at          - timestamp
 **Template Category Enum — `StorefrontTemplateCategory`:**
 
 | Case        | Value       | Description                         |
-| ----------- | ----------- | ----------------------------------- |
+|-------------|-------------|-------------------------------------|
 | Commerce    | commerce    | Traditional e-commerce layouts      |
 | Editorial   | editorial   | Magazine/lookbook style             |
 | Marketplace | marketplace | High-volume, dense display          |
@@ -136,7 +152,7 @@ updated_at          - timestamp
 **Animation Tier Enum — `StorefrontAnimationTier`:**
 
 | Case      | Value     | Description                                             | Libraries                              |
-| --------- | --------- | ------------------------------------------------------- | -------------------------------------- |
+|-----------|-----------|---------------------------------------------------------|----------------------------------------|
 | None      | none      | No animations. Fast, accessible.                        | —                                      |
 | Subtle    | subtle    | Fade-in on scroll, smooth hover states                  | CSS transitions + IntersectionObserver |
 | Polished  | polished  | Staggered reveals, parallax images, elegant transitions | Framer Motion + Lenis                  |
@@ -150,13 +166,22 @@ updated_at          - timestamp
     "container_max_width": "1280px",
     "section_flow": "vertical",
     "header_anatomy": {
-        "variants": ["standard", "centered_logo", "transparent_overlay"],
+        "variants": [
+            "standard",
+            "centered_logo",
+            "transparent_overlay"
+        ],
         "supports_mega_menu": false,
         "supports_sticky": true,
         "supports_search_bar": true
     },
     "footer_anatomy": {
-        "variants": ["multi_column", "minimal", "centered", "mega_footer"]
+        "variants": [
+            "multi_column",
+            "minimal",
+            "centered",
+            "mega_footer"
+        ]
     },
     "hero_variants": [
         "centered_overlay",
@@ -165,7 +190,10 @@ updated_at          - timestamp
         "minimal_text",
         "video_background"
     ],
-    "product_display_modes": ["grid", "masonry"],
+    "product_display_modes": [
+        "grid",
+        "masonry"
+    ],
     "section_transition": "none",
     "supports_sidebar": false,
     "supports_parallax": false,
@@ -183,7 +211,10 @@ updated_at          - timestamp
 
 ### StorefrontTheme (REVISED)
 
-Theme is now scoped to a template. Each theme defines a complete aesthetic identity — not just colors, but behavioral differences: which animation variants fire, which component shapes render, which hover effects apply. Following Amoriie's pattern, the theme config is a pure data object that drives all visual/behavioral differences through a shared scaffold.
+Theme is now scoped to a template. Each theme defines a complete aesthetic identity — not just colors, but behavioral
+differences: which animation variants fire, which component shapes render, which hover effects apply. Following
+Amoriie's pattern, the theme config is a pure data object that drives all visual/behavioral differences through a shared
+scaffold.
 
 **Table:** `storefront_themes`
 
@@ -257,7 +288,6 @@ updated_at          - timestamp
         ],
         "allow_custom": false
     },
-
     "typography": {
         "options": [
             {
@@ -287,70 +317,133 @@ updated_at          - timestamp
         "heading_line_height": 1.2,
         "letter_spacing": "normal"
     },
-
     "components": {
         "button_style": "rounded",
-        "button_options": ["sharp", "rounded", "pill"],
+        "button_options": [
+            "sharp",
+            "rounded",
+            "pill"
+        ],
         "card_style": "elevated",
-        "card_options": ["flat", "bordered", "elevated", "glass"],
+        "card_options": [
+            "flat",
+            "bordered",
+            "elevated",
+            "glass"
+        ],
         "image_style": "rounded",
-        "image_options": ["sharp", "rounded", "circle"],
+        "image_options": [
+            "sharp",
+            "rounded",
+            "circle"
+        ],
         "badge_style": "pill",
-        "badge_options": ["pill", "square", "outlined"],
+        "badge_options": [
+            "pill",
+            "square",
+            "outlined"
+        ],
         "input_style": "bordered",
-        "input_options": ["bordered", "underline", "filled"]
+        "input_options": [
+            "bordered",
+            "underline",
+            "filled"
+        ]
     },
-
     "feel": {
         "shadow_depth": "subtle",
-        "shadow_options": ["none", "subtle", "medium", "dramatic"],
+        "shadow_options": [
+            "none",
+            "subtle",
+            "medium",
+            "dramatic"
+        ],
         "border_radius": "8px",
-        "border_radius_options": ["0px", "4px", "8px", "12px", "16px", "9999px"],
+        "border_radius_options": [
+            "0px",
+            "4px",
+            "8px",
+            "12px",
+            "16px",
+            "9999px"
+        ],
         "section_spacing": "64px",
-        "spacing_options": ["32px", "48px", "64px", "80px", "96px"],
+        "spacing_options": [
+            "32px",
+            "48px",
+            "64px",
+            "80px",
+            "96px"
+        ],
         "divider_style": "none",
-        "divider_options": ["none", "thin_line", "thick_line", "gradient", "ornament"]
+        "divider_options": [
+            "none",
+            "thin_line",
+            "thick_line",
+            "gradient",
+            "ornament"
+        ]
     },
-
     "animation": {
         "entrance_style": "fade_up",
-        "entrance_options": ["none", "fade_up", "fade_in", "slide_left", "slide_right", "zoom_in", "blur_in"],
+        "entrance_options": [
+            "none",
+            "fade_up",
+            "fade_in",
+            "slide_left",
+            "slide_right",
+            "zoom_in",
+            "blur_in"
+        ],
         "hover_style": "elevate",
-        "hover_options": ["none", "elevate", "glow", "scale", "border_accent", "underline"],
+        "hover_options": [
+            "none",
+            "elevate",
+            "glow",
+            "scale",
+            "border_accent",
+            "underline"
+        ],
         "page_transition": "fade",
-        "page_transition_options": ["none", "fade", "slide", "morph"],
+        "page_transition_options": [
+            "none",
+            "fade",
+            "slide",
+            "morph"
+        ],
         "stagger_delay": 80,
         "duration_multiplier": 1.0
     },
-
     "header": {
         "variant": "standard",
         "position": "sticky",
         "transparent_on_hero": false
     },
-
     "footer": {
         "variant": "multi_column",
         "show_newsletter": true,
         "show_social_links": true
     },
-
     "hero": {
         "default_variant": "centered_overlay",
         "default_height": "large",
         "overlay_opacity": 0.4
     },
-
     "product_card": {
         "variant": "default",
         "show_quick_add": true,
         "image_aspect_ratio": "4:5",
         "hover_effect": "image_zoom"
     },
-
     "decorations": {
         "background_pattern": "none",
-        "pattern_options": ["none", "dots", "grid", "diagonal", "noise"],
+        "pattern_options": [
+            "none",
+            "dots",
+            "grid",
+            "diagonal",
+            "noise"
+        ],
         "pattern_opacity": 0.05,
         "section_dividers": false,
         "ornaments": false
@@ -358,7 +451,8 @@ updated_at          - timestamp
 }
 ```
 
-**Key insight:** Every `_options` array defines the guardrails. The user can only pick from these. The theme ships with sensible defaults, and every option combination looks good because the theme designer curated them.
+**Key insight:** Every `_options` array defines the guardrails. The user can only pick from these. The theme ships with
+sensible defaults, and every option combination looks good because the theme designer curated them.
 
 **Relationships:**
 
@@ -369,7 +463,8 @@ updated_at          - timestamp
 
 ### StorefrontConfig (REVISED)
 
-Per-shop customization. Stores the user's choices within theme guardrails. Only stores OVERRIDES — anything not set falls back to the theme's defaults.
+Per-shop customization. Stores the user's choices within theme guardrails. Only stores OVERRIDES — anything not set
+falls back to the theme's defaults.
 
 **Table:** `storefront_configs`
 
@@ -450,7 +545,7 @@ updated_at          - timestamp
 **Page Type Enum — `StorefrontPageType`:**
 
 | Case          | Value          | Description                        |
-| ------------- | -------------- | ---------------------------------- |
+|---------------|----------------|------------------------------------|
 | Home          | home           | Landing page                       |
 | Products      | products       | Product listing/catalog            |
 | ProductDetail | product_detail | Individual product page (template) |
@@ -502,7 +597,8 @@ Each section in the `sections` array:
 }
 ```
 
-Note the additions: `variant` (selects the layout variant for this section type) and `scroll_animation` (per-section entrance animation, constrained by template's animation tier).
+Note the additions: `variant` (selects the layout variant for this section type) and `scroll_animation` (per-section
+entrance animation, constrained by template's animation tier).
 
 ---
 
@@ -535,10 +631,11 @@ updated_at          - timestamp
 
 ### Tier System
 
-Each template declares an animation tier. The tier determines which animation libraries are loaded and which effects are available.
+Each template declares an animation tier. The tier determines which animation libraries are loaded and which effects are
+available.
 
 | Tier      | What Loads                      | Section Entrance             | Parallax         | Scroll Pin | 3D       | Page Transitions |
-| --------- | ------------------------------- | ---------------------------- | ---------------- | ---------- | -------- | ---------------- |
+|-----------|---------------------------------|------------------------------|------------------|------------|----------|------------------|
 | None      | Nothing                         | —                            | —                | —          | —        | —                |
 | Subtle    | CSS + IntersectionObserver      | fade_up, fade_in             | —                | —          | —        | —                |
 | Polished  | + Framer Motion + Lenis         | + slide, zoom, blur, stagger | Images only      | —          | —        | fade, slide      |
@@ -682,7 +779,8 @@ class SectionTypeRegistry
 }
 ```
 
-`getBuilderManifest()` now accepts a template — it only returns section types that template supports, with variant options filtered by template capabilities.
+`getBuilderManifest()` now accepts a template — it only returns section types that template supports, with variant
+options filtered by template capabilities.
 
 ---
 
@@ -695,7 +793,7 @@ class SectionTypeRegistry
 **Layout Variants:**
 
 | Variant            | Description                                                         |
-| ------------------ | ------------------------------------------------------------------- |
+|--------------------|---------------------------------------------------------------------|
 | `centered_overlay` | Full-width image, centered text overlay                             |
 | `split_image`      | Image on one side, text + CTA on the other (50/50 or 60/40)         |
 | `slideshow`        | Multiple slides with auto-advance, navigation dots                  |
@@ -706,7 +804,7 @@ class SectionTypeRegistry
 **Config Schema:**
 
 | Field                 | Type                                  | Default                | Description                                                                      |
-| --------------------- | ------------------------------------- | ---------------------- | -------------------------------------------------------------------------------- |
+|-----------------------|---------------------------------------|------------------------|----------------------------------------------------------------------------------|
 | heading               | text                                  | "Welcome to Our Store" | Main heading                                                                     |
 | subheading            | text                                  | ""                     | Secondary text                                                                   |
 | background_type       | select: image, color, gradient, video | "image"                | Background style                                                                 |
@@ -737,7 +835,7 @@ class SectionTypeRegistry
 **Layout Variants:**
 
 | Variant               | Description                            |
-| --------------------- | -------------------------------------- |
+|-----------------------|----------------------------------------|
 | `standard_grid`       | Even grid of product cards             |
 | `spotlight_plus_grid` | One large featured card + smaller grid |
 | `horizontal_scroll`   | Horizontally scrollable product row    |
@@ -747,7 +845,7 @@ class SectionTypeRegistry
 **Config Schema:**
 
 | Field               | Type                                                   | Default             | Description                    |
-| ------------------- | ------------------------------------------------------ | ------------------- | ------------------------------ |
+|---------------------|--------------------------------------------------------|---------------------|--------------------------------|
 | heading             | text                                                   | "Featured Products" | Section heading                |
 | subheading          | text                                                   | ""                  | Optional subheading            |
 | product_source      | select: featured, newest, bestselling, on_sale, manual | "featured"          | Which products                 |
@@ -792,7 +890,7 @@ Full product catalog with filtering, search, sorting, pagination.
 **Layout Variants:**
 
 | Variant            | Description                                      |
-| ------------------ | ------------------------------------------------ |
+|--------------------|--------------------------------------------------|
 | `standard_grid`    | Grid with top bar (search, sort, filters toggle) |
 | `sidebar_filters`  | Persistent sidebar with filter controls          |
 | `infinite_scroll`  | No pagination, infinite scroll loading           |
@@ -801,7 +899,7 @@ Full product catalog with filtering, search, sorting, pagination.
 **Config Schema:**
 
 | Field             | Type                                                         | Default        | Description            |
-| ----------------- | ------------------------------------------------------------ | -------------- | ---------------------- |
+|-------------------|--------------------------------------------------------------|----------------|------------------------|
 | heading           | text                                                         | "Our Products" | Section heading        |
 | show_search       | toggle                                                       | true           | Search bar             |
 | show_filters      | toggle                                                       | true           | Category/price filters |
@@ -821,7 +919,7 @@ Full product catalog with filtering, search, sorting, pagination.
 **Layout Variants:**
 
 | Variant         | Description                            |
-| --------------- | -------------------------------------- |
+|-----------------|----------------------------------------|
 | `image_overlay` | Image with category name overlaid      |
 | `image_above`   | Image above, text below                |
 | `icon_grid`     | Icon/emoji + text, compact grid        |
@@ -831,7 +929,7 @@ Full product catalog with filtering, search, sorting, pagination.
 **Config Schema:**
 
 | Field               | Type                                 | Default            | Description                 |
-| ------------------- | ------------------------------------ | ------------------ | --------------------------- |
+|---------------------|--------------------------------------|--------------------|-----------------------------|
 | heading             | text                                 | "Shop by Category" | Section heading             |
 | layout              | select: grid_2x2, grid_3x2, grid_3x3 | "grid_3x2"         | Grid layout                 |
 | show_product_count  | toggle                               | true               | Product count per category  |
@@ -850,7 +948,7 @@ Full product catalog with filtering, search, sorting, pagination.
 **Config Schema:**
 
 | Field            | Type                               | Default       | Description         |
-| ---------------- | ---------------------------------- | ------------- | ------------------- |
+|------------------|------------------------------------|---------------|---------------------|
 | content          | rich_text_editor                   | ""            | Tiptap content      |
 | max_width        | select: narrow, medium, wide, full | "medium"      | Content width       |
 | text_alignment   | select: left, center, right        | "left"        | Alignment           |
@@ -868,7 +966,7 @@ Full product catalog with filtering, search, sorting, pagination.
 **Layout Variants:**
 
 | Variant        | Description                                        |
-| -------------- | -------------------------------------------------- |
+|----------------|----------------------------------------------------|
 | `side_by_side` | Image and text side by side                        |
 | `overlap`      | Image overlaps text container slightly (polished+) |
 | `stacked`      | Image above text, full-width                       |
@@ -877,7 +975,7 @@ Full product catalog with filtering, search, sorting, pagination.
 **Config Schema:**
 
 | Field            | Type                            | Default       | Description       |
-| ---------------- | ------------------------------- | ------------- | ----------------- |
+|------------------|---------------------------------|---------------|-------------------|
 | heading          | text                            | ""            | Section heading   |
 | content          | rich_text_editor                | ""            | Body content      |
 | image            | image_upload                    | null          | Section image     |
@@ -898,7 +996,7 @@ Full product catalog with filtering, search, sorting, pagination.
 **Layout Variants:**
 
 | Variant            | Description                                   |
-| ------------------ | --------------------------------------------- |
+|--------------------|-----------------------------------------------|
 | `carousel`         | Rotating testimonial cards                    |
 | `grid`             | Static grid of testimonial cards              |
 | `masonry`          | Variable-height testimonial blocks            |
@@ -908,7 +1006,7 @@ Full product catalog with filtering, search, sorting, pagination.
 **Config Schema:**
 
 | Field           | Type             | Default                  | Description                      |
-| --------------- | ---------------- | ------------------------ | -------------------------------- |
+|-----------------|------------------|--------------------------|----------------------------------|
 | heading         | text             | "What Our Customers Say" | Section heading                  |
 | items           | testimonial_list | []                       | Array of testimonials            |
 | auto_rotate     | toggle           | true                     | Auto-rotate (carousel/spotlight) |
@@ -929,7 +1027,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Config Schema:**
 
 | Field            | Type                      | Default      | Description                |
-| ---------------- | ------------------------- | ------------ | -------------------------- |
+|------------------|---------------------------|--------------|----------------------------|
 | text             | text                      | ""           | Announcement text          |
 | background_color | color_preset              | theme accent | Bar background             |
 | text_color       | color_preset              | "#ffffff"    | Text color                 |
@@ -949,7 +1047,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Layout Variants:**
 
 | Variant         | Description                         |
-| --------------- | ----------------------------------- |
+|-----------------|-------------------------------------|
 | `inline`        | Input + button on one line          |
 | `stacked`       | Input above button                  |
 | `split`         | Text on one side, form on the other |
@@ -958,7 +1056,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Config Schema:**
 
 | Field            | Type         | Default                            | Description       |
-| ---------------- | ------------ | ---------------------------------- | ----------------- |
+|------------------|--------------|------------------------------------|-------------------|
 | heading          | text         | "Stay Updated"                     | Section heading   |
 | subheading       | text         | "Subscribe for offers and updates" | Subtext           |
 | placeholder      | text         | "Enter your email"                 | Input placeholder |
@@ -977,7 +1075,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Config Schema:**
 
 | Field        | Type                               | Default | Description           |
-| ------------ | ---------------------------------- | ------- | --------------------- |
+|--------------|------------------------------------|---------|-----------------------|
 | image        | image_upload                       | null    | Banner image          |
 | mobile_image | image_upload                       | null    | Mobile-specific image |
 | alt_text     | text                               | ""      | Accessibility text    |
@@ -995,7 +1093,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Config Schema:**
 
 | Field         | Type                                 | Default       | Description                      |
-| ------------- | ------------------------------------ | ------------- | -------------------------------- |
+|---------------|--------------------------------------|---------------|----------------------------------|
 | height        | select: small, medium, large, xlarge | "medium"      | 16/32/64/96px                    |
 | show_divider  | toggle                               | false         | Horizontal line                  |
 | divider_style | select                               | theme default | Uses theme divider_style options |
@@ -1011,7 +1109,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Layout Variants:**
 
 | Variant             | Description                       |
-| ------------------- | --------------------------------- |
+|---------------------|-----------------------------------|
 | `grid`              | Even grid                         |
 | `masonry`           | Variable-height masonry           |
 | `carousel`          | Swipeable carousel                |
@@ -1020,7 +1118,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Config Schema:**
 
 | Field    | Type                        | Default | Description        |
-| -------- | --------------------------- | ------- | ------------------ |
+|----------|-----------------------------|---------|--------------------|
 | heading  | text                        | ""      | Optional heading   |
 | images   | image_list                  | []      | Array of images    |
 | columns  | select: 2, 3, 4             | 3       | Grid columns       |
@@ -1038,7 +1136,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Layout Variants:**
 
 | Variant           | Description                                     |
-| ----------------- | ----------------------------------------------- |
+|-------------------|-------------------------------------------------|
 | `embedded`        | Standard YouTube/Vimeo embed                    |
 | `background_loop` | Looping video as section background (polished+) |
 | `lightbox`        | Thumbnail that opens video in lightbox          |
@@ -1046,7 +1144,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Config Schema:**
 
 | Field           | Type                       | Default | Description                             |
-| --------------- | -------------------------- | ------- | --------------------------------------- |
+|-----------------|----------------------------|---------|-----------------------------------------|
 | heading         | text                       | ""      | Optional heading                        |
 | video_url       | text                       | ""      | YouTube or Vimeo URL                    |
 | thumbnail_image | image_upload               | null    | Custom thumbnail (for lightbox variant) |
@@ -1065,7 +1163,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Config Schema:**
 
 | Field               | Type                                | Default                      | Description                 |
-| ------------------- | ----------------------------------- | ---------------------------- | --------------------------- |
+|---------------------|-------------------------------------|------------------------------|-----------------------------|
 | heading             | text                                | "Frequently Asked Questions" | Heading                     |
 | items               | faq_list                            | []                           | Array of {question, answer} |
 | style               | select: accordion, list, two_column | "accordion"                  | Display style               |
@@ -1082,7 +1180,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Layout Variants:**
 
 | Variant        | Description                               |
-| -------------- | ----------------------------------------- |
+|----------------|-------------------------------------------|
 | `side_by_side` | Contact info + form side by side          |
 | `stacked`      | Contact info above, form below            |
 | `form_only`    | Just the form, no contact details         |
@@ -1091,7 +1189,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Config Schema:**
 
 | Field           | Type                    | Default                               | Description                 |
-| --------------- | ----------------------- | ------------------------------------- | --------------------------- |
+|-----------------|-------------------------|---------------------------------------|-----------------------------|
 | heading         | text                    | "Get In Touch"                        | Heading                     |
 | subheading      | text                    | ""                                    | Subtext                     |
 | show_phone      | toggle                  | true                                  | Show phone                  |
@@ -1112,7 +1210,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Config Schema:**
 
 | Field        | Type                              | Default      | Description        |
-| ------------ | --------------------------------- | ------------ | ------------------ |
+|--------------|-----------------------------------|--------------|--------------------|
 | heading      | text                              | "Trusted By" | Heading            |
 | logos        | image_list                        | []           | Logo images        |
 | display_mode | select: static, scrolling_marquee | "static"     | Animation          |
@@ -1130,7 +1228,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Config Schema:**
 
 | Field            | Type                                 | Default                | Description      |
-| ---------------- | ------------------------------------ | ---------------------- | ---------------- |
+|------------------|--------------------------------------|------------------------|------------------|
 | heading          | text                                 | "Sale Ends In"         | Heading          |
 | target_date      | datetime                             | null                   | Countdown target |
 | expired_message  | text                                 | "This offer has ended" | Post-expiry text |
@@ -1151,7 +1249,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Layout Variants:**
 
 | Variant     | Description                                  |
-| ----------- | -------------------------------------------- |
+|-------------|----------------------------------------------|
 | `tabs`      | Tabbed interface, switch between collections |
 | `rows`      | Stacked rows, one per collection             |
 | `accordion` | Expandable collection sections               |
@@ -1159,7 +1257,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Config Schema:**
 
 | Field       | Type               | Default           | Description                                              |
-| ----------- | ------------------ | ----------------- | -------------------------------------------------------- |
+|-------------|--------------------|-------------------|----------------------------------------------------------|
 | heading     | text               | "Our Collections" | Heading                                                  |
 | collections | collection_list    | []                | Array of {title, product_source, category_id, max_items} |
 | columns     | select: 2, 3, 4, 5 | 4                 | Grid columns                                             |
@@ -1175,7 +1273,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Config Schema:**
 
 | Field     | Type               | Default           | Description  |
-| --------- | ------------------ | ----------------- | ------------ |
+|-----------|--------------------|-------------------|--------------|
 | heading   | text               | "Recently Viewed" | Heading      |
 | max_items | number (4-12)      | 6                 | Max products |
 | columns   | select: 3, 4, 5, 6 | 4                 | Grid columns |
@@ -1191,7 +1289,7 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Config Schema:**
 
 | Field                | Type                         | Default  | Description           |
-| -------------------- | ---------------------------- | -------- | --------------------- |
+|----------------------|------------------------------|----------|-----------------------|
 | heading              | text                         | ""       | Optional heading      |
 | embed_url            | text                         | ""       | Google Maps embed URL |
 | height               | select: small, medium, large | "medium" | 250/400/550px         |
@@ -1211,7 +1309,8 @@ Testimonial item: `{ name, text, rating, avatar_path, location }`
 **Scroll:** Standard scroll
 **Best for:** General retail, pharmacy, grocery, electronics — the broadest use case
 
-The workhorse template. Traditional vertical section stack. Clear header-hero-content-footer flow. Every section has defined boundaries. Familiar e-commerce patterns that convert. Optimized for speed and clarity over visual drama.
+The workhorse template. Traditional vertical section stack. Clear header-hero-content-footer flow. Every section has
+defined boundaries. Familiar e-commerce patterns that convert. Optimized for speed and clarity over visual drama.
 
 **Structural config:**
 
@@ -1226,7 +1325,7 @@ The workhorse template. Traditional vertical section stack. Clear header-hero-co
 **Themes (6):**
 
 | Theme                  | Mood                                  | Colors                                          | Typography      | Card Style                             | Best For                          |
-| ---------------------- | ------------------------------------- | ----------------------------------------------- | --------------- | -------------------------------------- | --------------------------------- |
+|------------------------|---------------------------------------|-------------------------------------------------|-----------------|----------------------------------------|-----------------------------------|
 | **Lagos Express**      | Bold, high-energy, conversion-focused | White bg, coral-red (#e94560) accent, dark text | DM Sans 700/400 | Elevated, prominent CTAs, 4-col grid   | General retail, electronics       |
 | **Sunshine Market**    | Warm, friendly, deal-driven           | Cream (#fffbf0) bg, orange (#f97316) accent     | Poppins 600/400 | Rounded, deal badges, sale tags        | Grocery, supermarket              |
 | **Abuja Fresh**        | Clean, trustworthy, clinical          | White bg, green (#16a34a) accent                | DM Sans 600/400 | Flat, trust badges, clean borders      | Pharmacy, health, organic         |
@@ -1244,7 +1343,8 @@ The workhorse template. Traditional vertical section stack. Clear header-hero-co
 **Scroll:** Smooth scroll (Lenis), subtle parallax on images
 **Best for:** Fashion, luxury, artisan brands, lifestyle
 
-Magazine-style layouts. Large imagery dominates. Generous whitespace. Content-first with curated product integration. The products feel aspirational, not transactional. Staggered reveals on scroll. Elegant page transitions.
+Magazine-style layouts. Large imagery dominates. Generous whitespace. Content-first with curated product integration.
+The products feel aspirational, not transactional. Staggered reveals on scroll. Elegant page transitions.
 
 **Structural config:**
 
@@ -1259,7 +1359,7 @@ Magazine-style layouts. Large imagery dominates. Generous whitespace. Content-fi
 **Themes (6):**
 
 | Theme                | Mood                             | Colors                                                    | Typography                        | Card Style                                 | Best For                                |
-| -------------------- | -------------------------------- | --------------------------------------------------------- | --------------------------------- | ------------------------------------------ | --------------------------------------- |
+|----------------------|----------------------------------|-----------------------------------------------------------|-----------------------------------|--------------------------------------------|-----------------------------------------|
 | **Eko Luxe**         | Dark, editorial, opulent         | Black (#0a0a0a) bg, gold (#d4af37) accent, white text     | Playfair Display / DM Sans        | Borderless, dramatic shadows, 3-col        | High-end fashion, luxury                |
 | **Terra Warm**       | Earthy, intimate, handcrafted    | Warm cream (#faf5f0) bg, saddle brown (#8B4513) accent    | Cormorant Garamond / Lato         | Large imagery, minimal borders             | Artisan, handmade, organic              |
 | **Midnight Gallery** | Stark, dramatic, art-forward     | Pure black bg, white text, no accent color                | Libre Baskerville / Source Sans 3 | Full-bleed images, no cards, gallery-style | Art, photography, luxury jewelry        |
@@ -1277,7 +1377,9 @@ Magazine-style layouts. Large imagery dominates. Generous whitespace. Content-fi
 **Scroll:** Standard, fast loading, lazy load
 **Best for:** Electronics, wholesale, multi-category, supermarkets
 
-Dense, high-information layouts. Category sidebar, deal banners, flash sale countdowns, comparison tools, quick-view modals. Optimized for finding products fast across large inventories. Speed is the feature — every millisecond of animation is a millisecond not spent browsing.
+Dense, high-information layouts. Category sidebar, deal banners, flash sale countdowns, comparison tools, quick-view
+modals. Optimized for finding products fast across large inventories. Speed is the feature — every millisecond of
+animation is a millisecond not spent browsing.
 
 **Structural config:**
 
@@ -1292,7 +1394,7 @@ Dense, high-information layouts. Category sidebar, deal banners, flash sale coun
 **Themes (6):**
 
 | Theme             | Mood                          | Colors                                                    | Typography             | Card Style                                        | Best For                                    |
-| ----------------- | ----------------------------- | --------------------------------------------------------- | ---------------------- | ------------------------------------------------- | ------------------------------------------- |
+|-------------------|-------------------------------|-----------------------------------------------------------|------------------------|---------------------------------------------------|---------------------------------------------|
 | **Neon District** | Dark, futuristic, tech        | Deep navy (#0a0a1a) bg, electric purple (#a855f7) glow    | Space Grotesk / Inter  | Glowing borders, neon badges, dark cards          | Tech, gaming, electronics                   |
 | **Deal Zone**     | Loud, urgent, deal-driven     | White bg, red (#dc2626) + orange (#f97316) accents        | DM Sans 700/400        | Bold price displays, sale ribbons, urgency badges | Flash sales, deal sites, general e-commerce |
 | **Mega Store**    | Corporate, organized, trusted | White bg, blue (#2563eb) + orange (#f97316)               | Inter 600/400          | Clean cards, category breadcrumbs, comparison     | Large retail, multi-department              |
@@ -1311,7 +1413,9 @@ Dense, high-information layouts. Category sidebar, deal banners, flash sale coun
 **Best for:** Premium brands, product launches, luxury, high-end tech
 **Premium:** Yes — this template is a paid upgrade
 
-Full-screen sections. Every scroll position is choreographed. Parallax layers create depth. Sections pin and reveal content. Product presentations are theatrical — scroll to rotate, scroll to reveal features. Optional 3D product viewer. Video backgrounds. This is Apple.com energy for Nigerian premium brands.
+Full-screen sections. Every scroll position is choreographed. Parallax layers create depth. Sections pin and reveal
+content. Product presentations are theatrical — scroll to rotate, scroll to reveal features. Optional 3D product viewer.
+Video backgrounds. This is Apple.com energy for Nigerian premium brands.
 
 **Structural config:**
 
@@ -1327,7 +1431,7 @@ Full-screen sections. Every scroll position is choreographed. Parallax layers cr
 **Themes (6):**
 
 | Theme             | Mood                             | Colors                                                             | Typography                       | Card Style                                     | Best For                                 |
-| ----------------- | -------------------------------- | ------------------------------------------------------------------ | -------------------------------- | ---------------------------------------------- | ---------------------------------------- |
+|-------------------|----------------------------------|--------------------------------------------------------------------|----------------------------------|------------------------------------------------|------------------------------------------|
 | **Kinetic Black** | Stark, dramatic, Apple-esque     | Pure black bg, white text, no color except product imagery         | Helvetica Neue / SF Pro (system) | No visible cards, products float on black      | Premium tech, single-product launches    |
 | **Aurora**        | Ethereal, dreamy, gradient-rich  | Dark bg (#0f0f23), gradient mesh accents (purple→teal→pink)        | Sora / Inter                     | Glass cards with blur, gradient borders        | Luxury cosmetics, premium wellness       |
 | **Glass**         | Futuristic, layered, translucent | Dark bg, glassmorphism panels, blur effects                        | Inter 300/400                    | Glass cards, frosted backgrounds, depth layers | Fintech, SaaS-adjacent premium           |
@@ -1345,7 +1449,9 @@ Full-screen sections. Every scroll position is choreographed. Parallax layers cr
 **Scroll:** Standard, pagination or infinite scroll
 **Best for:** Large inventories (100+ products), parts stores, wholesale, B2B, medical supply
 
-Search-first, filter-heavy. Maximum product density with minimum decoration. The product IS the interface. Grid/list view toggle, quick-view modals, comparison mode, specification tables. Fast filtering, fast loading. For shops where customers know what they want and need to find it fast.
+Search-first, filter-heavy. Maximum product density with minimum decoration. The product IS the interface. Grid/list
+view toggle, quick-view modals, comparison mode, specification tables. Fast filtering, fast loading. For shops where
+customers know what they want and need to find it fast.
 
 **Structural config:**
 
@@ -1362,7 +1468,7 @@ Search-first, filter-heavy. Maximum product density with minimum decoration. The
 **Themes (6):**
 
 | Theme              | Mood                          | Colors                                                  | Typography                        | Card Style                                       | Best For                            |
-| ------------------ | ----------------------------- | ------------------------------------------------------- | --------------------------------- | ------------------------------------------------ | ----------------------------------- |
+|--------------------|-------------------------------|---------------------------------------------------------|-----------------------------------|--------------------------------------------------|-------------------------------------|
 | **Clean Sheet**    | Minimal, data-forward         | White bg, slate (#64748b) borders, blue (#2563eb) links | Inter 400/400                     | Table-like, dense, lots of data visible          | Large general inventory             |
 | **Industrial**     | Rugged, utilitarian, workshop | Dark gray (#1c1917) sidebar, orange (#ea580c) accent    | Roboto Condensed / Roboto         | Compact cards, specification-heavy               | Auto parts, tools, hardware         |
 | **Medical Supply** | Clean, sterile, trustworthy   | White bg, green (#15803d) accent, blue highlights       | DM Sans 500/400                   | Clean borders, certification badges, dosage info | Pharmacy, medical equipment         |
@@ -1380,7 +1486,9 @@ Search-first, filter-heavy. Maximum product density with minimum decoration. The
 **Scroll:** Scroll-triggered reveals, parallax on images, pinned sections (if cinematic)
 **Best for:** DTC brands, single-product or small-catalog shops, artisan makers, food brands
 
-Long-scroll narrative. The page IS the story. Each section reveals the next chapter — origin, process, product, testimonials, purchase. Designed for shops with fewer products but stronger brand narratives. Every scroll position has purpose. Products aren't listed — they're presented.
+Long-scroll narrative. The page IS the story. Each section reveals the next chapter — origin, process, product,
+testimonials, purchase. Designed for shops with fewer products but stronger brand narratives. Every scroll position has
+purpose. Products aren't listed — they're presented.
 
 **Structural config:**
 
@@ -1396,7 +1504,7 @@ Long-scroll narrative. The page IS the story. Each section reveals the next chap
 **Themes (6):**
 
 | Theme                 | Mood                                | Colors                                                 | Typography                     | Card Style                                          | Best For                                 |
-| --------------------- | ----------------------------------- | ------------------------------------------------------ | ------------------------------ | --------------------------------------------------- | ---------------------------------------- |
+|-----------------------|-------------------------------------|--------------------------------------------------------|--------------------------------|-----------------------------------------------------|------------------------------------------|
 | **Origin Story**      | Earthy, handcrafted, authentic      | Warm cream (#f5f0e8) bg, forest green (#365314) accent | Bitter / Karla                 | Raw textures, hand-drawn feel, large imagery        | Artisan makers, craft producers          |
 | **Product Spotlight** | Clean, focused, Apple-esque         | White bg, minimal black text, no strong accent         | SF Pro / Inter                 | Product floats on white, minimal chrome             | Single hero product, DTC launches        |
 | **Farm to Table**     | Fresh, green, appetizing            | Light green-cream (#f5faf0) bg, green (#4d7c0f) accent | Merriweather / Open Sans       | Food photography dominant, freshness badges         | Food, beverage, farm direct              |
@@ -1414,7 +1522,9 @@ Long-scroll narrative. The page IS the story. Each section reveals the next chap
 **Scroll:** Standard scroll with sticky category nav
 **Best for:** Restaurants, bakeries, food vendors, juice bars, small chops, catering
 
-Food-first layout. Menu organized by categories with food photography, dietary tags (halal, vegetarian, spicy), portion sizes, and add-to-order flow. Not a product grid — a menu. Category tabs stick to the top as you scroll. Cart shows order summary with delivery/pickup toggle.
+Food-first layout. Menu organized by categories with food photography, dietary tags (halal, vegetarian, spicy), portion
+sizes, and add-to-order flow. Not a product grid — a menu. Category tabs stick to the top as you scroll. Cart shows
+order summary with delivery/pickup toggle.
 
 **Structural config:**
 
@@ -1436,7 +1546,7 @@ Food-first layout. Menu organized by categories with food photography, dietary t
 **Themes (6):**
 
 | Theme             | Mood                          | Colors                                                     | Typography                | Card Style                                              | Best For                                       |
-| ----------------- | ----------------------------- | ---------------------------------------------------------- | ------------------------- | ------------------------------------------------------- | ---------------------------------------------- |
+|-------------------|-------------------------------|------------------------------------------------------------|---------------------------|---------------------------------------------------------|------------------------------------------------|
 | **Suya Spot**     | Vibrant, smoky, street food   | Dark charcoal (#1c1917) bg, flame orange (#ea580c) accent  | Outfit 700/400            | Bold menu items, fire emoji badges, large food photos   | Street food, suya joints, grills               |
 | **Fresh Kitchen** | Clean, healthy, modern        | White bg, leaf green (#16a34a) accent                      | DM Sans 500/400           | Clean cards, dietary tags, calorie counts               | Healthy food, salad bars, juice bars           |
 | **Mama's Table**  | Warm, homestyle, comforting   | Cream (#faf5ef) bg, warm brown (#92400e) accent            | Merriweather / Open Sans  | Large photos, story descriptions, family-style portions | Home cooking, local restaurants, family joints |
@@ -1454,7 +1564,8 @@ Food-first layout. Menu organized by categories with food photography, dietary t
 **Scroll:** Standard scroll
 **Best for:** Salons, barbershops, spas, clinics, consultants, fitness trainers, photographers
 
-Service cards with duration, price, and "Book Now" CTA. Staff profiles with photo, bio, specialties, and availability. Calendar integration for time slot selection. Before/after galleries. Loyalty/membership section.
+Service cards with duration, price, and "Book Now" CTA. Staff profiles with photo, bio, specialties, and availability.
+Calendar integration for time slot selection. Before/after galleries. Loyalty/membership section.
 
 **Structural config:**
 
@@ -1477,7 +1588,7 @@ Service cards with duration, price, and "Book Now" CTA. Staff profiles with phot
 **Themes (6):**
 
 | Theme              | Mood                          | Colors                                                 | Typography                  | Card Style                                                       | Best For                                 |
-| ------------------ | ----------------------------- | ------------------------------------------------------ | --------------------------- | ---------------------------------------------------------------- | ---------------------------------------- |
+|--------------------|-------------------------------|--------------------------------------------------------|-----------------------------|------------------------------------------------------------------|------------------------------------------|
 | **Glow Studio**    | Bright, clean, beauty         | White bg, hot pink (#ec4899) accent                    | Poppins 600/400             | Rounded service cards, staff photo circles, gradient CTA buttons | Beauty salons, nail studios, lash bars   |
 | **Sharp Edge**     | Bold, masculine, precise      | Dark gray (#18181b) bg, electric blue (#3b82f6) accent | Space Grotesk / Inter       | Sharp edges, minimal cards, bold typography                      | Barbershops, men's grooming              |
 | **Zen Retreat**    | Calm, natural, restorative    | Soft sage (#f5f7f2) bg, forest green (#365314) accent  | Cormorant Garamond / Nunito | Soft shadows, organic shapes, generous whitespace                | Spas, wellness centers, massage          |
@@ -1495,7 +1606,9 @@ Service cards with duration, price, and "Book Now" CTA. Staff profiles with phot
 **Scroll:** Smooth scroll (Lenis), subtle parallax
 **Best for:** Side hustlers, single-product sellers, market vendors going digital, Instagram sellers
 
-Everything on one scroll. Hero → Products (1-10 max) → About → Testimonials → Buy. No separate pages. No product detail page — clicking a product opens a modal or expands inline. Designed to be set up in under 5 minutes. The lowest barrier to entry for first-time sellers.
+Everything on one scroll. Hero → Products (1-10 max) → About → Testimonials → Buy. No separate pages. No product detail
+page — clicking a product opens a modal or expands inline. Designed to be set up in under 5 minutes. The lowest barrier
+to entry for first-time sellers.
 
 **Structural config:**
 
@@ -1510,14 +1623,15 @@ Everything on one scroll. Hero → Products (1-10 max) → About → Testimonial
 
 **Unique section types required:**
 
-- `product_showcase_inline` — Product cards that expand inline with full details, gallery, and add-to-cart (no navigation to separate page)
+- `product_showcase_inline` — Product cards that expand inline with full details, gallery, and add-to-cart (no
+  navigation to separate page)
 - `whatsapp_order` — WhatsApp CTA button that pre-fills an order message
 - `social_proof_compact` — Combined Instagram feed + testimonials in one section
 
 **Themes (6):**
 
 | Theme            | Mood                          | Colors                                                  | Typography            | Card Style                                       | Best For                              |
-| ---------------- | ----------------------------- | ------------------------------------------------------- | --------------------- | ------------------------------------------------ | ------------------------------------- |
+|------------------|-------------------------------|---------------------------------------------------------|-----------------------|--------------------------------------------------|---------------------------------------|
 | **Market Fresh** | Approachable, bright, casual  | White bg, vibrant green (#22c55e) accent                | Outfit 600/400        | Simple product cards, WhatsApp green CTA         | Market vendors, fresh produce sellers |
 | **Insta Shop**   | Trendy, social-first, visual  | White bg, gradient accent (pink→orange)                 | Poppins 500/400       | Instagram-style image cards, story-like sections | Instagram sellers, small fashion      |
 | **Hustle**       | Bold, direct, no-nonsense     | Black (#111111) bg, yellow (#eab308) accent, white text | DM Sans 700/400       | High-contrast cards, bold prices, urgency        | Side hustlers, deal sellers           |
@@ -1533,9 +1647,12 @@ Everything on one scroll. Hero → Products (1-10 max) → About → Testimonial
 **Animation Tier:** Polished
 **Navigation:** Minimal — logo + countdown only
 **Scroll:** Smooth scroll, scroll-triggered reveals, parallax
-**Best for:** Product launches, preorder campaigns, limited drops, crowdfunding-style sells, seasonal campaigns (Black Friday, Ramadan, Christmas)
+**Best for:** Product launches, preorder campaigns, limited drops, crowdfunding-style sells, seasonal campaigns (Black
+Friday, Ramadan, Christmas)
 
-Time-bound, urgency-driven. Countdown timer dominates. Email capture for early access. Pricing tiers (early bird, standard, VIP). Progress/goal bar ("42 of 100 claimed"). Social proof ticker. Designed to convert within one session. Can be repurposed for seasonal campaigns by swapping theme.
+Time-bound, urgency-driven. Countdown timer dominates. Email capture for early access. Pricing tiers (early bird,
+standard, VIP). Progress/goal bar ("42 of 100 claimed"). Social proof ticker. Designed to convert within one session.
+Can be repurposed for seasonal campaigns by swapping theme.
 
 **Structural config:**
 
@@ -1560,7 +1677,7 @@ Time-bound, urgency-driven. Countdown timer dominates. Email capture for early a
 **Themes (6):**
 
 | Theme                | Mood                          | Colors                                                     | Typography                 | Card Style                                             | Best For                                 |
-| -------------------- | ----------------------------- | ---------------------------------------------------------- | -------------------------- | ------------------------------------------------------ | ---------------------------------------- |
+|----------------------|-------------------------------|------------------------------------------------------------|----------------------------|--------------------------------------------------------|------------------------------------------|
 | **Hype Drop**        | Urgent, exclusive, streetwear | Black bg, neon green (#22c55e) + white                     | Space Grotesk 700/400      | Bold countdown, ticker, limited-edition badges         | Limited drops, streetwear, sneakers      |
 | **Early Bird**       | Friendly, deal-focused, warm  | Cream bg, coral (#f43f5e) accent                           | Outfit 600/400             | Tier cards, early-bird badges, progress bar            | Preorder campaigns, early-bird pricing   |
 | **Black Friday**     | Red-hot, urgent, deal-driven  | Near-black bg, red (#dc2626) + yellow (#eab308)            | DM Sans 800/400            | Flash deal cards, countdown prominently, price slashes | Black Friday, seasonal mega-sales        |
@@ -1578,7 +1695,9 @@ Time-bound, urgency-driven. Countdown timer dominates. Email capture for early a
 **Scroll:** Smooth scroll, staggered reveals
 **Best for:** Fashion brands with strong Instagram presence, beauty brands, lifestyle sellers, influencer shops
 
-Social-first e-commerce. User-generated content grid (customer photos wearing/using products). Shoppable posts — tap an image, see tagged products, add to cart. Influencer/ambassador spotlight sections. Review-heavy product pages with photo reviews. Instagram feed integration.
+Social-first e-commerce. User-generated content grid (customer photos wearing/using products). Shoppable posts — tap an
+image, see tagged products, add to cart. Influencer/ambassador spotlight sections. Review-heavy product pages with photo
+reviews. Instagram feed integration.
 
 **Structural config:**
 
@@ -1602,7 +1721,7 @@ Social-first e-commerce. User-generated content grid (customer photos wearing/us
 **Themes (6):**
 
 | Theme            | Mood                                  | Colors                                               | Typography                 | Card Style                                               | Best For                                   |
-| ---------------- | ------------------------------------- | ---------------------------------------------------- | -------------------------- | -------------------------------------------------------- | ------------------------------------------ |
+|------------------|---------------------------------------|------------------------------------------------------|----------------------------|----------------------------------------------------------|--------------------------------------------|
 | **Feed**         | Instagram-native, grid-first, visual  | White bg, gradient pink→purple accent                | Poppins 500/400            | Square image cards, minimal chrome, double-tap heart     | Instagram-first brands, fashion            |
 | **Curator**      | Editorial social, magazine-meets-gram | Light gray (#fafafa) bg, black accent                | Archivo / Source Sans 3    | Magazine-style layout, editorial captions                | Fashion editorial, curated lifestyle       |
 | **Glow Up**      | Beauty, luminous, aspirational        | Soft pink (#fef2f8) bg, hot pink (#ec4899) accent    | DM Sans 500/400            | Before/after cards, review highlights, star ratings      | Beauty, skincare, cosmetics                |
@@ -1618,9 +1737,11 @@ Social-first e-commerce. User-generated content grid (customer photos wearing/us
 **Animation Tier:** Subtle
 **Navigation:** Standard with Blog + Shop navigation split
 **Scroll:** Standard scroll
-**Best for:** Beauty brands that blog, wellness/fitness with content, fashion bloggers selling merch, recipe sites selling ingredients
+**Best for:** Beauty brands that blog, wellness/fitness with content, fashion bloggers selling merch, recipe sites
+selling ingredients
 
-Content-commerce hybrid. Blog posts alongside product collections. Articles can link to featured products ("As seen in this post"). Author profiles. Category-based content organization. The blog drives traffic and trust, the shop converts.
+Content-commerce hybrid. Blog posts alongside product collections. Articles can link to featured products ("As seen in
+this post"). Author profiles. Category-based content organization. The blog drives traffic and trust, the shop converts.
 
 **Structural config:**
 
@@ -1643,7 +1764,7 @@ Content-commerce hybrid. Blog posts alongside product collections. Articles can 
 **Themes (6):**
 
 | Theme                 | Mood                             | Colors                                          | Typography                        | Card Style                                             | Best For                        |
-| --------------------- | -------------------------------- | ----------------------------------------------- | --------------------------------- | ------------------------------------------------------ | ------------------------------- |
+|-----------------------|----------------------------------|-------------------------------------------------|-----------------------------------|--------------------------------------------------------|---------------------------------|
 | **Lifestyle Journal** | Editorial, content-first         | White bg, muted sage (#6b7280) accent           | Libre Baskerville / Source Sans 3 | Magazine-style post cards, generous typography         | Lifestyle blogs, wellness       |
 | **Beauty Diary**      | Soft, feminine, tutorial-focused | Blush (#fdf2f4) bg, rose (#be185d) accent       | Poppins / Nunito                  | Rounded cards, step-by-step tutorial layouts           | Beauty blogs, skincare routines |
 | **Fit Life**          | Energetic, motivating, health    | White bg, lime green (#65a30d) accent           | Outfit 600/400                    | Bold headers, workout-style cards, progress indicators | Fitness blogs, health products  |
@@ -1661,7 +1782,9 @@ Content-commerce hybrid. Blog posts alongside product collections. Articles can 
 **Scroll:** Standard, fast
 **Best for:** Distributors, manufacturers, bulk sellers, trade-only businesses
 
-Account-gated storefront. Tiered pricing visible after login. Bulk order forms (quantity tables, not single add-to-cart). Quote request flow for large orders. Order history and reorder. Minimum order quantities and badges. Invoice/statement download. Not consumer-facing — this is business-to-business.
+Account-gated storefront. Tiered pricing visible after login. Bulk order forms (quantity tables, not single
+add-to-cart). Quote request flow for large orders. Order history and reorder. Minimum order quantities and badges.
+Invoice/statement download. Not consumer-facing — this is business-to-business.
 
 **Structural config:**
 
@@ -1685,7 +1808,7 @@ Account-gated storefront. Tiered pricing visible after login. Bulk order forms (
 **Themes (6):**
 
 | Theme                 | Mood                              | Colors                                           | Typography                | Card Style                                          | Best For                            |
-| --------------------- | --------------------------------- | ------------------------------------------------ | ------------------------- | --------------------------------------------------- | ----------------------------------- |
+|-----------------------|-----------------------------------|--------------------------------------------------|---------------------------|-----------------------------------------------------|-------------------------------------|
 | **Trade Direct**      | Corporate, efficient, trustworthy | White bg, navy (#1e3a5f) accent                  | Inter 500/400             | Clean tables, corporate cards, professional         | General B2B, distributors           |
 | **Warehouse**         | Industrial, utilitarian, dense    | Light gray (#f5f5f4) bg, orange (#ea580c) accent | Roboto Condensed / Roboto | Compact rows, specification-heavy, no imagery       | Warehouse, industrial supply        |
 | **Agro Supply**       | Agricultural, earthy, practical   | Cream bg, green (#15803d) accent                 | DM Sans 500/400           | Product cards with pack sizes, seasonal badges      | Agricultural supply, farm inputs    |
@@ -1703,7 +1826,9 @@ Account-gated storefront. Tiered pricing visible after login. Bulk order forms (
 **Scroll:** Smooth scroll, staggered reveals, subtle parallax
 **Best for:** Photographers, interior designers, event planners, freelancers, agencies, architects
 
-Portfolio-first with service packages. Project gallery with case studies. Service cards with tiered pricing (Basic, Standard, Premium). Client testimonials with project photos. Inquiry/consultation booking form. Less about selling products, more about selling expertise.
+Portfolio-first with service packages. Project gallery with case studies. Service cards with tiered pricing (Basic,
+Standard, Premium). Client testimonials with project photos. Inquiry/consultation booking form. Less about selling
+products, more about selling expertise.
 
 **Structural config:**
 
@@ -1727,7 +1852,7 @@ Portfolio-first with service packages. Project gallery with case studies. Servic
 **Themes (6):**
 
 | Theme              | Mood                                | Colors                                               | Typography                  | Card Style                                          | Best For                                |
-| ------------------ | ----------------------------------- | ---------------------------------------------------- | --------------------------- | --------------------------------------------------- | --------------------------------------- |
+|--------------------|-------------------------------------|------------------------------------------------------|-----------------------------|-----------------------------------------------------|-----------------------------------------|
 | **Studio**         | Clean, modern, portfolio-focused    | White bg, charcoal (#1c1917) + gold (#c9a84c) accent | Inter 400/400               | Full-bleed images, minimal text, gallery-first      | Photographers, videographers            |
 | **Blueprint Pro**  | Professional, structured, corporate | Light gray (#f8fafc) bg, navy (#1e3a5f) accent       | DM Sans 600/400             | Service tier cards, structured layout, professional | Agencies, consulting firms              |
 | **Atelier**        | Artistic, elegant, creative         | Off-white (#faf9f7) bg, deep purple (#581c87) accent | Cormorant Garamond / Nunito | Asymmetric gallery, large imagery, artistic         | Interior designers, artists, architects |
@@ -1745,7 +1870,8 @@ Portfolio-first with service packages. Project gallery with case studies. Servic
 **Scroll:** Smooth scroll, staggered reveals
 **Best for:** Monthly boxes, recurring deliveries, membership-based products, curated selections
 
-Subscription-first layout. Plan comparison as the primary conversion point. "What's in the box" reveal section. Delivery schedule visualization. Subscriber testimonials. Gifting option. Past box gallery showing previous months.
+Subscription-first layout. Plan comparison as the primary conversion point. "What's in the box" reveal section. Delivery
+schedule visualization. Subscriber testimonials. Gifting option. Past box gallery showing previous months.
 
 **Structural config:**
 
@@ -1769,7 +1895,7 @@ Subscription-first layout. Plan comparison as the primary conversion point. "Wha
 **Themes (6):**
 
 | Theme                 | Mood                          | Colors                                              | Typography                | Card Style                                         | Best For                          |
-| --------------------- | ----------------------------- | --------------------------------------------------- | ------------------------- | -------------------------------------------------- | --------------------------------- |
+|-----------------------|-------------------------------|-----------------------------------------------------|---------------------------|----------------------------------------------------|-----------------------------------|
 | **Unbox Joy**         | Playful, surprise, colorful   | White bg, multicolor accents (rotating per section) | Poppins 600/400           | Colorful plan cards, surprise/unbox animations     | General subscription boxes        |
 | **Curated**           | Premium, selective, editorial | Cream (#faf7f2) bg, muted gold (#a3842c) accent     | Cormorant Garamond / Lato | Elegant plan comparison, editorial product reveals | Premium curated boxes, luxury     |
 | **Fresh Box**         | Healthy, clean, green         | White bg, green (#22c55e) accent                    | DM Sans 500/400           | Clean cards, freshness badges, delivery schedule   | Food boxes, health boxes, organic |
@@ -1782,7 +1908,7 @@ Subscription-first layout. Plan comparison as the primary conversion point. "Wha
 ### Template Roadmap Summary
 
 | Priority | Template               | Category    | Stage    | Reason                                     |
-| -------- | ---------------------- | ----------- | -------- | ------------------------------------------ |
+|----------|------------------------|-------------|----------|--------------------------------------------|
 | P0       | Classic Commerce       | Commerce    | Stage 1  | 60%+ of shops, broadest use case           |
 | P0       | Editorial Showcase     | Editorial   | Stage 2  | Fashion/luxury is a major Nigerian market  |
 | P0       | Marketplace Hub        | Marketplace | Stage 3  | Electronics/wholesale — high-volume shops  |
@@ -1799,7 +1925,8 @@ Subscription-first layout. Plan comparison as the primary conversion point. "Wha
 | P3       | Portfolio & Services   | Service     | Stage 14 | Service-based businesses                   |
 | P3       | Subscription Box       | Specialty   | Stage 15 | Emerging market, recurring revenue         |
 
-**15 templates × 6 themes each = 90 base presets.** With guardrailed customization, section composition, and variant selection on top, the combinatorial space is effectively infinite. No two shops need look alike.
+**15 templates × 6 themes each = 90 base presets.** With guardrailed customization, section composition, and variant
+selection on top, the combinatorial space is effectively infinite. No two shops need look alike.
 
 ---
 
@@ -1809,9 +1936,11 @@ Subscription-first layout. Plan comparison as the primary conversion point. "Wha
 
 Build once, used by all templates:
 
-1. Database migrations: `storefront_templates`, `storefront_themes`, `storefront_configs`, `storefront_pages`, `storefront_media`
+1. Database migrations: `storefront_templates`, `storefront_themes`, `storefront_configs`, `storefront_pages`,
+   `storefront_media`
 2. Eloquent models with relationships and traits
-3. Enums: `StorefrontTemplateCategory`, `StorefrontAnimationTier`, `StorefrontThemeCategory`, `StorefrontPageType`, `SectionCategory`
+3. Enums: `StorefrontTemplateCategory`, `StorefrontAnimationTier`, `StorefrontThemeCategory`, `StorefrontPageType`,
+   `SectionCategory`
 4. `StorefrontSectionInterface` contract (with variants)
 5. `SectionTypeRegistry` service (template-aware)
 6. `StorefrontServiceProvider`
@@ -1820,8 +1949,10 @@ Build once, used by all templates:
 9. `StorefrontApiController` — JSON API for cart, checkout, auth, account mutations (reuses existing services)
 10. React storefront entry point + `StorefrontRenderer` + `ThemeProvider` + `AnimationProvider`
 11. Shared React components: `ProductCard`, `CartDrawer`, `SearchBar`, responsive grid system
-12. Fixed themed pages: Cart, Checkout, Auth (Login, Register, Forgot/Reset Password), Account (Dashboard, Orders, Profile), Services — all fully themed via ThemeProvider
-13. Builder UI: `PageBuilder`, `SectionPalette`, `SectionCanvas`, `SectionConfigPanel`, `ThemeConfigPanel`, `PreviewFrame`, all config field components
+12. Fixed themed pages: Cart, Checkout, Auth (Login, Register, Forgot/Reset Password), Account (Dashboard, Orders,
+    Profile), Services — all fully themed via ThemeProvider
+13. Builder UI: `PageBuilder`, `SectionPalette`, `SectionCanvas`, `SectionConfigPanel`, `ThemeConfigPanel`,
+    `PreviewFrame`, all config field components
 14. `StorefrontBuilderController` + `StorefrontBuilderService`
 15. Caching layer
 16. Media upload/management
@@ -1973,7 +2104,8 @@ Distributors, manufacturers, bulk sellers.
 
 1. Seed Wholesale & B2B Portal template
 2. 6 themes
-3. New section types: `bulk_order_form`, `pricing_tiers_table`, `quote_request`, `account_dashboard`, `trade_registration`
+3. New section types: `bulk_order_form`, `pricing_tiers_table`, `quote_request`, `account_dashboard`,
+   `trade_registration`
 4. Account-gated pricing and content
 5. Bulk order quantity tables
 6. Quote/invoice request flow
@@ -1984,7 +2116,8 @@ Photographers, agencies, freelancers, event planners.
 
 1. Seed Portfolio & Services template
 2. 6 themes
-3. New section types: `portfolio_grid`, `service_packages`, `client_logos_and_testimonials`, `consultation_form`, `process_timeline`
+3. New section types: `portfolio_grid`, `service_packages`, `client_logos_and_testimonials`, `consultation_form`,
+   `process_timeline`
 4. Portfolio case study overlays
 5. Service tier comparison cards
 6. Inquiry/consultation booking form
@@ -1995,7 +2128,8 @@ Monthly boxes, recurring deliveries, curated selections.
 
 1. Seed Subscription Box template
 2. 6 themes
-3. New section types: `subscription_plans`, `whats_in_the_box`, `how_it_works_steps`, `past_boxes_gallery`, `gift_subscription`
+3. New section types: `subscription_plans`, `whats_in_the_box`, `how_it_works_steps`, `past_boxes_gallery`,
+   `gift_subscription`
 4. Subscription billing integration
 5. Gift subscription flow
 
@@ -2013,14 +2147,17 @@ The storefront has two fundamentally different page categories, both fully theme
 - Rendered from `StorefrontPage.sections` JSON
 - Each section is a React component driven by config + variant + theme
 
-**2. Fixed themed pages** — layout is predetermined (a cart IS a cart), but every visual element respects the theme: colors, fonts, button styles, card styles, spacing, header/footer, animations.
+**2. Fixed themed pages** — layout is predetermined (a cart IS a cart), but every visual element respects the theme:
+colors, fonts, button styles, card styles, spacing, header/footer, animations.
 
 - Cart, Checkout, Checkout Success/Pending
 - Auth: Login, Register, Forgot Password, Reset Password, Verify Email
 - Account: Dashboard, Orders, Order Detail, Profile
 - Services: Listing, Detail
 
-Fixed pages share the same `ThemeProvider`, CSS variables, header/footer, and animation context as composable pages. The customer experiences a single, cohesive storefront — they cannot tell which pages are section-composed and which are fixed. The difference is only visible to the shop owner in the builder.
+Fixed pages share the same `ThemeProvider`, CSS variables, header/footer, and animation context as composable pages. The
+customer experiences a single, cohesive storefront — they cannot tell which pages are section-composed and which are
+fixed. The difference is only visible to the shop owner in the builder.
 
 ### Route Structure
 
@@ -2072,7 +2209,9 @@ GET    /{shop-slug}/payment/callback             → Paystack redirect (unchange
 POST   /{shop-slug}/payment/webhook              → Paystack webhook (unchanged, CSRF exempt)
 ```
 
-The JSON API controller (`StorefrontApiController`) is a thin layer — it reuses the existing `CartService`, `CheckoutService`, and auth logic from the current controllers, but returns JSON instead of Inertia redirects. The existing business logic is untouched.
+The JSON API controller (`StorefrontApiController`) is a thin layer — it reuses the existing `CartService`,
+`CheckoutService`, and auth logic from the current controllers, but returns JSON instead of Inertia redirects. The
+existing business logic is untouched.
 
 NOT Inertia routes. Blade views bootstrap standalone React app.
 
@@ -2095,9 +2234,13 @@ class StorefrontRenderService
 }
 ```
 
-`buildPage()` returns the payload for composable (section-composed) pages. `buildFixedPage()` returns the payload for fixed themed pages — same shop data, theme config, CSS variables, navigation, and header/footer, but includes `fixedPage` (string discriminator) and `fixedPageData` (page-specific data from existing services) instead of resolved sections.
+`buildPage()` returns the payload for composable (section-composed) pages. `buildFixedPage()` returns the payload for
+fixed themed pages — same shop data, theme config, CSS variables, navigation, and header/footer, but includes
+`fixedPage` (string discriminator) and `fixedPageData` (page-specific data from existing services) instead of resolved
+sections.
 
-Both methods inject `customer` (the logged-in customer via `auth('customer')->user()`, or `null`) and `csrfToken` (via `csrf_token()`) into every page payload. The React app needs these for auth state display and CSRF-protected API calls.
+Both methods inject `customer` (the logged-in customer via `auth('customer')->user()`, or `null`) and `csrfToken` (via
+`csrf_token()`) into every page payload. The React app needs these for auth state display and CSRF-protected API calls.
 
 `resolveThemeConfig()` merges theme defaults with shop overrides:
 
@@ -2251,7 +2394,8 @@ function StorefrontRenderer({ shop, theme, page, cart, navigation }) {
 
 **Key changes from previous spec:**
 
-- `templateLayoutRegistry` — each template has its own layout component (different header/footer anatomy, navigation patterns, overall structure)
+- `templateLayoutRegistry` — each template has its own layout component (different header/footer anatomy, navigation
+  patterns, overall structure)
 - `AnimationProvider` — manages animation tier, loads libraries conditionally (no GSAP for "subtle" tier)
 - `ScrollAnimation` wrapper — applies per-section entrance animations based on tier
 - `variant` prop passed to each section component — drives layout variant selection
@@ -2270,7 +2414,8 @@ export const templateLayoutRegistry: Record<string, React.FC<LayoutProps>> = {
 };
 ```
 
-Each layout component defines that template's structural skeleton: header, footer, navigation, sidebar (if any), section flow.
+Each layout component defines that template's structural skeleton: header, footer, navigation, sidebar (if any), section
+flow.
 
 ---
 
@@ -2280,8 +2425,10 @@ The builder lives at `/admin/storefront/builder`.
 
 ### Builder Flow
 
-1. **Template Selection** — Shop owner picks a template (structural layout). Shows template previews with descriptions and ideal-for tags. One-time choice (changing template resets theme + sections).
-2. **Theme Selection** — Within the chosen template, pick a theme. Shows 6 theme cards with realistic previews. Can switch themes without losing section content (sections re-render with new visual identity).
+1. **Template Selection** — Shop owner picks a template (structural layout). Shows template previews with descriptions
+   and ideal-for tags. One-time choice (changing template resets theme + sections).
+2. **Theme Selection** — Within the chosen template, pick a theme. Shows 6 theme cards with realistic previews. Can
+   switch themes without losing section content (sections re-render with new visual identity).
 3. **Customization** — Customize within theme guardrails via `ThemeConfigPanel`:
     - Color preset selector (4-6 curated palettes, or "Custom" for advanced)
     - Typography preset selector (2-3 curated font pairings)
@@ -2289,7 +2436,8 @@ The builder lives at `/admin/storefront/builder`.
     - Feel options (shadow depth, border radius, spacing)
     - Animation options (entrance style, hover effect)
     - Header/footer variant selection
-4. **Page Building** — Add/remove/reorder sections per page via drag-and-drop. Configure each section. Select section layout variants.
+4. **Page Building** — Add/remove/reorder sections per page via drag-and-drop. Configure each section. Select section
+   layout variants.
 5. **Preview** — Live iframe preview showing the storefront as customers see it.
 6. **Publish** — Go live.
 
@@ -2313,7 +2461,7 @@ The builder lives at `/admin/storefront/builder`.
 ### Config Field Types
 
 | Field Type       | Component            | Description                                      |
-| ---------------- | -------------------- | ------------------------------------------------ |
+|------------------|----------------------|--------------------------------------------------|
 | text             | TextInput            | Simple text input                                |
 | rich_text_editor | Tiptap editor        | Rich text                                        |
 | color_preset     | PresetColorPicker    | Theme's curated palettes (not a raw color wheel) |
@@ -2547,15 +2695,19 @@ resources/
 ### What Changes
 
 1. **Shop model** gets a `storefrontConfig()` HasOne relationship
-2. **All 5 existing storefront controllers** (`StorefrontController`, `CartController`, `CheckoutController`, `CustomerAuthController`, `CustomerPortalController`) are replaced by two new controllers:
+2. **All 5 existing storefront controllers** (`StorefrontController`, `CartController`, `CheckoutController`,
+   `CustomerAuthController`, `CustomerPortalController`) are replaced by two new controllers:
     - `StorefrontRenderController` — ALL page rendering (composable + fixed themed), returns Blade→React
     - `StorefrontApiController` — ALL mutations (cart CRUD, checkout processing, auth, account updates), returns JSON
 3. **Existing `StorefrontService`** methods become data sources called by section resolvers and fixed page data loaders
-4. **Existing services are reused as-is:** `CartService`, `CheckoutService`, `CustomerService` business logic is unchanged — only the controller layer changes from Inertia responses to Blade views / JSON
+4. **Existing services are reused as-is:** `CartService`, `CheckoutService`, `CustomerService` business logic is
+   unchanged — only the controller layer changes from Inertia responses to Blade views / JSON
 5. **Existing `storefront_settings` JSON** superseded by `StorefrontConfig`. Migration copies existing settings.
-6. **Customer authentication** guard (`auth('customer')`) and `Password::broker('customers')` are unchanged — the API controller reuses the same auth logic
+6. **Customer authentication** guard (`auth('customer')`) and `Password::broker('customers')` are unchanged — the API
+   controller reuses the same auth logic
 7. **Vite config** needs second entry point
-8. **All storefront routes** migrate from Inertia to the new Blade→React pipeline. No Inertia pages remain on the public storefront.
+8. **All storefront routes** migrate from Inertia to the new Blade→React pipeline. No Inertia pages remain on the public
+   storefront.
 
 ### What Doesn't Change
 
@@ -2587,7 +2739,9 @@ export default defineConfig({
 - **Theme defaults must look professional with zero customization.** The builder is for refinement, not rescue.
 - **One template, done right, before the next.** No half-implementations across multiple templates.
 - **Guardrails, not restrictions.** Every customization option leads to a good result. Ugly is structurally impossible.
-- **Speed matters.** Lazy-load animation libraries by tier. No GSAP on Classic Commerce. No Three.js unless Immersive Experience.
-- **Premium = earned.** Immersive Experience and 3D viewer are paid features. The free tier (Classic Commerce, Editorial Showcase, Marketplace Hub) must be genuinely excellent on its own.
+- **Speed matters.** Lazy-load animation libraries by tier. No GSAP on Classic Commerce. No Three.js unless Immersive
+  Experience.
+- **Premium = earned.** Immersive Experience and 3D viewer are paid features. The free tier (Classic Commerce, Editorial
+  Showcase, Marketplace Hub) must be genuinely excellent on its own.
 - **Builder must be fast.** Debounce saves, optimistic UI, no full page reloads during editing.
 - **Images are processed.** Resize, optimize, and serve responsive srcsets.

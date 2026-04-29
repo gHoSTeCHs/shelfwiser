@@ -24,8 +24,6 @@ export interface NavItem {
 }
 
 export interface SharedData {
-    first_name: string;
-    last_name: string;
     quote: { message: string; author: string };
     auth: Auth;
     sidebarOpen: boolean;
@@ -44,7 +42,6 @@ export interface User {
     is_super_admin: boolean;
     is_active: boolean;
     email_verified_at: string | null;
-    two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;
     [key: string]: unknown;

@@ -1,4 +1,5 @@
 import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
+import { accountOrders } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
@@ -32,7 +33,7 @@ const OrderDetail: React.FC<AccountOrderDetailProps> = ({ shop, order }) => {
             <div className="mx-auto max-w-6xl">
                 <div className="mb-6">
                     <Link
-                        href={CustomerPortalController.orders.url({
+                        href={accountOrders.url({
                             shop: shop.slug,
                         })}
                     >

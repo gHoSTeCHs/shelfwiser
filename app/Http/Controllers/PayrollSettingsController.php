@@ -62,11 +62,11 @@ class PayrollSettingsController extends Controller
     {
         Gate::authorize('manage_payroll_settings');
 
-        if ($earningType->is_system) {
-            return back()->with('error', 'System earning types cannot be modified.');
+        try {
+            $this->payrollSettingsService->updateEarningType($earningType, $request->validated(), $request->user());
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $this->payrollSettingsService->updateEarningType($earningType, $request->validated(), $request->user());
 
         return redirect()->route('payroll.settings.earning-types')
             ->with('success', 'Earning type updated successfully.');
@@ -76,15 +76,11 @@ class PayrollSettingsController extends Controller
     {
         Gate::authorize('manage_payroll_settings');
 
-        if ($earningType->is_system) {
-            return back()->with('error', 'System earning types cannot be deleted.');
+        try {
+            $this->payrollSettingsService->deleteEarningType($earningType, $request->user());
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        if ($earningType->employeeEarnings()->exists()) {
-            return back()->with('error', 'Cannot delete earning type that is in use.');
-        }
-
-        $this->payrollSettingsService->deleteEarningType($earningType, $request->user());
 
         return redirect()->route('payroll.settings.earning-types')
             ->with('success', 'Earning type deleted successfully.');
@@ -116,11 +112,11 @@ class PayrollSettingsController extends Controller
     {
         Gate::authorize('manage_payroll_settings');
 
-        if ($deductionType->is_system) {
-            return back()->with('error', 'System deduction types cannot be modified.');
+        try {
+            $this->payrollSettingsService->updateDeductionType($deductionType, $request->validated(), $request->user());
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $this->payrollSettingsService->updateDeductionType($deductionType, $request->validated(), $request->user());
 
         return redirect()->route('payroll.settings.deduction-types')
             ->with('success', 'Deduction type updated successfully.');
@@ -130,15 +126,11 @@ class PayrollSettingsController extends Controller
     {
         Gate::authorize('manage_payroll_settings');
 
-        if ($deductionType->is_system) {
-            return back()->with('error', 'System deduction types cannot be deleted.');
+        try {
+            $this->payrollSettingsService->deleteDeductionType($deductionType, $request->user());
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        if ($deductionType->employeeDeductions()->exists()) {
-            return back()->with('error', 'Cannot delete deduction type that is in use.');
-        }
-
-        $this->payrollSettingsService->deleteDeductionType($deductionType, $request->user());
 
         return redirect()->route('payroll.settings.deduction-types')
             ->with('success', 'Deduction type deleted successfully.');
@@ -178,15 +170,11 @@ class PayrollSettingsController extends Controller
     {
         Gate::authorize('manage_payroll_settings');
 
-        if ($payCalendar->employees()->exists()) {
-            return back()->with('error', 'Cannot delete pay calendar with assigned employees.');
+        try {
+            $this->payrollSettingsService->deletePayCalendar($payCalendar, $request->user());
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        if ($payCalendar->payPeriods()->exists()) {
-            return back()->with('error', 'Cannot delete pay calendar with existing pay periods.');
-        }
-
-        $this->payrollSettingsService->deletePayCalendar($payCalendar, $request->user());
 
         return redirect()->route('payroll.settings.pay-calendars')
             ->with('success', 'Pay calendar deleted successfully.');
@@ -212,11 +200,8 @@ class PayrollSettingsController extends Controller
 
         abort_if(! $taxTable->is_system && $taxTable->tenant_id !== $this->tenantId(), 403);
 
-        $taxTable->load(['bands' => fn ($q) => $q->orderBy('band_order'), 'reliefs']);
-        $taxTable->tax_law_version_label = $taxTable->getTaxLawVersion()?->shortLabel();
-
         return Inertia::render('Payroll/Settings/TaxTableShow', [
-            'taxTable' => $taxTable,
+            'taxTable' => $this->payrollSettingsService->prepareTaxTableForShow($taxTable),
         ]);
     }
 

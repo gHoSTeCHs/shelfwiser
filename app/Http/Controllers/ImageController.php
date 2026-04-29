@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ReorderImagesRequest;
+use App\Http\Requests\UpdateImageRequest;
 use App\Http\Requests\UploadImageRequest;
 use App\Models\Image;
 use App\Services\ImageService;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 
 class ImageController extends Controller
@@ -17,10 +19,10 @@ class ImageController extends Controller
     /**
      * Upload an image for a model
      */
-    public function upload(UploadImageRequest $request)
+    public function upload(UploadImageRequest $request): JsonResponse
     {
-        $modelClass = 'App\\Models\\'.$request->input('model_type');
-        $model = $modelClass::findOrFail($request->input('model_id'));
+        $validated = $request->validated();
+        $model = $this->imageService->resolveImageable($validated['model_type'], $validated['model_id']);
 
         Gate::authorize('update', $model);
 
@@ -29,7 +31,7 @@ class ImageController extends Controller
                 ? $request->file('images')
                 : [$request->file('images')];
 
-            $images = $this->imageService->uploadMultiple($model, $files, []);
+            $images = $this->imageService->uploadMultiple($model, $files, $request->user()->tenant_id, []);
 
             return response()->json([
                 'message' => 'Images uploaded successfully',
@@ -41,7 +43,8 @@ class ImageController extends Controller
             $image = $this->imageService->upload(
                 $model,
                 $request->file('image'),
-                $request->only(['alt_text', 'title', 'caption', 'is_primary'])
+                $request->user()->tenant_id,
+                $request->safe()->only(['alt_text', 'title', 'caption', 'is_primary'])
             );
 
             return response()->json([
@@ -58,7 +61,7 @@ class ImageController extends Controller
     /**
      * Delete an image
      */
-    public function destroy(Image $image)
+    public function destroy(Image $image): JsonResponse
     {
         Gate::authorize('delete', $image);
 
@@ -72,7 +75,7 @@ class ImageController extends Controller
     /**
      * Set an image as primary
      */
-    public function setPrimary(Image $image)
+    public function setPrimary(Image $image): JsonResponse
     {
         Gate::authorize('update', $image);
 
@@ -87,17 +90,11 @@ class ImageController extends Controller
     /**
      * Update image metadata
      */
-    public function update(Request $request, Image $image)
+    public function update(UpdateImageRequest $request, Image $image): JsonResponse
     {
         Gate::authorize('update', $image);
 
-        $validated = $request->validate([
-            'alt_text' => 'nullable|string|max:255',
-            'title' => 'nullable|string|max:255',
-            'caption' => 'nullable|string',
-        ]);
-
-        $this->imageService->updateMetadata($image, $validated);
+        $this->imageService->updateMetadata($image, $request->validated());
 
         return response()->json([
             'message' => 'Image updated successfully',
@@ -108,17 +105,10 @@ class ImageController extends Controller
     /**
      * Reorder images for a model
      */
-    public function reorder(Request $request)
+    public function reorder(ReorderImagesRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'model_type' => ['required', 'string', 'in:Product,ProductVariant,Service,User'],
-            'model_id' => 'required|integer',
-            'image_ids' => 'required|array',
-            'image_ids.*' => 'required|integer|exists:images,id',
-        ]);
-
-        $modelClass = 'App\\Models\\'.$validated['model_type'];
-        $model = $modelClass::findOrFail($validated['model_id']);
+        $validated = $request->validated();
+        $model = $this->imageService->resolveImageable($validated['model_type'], $validated['model_id']);
 
         Gate::authorize('update', $model);
 

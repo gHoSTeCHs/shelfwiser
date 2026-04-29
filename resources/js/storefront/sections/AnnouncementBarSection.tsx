@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { sanitizeUrl } from '../lib/sanitize-html';
 import { narrowConfig } from '../lib/section-helpers';
 import type { SectionProps } from '../types/storefront';
 
@@ -27,16 +28,18 @@ export function AnnouncementBarSection({ config }: SectionProps) {
     const bgColor = background_color || 'var(--color-primary, #1a1a1a)';
     const txtColor = text_color || 'var(--color-primary-foreground, #ffffff)';
 
-    const content = link ? (
+    const safeLink = sanitizeUrl(link);
+
+    const content = safeLink ? (
         <a
-            href={link}
+            href={safeLink}
             className="underline-offset-2 hover:underline"
             style={{ color: txtColor }}
         >
             {text}
         </a>
     ) : (
-        <span>{text}</span>
+        <span style={{ color: txtColor }}>{text}</span>
     );
 
     return (

@@ -12,7 +12,6 @@ use App\Http\Requests\StartBreakRequest;
 use App\Http\Requests\SubmitTimesheetRequest;
 use App\Http\Requests\TimesheetIndexRequest;
 use App\Http\Requests\UpdateTimesheetRequest;
-use App\Models\Shop;
 use App\Models\Timesheet;
 use App\Services\TimesheetService;
 use Illuminate\Http\RedirectResponse;
@@ -31,28 +30,27 @@ class TimesheetController extends Controller
         Gate::authorize('timesheet.viewAny', Timesheet::class);
 
         $user = $request->user();
-        $shopId = $request->input('shop_id');
-        $status = $request->input('status');
+        $validated = $request->validated();
+        $shopId = $validated['shop_id'] ?? null;
+        $statusValue = $validated['status'] ?? null;
+        $statusEnum = $statusValue ? TimesheetStatus::from($statusValue) : null;
         $dateRange = DateRange::fromRequest(
-            $request->only(['start_date', 'end_date']),
+            $validated,
             fromKey: 'start_date',
             toKey: 'end_date',
         );
 
-        $shop = $shopId ? Shop::query()->findOrFail($shopId) : null;
+        $shop = $shopId ? $this->timesheetService->resolveShop($shopId) : null;
 
-        $timesheets = $this->timesheetService->getEmployeeTimesheets($user, $dateRange->start, $dateRange->end, $shop);
-        $displayTimesheets = $status
-            ? $timesheets->where('status', TimesheetStatus::from($status))
-            : $timesheets;
+        $timesheets = $this->timesheetService->getEmployeeTimesheets($user, $dateRange->start, $dateRange->end, $shop, $statusEnum);
 
         return Inertia::render('Timesheets/Index', [
-            'timesheets' => $displayTimesheets,
+            'timesheets' => $timesheets,
             'summary' => $this->timesheetService->getTimesheetSummary($timesheets, $user, $dateRange->start, $dateRange->end),
             'activeTimesheet' => $this->timesheetService->getActiveTimesheet($user, $shop ?? $user->shops()->first()),
             'filters' => [
                 'shop_id' => $shopId,
-                'status' => $status,
+                'status' => $statusValue,
                 'start_date' => $dateRange->start->toDateString(),
                 'end_date' => $dateRange->end->toDateString(),
             ],
@@ -69,18 +67,16 @@ class TimesheetController extends Controller
         Gate::authorize('timesheet.viewAny', Timesheet::class);
 
         $user = $request->user();
-        $shopId = $request->input('shop_id');
+        $shopId = $request->validated('shop_id');
 
-        $shop = $shopId ? Shop::query()->findOrFail($shopId) : null;
+        $shop = $shopId ? $this->timesheetService->resolveShop($shopId) : null;
 
         return Inertia::render('Timesheets/Approve', [
             'timesheets' => $this->timesheetService->getTimesheetsForApproval($user, $shop),
             'filters' => [
                 'shop_id' => $shopId,
             ],
-            'shops' => $user->is_tenant_owner
-                ? Shop::query()->where('tenant_id', $user->tenant_id)->where('is_active', true)->get()
-                : $user->shops,
+            'shops' => $user->accessibleShops(),
         ]);
     }
 
@@ -88,7 +84,7 @@ class TimesheetController extends Controller
     {
         Gate::authorize('view', $timesheet);
 
-        $timesheet->load(['user', 'shop', 'approvedBy']);
+        $timesheet->loadShowRelations();
 
         return Inertia::render('Timesheets/Show', [
             'timesheet' => $timesheet,
@@ -104,7 +100,7 @@ class TimesheetController extends Controller
         Gate::authorize('clockInOut', Timesheet::class);
 
         $validated = $request->validated();
-        $shop = Shop::query()->findOrFail($validated['shop_id']);
+        $shop = $this->timesheetService->resolveShop($validated['shop_id']);
 
         try {
             $timesheet = $this->timesheetService->clockIn(
@@ -217,12 +213,12 @@ class TimesheetController extends Controller
         }
     }
 
-    public function approve(Timesheet $timesheet): RedirectResponse
+    public function approve(Timesheet $timesheet, \Illuminate\Http\Request $request): RedirectResponse
     {
         Gate::authorize('approve', $timesheet);
 
         try {
-            $this->timesheetService->approveTimesheet($timesheet, auth()->user());
+            $this->timesheetService->approveTimesheet($timesheet, $request->user());
 
             return redirect()
                 ->route('timesheets.approval-queue')
@@ -241,7 +237,7 @@ class TimesheetController extends Controller
         try {
             $this->timesheetService->rejectTimesheet(
                 timesheet: $timesheet,
-                approver: auth()->user(),
+                approver: $request->user(),
                 reason: $request->validated('rejection_reason'),
             );
 

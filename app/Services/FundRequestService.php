@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\FundRequestStatus;
 use App\Enums\FundRequestType;
+use App\Enums\UserRole;
 use App\Models\FundRequest;
 use App\Models\Shop;
 use App\Models\User;
@@ -17,6 +18,31 @@ class FundRequestService
     public function __construct(
         private NotificationService $notificationService
     ) {}
+
+    public function resolveShop(?int $shopId): ?Shop
+    {
+        if ($shopId === null) {
+            return null;
+        }
+
+        return Shop::query()->findOrFail($shopId);
+    }
+
+    public function getStatusOptions(): array
+    {
+        return collect(FundRequestStatus::cases())->map(fn ($case) => [
+            'value' => $case->value,
+            'label' => $case->label(),
+        ])->all();
+    }
+
+    public function getTypeOptions(): array
+    {
+        return collect(FundRequestType::cases())->map(fn ($case) => [
+            'value' => $case->value,
+            'label' => $case->label(),
+        ])->all();
+    }
 
     /**
      * Create a new fund request
@@ -52,22 +78,27 @@ class FundRequestService
      */
     public function approve(FundRequest $fundRequest, User $approver, ?string $notes = null): FundRequest
     {
-        if (! $fundRequest->status->canApprove()) {
-            throw new \RuntimeException('Fund request cannot be approved in current status');
-        }
-
         $freshRequest = DB::transaction(function () use ($fundRequest, $approver, $notes) {
-            $fundRequest->update([
+            $locked = FundRequest::query()
+                ->where('id', $fundRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $locked->status->canApprove()) {
+                throw new \RuntimeException('Fund request cannot be approved in current status');
+            }
+
+            $locked->update([
                 'status' => FundRequestStatus::APPROVED,
                 'approved_by_user_id' => $approver->id,
                 'approved_at' => now(),
                 'rejection_reason' => null,
-                'notes' => $notes ?? $fundRequest->notes,
+                'notes' => $notes ?? $locked->notes,
             ]);
 
-            $this->clearCache($fundRequest->tenant_id);
+            $this->clearCache($locked->tenant_id);
 
-            return $fundRequest->fresh(['user', 'shop', 'approvedBy']);
+            return $locked->fresh(['user', 'shop', 'approvedBy']);
         });
 
         $this->notificationService->notifyFundRequestApproved($freshRequest, $approver);
@@ -82,21 +113,26 @@ class FundRequestService
      */
     public function reject(FundRequest $fundRequest, User $rejector, string $reason): FundRequest
     {
-        if (! $fundRequest->status->canReject()) {
-            throw new \RuntimeException('Fund request cannot be rejected in current status');
-        }
-
         $freshRequest = DB::transaction(function () use ($fundRequest, $rejector, $reason) {
-            $fundRequest->update([
+            $locked = FundRequest::query()
+                ->where('id', $fundRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $locked->status->canReject()) {
+                throw new \RuntimeException('Fund request cannot be rejected in current status');
+            }
+
+            $locked->update([
                 'status' => FundRequestStatus::REJECTED,
-                'approved_by_user_id' => $rejector->id,
-                'approved_at' => now(),
+                'rejected_by_user_id' => $rejector->id,
+                'rejected_at' => now(),
                 'rejection_reason' => $reason,
             ]);
 
-            $this->clearCache($fundRequest->tenant_id);
+            $this->clearCache($locked->tenant_id);
 
-            return $fundRequest->fresh(['user', 'shop', 'approvedBy']);
+            return $locked->fresh(['user', 'shop', 'approvedBy', 'rejectedBy']);
         });
 
         $this->notificationService->notifyFundRequestRejected($freshRequest, $rejector, $reason);
@@ -109,21 +145,26 @@ class FundRequestService
      */
     public function disburse(FundRequest $fundRequest, User $disburser, ?string $notes = null): FundRequest
     {
-        if (! $fundRequest->status->canDisburse()) {
-            throw new \RuntimeException('Fund request cannot be disbursed in current status');
-        }
-
         $freshRequest = DB::transaction(function () use ($fundRequest, $disburser, $notes) {
-            $fundRequest->update([
+            $locked = FundRequest::query()
+                ->where('id', $fundRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $locked->status->canDisburse()) {
+                throw new \RuntimeException('Fund request cannot be disbursed in current status');
+            }
+
+            $locked->update([
                 'status' => FundRequestStatus::DISBURSED,
                 'disbursed_by_user_id' => $disburser->id,
                 'disbursed_at' => now(),
-                'notes' => $notes ?? $fundRequest->notes,
+                'notes' => $notes ?? $locked->notes,
             ]);
 
-            $this->clearCache($fundRequest->tenant_id);
+            $this->clearCache($locked->tenant_id);
 
-            return $fundRequest->fresh(['user', 'shop', 'approvedBy', 'disbursedBy']);
+            return $locked->fresh(['user', 'shop', 'approvedBy', 'disbursedBy']);
         });
 
         $this->notificationService->notifyFundRequestDisbursed($freshRequest, $disburser);
@@ -138,22 +179,31 @@ class FundRequestService
      */
     public function cancel(FundRequest $fundRequest, User $user, string $reason): FundRequest
     {
-        if (! $fundRequest->status->canCancel()) {
-            throw new \RuntimeException('Fund request cannot be cancelled in current status');
-        }
+        $freshRequest = DB::transaction(function () use ($fundRequest, $user, $reason) {
+            $locked = FundRequest::query()
+                ->where('id', $fundRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        return DB::transaction(function () use ($fundRequest, $user, $reason) {
-            $fundRequest->update([
+            if (! $locked->status->canCancel()) {
+                throw new \RuntimeException('Fund request cannot be cancelled in current status');
+            }
+
+            $locked->update([
                 'status' => FundRequestStatus::CANCELLED,
                 'rejection_reason' => $reason,
-                'notes' => ($fundRequest->notes ? $fundRequest->notes."\n\n" : '').
+                'notes' => ($locked->notes ? $locked->notes."\n\n" : '').
                     "Cancelled by {$user->name}: {$reason}",
             ]);
 
-            $this->clearCache($fundRequest->tenant_id);
+            $this->clearCache($locked->tenant_id);
 
-            return $fundRequest->fresh();
+            return $locked->fresh();
         });
+
+        $this->notificationService->notifyFundRequestCancelled($freshRequest, $user);
+
+        return $freshRequest;
     }
 
     /**
@@ -161,7 +211,27 @@ class FundRequestService
      */
     public function markReceiptUploaded(FundRequest $fundRequest): FundRequest
     {
+        if (! in_array($fundRequest->status, [FundRequestStatus::PENDING, FundRequestStatus::APPROVED])) {
+            throw new \RuntimeException('Cannot modify a fund request that has been finalised.');
+        }
+
         $fundRequest->update(['receipt_uploaded' => true]);
+
+        $this->clearCache($fundRequest->tenant_id);
+
+        return $fundRequest->fresh();
+    }
+
+    /**
+     * Update fund request description
+     */
+    public function updateDescription(FundRequest $fundRequest, string $description): FundRequest
+    {
+        if (! in_array($fundRequest->status, [FundRequestStatus::PENDING, FundRequestStatus::APPROVED])) {
+            throw new \RuntimeException('Cannot modify a fund request that has been finalised.');
+        }
+
+        $fundRequest->update(['description' => $description]);
 
         $this->clearCache($fundRequest->tenant_id);
 
@@ -173,8 +243,10 @@ class FundRequestService
      */
     public function getRequestsForApproval(User $manager, ?Shop $shop = null): Collection
     {
-        $query = FundRequest::query()->where('tenant_id', $manager->tenant_id)
+        $query = FundRequest::query()
+            ->where('tenant_id', $manager->tenant_id)
             ->where('status', FundRequestStatus::PENDING)
+            ->where('user_id', '!=', $manager->id)
             ->with(['user', 'shop', 'approvedBy']);
 
         if ($shop) {
@@ -187,10 +259,6 @@ class FundRequestService
         $requests = $query->orderBy('requested_at', 'asc')->get();
 
         return $requests->filter(function ($request) use ($manager) {
-            if ($manager->id === $request->user_id) {
-                return false;
-            }
-
             if ($manager->is_tenant_owner) {
                 return true;
             }
@@ -207,10 +275,10 @@ class FundRequestService
         ?FundRequestStatus $status = null,
         ?Shop $shop = null,
         ?Carbon $startDate = null,
-        ?Carbon $endDate = null
+        ?Carbon $endDate = null,
+        ?FundRequestType $type = null
     ): Collection {
         $query = FundRequest::query()->where('user_id', $user->id)
-            ->where('tenant_id', $user->tenant_id)
             ->with(['shop', 'approvedBy', 'disbursedBy']);
 
         if ($status) {
@@ -219,6 +287,10 @@ class FundRequestService
 
         if ($shop) {
             $query->where('shop_id', $shop->id);
+        }
+
+        if ($type) {
+            $query->where('request_type', $type);
         }
 
         if ($startDate) {
@@ -243,7 +315,6 @@ class FundRequestService
         ?Carbon $endDate = null
     ): Collection {
         $query = FundRequest::query()->where('shop_id', $shop->id)
-            ->where('tenant_id', $shop->tenant_id)
             ->with(['user', 'approvedBy', 'disbursedBy']);
 
         if ($status) {
@@ -268,41 +339,63 @@ class FundRequestService
     /**
      * Get fund request statistics
      */
-    public function getStatistics(int $tenantId, ?Shop $shop = null, ?Carbon $startDate = null, ?Carbon $endDate = null): array
+    public function getStatistics(User $user, ?Shop $shop = null, ?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
-        $query = FundRequest::query()->where('tenant_id', $tenantId);
+        $base = FundRequest::query()->where('tenant_id', $user->tenant_id);
 
         if ($shop) {
-            $query->where('shop_id', $shop->id);
+            $base->where('shop_id', $shop->id);
+        } elseif (! $user->is_tenant_owner && $user->role->level() < UserRole::GENERAL_MANAGER->level()) {
+            $base->whereIn('shop_id', $user->shops->pluck('id'));
         }
 
         if ($startDate) {
-            $query->where('requested_at', '>=', $startDate);
+            $base->where('requested_at', '>=', $startDate);
         }
 
         if ($endDate) {
-            $query->where('requested_at', '<=', $endDate);
+            $base->where('requested_at', '<=', $endDate);
         }
 
-        $all = $query->get();
+        $byStatus = (clone $base)
+            ->selectRaw('status, count(*) as total, sum(amount) as total_amount')
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
+        $byType = (clone $base)
+            ->selectRaw('request_type, count(*) as total, sum(amount) as total_amount')
+            ->groupBy('request_type')
+            ->get();
+
+        $pending = $byStatus->get(FundRequestStatus::PENDING->value);
+        $approved = $byStatus->get(FundRequestStatus::APPROVED->value);
+        $rejected = $byStatus->get(FundRequestStatus::REJECTED->value);
+        $disbursed = $byStatus->get(FundRequestStatus::DISBURSED->value);
 
         return [
-            'total_requests' => $all->count(),
-            'pending_requests' => $all->where('status', FundRequestStatus::PENDING)->count(),
-            'approved_requests' => $all->where('status', FundRequestStatus::APPROVED)->count(),
-            'rejected_requests' => $all->where('status', FundRequestStatus::REJECTED)->count(),
-            'disbursed_requests' => $all->where('status', FundRequestStatus::DISBURSED)->count(),
-            'total_amount_requested' => $all->sum('amount'),
-            'total_amount_approved' => $all->whereIn('status', [
-                FundRequestStatus::APPROVED,
-                FundRequestStatus::DISBURSED,
-            ])->sum('amount'),
-            'total_amount_disbursed' => $all->where('status', FundRequestStatus::DISBURSED)->sum('amount'),
-            'by_type' => $all->groupBy('request_type')->map(fn ($items) => [
-                'count' => $items->count(),
-                'total_amount' => $items->sum('amount'),
+            'total_requests' => $byStatus->sum('total'),
+            'pending_requests' => (int) ($pending?->total ?? 0),
+            'approved_requests' => (int) ($approved?->total ?? 0),
+            'rejected_requests' => (int) ($rejected?->total ?? 0),
+            'disbursed_requests' => (int) ($disbursed?->total ?? 0),
+            'total_amount_requested' => (float) $byStatus->sum('total_amount'),
+            'total_amount_approved' => (float) (($approved?->total_amount ?? 0) + ($disbursed?->total_amount ?? 0)),
+            'total_amount_disbursed' => (float) ($disbursed?->total_amount ?? 0),
+            'by_type' => $byType->mapWithKeys(fn ($row) => [
+                $row->request_type => [
+                    'count' => (int) $row->total,
+                    'total_amount' => (float) $row->total_amount,
+                ],
             ])->toArray(),
         ];
+    }
+
+    public function delete(FundRequest $fundRequest): void
+    {
+        $tenantId = $fundRequest->tenant_id;
+        $fundRequest->delete();
+        $this->clearCache($tenantId);
     }
 
     /**

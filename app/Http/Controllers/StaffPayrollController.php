@@ -2,16 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\EmploymentType;
-use App\Enums\PayFrequency;
-use App\Enums\PayType;
-use App\Enums\TaxHandling;
+use App\Http\Requests\StoreStaffPayrollRequest;
+use App\Http\Requests\UpdateDeductionPreferencesRequest;
+use App\Http\Requests\UpdateStaffTaxHandlingRequest;
 use App\Models\User;
 use App\Services\EmployeePayrollService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 
 class StaffPayrollController extends Controller
 {
@@ -19,88 +16,37 @@ class StaffPayrollController extends Controller
         private EmployeePayrollService $payrollService
     ) {}
 
-    /**
-     * Store or update payroll details for an employee
-     */
-    public function store(Request $request, User $employee): RedirectResponse
+    public function store(StoreStaffPayrollRequest $request, User $employee): RedirectResponse
     {
         Gate::authorize('updatePayrollDetails', $employee);
 
-        $validated = $request->validate([
-            'employment_type' => ['required', Rule::in(array_column(EmploymentType::cases(), 'value'))],
-            'pay_type' => ['required', Rule::in(array_column(PayType::cases(), 'value'))],
-            'pay_amount' => ['required', 'numeric', 'min:0'],
-            'pay_frequency' => ['required', Rule::in(array_column(PayFrequency::cases(), 'value'))],
-            'tax_handling' => ['required', Rule::in(array_column(TaxHandling::cases(), 'value'))],
-            'enable_tax_calculations' => ['nullable', 'boolean'],
-            'tax_id_number' => ['nullable', 'string', 'max:255'],
-            'pension_enabled' => ['nullable', 'boolean'],
-            'pension_employee_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'pension_employer_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'nhf_enabled' => ['nullable', 'boolean'],
-            'nhf_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'nhis_enabled' => ['nullable', 'boolean'],
-            'nhis_amount' => ['nullable', 'numeric', 'min:0'],
-            'other_deductions_enabled' => ['nullable', 'boolean'],
-            'bank_account_number' => ['nullable', 'string', 'max:255'],
-            'bank_name' => ['nullable', 'string', 'max:255'],
-            'routing_number' => ['nullable', 'string', 'max:255'],
-            'emergency_contact_name' => ['nullable', 'string', 'max:255'],
-            'emergency_contact_phone' => ['nullable', 'string', 'max:255'],
-            'position_title' => ['nullable', 'string', 'max:255'],
-            'department' => ['nullable', 'string', 'max:255'],
-            'start_date' => ['nullable', 'date'],
-            'end_date' => ['nullable', 'date', 'after:start_date'],
-        ]);
+        $isNew = $employee->employeePayrollDetail === null;
 
-        if ($employee->employeePayrollDetail) {
-            $this->payrollService->updatePayrollDetails($employee, $validated);
-            $message = 'Payroll details updated successfully';
-        } else {
-            $this->payrollService->createEmployeePayroll($employee, $validated);
-            $message = 'Payroll details created successfully';
-        }
+        $this->payrollService->updatePayrollDetails($employee, $request->validated());
+
+        $message = $isNew ? 'Payroll details created successfully' : 'Payroll details updated successfully';
 
         return redirect()
             ->route('staff.show', $employee)
             ->with('success', $message);
     }
 
-    /**
-     * Update employee deduction preferences
-     */
-    public function updateDeductions(Request $request, User $employee): RedirectResponse
+    public function updateDeductions(UpdateDeductionPreferencesRequest $request, User $employee): RedirectResponse
     {
         Gate::authorize('updateDeductionPreferences', $employee);
 
-        $validated = $request->validate([
-            'pension_enabled' => ['nullable', 'boolean'],
-            'nhf_enabled' => ['nullable', 'boolean'],
-            'nhis_enabled' => ['nullable', 'boolean'],
-            'nhis_amount' => ['nullable', 'numeric', 'min:0'],
-        ]);
-
-        $this->payrollService->updatePayrollDetails($employee, $validated);
+        $this->payrollService->updatePayrollDetails($employee, $request->validated());
 
         return redirect()
             ->back()
             ->with('success', 'Deduction preferences updated successfully');
     }
 
-    /**
-     * Update employee tax settings
-     */
-    public function updateTaxSettings(Request $request, User $employee): RedirectResponse
+    public function updateTaxSettings(UpdateStaffTaxHandlingRequest $request, User $employee): RedirectResponse
     {
         Gate::authorize('updateTaxSettings', $employee);
 
-        $validated = $request->validate([
-            'enable_tax_calculations' => ['required', 'boolean'],
-            'tax_handling' => ['required', Rule::in(array_column(TaxHandling::cases(), 'value'))],
-            'tax_id_number' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        $this->payrollService->updatePayrollDetails($employee, $validated);
+        $this->payrollService->updatePayrollDetails($employee, $request->validated());
 
         return redirect()
             ->back()

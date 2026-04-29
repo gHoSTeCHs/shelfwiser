@@ -1,4 +1,4 @@
-import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
+import { accountOrderDetail, accountOrders } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import EmptyState from '@/components/ui/EmptyState';
@@ -19,7 +19,7 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
     const { formatCurrency } = useCurrency(shop);
 
     const handlePageChange = (page: number) => {
-        window.location.href = `${CustomerPortalController.orders.url({ shop: shop.slug })}?page=${page}`;
+        window.location.href = `${accountOrders.url({ shop: shop.slug })}?page=${page}`;
     };
 
     return (
@@ -146,7 +146,7 @@ const Orders: React.FC<AccountOrdersProps> = ({ shop, orders }) => {
                                             </div>
 
                                             <Link
-                                                href={CustomerPortalController.orderDetail.url(
+                                                href={accountOrderDetail.url(
                                                     {
                                                         shop: shop.slug,
                                                         order: order.id,

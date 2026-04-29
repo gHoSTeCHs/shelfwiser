@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Webhooks;
 
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderPayment;
@@ -99,12 +100,18 @@ class PaymentWebhookController extends Controller
 
             $lockedOrder = Order::query()->where('id', $order->id)->lockForUpdate()->first();
 
+            if ($lockedOrder->payment_status === PaymentStatus::PAID) {
+                return;
+            }
+
             if ($event->amount < $lockedOrder->remainingBalance() * 0.99) {
-                Log::warning('Payment amount less than expected', [
+                Log::warning('Payment amount less than expected — payment not recorded, reconciliation required', [
                     'order_id' => $lockedOrder->id,
                     'expected' => $lockedOrder->remainingBalance(),
                     'received' => $event->amount,
                 ]);
+
+                return;
             }
 
             OrderPayment::create([
@@ -133,23 +140,27 @@ class PaymentWebhookController extends Controller
      */
     protected function handleFailedPayment(string $gateway, $event): void
     {
-        $existingPayment = OrderPayment::where('reference_number', $event->reference)->first();
+        DB::transaction(function () use ($gateway, $event) {
+            $existingPayment = OrderPayment::query()
+                ->where('reference_number', $event->reference)
+                ->first();
 
-        if ($existingPayment) {
-            $existingPayment->update([
-                'gateway_status' => 'failed',
-                'gateway_response' => $this->buildSafeGatewayResponse($gateway, $event),
-            ]);
-        }
+            if ($existingPayment) {
+                $existingPayment->update([
+                    'gateway_status' => 'failed',
+                    'gateway_response' => $this->buildSafeGatewayResponse($gateway, $event),
+                ]);
+            }
 
-        $order = $this->findOrderByReference($event->reference);
+            $order = $this->findOrderByReference($event->reference);
 
-        if ($order && $order->payment_reference === $event->reference) {
-            Log::info('Payment failed for order', [
-                'order_id' => $order->id,
-                'reference' => $event->reference,
-            ]);
-        }
+            if ($order && $order->payment_reference === $event->reference) {
+                Log::info('Payment failed for order', [
+                    'order_id' => $order->id,
+                    'reference' => $event->reference,
+                ]);
+            }
+        });
     }
 
     private function buildSafeGatewayResponse(string $gateway, $event): array
@@ -172,7 +183,7 @@ class PaymentWebhookController extends Controller
      */
     protected function findOrderByReference(string $reference): ?Order
     {
-        $order = Order::where('payment_reference', $reference)->first();
+        $order = Order::query()->where('payment_reference', $reference)->first();
 
         if ($order) {
             return $order;
@@ -180,7 +191,7 @@ class PaymentWebhookController extends Controller
 
         $parts = explode('_', $reference);
         if (count($parts) >= 2) {
-            return Order::where('order_number', $parts[1])->first();
+            return Order::query()->where('order_number', $parts[1])->first();
         }
 
         return null;

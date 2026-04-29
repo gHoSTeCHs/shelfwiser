@@ -60,7 +60,7 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
         const params: Record<string, string> = {};
         if (selectedShop) params.shop_id = selectedShop;
 
-        router.get('/timesheets/approval-queue', params, {
+        router.get(TimesheetController.approvalQueue.url(), params, {
             preserveState: true,
             preserveScroll: true,
         });
@@ -69,7 +69,7 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
     const handleClearFilters = () => {
         setSelectedShop('');
         router.get(
-            '/timesheets/approval-queue',
+            TimesheetController.approvalQueue.url(),
             {},
             { preserveState: true, preserveScroll: true },
         );
@@ -189,7 +189,9 @@ const TimesheetsApprove = ({ timesheets, filters, shops }: Props) => {
                                                     Date
                                                 </p>
                                                 <p className="font-medium text-gray-900 dark:text-white">
-                                                    {formatDateShort(timesheet.date)}
+                                                    {formatDateShort(
+                                                        timesheet.date,
+                                                    )}
                                                 </p>
                                             </div>
                                         </div>

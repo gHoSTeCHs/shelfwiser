@@ -21,7 +21,6 @@ class UserResource extends JsonResource
             'is_super_admin' => (bool) $this->is_super_admin,
             'is_active' => (bool) $this->is_active,
             'email_verified_at' => $this->email_verified_at?->toIso8601String(),
-            'two_factor_enabled' => $this->two_factor_confirmed_at !== null,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

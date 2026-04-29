@@ -57,7 +57,7 @@ class UserSeeder extends Seeder
             [
                 'first_name' => 'John',
                 'last_name' => 'Doe',
-                'email' => "owner@{$slug}.com",
+                'email' => "owner@$slug.com",
                 'role' => UserRole::OWNER,
                 'is_tenant_owner' => true,
                 'is_active' => true,
@@ -65,7 +65,7 @@ class UserSeeder extends Seeder
             [
                 'first_name' => 'Sarah',
                 'last_name' => 'Johnson',
-                'email' => "gm@{$slug}.com",
+                'email' => "gm@$slug.com",
                 'role' => UserRole::GENERAL_MANAGER,
                 'is_tenant_owner' => false,
                 'is_active' => true,
@@ -73,7 +73,7 @@ class UserSeeder extends Seeder
             [
                 'first_name' => 'Michael',
                 'last_name' => 'Williams',
-                'email' => "manager1@{$slug}.com",
+                'email' => "manager1@$slug.com",
                 'role' => UserRole::STORE_MANAGER,
                 'is_tenant_owner' => false,
                 'is_active' => true,
@@ -81,7 +81,7 @@ class UserSeeder extends Seeder
             [
                 'first_name' => 'Emily',
                 'last_name' => 'Brown',
-                'email' => "manager2@{$slug}.com",
+                'email' => "manager2@$slug.com",
                 'role' => UserRole::STORE_MANAGER,
                 'is_tenant_owner' => false,
                 'is_active' => true,
@@ -89,7 +89,7 @@ class UserSeeder extends Seeder
             [
                 'first_name' => 'David',
                 'last_name' => 'Jones',
-                'email' => "assistant@{$slug}.com",
+                'email' => "assistant@$slug.com",
                 'role' => UserRole::ASSISTANT_MANAGER,
                 'is_tenant_owner' => false,
                 'is_active' => true,
@@ -97,7 +97,7 @@ class UserSeeder extends Seeder
             [
                 'first_name' => 'Jessica',
                 'last_name' => 'Garcia',
-                'email' => "sales1@{$slug}.com",
+                'email' => "sales1@$slug.com",
                 'role' => UserRole::SALES_REP,
                 'is_tenant_owner' => false,
                 'is_active' => true,
@@ -105,7 +105,7 @@ class UserSeeder extends Seeder
             [
                 'first_name' => 'James',
                 'last_name' => 'Martinez',
-                'email' => "sales2@{$slug}.com",
+                'email' => "sales2@$slug.com",
                 'role' => UserRole::SALES_REP,
                 'is_tenant_owner' => false,
                 'is_active' => true,
@@ -113,7 +113,7 @@ class UserSeeder extends Seeder
             [
                 'first_name' => 'Lisa',
                 'last_name' => 'Davis',
-                'email' => "cashier1@{$slug}.com",
+                'email' => "cashier1@$slug.com",
                 'role' => UserRole::CASHIER,
                 'is_tenant_owner' => false,
                 'is_active' => true,
@@ -121,7 +121,7 @@ class UserSeeder extends Seeder
             [
                 'first_name' => 'Robert',
                 'last_name' => 'Rodriguez',
-                'email' => "cashier2@{$slug}.com",
+                'email' => "cashier2@$slug.com",
                 'role' => UserRole::CASHIER,
                 'is_tenant_owner' => false,
                 'is_active' => true,
@@ -129,7 +129,7 @@ class UserSeeder extends Seeder
             [
                 'first_name' => 'Maria',
                 'last_name' => 'Wilson',
-                'email' => "inventory@{$slug}.com",
+                'email' => "inventory@$slug.com",
                 'role' => UserRole::INVENTORY_CLERK,
                 'is_tenant_owner' => false,
                 'is_active' => true,

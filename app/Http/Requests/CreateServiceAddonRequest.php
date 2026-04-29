@@ -11,15 +11,7 @@ class CreateServiceAddonRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Check if this is service-specific or category-wide
-        if ($this->route('service')) {
-            $service = $this->route('service');
-
-            return $this->user()->can('manage', $service);
-        }
-
-        // For category-wide addons, check if user has inventory management permission
-        return $this->user()->role->hasPermission('manage_inventory');
+        return true;
     }
 
     /**

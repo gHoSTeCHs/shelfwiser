@@ -1,3 +1,4 @@
+import AdminTenantController from '@/actions/App/Http/Controllers/Admin/AdminTenantController';
 import Input from '@/components/form/input/InputField';
 import Select from '@/components/form/Select';
 import Badge from '@/components/ui/badge/Badge';
@@ -49,7 +50,7 @@ export default function Index({ tenants, filters }: Props) {
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         router.get(
-            '/admin/tenants',
+            AdminTenantController.index.url(),
             { ...filters, search },
             { preserveState: true },
         );
@@ -58,7 +59,9 @@ export default function Index({ tenants, filters }: Props) {
     const handleFilterChange = (key: string, value: string) => {
         const newFilters = { ...filters, [key]: value };
         if (!value) delete newFilters[key as keyof typeof newFilters];
-        router.get('/admin/tenants', newFilters, { preserveState: true });
+        router.get(AdminTenantController.index.url(), newFilters, {
+            preserveState: true,
+        });
     };
 
     return (
@@ -75,7 +78,7 @@ export default function Index({ tenants, filters }: Props) {
                             Manage all platform tenants and their subscriptions
                         </p>
                     </div>
-                    <Link href="/admin/tenants/create">
+                    <Link href={AdminTenantController.create.url()}>
                         <Button startIcon={<Plus className="h-4 w-4" />}>
                             Create Tenant
                         </Button>
@@ -137,7 +140,7 @@ export default function Index({ tenants, filters }: Props) {
                         title="No tenants found"
                         description="Get started by creating your first tenant."
                         action={
-                            <Link href="/admin/tenants/create">
+                            <Link href={AdminTenantController.create.url()}>
                                 <Button
                                     startIcon={<Plus className="h-4 w-4" />}
                                 >
@@ -199,7 +202,11 @@ export default function Index({ tenants, filters }: Props) {
                                             <td className="px-4 py-3">
                                                 <div>
                                                     <Link
-                                                        href={`/admin/tenants/${tenant.id}`}
+                                                        href={AdminTenantController.show.url(
+                                                            {
+                                                                tenant: tenant.id,
+                                                            },
+                                                        )}
                                                         className="font-medium text-gray-900 hover:text-brand-600 dark:text-white dark:hover:text-brand-400"
                                                     >
                                                         {tenant.name}
@@ -251,7 +258,11 @@ export default function Index({ tenants, filters }: Props) {
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex items-center justify-end gap-2">
                                                     <Link
-                                                        href={`/admin/tenants/${tenant.id}`}
+                                                        href={AdminTenantController.show.url(
+                                                            {
+                                                                tenant: tenant.id,
+                                                            },
+                                                        )}
                                                     >
                                                         <Button
                                                             variant="ghost"
@@ -261,7 +272,11 @@ export default function Index({ tenants, filters }: Props) {
                                                         </Button>
                                                     </Link>
                                                     <Link
-                                                        href={`/admin/tenants/${tenant.id}/edit`}
+                                                        href={AdminTenantController.edit.url(
+                                                            {
+                                                                tenant: tenant.id,
+                                                            },
+                                                        )}
                                                     >
                                                         <Button
                                                             variant="ghost"
@@ -299,7 +314,11 @@ export default function Index({ tenants, filters }: Props) {
                                                       : 'cursor-not-allowed text-gray-300 dark:text-gray-600'
                                             }`}
                                         >
-                                            <span>{decodePaginationLabel(link.label)}</span>
+                                            <span>
+                                                {decodePaginationLabel(
+                                                    link.label,
+                                                )}
+                                            </span>
                                         </button>
                                     ))}
                                 </div>

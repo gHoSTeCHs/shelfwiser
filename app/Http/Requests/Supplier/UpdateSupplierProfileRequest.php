@@ -4,14 +4,13 @@ namespace App\Http\Requests\Supplier;
 
 use App\Enums\ConnectionApprovalMode;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class UpdateSupplierProfileRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Gate::allows('updateProfile', $this->route('profile'));
+        return true;
     }
 
     public function rules(): array
@@ -23,7 +22,8 @@ class UpdateSupplierProfileRequest extends FormRequest
             'lead_time_days' => ['sometimes', 'integer', 'min:1', 'max:365'],
             'minimum_order_value' => ['sometimes', 'numeric', 'min:0'],
             'connection_approval_mode' => ['sometimes', Rule::enum(ConnectionApprovalMode::class)],
-            'settings' => ['sometimes', 'nullable', 'array'],
+            'settings' => ['sometimes', 'nullable', 'array', 'max:20'],
+            'settings.*' => ['nullable', 'scalar'],
         ];
     }
 

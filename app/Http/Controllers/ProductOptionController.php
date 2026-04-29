@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\CannotDeleteException;
 use App\Http\Requests\Storefront\GenerateVariantMatrixRequest;
 use App\Http\Requests\Storefront\StoreProductOptionRequest;
 use App\Http\Requests\Storefront\StoreProductOptionValueRequest;
@@ -9,14 +10,15 @@ use App\Http\Requests\Storefront\UpdateProductOptionRequest;
 use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\ProductOptionValue;
+use App\Services\ProductOptionService;
 use App\Services\VariantMatrixService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class ProductOptionController extends Controller
 {
     public function __construct(
+        private readonly ProductOptionService $optionService,
         private readonly VariantMatrixService $matrixService
     ) {}
 
@@ -24,29 +26,7 @@ class ProductOptionController extends Controller
     {
         Gate::authorize('create', ProductOption::class);
 
-        $validated = $request->validated();
-
-        $option = DB::transaction(function () use ($product, $validated) {
-            $option = $product->options()->create([
-                'tenant_id' => $product->tenant_id,
-                'name' => $validated['name'],
-                'display_name' => $validated['display_name'] ?? null,
-                'position' => $validated['position'],
-                'visual_type' => $validated['visual_type'],
-            ]);
-
-            foreach ($validated['values'] as $valueData) {
-                $option->values()->create([
-                    'label' => $valueData['label'],
-                    'value' => $valueData['value'],
-                    'position' => $valueData['position'],
-                    'visual_data' => $valueData['visual_data'] ?? null,
-                ]);
-            }
-
-            return $option;
-        });
-
+        $option = $this->optionService->createOption($product, $request->validated());
         $option->load('values');
 
         return response()->json([
@@ -60,41 +40,7 @@ class ProductOptionController extends Controller
         abort_if($option->product_id !== $product->id, 404);
         Gate::authorize('update', $option);
 
-        $validated = $request->validated();
-
-        DB::transaction(function () use ($option, $validated): void {
-            $fields = [];
-            if (isset($validated['name'])) {
-                $fields['name'] = $validated['name'];
-            }
-            if (array_key_exists('display_name', $validated)) {
-                $fields['display_name'] = $validated['display_name'];
-            }
-            if (isset($validated['position'])) {
-                $fields['position'] = $validated['position'];
-            }
-            if (isset($validated['visual_type'])) {
-                $fields['visual_type'] = $validated['visual_type'];
-            }
-
-            if (! empty($fields)) {
-                $option->update($fields);
-            }
-
-            if (isset($validated['values'])) {
-                $option->values()->forceDelete();
-
-                foreach ($validated['values'] as $valueData) {
-                    $option->values()->create([
-                        'label' => $valueData['label'],
-                        'value' => $valueData['value'],
-                        'position' => $valueData['position'],
-                        'visual_data' => $valueData['visual_data'] ?? null,
-                    ]);
-                }
-            }
-        });
-
+        $option = $this->optionService->updateOption($option, $request->validated());
         $option->load('values');
 
         return response()->json([
@@ -108,49 +54,11 @@ class ProductOptionController extends Controller
         abort_if($option->product_id !== $product->id, 404);
         Gate::authorize('delete', $option);
 
-        $valueIds = $option->values()->pluck('id');
-
-        if ($valueIds->isEmpty()) {
-            $option->delete();
-
-            return response()->json(['message' => 'Option deleted successfully.']);
+        try {
+            $this->optionService->deleteOption($option);
+        } catch (CannotDeleteException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
-
-        $variantIds = DB::table('product_option_value_variant')
-            ->whereIn('product_option_value_id', $valueIds)
-            ->distinct()
-            ->pluck('product_variant_id');
-
-        if ($variantIds->isNotEmpty()) {
-            $orderCount = DB::table('order_items')
-                ->whereIn('product_variant_id', $variantIds)
-                ->distinct('order_id')
-                ->count('order_id');
-
-            if ($orderCount > 0) {
-                return response()->json([
-                    'message' => "Cannot delete — variants linked to {$orderCount} past order(s). Archive them instead.",
-                ], 422);
-            }
-        }
-
-        DB::transaction(function () use ($option, $variantIds): void {
-            if ($variantIds->isNotEmpty()) {
-                \App\Models\ProductVariant::query()
-                    ->whereIn('id', $variantIds)
-                    ->each(function (\App\Models\ProductVariant $variant): void {
-                        Gate::authorize('delete', $variant);
-                        $variant->delete();
-                    });
-
-                DB::table('product_option_value_variant')
-                    ->whereIn('product_variant_id', $variantIds)
-                    ->delete();
-            }
-
-            $option->values()->each(fn ($value) => $value->delete());
-            $option->delete();
-        });
 
         return response()->json(['message' => 'Option deleted successfully.']);
     }
@@ -160,14 +68,7 @@ class ProductOptionController extends Controller
         abort_if($option->product_id !== $product->id, 404);
         Gate::authorize('update', $option);
 
-        $validated = $request->validated();
-
-        $value = $option->values()->create([
-            'label' => $validated['label'],
-            'value' => $validated['value'],
-            'position' => $validated['position'],
-            'visual_data' => $validated['visual_data'] ?? null,
-        ]);
+        $value = $this->optionService->createOptionValue($option, $request->validated());
 
         return response()->json([
             'value' => $value,
@@ -181,39 +82,13 @@ class ProductOptionController extends Controller
         abort_if($value->product_option_id !== $option->id, 404);
         Gate::authorize('update', $option);
 
-        $variantIds = $value->variants()->pluck('product_variants.id');
-
-        $orderCount = DB::table('order_items')
-            ->whereIn('product_variant_id', $variantIds)
-            ->distinct('order_id')
-            ->count('order_id');
-
-        if ($orderCount > 0) {
-            return response()->json([
-                'message' => "Cannot delete — variants linked to {$orderCount} past order(s). Archive them instead.",
-            ], 422);
+        try {
+            $this->optionService->deleteOptionValue($value);
+        } catch (CannotDeleteException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
 
-        DB::transaction(function () use ($value, $variantIds): void {
-            if ($variantIds->isNotEmpty()) {
-                \App\Models\ProductVariant::query()
-                    ->whereIn('id', $variantIds)
-                    ->each(function (\App\Models\ProductVariant $variant): void {
-                        Gate::authorize('delete', $variant);
-                        $variant->delete();
-                    });
-
-                DB::table('product_option_value_variant')
-                    ->whereIn('product_variant_id', $variantIds)
-                    ->delete();
-            }
-
-            $value->delete();
-        });
-
-        return response()->json([
-            'message' => 'Option value deleted successfully.',
-        ]);
+        return response()->json(['message' => 'Option value deleted successfully.']);
     }
 
     public function generateMatrix(GenerateVariantMatrixRequest $request, Product $product): JsonResponse

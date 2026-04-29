@@ -32,10 +32,10 @@ interface WageAdvance {
     id: number;
     user_id: number;
     shop_id: number;
-    amount_requested: string;
-    amount_approved: string | null;
+    amount_requested: number;
+    amount_approved: number | null;
     repayment_installments: number;
-    amount_repaid: string;
+    amount_repaid: number;
     status: string;
     reason: string | null;
     requested_at: string;

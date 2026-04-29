@@ -39,7 +39,7 @@ class POSController extends Controller
         return Inertia::render('POS/Index', [
             'shop' => $shop,
             'paymentMethods' => PaymentMethod::posOptions(),
-            'heldSalesCount' => $this->heldSaleService->getActiveCount($shop),
+            'heldSalesCount' => $this->heldSaleService->getActiveCount($shop, auth()->user()->tenant_id),
         ]);
     }
 
@@ -163,6 +163,7 @@ class POSController extends Controller
 
         try {
             $heldSale = $this->heldSaleService->holdSale(
+                user: $request->user(),
                 shop: $shop,
                 items: $request->validated('items'),
                 customerId: $request->validated('customer_id'),
@@ -170,7 +171,7 @@ class POSController extends Controller
             );
 
             return response()->json([
-                'held_sale' => $heldSale->load(['customer', 'heldByUser']),
+                'held_sale' => $heldSale->loadHeldSaleRelations(),
                 'message' => "Sale held as {$heldSale->hold_reference}",
             ]);
         } catch (\RuntimeException $e) {
@@ -188,30 +189,13 @@ class POSController extends Controller
     public function retrieveHeldSale(Shop $shop, HeldSale $heldSale): JsonResponse
     {
         Gate::authorize('shop.manage', $shop);
-
-        if ($heldSale->tenant_id !== auth()->user()->tenant_id) {
-            return response()->json([
-                'error' => 'Unauthorized access.',
-            ], 403);
-        }
-
-        if ($heldSale->shop_id !== $shop->id) {
-            return response()->json([
-                'error' => 'Held sale does not belong to this shop.',
-            ], 403);
-        }
-
-        if ($heldSale->isRetrieved()) {
-            return response()->json([
-                'error' => 'This held sale has already been retrieved.',
-            ], 400);
-        }
+        abort_unless($heldSale->shop_id === $shop->id, 403, 'Held sale does not belong to this shop.');
 
         try {
-            $retrievedSale = $this->heldSaleService->retrieveHeldSale($heldSale);
+            $retrievedSale = $this->heldSaleService->retrieveHeldSale($heldSale, auth()->user());
 
             return response()->json([
-                'held_sale' => $retrievedSale->load(['customer', 'heldByUser']),
+                'held_sale' => $retrievedSale->loadHeldSaleRelations(),
                 'message' => "Sale {$retrievedSale->hold_reference} retrieved successfully.",
             ]);
         } catch (\RuntimeException $e) {
@@ -230,7 +214,7 @@ class POSController extends Controller
     {
         Gate::authorize('shop.manage', $shop);
 
-        $heldSales = $this->heldSaleService->getActiveHeldSales($shop);
+        $heldSales = $this->heldSaleService->getActiveHeldSales($shop, auth()->user()->tenant_id);
 
         return response()->json([
             'held_sales' => $heldSales,
@@ -245,7 +229,7 @@ class POSController extends Controller
         Gate::authorize('shop.manage', $shop);
 
         return response()->json([
-            'count' => $this->heldSaleService->getActiveCount($shop),
+            'count' => $this->heldSaleService->getActiveCount($shop, auth()->user()->tenant_id),
         ]);
     }
 
@@ -255,18 +239,7 @@ class POSController extends Controller
     public function deleteHeldSale(Shop $shop, HeldSale $heldSale): JsonResponse
     {
         Gate::authorize('shop.manage', $shop);
-
-        if ($heldSale->tenant_id !== auth()->user()->tenant_id) {
-            return response()->json([
-                'error' => 'Unauthorized access.',
-            ], 403);
-        }
-
-        if ($heldSale->shop_id !== $shop->id) {
-            return response()->json([
-                'error' => 'Held sale does not belong to this shop.',
-            ], 403);
-        }
+        abort_unless($heldSale->shop_id === $shop->id, 403, 'Held sale does not belong to this shop.');
 
         try {
             $reference = $heldSale->hold_reference;

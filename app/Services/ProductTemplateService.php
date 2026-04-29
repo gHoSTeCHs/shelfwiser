@@ -3,11 +3,14 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\ProductPackagingType;
 use App\Models\ProductTemplate;
+use App\Models\ProductType;
 use App\Models\ProductVariant;
 use App\Models\Shop;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -45,11 +48,27 @@ class ProductTemplateService
             $query->where('is_system', $filters['is_system']);
         }
 
-        $sortField = $filters['sort'] ?? 'name';
-        $sortDir = $filters['direction'] ?? 'asc';
+        $allowedTemplateSorts = ['name', 'created_at', 'updated_at'];
+        $sortField = in_array($filters['sort'] ?? 'name', $allowedTemplateSorts) ? ($filters['sort'] ?? 'name') : 'name';
+        $sortDir = in_array($filters['direction'] ?? 'asc', ['asc', 'desc']) ? $filters['direction'] : 'asc';
         $query->orderBy($sortField, $sortDir);
 
         return $query->paginate($filters['per_page'] ?? 20);
+    }
+
+    /**
+     * Get a lightweight, non-paginated list of templates for the tenant selection UI.
+     */
+    public function getAvailableForSelection(int $tenantId, ?string $search, ?int $productTypeId): Collection
+    {
+        return ProductTemplate::with(['productType', 'category'])
+            ->availableFor($tenantId)
+            ->active()
+            ->when($search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
+            ->when($productTypeId, fn ($q, $id) => $q->where('product_type_id', $id))
+            ->orderBy('name')
+            ->limit(50)
+            ->get();
     }
 
     /**
@@ -77,16 +96,16 @@ class ProductTemplateService
     /**
      * Create a new product template.
      */
-    public function create(array $data, ?Tenant $tenant = null): ProductTemplate
+    public function create(array $data, ?Tenant $tenant = null, ?User $actor = null): ProductTemplate
     {
-        return DB::transaction(function () use ($data, $tenant) {
-            $template = ProductTemplate::create([
+        return DB::transaction(function () use ($data, $tenant, $actor) {
+            $template = ProductTemplate::query()->create([
                 'tenant_id' => $tenant?->id,
                 'product_type_id' => $data['product_type_id'],
                 'category_id' => $data['category_id'] ?? null,
-                'created_by_id' => auth()->id(),
+                'created_by_id' => $actor?->id,
                 'name' => $data['name'],
-                'slug' => Str::slug($data['name']),
+                'slug' => $this->generateUniqueTemplateSlug($data['name'], $tenant?->id),
                 'description' => $data['description'] ?? null,
                 'custom_attributes' => $data['custom_attributes'] ?? [],
                 'template_structure' => $data['template_structure'],
@@ -113,7 +132,7 @@ class ProductTemplateService
                 'product_type_id' => $data['product_type_id'] ?? $template->product_type_id,
                 'category_id' => $data['category_id'] ?? $template->category_id,
                 'name' => $data['name'] ?? $template->name,
-                'slug' => isset($data['name']) ? Str::slug($data['name']) : $template->slug,
+                'slug' => isset($data['name']) ? $this->generateUniqueTemplateSlug($data['name'], $template->tenant_id, $template->id) : $template->slug,
                 'description' => $data['description'] ?? $template->description,
                 'custom_attributes' => $data['custom_attributes'] ?? $template->custom_attributes,
                 'template_structure' => $data['template_structure'] ?? $template->template_structure,
@@ -135,10 +154,23 @@ class ProductTemplateService
     public function delete(ProductTemplate $template): bool
     {
         $tenantId = $template->tenant_id;
-        $result = $template->delete();
-        $this->clearCache($tenantId);
 
-        return $result;
+        return DB::transaction(function () use ($template, $tenantId) {
+            $locked = ProductTemplate::query()->lockForUpdate()->find($template->id);
+
+            if (! $locked) {
+                return false;
+            }
+
+            if ($locked->usage_count > 0) {
+                throw new \RuntimeException('Cannot delete a template that has been used to create products.');
+            }
+
+            $result = $locked->delete();
+            $this->clearCache($tenantId);
+
+            return $result;
+        });
     }
 
     /**
@@ -150,14 +182,15 @@ class ProductTemplateService
         array $priceData
     ): Product {
         return DB::transaction(function () use ($template, $shop, $priceData) {
-            $product = Product::create([
+            $productName = $priceData['name'] ?? $template->name;
+            $product = Product::query()->create([
                 'tenant_id' => $shop->tenant_id,
                 'shop_id' => $shop->id,
                 'template_id' => $template->id,
                 'product_type_id' => $template->product_type_id,
                 'category_id' => $template->category_id,
-                'name' => $priceData['name'] ?? $template->name,
-                'slug' => Str::slug($priceData['name'] ?? $template->name).'-'.$shop->id,
+                'name' => $productName,
+                'slug' => $this->generateUniqueProductSlug($productName, $shop->tenant_id),
                 'description' => $priceData['description'] ?? $template->description,
                 'custom_attributes' => array_merge(
                     $template->custom_attributes ?? [],
@@ -188,7 +221,7 @@ class ProductTemplateService
                     $variantData['name'] ?? 'Default'
                 );
 
-                $variant = ProductVariant::create([
+                $variant = ProductVariant::query()->create([
                     'product_id' => $product->id,
                     'sku' => $variantPrices['sku'] ?? $sku,
                     'barcode' => $variantPrices['barcode'] ?? null,
@@ -202,7 +235,8 @@ class ProductTemplateService
                 foreach ($packagingTypes as $pkgIndex => $pkgData) {
                     $pkgPrices = $variantPrices['packaging_types'][$pkgIndex] ?? [];
 
-                    ProductPackagingType::create([
+                    ProductPackagingType::query()->create([
+                        'tenant_id' => $shop->tenant_id,
                         'product_variant_id' => $variant->id,
                         'name' => $pkgData['name'],
                         'display_name' => $pkgData['display_name'] ?? $pkgData['name'],
@@ -218,7 +252,7 @@ class ProductTemplateService
             // Invalidate only product list cache since this is a new product
             Cache::tags(["tenant:{$shop->tenant_id}:products:list"])->flush();
 
-            return $product->load(['variants.packagingTypes', 'productType', 'category']);
+            return $product->load(['variants.packagingTypes', 'type', 'category']);
         });
     }
 
@@ -249,6 +283,54 @@ class ProductTemplateService
     }
 
     /**
+     * Return product types and system categories for admin create/edit forms.
+     *
+     * @return array{productTypes: \Illuminate\Database\Eloquent\Collection, categories: \Illuminate\Database\Eloquent\Collection}
+     */
+    public function getAdminFormOptions(): array
+    {
+        return [
+            'productTypes' => ProductType::query()->orderBy('label')->get(),
+            'categories' => ProductCategory::query()->whereNull('tenant_id')->orderBy('name')->get(),
+        ];
+    }
+
+    private function generateUniqueTemplateSlug(string $name, ?int $tenantId, ?int $excludeId = null): string
+    {
+        $base = Str::slug($name);
+        $slug = $base;
+        $counter = 1;
+
+        while (
+            ProductTemplate::query()
+                ->when($tenantId, fn ($q) => $q->where('tenant_id', $tenantId))
+                ->where('slug', $slug)
+                ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+                ->lockForUpdate()
+                ->exists()
+        ) {
+            $slug = $base.'-'.$counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
+    private function generateUniqueProductSlug(string $name, int $tenantId): string
+    {
+        $base = Str::slug($name);
+        $slug = $base;
+        $counter = 1;
+
+        while (Product::query()->where('tenant_id', $tenantId)->where('slug', $slug)->lockForUpdate()->exists()) {
+            $slug = $base.'-'.$counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
+    /**
      * Get template statistics.
      */
     public function getStatistics(?int $tenantId = null): array
@@ -261,8 +343,12 @@ class ProductTemplateService
 
         return [
             'total' => $query->count(),
-            'system' => ProductTemplate::system()->count(),
+            'system' => ProductTemplate::query()->system()->availableFor($tenantId)->count(),
             'active' => $query->active()->count(),
+            'total_usage' => \App\Models\Product::query()
+                ->whereNotNull('template_id')
+                ->when($tenantId, fn ($q) => $q->where('tenant_id', $tenantId))
+                ->count(),
         ];
     }
 }

@@ -3,9 +3,24 @@ import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
-import { formatCurrency, formatDateLong, formatNumber, formatPercentage } from '@/lib/formatters';
+import {
+    formatCurrency,
+    formatDateLong,
+    formatNumber,
+    formatPercentage,
+} from '@/lib/formatters';
 import { getPayrollStatusColor } from '@/lib/status-configs';
-import type { AppliedRelief, TaxLawVersion } from '@/types/payroll';
+import type { User } from '@/types';
+import type {
+    AppliedRelief,
+    DeductionBreakdownItem,
+    DeductionsBreakdown,
+    EarningBreakdownItem,
+    EarningsBreakdown,
+    PayrollPeriod,
+    TaxLawVersion,
+} from '@/types/payroll';
+import type { Shop } from '@/types/shop';
 import { Head, router } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -17,28 +32,8 @@ import {
     Download,
     Info,
     Receipt,
-    User,
+    User as UserIcon,
 } from 'lucide-react';
-
-interface User {
-    id: number;
-    name: string;
-    email: string;
-}
-
-interface Shop {
-    id: number;
-    name: string;
-}
-
-interface PayrollPeriod {
-    id: number;
-    period_name: string;
-    start_date: string;
-    end_date: string;
-    payment_date: string;
-    status: string;
-}
 
 interface TaxBreakdown {
     tax_law_version?: TaxLawVersion;
@@ -77,8 +72,8 @@ interface Payslip {
     other_deductions: string;
     total_deductions: string;
     net_pay: string;
-    earnings_breakdown?: any;
-    deductions_breakdown?: any;
+    earnings_breakdown?: EarningsBreakdown | EarningBreakdownItem[];
+    deductions_breakdown?: DeductionsBreakdown | DeductionBreakdownItem[];
     tax_breakdown?: TaxBreakdown;
     user: User;
     shop?: Shop;
@@ -174,7 +169,7 @@ export default function Payslip({ payslip }: Props) {
                             </h2>
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2 text-sm">
-                                    <User className="h-4 w-4 text-gray-400" />
+                                    <UserIcon className="h-4 w-4 text-gray-400" />
                                     <span className="font-medium text-gray-900 dark:text-white">
                                         {payslip.user.name}
                                     </span>
@@ -264,10 +259,17 @@ export default function Payslip({ payslip }: Props) {
                                 {parseFloat(payslip.regular_hours) > 0 && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-600 dark:text-gray-400">
-                                            Regular Pay ({formatNumber(payslip.regular_hours, 2)} hours)
+                                            Regular Pay (
+                                            {formatNumber(
+                                                payslip.regular_hours,
+                                                2,
+                                            )}{' '}
+                                            hours)
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatCurrency(payslip.regular_pay)}
+                                            {formatCurrency(
+                                                payslip.regular_pay,
+                                            )}
                                         </span>
                                     </div>
                                 )}
@@ -275,10 +277,17 @@ export default function Payslip({ payslip }: Props) {
                                 {parseFloat(payslip.overtime_hours) > 0 && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-600 dark:text-gray-400">
-                                            Overtime Pay ({formatNumber(payslip.overtime_hours, 2)} hours)
+                                            Overtime Pay (
+                                            {formatNumber(
+                                                payslip.overtime_hours,
+                                                2,
+                                            )}{' '}
+                                            hours)
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-white">
-                                            {formatCurrency(payslip.overtime_pay)}
+                                            {formatCurrency(
+                                                payslip.overtime_pay,
+                                            )}
                                         </span>
                                     </div>
                                 )}

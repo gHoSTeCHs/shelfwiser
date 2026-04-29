@@ -11,9 +11,7 @@ class CreateServiceVariantRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $service = $this->route('service');
-
-        return $this->user()->can('manage', $service);
+        return true;
     }
 
     /**
@@ -32,7 +30,6 @@ class CreateServiceVariantRequest extends FormRequest
             'is_active' => ['boolean'],
         ];
 
-        // If service has material options, require material pricing
         if ($service && $service->has_material_options) {
             $rules['customer_materials_price'] = ['nullable', 'numeric', 'min:0'];
             $rules['shop_materials_price'] = ['nullable', 'numeric', 'min:0'];

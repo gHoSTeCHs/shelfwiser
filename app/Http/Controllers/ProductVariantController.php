@@ -41,6 +41,8 @@ class ProductVariantController extends Controller
      */
     public function update(UpdateProductVariantRequest $request, ProductVariant $variant): RedirectResponse
     {
+        Gate::authorize('update', $variant);
+
         $this->productService->updateVariant($variant, $request->validated());
 
         return Redirect::route('products.show', $variant->product_id)
@@ -76,13 +78,14 @@ class ProductVariantController extends Controller
      */
     public function batchGenerateBarcodes(BatchGenerateBarcodesRequest $request): JsonResponse
     {
-        $variants = ProductVariant::query()->with('product')->whereIn('id', $request->validated()['variant_ids'])->get();
+        Gate::authorize('batchUpdate', ProductVariant::class);
 
-        foreach ($variants as $variant) {
-            Gate::authorize('update', $variant);
-        }
+        $ownedIds = $this->productService->filterVariantsByOwnership(
+            $request->validated()['variant_ids'],
+            $request->user(),
+        );
 
-        $results = $this->barcodeGenerator->batchGenerate($request->validated()['variant_ids']);
+        $results = $this->barcodeGenerator->batchGenerate($ownedIds);
 
         $successCount = count(array_filter($results, fn ($b) => $b !== null));
         $failedCount = count($results) - $successCount;

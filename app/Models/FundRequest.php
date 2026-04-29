@@ -25,6 +25,8 @@ class FundRequest extends Model
         'requested_at',
         'approved_by_user_id',
         'approved_at',
+        'rejected_by_user_id',
+        'rejected_at',
         'rejection_reason',
         'disbursed_by_user_id',
         'disbursed_at',
@@ -32,15 +34,19 @@ class FundRequest extends Model
         'notes',
     ];
 
-    protected $casts = [
-        'request_type' => FundRequestType::class,
-        'status' => FundRequestStatus::class,
-        'amount' => 'decimal:2',
-        'requested_at' => 'datetime',
-        'approved_at' => 'datetime',
-        'disbursed_at' => 'datetime',
-        'receipt_uploaded' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'request_type' => FundRequestType::class,
+            'status' => FundRequestStatus::class,
+            'amount' => 'decimal:2',
+            'requested_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
+            'disbursed_at' => 'datetime',
+            'receipt_uploaded' => 'boolean',
+        ];
+    }
 
     /**
      * Employee who requested the funds
@@ -75,6 +81,14 @@ class FundRequest extends Model
     }
 
     /**
+     * User who rejected the request
+     */
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by_user_id');
+    }
+
+    /**
      * User who disbursed the funds
      */
     public function disbursedBy(): BelongsTo
@@ -85,6 +99,11 @@ class FundRequest extends Model
     /**
      * Check if request is pending
      */
+    public function loadDetailRelations(): static
+    {
+        return $this->load(['user', 'shop', 'approvedBy', 'disbursedBy']);
+    }
+
     public function isPending(): bool
     {
         return $this->status === FundRequestStatus::PENDING;

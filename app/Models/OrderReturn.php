@@ -38,17 +38,17 @@ class OrderReturn extends Model
         'completed_at',
     ];
 
-    /**
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'status' => OrderReturnStatus::class,
-        'refund_amount' => 'decimal:2',
-        'restocked' => 'boolean',
-        'approved_at' => 'datetime',
-        'rejected_at' => 'datetime',
-        'completed_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'status'       => OrderReturnStatus::class,
+            'refund_amount'=> 'decimal:2',
+            'restocked'    => 'boolean',
+            'approved_at'  => 'datetime',
+            'rejected_at'  => 'datetime',
+            'completed_at' => 'datetime',
+        ];
+    }
 
     public function tenant(): BelongsTo
     {
@@ -88,6 +88,20 @@ class OrderReturn extends Model
     public function completedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    public function loadShowRelations(): static
+    {
+        return $this->load([
+            'order.items.productVariant.product',
+            'order.customer',
+            'order.shop',
+            'items.orderItem.productVariant.product',
+            'createdByUser',
+            'approvedByUser',
+            'rejectedByUser',
+            'completedByUser',
+        ]);
     }
 
     public function isPending(): bool

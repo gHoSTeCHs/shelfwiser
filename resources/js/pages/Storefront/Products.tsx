@@ -1,4 +1,7 @@
-import { home, products } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
+import {
+    home,
+    products as ShopProducts,
+} from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import Breadcrumbs from '@/components/storefront/Breadcrumbs';
 import ProductCard from '@/components/storefront/ProductCard';
 import ProductFilter from '@/components/storefront/ProductFilter';
@@ -61,16 +64,14 @@ const Products: React.FC<StorefrontProductsProps> = ({
         if (filters.category) params.category = filters.category;
         if (filters.sort) params.sort = filters.sort;
 
-        router.get(
-            products({ shop: shop.slug }).url,
-            params,
-            { preserveState: true },
-        );
+        router.get(ShopProducts({ shop: shop.slug }).url, params, {
+            preserveState: true,
+        });
     };
 
     const handlePageChange = (page: number) => {
         router.get(
-            products({ shop: shop.slug }).url,
+            ShopProducts({ shop: shop.slug }).url,
             { ...filters, page },
             { preserveState: true, preserveScroll: true },
         );
@@ -85,7 +86,11 @@ const Products: React.FC<StorefrontProductsProps> = ({
     ).length;
 
     return (
-        <StorefrontLayout shop={shop} cartItemCount={cartSummary.item_count} cartSummary={cartSummary}>
+        <StorefrontLayout
+            shop={shop}
+            cartItemCount={cartSummary.item_count}
+            cartSummary={cartSummary}
+        >
             <div className="space-y-4 sm:space-y-6">
                 {/* Breadcrumbs */}
                 <Breadcrumbs

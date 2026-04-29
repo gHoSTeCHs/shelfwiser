@@ -130,7 +130,7 @@ class StaffOnboardingService
      */
     protected function syncShops(User $staff, array $shopIds): void
     {
-        ShopUser::where('user_id', $staff->id)->delete();
+        ShopUser::query()->where('user_id', $staff->id)->where('tenant_id', $staff->tenant_id)->delete();
 
         foreach ($shopIds as $shopId) {
             ShopUser::create([

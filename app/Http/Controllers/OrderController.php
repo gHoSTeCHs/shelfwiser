@@ -5,13 +5,12 @@ namespace App\Http\Controllers;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Http\Requests\CreateOrderRequest;
+use App\Http\Requests\IndexOrderRequest;
 use App\Http\Requests\RefundOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Http\Requests\UpdatePaymentStatusRequest;
-use App\Models\Customer;
 use App\Models\Order;
-use App\Models\Shop;
 use App\Services\OrderRefundService;
 use App\Services\OrderService;
 use Exception;
@@ -30,15 +29,22 @@ class OrderController extends Controller
         private readonly OrderRefundService $refundService
     ) {}
 
-    public function index(): Response
+    public function index(IndexOrderRequest $request): Response
     {
         Gate::authorize('viewAny', Order::class);
 
+        $filters = $request->validated();
+
         return Inertia::render('Orders/Index', [
-            'orders' => $this->orderService->getPaginatedOrders(),
+            'orders' => $this->orderService->getPaginatedOrders($filters),
             'stats' => $this->orderService->getOrderStats(),
             'order_statuses' => OrderStatus::forSelect(),
             'payment_statuses' => PaymentStatus::forSelect(),
+            'filters' => [
+                'search' => $filters['search'] ?? null,
+                'status' => $filters['status'] ?? null,
+                'payment_status' => $filters['payment_status'] ?? null,
+            ],
         ]);
     }
 
@@ -62,9 +68,9 @@ class OrderController extends Controller
         try {
             $validated = $request->validated();
 
-            $shop = Shop::query()->findOrFail($validated['shop_id']);
+            $shop = $this->orderService->resolveShop($validated['shop_id']);
             $customer = isset($validated['customer_id'])
-                ? Customer::query()->findOrFail($validated['customer_id'])
+                ? $this->orderService->resolveCustomer($validated['customer_id'])
                 : null;
 
             $order = $this->orderService->createOrder(
@@ -114,7 +120,7 @@ class OrderController extends Controller
                 ->with('error', 'Order cannot be edited in current status.');
         }
 
-        $order->load(['shop', 'customer', 'items.productVariant.product']);
+        $order->loadEditRelations();
 
         return Inertia::render('Orders/Edit', [
             'order' => $order,
@@ -170,7 +176,7 @@ class OrderController extends Controller
         Gate::authorize('manage', $order);
 
         try {
-            $newStatus = OrderStatus::from($request->input('status'));
+            $newStatus = OrderStatus::from($request->validated('status'));
 
             match ($newStatus) {
                 OrderStatus::CONFIRMED => $this->orderService->confirmOrder($order, $request->user()),
@@ -230,12 +236,12 @@ class OrderController extends Controller
         Gate::authorize('manage', $order);
 
         try {
-            $newStatus = PaymentStatus::from($request->input('payment_status'));
+            $newStatus = PaymentStatus::from($request->validated('payment_status'));
 
             $this->orderService->updatePaymentStatus(
                 $order,
                 $newStatus,
-                $request->input('payment_method'),
+                $request->validated('payment_method'),
             );
 
             return Redirect::back()

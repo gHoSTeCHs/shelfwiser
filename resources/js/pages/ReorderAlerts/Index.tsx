@@ -1,3 +1,5 @@
+import ProductController from '@/actions/App/Http/Controllers/ProductController';
+import ShopController from '@/actions/App/Http/Controllers/ShopController';
 import Badge from '@/components/ui/badge/Badge';
 import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
@@ -61,7 +63,9 @@ export default function Index({ shop, low_stock_items, summary }: Props) {
                     <div>
                         {shop && (
                             <Link
-                                href={`/shops/${shop.id}`}
+                                href={ShopController.show.url({
+                                    shop: shop.id,
+                                })}
                                 className="mb-2 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                             >
                                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -158,25 +162,46 @@ export default function Index({ shop, low_stock_items, summary }: Props) {
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Product
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             SKU
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Current Stock
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Reorder Level
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Shortage
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Status
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                        >
                                             Actions
                                         </th>
                                     </tr>
@@ -245,7 +270,13 @@ export default function Index({ shop, low_stock_items, summary }: Props) {
                                             </td>
                                             <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
                                                 <Link
-                                                    href={`/products/${item.variant.product_id}`}
+                                                    href={ProductController.show.url(
+                                                        {
+                                                            product:
+                                                                item.variant
+                                                                    .product_id,
+                                                        },
+                                                    )}
                                                     className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                                                 >
                                                     <Button

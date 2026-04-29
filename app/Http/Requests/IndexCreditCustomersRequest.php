@@ -29,8 +29,8 @@ class IndexCreditCustomersRequest extends FormRequest
     public function filters(): array
     {
         return [
-            'search' => $this->input('search'),
-            'sort' => $this->input('sort'),
+            'search' => $this->validated('search'),
+            'sort' => $this->validated('sort'),
         ];
     }
 }

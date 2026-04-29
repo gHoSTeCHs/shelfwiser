@@ -8,7 +8,7 @@ class CreateCategoryRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('create', \App\Models\ProductCategory::class);
+        return true;
     }
 
     public function rules(): array

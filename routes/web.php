@@ -366,7 +366,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Image Management Routes
     Route::prefix('images')->name('images.')->group(function () {
-        Route::post('/upload', [ImageController::class, 'upload'])->name('upload');
+        Route::post('/upload', [ImageController::class, 'upload'])->middleware('throttle:20,1')->name('upload');
         Route::put('/{image}', [ImageController::class, 'update'])->name('update');
         Route::delete('/{image}', [ImageController::class, 'destroy'])->name('destroy');
         Route::post('/{image}/set-primary', [ImageController::class, 'setPrimary'])->name('set-primary');
@@ -477,6 +477,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('stock-movements')->name('stock-movements.')->group(function () {
         Route::get('/', [StockMovementController::class, 'index'])->name('index');
         Route::get('/export', [StockMovementController::class, 'export'])->name('export');
+        Route::post('/record-purchase', [StockMovementController::class, 'recordPurchase'])->name('record-purchase');
         Route::get('/{stockMovement}', [StockMovementController::class, 'show'])->name('show');
         Route::post('/adjust', [StockMovementController::class, 'adjustStock'])->name('adjust');
         Route::post('/transfer', [StockMovementController::class, 'transferStock'])->name('transfer');

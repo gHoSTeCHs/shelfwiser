@@ -9,7 +9,7 @@ class CreateOrderRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('create', \App\Models\Order::class);
+        return true;
     }
 
     public function rules(): array
@@ -31,7 +31,10 @@ class CreateOrderRequest extends FormRequest
                 Rule::exists('product_variants', 'id')
                     ->where(fn ($query) => $query->whereIn(
                         'product_id',
-                        \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                        \App\Models\Product::query()
+                            ->where('tenant_id', $tenantId)
+                            ->where('shop_id', $this->input('shop_id'))
+                            ->select('id')
                     )),
             ],
             'items.*.product_packaging_type_id' => [
@@ -39,9 +42,9 @@ class CreateOrderRequest extends FormRequest
                 Rule::exists('product_packaging_types', 'id')
                     ->where(fn ($query) => $query->whereIn(
                         'product_variant_id',
-                        \App\Models\ProductVariant::whereIn(
+                        \App\Models\ProductVariant::query()->whereIn(
                             'product_id',
-                            \App\Models\Product::where('tenant_id', $tenantId)->select('id')
+                            \App\Models\Product::query()->where('tenant_id', $tenantId)->select('id')
                         )->select('id')
                     )),
             ],

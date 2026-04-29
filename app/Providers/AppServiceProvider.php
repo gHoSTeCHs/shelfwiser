@@ -13,15 +13,18 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
+use App\Models\OrderReturn;
 use App\Models\PayrollPeriod;
 use App\Models\PayRun;
 use App\Models\Payslip;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductOption;
+use App\Models\ProductTemplate;
 use App\Models\ProductVariant;
 use App\Models\Receipt;
 use App\Models\Service;
+use App\Models\ServiceCategory;
 use App\Models\Shop;
 use App\Models\StockMovement;
 use App\Models\SupplierConnection;
@@ -41,16 +44,19 @@ use App\Policies\NotificationPolicy;
 use App\Policies\OrderItemPolicy;
 use App\Policies\OrderPaymentPolicy;
 use App\Policies\OrderPolicy;
+use App\Policies\OrderReturnPolicy;
 use App\Policies\PayrollPolicy;
 use App\Policies\PayRunPolicy;
 use App\Policies\PayslipPolicy;
 use App\Policies\ProductCategoryPolicy;
 use App\Policies\ProductOptionPolicy;
 use App\Policies\ProductPolicy;
+use App\Policies\ProductTemplatePolicy;
 use App\Policies\ProductVariantPolicy;
 use App\Policies\PurchaseOrderPolicy;
 use App\Policies\ReceiptPolicy;
 use App\Policies\ReportPolicy;
+use App\Policies\ServiceCategoryPolicy;
 use App\Policies\ServicePolicy;
 use App\Policies\ShopPolicy;
 use App\Policies\StaffPolicy;
@@ -97,6 +103,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (in_array('*', config('cors.allowed_origins', []), true) && config('cors.supports_credentials')) {
+            throw new \RuntimeException('CORS wildcard origins with credentials is forbidden — set CORS_ALLOWED_ORIGINS to specific origins');
+        }
+
         Password::defaults(function () {
             return Password::min(8)
                 ->mixedCase()
@@ -107,13 +117,16 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, StaffPolicy::class);
         Gate::policy(Shop::class, ShopPolicy::class);
         Gate::policy(Service::class, ServicePolicy::class);
+        Gate::policy(ServiceCategory::class, ServiceCategoryPolicy::class);
         Gate::policy(Customer::class, CustomerPolicy::class);
         Gate::policy(Image::class, ImagePolicy::class);
         Gate::policy(Product::class, ProductPolicy::class);
         Gate::policy(ProductCategory::class, ProductCategoryPolicy::class);
+        Gate::policy(ProductTemplate::class, ProductTemplatePolicy::class);
         Gate::policy(ProductOption::class, ProductOptionPolicy::class);
         Gate::policy(ProductVariant::class, ProductVariantPolicy::class);
         Gate::policy(Order::class, OrderPolicy::class);
+        Gate::policy(OrderReturn::class, OrderReturnPolicy::class);
         Gate::policy(OrderItem::class, OrderItemPolicy::class);
         Gate::policy(OrderPayment::class, OrderPaymentPolicy::class);
         Gate::policy(Receipt::class, ReceiptPolicy::class);
@@ -155,6 +168,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('catalog.enableSupplierMode', [SupplierPolicy::class, 'enableSupplierMode']);
         Gate::define('catalog.updateProfile', [SupplierPolicy::class, 'updateProfile']);
         Gate::define('catalog.viewCatalog', [SupplierPolicy::class, 'viewCatalog']);
+        Gate::define('catalog.manageCatalogItem', [SupplierPolicy::class, 'manageCatalogItem']);
 
         // PurchaseOrder Polices
         Gate::define('purchaseOrder.viewAny', [PurchaseOrderPolicy::class, 'viewAny']);
@@ -202,9 +216,16 @@ class AppServiceProvider extends ServiceProvider
 
         // Admin gates - super admin only actions
         Gate::define('admin.tenants.viewAny', fn (User $user) => $user->isSuperAdmin());
+        Gate::define('admin.product-templates.create', fn (User $user) => $user->isSuperAdmin());
+        Gate::define('admin.product-templates.update', fn (User $user) => $user->isSuperAdmin());
+        Gate::define('admin.product-templates.delete', fn (User $user) => $user->isSuperAdmin());
         Gate::define('admin.tenants.view', fn (User $user) => $user->isSuperAdmin());
         Gate::define('admin.tenants.create', fn (User $user) => $user->isSuperAdmin());
         Gate::define('admin.tenants.update', fn (User $user) => $user->isSuperAdmin());
         Gate::define('admin.tenants.delete', fn (User $user) => $user->isSuperAdmin());
+        Gate::define('admin.subscriptions.viewAny', fn (User $user) => $user->isSuperAdmin());
+        Gate::define('admin.api.viewAny', fn (User $user) => $user->isSuperAdmin());
+        Gate::define('admin.api.create', fn (User $user) => $user->isSuperAdmin());
+        Gate::define('admin.api.delete', fn (User $user) => $user->isSuperAdmin());
     }
 }

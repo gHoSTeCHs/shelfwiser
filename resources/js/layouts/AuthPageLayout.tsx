@@ -1,5 +1,6 @@
 import GridShape from '@/components/common/GridShape.tsx';
 import ThemeTogglerTwo from '@/components/common/ThemeTogglerTwo';
+import { home } from '@/routes';
 import { Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import React from 'react';
@@ -37,7 +38,7 @@ export default function AuthLayout({
                     <GridShape />
 
                     <div className="relative z-10 flex max-w-md flex-col items-center px-8 text-center">
-                        <Link href="/" className="mb-6 block">
+                        <Link href={home.url()} className="mb-6 block">
                             <img
                                 width={180}
                                 height={48}

@@ -2,6 +2,7 @@ import Button from '@/components/ui/button/Button';
 import { formatNumber } from '@/lib/formatters';
 import { Image } from '@/types/image';
 import { router } from '@inertiajs/react';
+import axios from 'axios';
 import { Upload, X } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
@@ -79,34 +80,21 @@ export default function ImageUploader({
         });
 
         try {
-            const response = await fetch('/images/upload', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN':
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute('content') || '',
-                    Accept: 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.message || 'Upload failed');
-            }
-
-            const data = await response.json();
+            const response = await axios.post('/images/upload', formData);
 
             setSelectedFiles([]);
 
-            if (onUploadSuccess && data.images) {
-                onUploadSuccess(data.images);
+            if (onUploadSuccess && response.data.images) {
+                onUploadSuccess(response.data.images);
             }
 
             router.reload();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Upload failed');
+        } catch (err: unknown) {
+            const message =
+                axios.isAxiosError(err)
+                    ? (err.response?.data?.message ?? 'Upload failed')
+                    : 'Upload failed';
+            setError(message);
         } finally {
             setUploading(false);
         }

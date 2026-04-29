@@ -66,7 +66,6 @@ enum StockMovementType: string
             self::ADJUSTMENT_IN,
             self::TRANSFER_IN,
             self::RETURN,
-            self::STOCK_TAKE,
             self::PURCHASE_ORDER_RECEIVED,
         ]);
     }

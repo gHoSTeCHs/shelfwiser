@@ -114,7 +114,7 @@ export default function Index({
                             Complete audit trail of all inventory changes
                         </p>
                     </div>
-                    <a href="/stock-movements/export" download>
+                    <a href={StockMovementController.export.url()} download>
                         <Button variant="outline" size="sm">
                             <Download className="mr-2 h-4 w-4" />
                             Export All
@@ -232,25 +232,46 @@ export default function Index({
                                 <table className="w-full">
                                     <thead className="border-b border-gray-200 dark:border-gray-700">
                                         <tr>
-                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Date & Time
                                             </th>
-                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Type
                                             </th>
-                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Product
                                             </th>
-                                            <th scope="col" className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Quantity
                                             </th>
-                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Reference
                                             </th>
-                                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Created By
                                             </th>
-                                            <th scope="col" className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                            >
                                                 Actions
                                             </th>
                                         </tr>

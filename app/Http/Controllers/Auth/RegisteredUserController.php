@@ -3,15 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Http\Requests\Auth\RegisterUserRequest;
 use App\Services\TenantService;
 use Exception;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,31 +25,21 @@ class RegisteredUserController extends Controller
         return Inertia::render('auth/register');
     }
 
-    /**
-     * Handle an incoming registration request.
-     */
-    public function store(Request $request): RedirectResponse
+    public function store(RegisterUserRequest $request): RedirectResponse
     {
-        $request->validate([
-            'fname' => 'required|string|max:255',
-            'lname' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'company_name' => 'required|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         try {
             $result = $this->tenantService->createTenant(
                 [
-                    'name' => $request->company_name,
-                    'email' => $request->email,
-
+                    'name' => $validated['company_name'],
+                    'email' => $validated['email'],
                 ],
                 [
-                    'first_name' => $request->fname,
-                    'last_name' => $request->lname,
-                    'email' => $request->email,
-                    'password' => $request->password,
+                    'first_name' => $validated['fname'],
+                    'last_name' => $validated['lname'],
+                    'email' => $validated['email'],
+                    'password' => $validated['password'],
                 ]
             );
 

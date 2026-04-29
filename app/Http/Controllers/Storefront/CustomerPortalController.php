@@ -2,19 +2,25 @@
 
 namespace App\Http\Controllers\Storefront;
 
-use App\Enums\OrderStatus;
-use App\Enums\OrderType;
-use App\Enums\PaymentStatus;
 use App\Http\Requests\Storefront\CancelOrderApiRequest;
 use App\Http\Requests\Storefront\UpdateCustomerProfileRequest;
 use App\Models\Shop;
+use App\Services\CheckoutService;
+use App\Services\CustomerPortalService;
+use App\Services\CustomerService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CustomerPortalController extends StorefrontBaseController
 {
+    public function __construct(
+        private readonly CustomerPortalService $portalService,
+        private readonly CustomerService $customerService,
+        private readonly CheckoutService $checkoutService,
+    ) {}
+
     /**
      * Display customer dashboard with stats and recent orders.
      */
@@ -22,75 +28,37 @@ class CustomerPortalController extends StorefrontBaseController
     {
         $customer = $this->customerForShop($shop);
 
-        $stats = [
-            'total_orders' => $customer->orders()
-                ->where('shop_id', $shop->id)
-                ->where('order_type', OrderType::CUSTOMER->value)
-                ->count(),
-            'pending_orders' => $customer->orders()
-                ->where('shop_id', $shop->id)
-                ->where('order_type', OrderType::CUSTOMER->value)
-                ->where('status', OrderStatus::PENDING)
-                ->count(),
-            'total_spent' => $customer->orders()
-                ->where('shop_id', $shop->id)
-                ->where('order_type', OrderType::CUSTOMER->value)
-                ->where('payment_status', PaymentStatus::PAID)
-                ->sum('total_amount'),
-        ];
-
-        $recentOrders = $customer->orders()
-            ->where('shop_id', $shop->id)
-            ->where('order_type', OrderType::CUSTOMER->value)
-            ->latest()
-            ->limit(5)
-            ->get();
-
         return Inertia::render('Storefront/Account/Dashboard', [
             'shop' => $shop,
             'customer' => $customer,
-            'stats' => $stats,
-            'recentOrders' => $recentOrders,
+            'stats' => $this->portalService->getDashboardStats($customer, $shop),
+            'recentOrders' => $this->portalService->getRecentOrders($customer, $shop),
         ]);
     }
 
     /**
      * Display paginated order history.
      */
-    public function orders(Request $request, Shop $shop): Response
+    public function orders(Shop $shop): Response
     {
         $customer = $this->customerForShop($shop);
 
-        $orders = $customer->orders()
-            ->where('shop_id', $shop->id)
-            ->where('order_type', OrderType::CUSTOMER->value)
-            ->with(['items.productVariant.product'])
-            ->latest()
-            ->paginate(10);
-
         return Inertia::render('Storefront/Account/Orders', [
             'shop' => $shop,
-            'orders' => $orders,
+            'orders' => $this->portalService->getOrderList($customer, $shop),
         ]);
     }
 
     /**
      * Display detailed view of a single order.
      */
-    public function orderDetail(Shop $shop, $orderId): Response
+    public function orderDetail(Shop $shop, int|string $orderId): Response
     {
         $customer = $this->customerForShop($shop);
 
-        $order = $customer->orders()
-            ->where('id', $orderId)
-            ->where('shop_id', $shop->id)
-            ->where('order_type', OrderType::CUSTOMER->value)
-            ->with(['items.productVariant.product', 'items.packagingType'])
-            ->firstOrFail();
-
         return Inertia::render('Storefront/Account/OrderDetail', [
             'shop' => $shop,
-            'order' => $order,
+            'order' => $this->portalService->getOrderDetail($customer, $shop, $orderId),
         ]);
     }
 
@@ -99,14 +67,12 @@ class CustomerPortalController extends StorefrontBaseController
      */
     public function profile(Shop $shop): Response
     {
-        $customer = $this->customerForShop($shop);
-
-        $addresses = $customer->addresses;
+        $customer = $this->portalService->getCustomerProfile($this->customerForShop($shop));
 
         return Inertia::render('Storefront/Account/Profile', [
             'shop' => $shop,
             'customer' => $customer,
-            'addresses' => $addresses,
+            'addresses' => $customer->addresses,
         ]);
     }
 
@@ -117,7 +83,7 @@ class CustomerPortalController extends StorefrontBaseController
     {
         $customer = $this->customerForShop($shop);
 
-        $customer->update($request->validated());
+        $this->customerService->updateStorefrontProfile($customer, $request->validated());
 
         return back()->with('success', 'Profile updated successfully');
     }
@@ -125,25 +91,22 @@ class CustomerPortalController extends StorefrontBaseController
     /**
      * Cancel a customer order.
      */
-    public function cancelOrder(CancelOrderApiRequest $request, Shop $shop, $orderId): RedirectResponse
+    public function cancelOrder(CancelOrderApiRequest $request, Shop $shop, int|string $orderId): RedirectResponse
     {
         $customer = $this->customerForShop($shop);
 
-        $order = $customer->orders()
-            ->where('id', $orderId)
-            ->where('shop_id', $shop->id)
-            ->where('order_type', OrderType::CUSTOMER->value)
-            ->firstOrFail();
-
-        if (! $order->canCancel()) {
+        try {
+            $this->checkoutService->cancelByCustomer(
+                (int) $orderId,
+                $customer,
+                $shop,
+                $request->validated('cancellation_reason'),
+            );
+        } catch (ModelNotFoundException) {
+            abort(404);
+        } catch (\RuntimeException) {
             return back()->with('error', 'This order cannot be cancelled at its current status.');
         }
-
-        $order->update([
-            'status' => OrderStatus::CANCELLED,
-            'cancellation_reason' => $request->validated('cancellation_reason'),
-            'cancelled_at' => now(),
-        ]);
 
         return back()->with('success', 'Order cancelled successfully.');
     }

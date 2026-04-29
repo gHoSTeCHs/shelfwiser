@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\StockMovementType;
+use App\Models\Customer;
+use App\Models\InventoryLocation;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductPackagingType;
@@ -28,8 +30,10 @@ class OrderService
 
     /**
      * Get paginated orders with standard relations for the index page.
+     *
+     * @param  array{search?: string|null, status?: string|null, payment_status?: string|null}  $filters
      */
-    public function getPaginatedOrders(): LengthAwarePaginator
+    public function getPaginatedOrders(array $filters = []): LengthAwarePaginator
     {
         return Order::query()
             ->with([
@@ -38,8 +42,30 @@ class OrderService
                 'createdBy:id,first_name,last_name',
             ])
             ->withCount('items')
+            ->when(
+                ! empty($filters['search']),
+                fn ($query) => $query->where(function ($q) use ($filters) {
+                    $term = $filters['search'];
+                    $q->where('order_number', 'like', "%{$term}%")
+                        ->orWhereHas('customer', fn ($c) => $c->where(
+                            DB::raw("CONCAT(first_name, ' ', last_name)"),
+                            'like',
+                            "%{$term}%"
+                        ))
+                        ->orWhereHas('shop', fn ($s) => $s->where('name', 'like', "%{$term}%"));
+                })
+            )
+            ->when(
+                ! empty($filters['status']),
+                fn ($query) => $query->where('status', $filters['status'])
+            )
+            ->when(
+                ! empty($filters['payment_status']),
+                fn ($query) => $query->where('payment_status', $filters['payment_status'])
+            )
             ->latest()
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
     }
 
     /**
@@ -67,6 +93,20 @@ class OrderService
      *
      * @return Collection<int, Shop>
      */
+    public function resolveShop(int $shopId): Shop
+    {
+        return Shop::query()
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->findOrFail($shopId);
+    }
+
+    public function resolveCustomer(int $customerId): Customer
+    {
+        return Customer::query()
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->findOrFail($customerId);
+    }
+
     public function getShopsForForm(): Collection
     {
         return Shop::query()
@@ -141,7 +181,7 @@ class OrderService
         Shop $shop,
         array $items,
         User $createdBy,
-        ?User $customer = null,
+        ?Customer $customer = null,
         ?string $customerNotes = null,
         ?string $internalNotes = null,
         float $shippingCost = 0,
@@ -201,7 +241,7 @@ class OrderService
                     Log::error('Order creation failed.', [
                         'tenant_id' => $tenant->id,
                         'shop_id' => $shop->id,
-                        'exception' => $e,
+                        'message' => $e->getMessage(),
                     ]);
                     throw $e;
                 }
@@ -210,7 +250,7 @@ class OrderService
                 Log::error('Order creation failed.', [
                     'tenant_id' => $tenant->id,
                     'shop_id' => $shop->id,
-                    'exception' => $e,
+                    'message' => $e->getMessage(),
                 ]);
                 throw $e;
             }
@@ -258,8 +298,56 @@ class OrderService
         try {
             return DB::transaction(function () use ($order, $data) {
                 if (isset($data['items'])) {
+                    if ($order->status === OrderStatus::CONFIRMED) {
+                        $order->load('items.productVariant');
+
+                        $productItems = $order->items->filter(fn ($item) => $item->isProduct() && $item->productVariant);
+                        $variantIds = $productItems->map(fn ($item) => $item->productVariant->id)->values();
+
+                        $oldLocations = InventoryLocation::query()
+                            ->where('location_type', 'App\\Models\\Shop')
+                            ->where('location_id', $order->shop_id)
+                            ->whereIn('product_variant_id', $variantIds)
+                            ->lockForUpdate()
+                            ->get()
+                            ->keyBy('product_variant_id');
+
+                        foreach ($order->items as $item) {
+                            if ($item->isProduct() && $item->productVariant) {
+                                $location = $oldLocations->get($item->productVariant->id);
+
+                                if ($location && $location->reserved_quantity >= $item->quantity) {
+                                    $location->decrement('reserved_quantity', $item->quantity);
+                                }
+                            }
+                        }
+                    }
+
                     $order->items()->delete();
                     $this->createOrderItems($order, $data['items']);
+
+                    if ($order->status === OrderStatus::CONFIRMED) {
+                        $order->load('items.productVariant');
+                        $newProductItems = $order->items->filter(fn ($item) => $item->isProduct());
+                        $newVariantIds = $newProductItems->map(fn ($item) => $item->productVariant?->id)->filter()->values();
+
+                        $newLocations = InventoryLocation::query()
+                            ->where('location_type', 'App\\Models\\Shop')
+                            ->where('location_id', $order->shop_id)
+                            ->whereIn('product_variant_id', $newVariantIds)
+                            ->lockForUpdate()
+                            ->get()
+                            ->keyBy('product_variant_id');
+
+                        foreach ($newProductItems as $item) {
+                            if ($item->productVariant) {
+                                $location = $newLocations->get($item->productVariant->id);
+                                if ($location) {
+                                    $location->increment('reserved_quantity', $item->quantity);
+                                }
+                            }
+                        }
+                    }
                 }
 
                 $order->update([
@@ -287,7 +375,7 @@ class OrderService
         } catch (Throwable $e) {
             Log::error('Order update failed.', [
                 'order_id' => $order->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -305,34 +393,42 @@ class OrderService
 
         try {
             return DB::transaction(function () use ($order) {
+                $lockedOrder = Order::query()->lockForUpdate()->find($order->id);
+
+                if (! $lockedOrder->status->canTransitionTo(OrderStatus::CONFIRMED)) {
+                    throw new Exception('Cannot confirm order in current status: '.$lockedOrder->status->value);
+                }
+
+                $order = $lockedOrder;
                 $order->load('items.productVariant');
 
+                $productItems = $order->items->filter(fn ($item) => $item->isProduct());
+                $variantIds = $productItems->map(fn ($item) => $item->productVariant->id)->values();
+
+                $locations = InventoryLocation::query()
+                    ->where('location_type', 'App\\Models\\Shop')
+                    ->where('location_id', $order->shop_id)
+                    ->whereIn('product_variant_id', $variantIds)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('product_variant_id');
+
                 foreach ($order->items as $item) {
-                    // Only handle inventory for product items, skip services
                     if ($item->isProduct()) {
                         $variant = $item->productVariant;
-
-                        // Use lockForUpdate to prevent race conditions during concurrent orders
-                        $location = $variant->inventoryLocations()
-                            ->where('location_type', 'App\\Models\\Shop')
-                            ->where('location_id', $order->shop_id)
-                            ->lockForUpdate()
-                            ->first();
+                        $location = $locations->get($variant->id);
 
                         if (! $location) {
                             throw new Exception("No inventory location found for variant {$variant->sku} at shop");
                         }
 
-                        // Check available stock (quantity - reserved)
                         $availableStock = $location->quantity - $location->reserved_quantity;
                         if ($availableStock < $item->quantity) {
                             throw new Exception("Insufficient stock for variant {$variant->sku}. Available: {$availableStock}");
                         }
 
-                        // Use atomic increment to prevent race conditions
                         $location->increment('reserved_quantity', $item->quantity);
                     }
-                    // Services don't require inventory reservation
                 }
 
                 $order->status = OrderStatus::CONFIRMED;
@@ -346,7 +442,7 @@ class OrderService
         } catch (Throwable $e) {
             Log::error('Order confirmation failed.', [
                 'order_id' => $order->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -366,15 +462,21 @@ class OrderService
             return DB::transaction(function () use ($order, $user) {
                 $order->load('items.productVariant');
 
+                $productItems = $order->items->filter(fn ($item) => $item->isProduct());
+                $variantIds = $productItems->map(fn ($item) => $item->productVariant->id)->values();
+
+                $locations = InventoryLocation::query()
+                    ->where('location_type', 'App\\Models\\Shop')
+                    ->where('location_id', $order->shop_id)
+                    ->whereIn('product_variant_id', $variantIds)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('product_variant_id');
+
                 foreach ($order->items as $item) {
-                    // Only handle inventory for product items, skip services
                     if ($item->isProduct()) {
                         $variant = $item->productVariant;
-                        $location = $variant->inventoryLocations()
-                            ->where('location_type', 'App\\Models\\Shop')
-                            ->where('location_id', $order->shop_id)
-                            ->lockForUpdate()
-                            ->first();
+                        $location = $locations->get($variant->id);
 
                         if (! $location) {
                             throw new Exception("No inventory location found for variant {$variant->sku}");
@@ -419,7 +521,7 @@ class OrderService
         } catch (Throwable $e) {
             Log::error('Order fulfillment failed.', [
                 'order_id' => $order->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -440,17 +542,21 @@ class OrderService
                 if ($order->status === OrderStatus::CONFIRMED) {
                     $order->load('items.productVariant');
 
+                    $productItems = $order->items->filter(fn ($item) => $item->isProduct());
+                    $variantIds = $productItems->map(fn ($item) => $item->productVariant->id)->values();
+
+                    $locations = InventoryLocation::query()
+                        ->where('location_type', 'App\\Models\\Shop')
+                        ->where('location_id', $order->shop_id)
+                        ->whereIn('product_variant_id', $variantIds)
+                        ->lockForUpdate()
+                        ->get()
+                        ->keyBy('product_variant_id');
+
                     foreach ($order->items as $item) {
-                        // Only handle inventory for product items, skip services
                         if ($item->isProduct()) {
                             $variant = $item->productVariant;
-
-                            // Use lockForUpdate to prevent race conditions
-                            $location = $variant->inventoryLocations()
-                                ->where('location_type', 'App\\Models\\Shop')
-                                ->where('location_id', $order->shop_id)
-                                ->lockForUpdate()
-                                ->first();
+                            $location = $locations->get($variant->id);
 
                             if ($location) {
                                 $location->decrement('reserved_quantity', $item->quantity);
@@ -463,6 +569,44 @@ class OrderService
                             }
                         }
                         // Services don't have reserved inventory
+                    }
+                } elseif (in_array($order->status, [OrderStatus::PROCESSING, OrderStatus::PACKED, OrderStatus::SHIPPED])) {
+                    $order->load('items.productVariant');
+
+                    $productItems = $order->items->filter(fn ($item) => $item->isProduct());
+                    $variantIds = $productItems->map(fn ($item) => $item->productVariant->id)->values();
+
+                    $locations = InventoryLocation::query()
+                        ->where('location_type', 'App\\Models\\Shop')
+                        ->where('location_id', $order->shop_id)
+                        ->whereIn('product_variant_id', $variantIds)
+                        ->lockForUpdate()
+                        ->get()
+                        ->keyBy('product_variant_id');
+
+                    foreach ($order->items as $item) {
+                        if ($item->isProduct()) {
+                            $variant = $item->productVariant;
+                            $location = $locations->get($variant->id);
+
+                            if ($location) {
+                                $this->stockMovementService->adjustStock(
+                                    $variant,
+                                    $location,
+                                    $item->quantity,
+                                    StockMovementType::RETURN,
+                                    $user,
+                                    "Cancelled order #{$order->order_number}",
+                                    'Stock restored due to post-fulfillment cancellation'
+                                );
+                            } else {
+                                Log::warning('Inventory location not found during post-fulfillment cancellation', [
+                                    'order_id' => $order->id,
+                                    'variant_id' => $variant->id,
+                                    'shop_id' => $order->shop_id,
+                                ]);
+                            }
+                        }
                     }
                 }
 
@@ -479,7 +623,7 @@ class OrderService
         } catch (Throwable $e) {
             Log::error('Order cancellation failed.', [
                 'order_id' => $order->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -512,7 +656,7 @@ class OrderService
         } catch (Throwable $e) {
             Log::error('Order packing failed.', [
                 'order_id' => $order->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -561,7 +705,7 @@ class OrderService
         } catch (Throwable $e) {
             Log::error('Order shipping failed.', [
                 'order_id' => $order->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -601,7 +745,7 @@ class OrderService
         } catch (Throwable $e) {
             Log::error('Order delivery failed.', [
                 'order_id' => $order->id,
-                'exception' => $e,
+                'message' => $e->getMessage(),
             ]);
 
             throw $e;

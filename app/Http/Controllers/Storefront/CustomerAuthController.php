@@ -7,18 +7,14 @@ use App\Http\Requests\Storefront\CustomerLoginRequest;
 use App\Http\Requests\Storefront\CustomerRegisterRequest;
 use App\Http\Requests\Storefront\CustomerResetPasswordRequest;
 use App\Http\Requests\Storefront\CustomerSendResetLinkRequest;
-use App\Models\Customer;
 use App\Models\Shop;
 use App\Services\CartService;
-use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Auth\Events\Registered;
+use App\Services\CustomerAuthService;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -26,7 +22,8 @@ use Inertia\Response;
 class CustomerAuthController extends Controller
 {
     public function __construct(
-        protected CartService $cartService
+        protected CartService $cartService,
+        protected CustomerAuthService $customerAuthService,
     ) {}
 
     /**
@@ -44,13 +41,13 @@ class CustomerAuthController extends Controller
      */
     public function login(CustomerLoginRequest $request, Shop $shop): RedirectResponse
     {
-        $customer = Customer::query()
-            ->where('email', $request->validated('email'))
-            ->where('tenant_id', $shop->tenant_id)
-            ->where('is_active', true)
-            ->first();
+        $customer = $this->customerAuthService->attemptLogin(
+            $request->validated('email'),
+            $request->validated('password'),
+            $shop->tenant_id
+        );
 
-        if (! $customer || ! Hash::check($request->validated('password'), $customer->password)) {
+        if (! $customer) {
             return back()->withErrors([
                 'email' => 'The provided credentials do not match our records.',
             ])->onlyInput('email');
@@ -84,18 +81,7 @@ class CustomerAuthController extends Controller
     {
         $oldSessionId = session()->getId();
 
-        $customer = Customer::query()->create([
-            'tenant_id' => $shop->tenant_id,
-            'preferred_shop_id' => $shop->id,
-            'first_name' => $request->validated('first_name'),
-            'last_name' => $request->validated('last_name'),
-            'email' => $request->validated('email'),
-            'phone' => $request->validated('phone'),
-            'password' => Hash::make($request->validated('password')),
-            'marketing_opt_in' => (bool) $request->validated('marketing_opt_in', false),
-        ]);
-
-        event(new Registered($customer));
+        $customer = $this->customerAuthService->register($shop, $request->validated());
 
         Auth::guard('customer')->login($customer);
 
@@ -140,16 +126,7 @@ class CustomerAuthController extends Controller
      */
     public function verifyEmail(Request $request, Shop $shop, string $id, string $hash): RedirectResponse
     {
-        $customer = Customer::query()
-            ->where('id', $id)
-            ->where('tenant_id', $shop->tenant_id)
-            ->firstOrFail();
-
-        if (! hash_equals((string) $hash, sha1($customer->getEmailForVerification()))) {
-            throw ValidationException::withMessages([
-                'email' => ['The verification link is invalid.'],
-            ]);
-        }
+        $customer = $this->customerAuthService->findForEmailVerification($id, $shop->tenant_id, $hash);
 
         if ($customer->hasVerifiedEmail()) {
             return redirect()->route('storefront.index', $shop->slug);
@@ -230,21 +207,12 @@ class CustomerAuthController extends Controller
      */
     public function resetPassword(CustomerResetPasswordRequest $request, Shop $shop): RedirectResponse
     {
-        $credentials = $request->only('email', 'password', 'password_confirmation', 'token');
-        $credentials['tenant_id'] = $shop->tenant_id;
-
-        $status = Password::broker('customers')->reset(
-            $credentials,
-            function (Customer $customer, string $password) {
-                $customer->forceFill([
-                    'password' => Hash::make($password),
-                ])->setRememberToken(Str::random(60));
-
-                $customer->save();
-
-                event(new PasswordReset($customer));
-            }
+        $credentials = array_merge(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            ['tenant_id' => $shop->tenant_id]
         );
+
+        $status = $this->customerAuthService->resetPassword($credentials);
 
         if ($status === Password::PASSWORD_RESET) {
             return redirect()->route('storefront.login', $shop->slug)

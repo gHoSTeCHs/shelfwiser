@@ -1,6 +1,5 @@
 import CustomerAuthController from '@/actions/App/Http/Controllers/Storefront/CustomerAuthController';
-import CustomerPortalController from '@/actions/App/Http/Controllers/Storefront/CustomerPortalController';
-import { home, products, services } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
+import { accountDashboard, accountOrders, home, login, products, services } from '@/actions/App/Http/Controllers/Storefront/StorefrontRenderController';
 import FlashMessage from '@/components/FlashMessage';
 import CartDrawer from '@/components/storefront/CartDrawer';
 import MiniCartPreview from '@/components/storefront/MiniCartPreview';
@@ -388,7 +387,7 @@ const StorefrontLayoutInner: React.FC<StorefrontLayoutInnerProps> = ({
 
                                                     <div className="py-1">
                                                         <Link
-                                                            href={CustomerPortalController.dashboard.url(
+                                                            href={accountDashboard.url(
                                                                 {
                                                                     shop: shop.slug,
                                                                 },
@@ -401,7 +400,7 @@ const StorefrontLayoutInner: React.FC<StorefrontLayoutInnerProps> = ({
                                                             </span>
                                                         </Link>
                                                         <Link
-                                                            href={CustomerPortalController.orders.url(
+                                                            href={accountOrders.url(
                                                                 {
                                                                     shop: shop.slug,
                                                                 },
@@ -443,7 +442,7 @@ const StorefrontLayoutInner: React.FC<StorefrontLayoutInnerProps> = ({
                                     </div>
                                 ) : (
                                     <Link
-                                        href={CustomerAuthController.showLogin.url(
+                                        href={login.url(
                                             { shop: shop.slug },
                                         )}
                                         className="hidden rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-brand-600 hover:shadow-[0_0_0_4px_rgba(232,111,66,0.12)] sm:block"
@@ -505,7 +504,7 @@ const StorefrontLayoutInner: React.FC<StorefrontLayoutInnerProps> = ({
                                 {!customer && (
                                     <div className="border-t border-gray-100 p-4 dark:border-navy-800">
                                         <Link
-                                            href={CustomerAuthController.showLogin.url(
+                                            href={login.url(
                                                 { shop: shop.slug },
                                             )}
                                             className="block rounded-xl bg-brand-500 px-4 py-3 text-center text-base font-medium text-white transition-all hover:bg-brand-600"

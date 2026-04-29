@@ -86,37 +86,77 @@ class CategoryService
         });
     }
 
+    public function getCategoriesForIndex(): \Illuminate\Database\Eloquent\Collection
+    {
+        return ProductCategory::query()
+            ->whereNull('parent_id')
+            ->with(['children' => function ($query) {
+                $query->with('children')->withCount('products');
+            }])
+            ->withCount('products')
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function getParentCategoriesForForm(?ProductCategory $excludeCategory = null): \Illuminate\Database\Eloquent\Collection
+    {
+        $query = ProductCategory::query()
+            ->where('is_active', true)
+            ->whereNull('parent_id')
+            ->orderBy('name');
+
+        if ($excludeCategory) {
+            if (! $excludeCategory->relationLoaded('children')) {
+                $excludeCategory->load('children.children.children');
+            }
+            $excludeIds = array_merge([$excludeCategory->id], $this->getDescendantIds($excludeCategory));
+            $query->whereNotIn('id', $excludeIds)
+                ->with(['children' => function ($q) use ($excludeIds) {
+                    $q->whereNotIn('id', $excludeIds);
+                }]);
+        } else {
+            $query->with('children');
+        }
+
+        return $query->get(['id', 'name', 'slug']);
+    }
+
     public function getCategoryTree(int $tenantId, ?int $parentId = null): array
     {
-        $cacheKey = "tenant:$tenantId:category_tree:".($parentId ?? 'root');
+        $cacheKey = "tenant:$tenantId:category_tree";
 
-        return Cache::tags(["tenant:$tenantId:categories"])
-            ->remember($cacheKey, 3600, function () use ($tenantId, $parentId) {
-                $categories = ProductCategory::query()->where('tenant_id', $tenantId)
-                    ->where('parent_id', $parentId)
+        $allCategories = Cache::tags(["tenant:$tenantId:categories"])
+            ->remember($cacheKey, 3600, function () use ($tenantId) {
+                return ProductCategory::query()
+                    ->where('tenant_id', $tenantId)
                     ->where('is_active', true)
-                    ->with(['children' => function ($query) {
-                        $query->where('is_active', true)->withCount('products');
-                    }])
                     ->withCount('products')
                     ->orderBy('name')
-                    ->get();
-
-                return $categories->map(function ($category) use ($tenantId) {
-                    return [
-                        'id' => $category->id,
-                        'name' => $category->name,
-                        'slug' => $category->slug,
-                        'description' => $category->description,
-                        'products_count' => $category->products_count,
-                        'children' => $this->getCategoryTree($tenantId, $category->id),
-                    ];
-                })->toArray();
+                    ->get(['id', 'name', 'slug', 'description', 'parent_id', 'products_count'])
+                    ->toArray();
             });
+
+        return $this->buildTreeFromFlat($allCategories, $parentId);
+    }
+
+    private function buildTreeFromFlat(array $allCategories, ?int $parentId): array
+    {
+        $result = [];
+
+        foreach ($allCategories as $category) {
+            if ($category['parent_id'] === $parentId) {
+                $category['children'] = $this->buildTreeFromFlat($allCategories, $category['id']);
+                $result[] = $category;
+            }
+        }
+
+        return $result;
     }
 
     public function getBreadcrumbs(ProductCategory $category): array
     {
+        $category->loadMissing('parent.parent.parent.parent');
+
         $breadcrumbs = [];
         $current = $category;
 
@@ -130,6 +170,18 @@ class CategoryService
         }
 
         return $breadcrumbs;
+    }
+
+    protected function getDescendantIds(ProductCategory $category): array
+    {
+        $descendants = [];
+
+        foreach ($category->children as $child) {
+            $descendants[] = $child->id;
+            $descendants = array_merge($descendants, $this->getDescendantIds($child));
+        }
+
+        return $descendants;
     }
 
     protected function generateUniqueSlug(string $name, int $tenantId, ?int $excludeId = null): string

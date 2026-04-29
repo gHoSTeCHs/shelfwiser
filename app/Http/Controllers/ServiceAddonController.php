@@ -9,6 +9,7 @@ use App\Models\ServiceAddon;
 use App\Models\ServiceCategory;
 use App\Services\ServiceManagementService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 
 class ServiceAddonController extends Controller
@@ -22,6 +23,8 @@ class ServiceAddonController extends Controller
      */
     public function store(CreateServiceAddonRequest $request, Service $service): RedirectResponse
     {
+        Gate::authorize('manage', $service);
+
         $this->serviceManagementService->createAddon($request->validated(), $service);
 
         return Redirect::route('services.show', $service)
@@ -35,6 +38,8 @@ class ServiceAddonController extends Controller
         CreateServiceAddonRequest $request,
         ServiceCategory $category
     ): RedirectResponse {
+        Gate::authorize('create', Service::class);
+
         $this->serviceManagementService->createAddon($request->validated(), null, $category);
 
         return Redirect::back()
@@ -46,6 +51,14 @@ class ServiceAddonController extends Controller
      */
     public function update(UpdateServiceAddonRequest $request, ServiceAddon $addon): RedirectResponse
     {
+        $addon->loadMissing('service');
+
+        if ($addon->service_id) {
+            Gate::authorize('manage', $addon->service);
+        } else {
+            Gate::authorize('create', Service::class);
+        }
+
         $this->serviceManagementService->updateAddon($addon, $request->validated());
 
         if ($addon->service_id) {
@@ -62,15 +75,12 @@ class ServiceAddonController extends Controller
      */
     public function destroy(ServiceAddon $addon): RedirectResponse
     {
-        // Check authorization
+        $addon->loadMissing('service');
+
         if ($addon->service_id) {
-            if (! auth()->user()->can('manage', $addon->service)) {
-                abort(403);
-            }
+            Gate::authorize('manage', $addon->service);
         } else {
-            if (! auth()->user()->role->hasPermission('manage_inventory')) {
-                abort(403);
-            }
+            Gate::authorize('create', Service::class);
         }
 
         $this->serviceManagementService->deleteAddon($addon);

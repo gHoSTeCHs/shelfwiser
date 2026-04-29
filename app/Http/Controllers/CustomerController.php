@@ -38,10 +38,7 @@ class CustomerController extends Controller
 
         $statistics = $this->customerService->getStatistics($request->user()->tenant);
 
-        $shops = $request->user()->tenant->shops()
-            ->select('id', 'name', 'slug')
-            ->where('is_active', true)
-            ->get();
+        $shops = $this->customerService->getActiveShops();
 
         return Inertia::render('Customers/Index', [
             'customers' => $customers,
@@ -54,14 +51,11 @@ class CustomerController extends Controller
     /**
      * Show the form for creating a new customer.
      */
-    public function create(Request $request): Response
+    public function create(): Response
     {
         Gate::authorize('create', Customer::class);
 
-        $shops = $request->user()->tenant->shops()
-            ->select('id', 'name', 'slug')
-            ->where('is_active', true)
-            ->get();
+        $shops = $this->customerService->getActiveShops();
 
         return Inertia::render('Customers/Create', [
             'shops' => $shops,
@@ -73,6 +67,8 @@ class CustomerController extends Controller
      */
     public function store(CreateCustomerRequest $request): RedirectResponse
     {
+        Gate::authorize('create', Customer::class);
+
         $customer = $this->customerService->create(
             $request->validated(),
             $request->user()->tenant
@@ -91,11 +87,7 @@ class CustomerController extends Controller
 
         $customer = $this->customerService->find($customer->id, $request->user()->tenant);
 
-        $recentOrders = $customer->orders()
-            ->with(['shop:id,name', 'items:id,order_id,product_name,quantity,unit_price'])
-            ->latest()
-            ->limit(5)
-            ->get();
+        $recentOrders = $this->customerService->getRecentOrders($customer);
 
         return Inertia::render('Customers/Show', [
             'customer' => $customer,
@@ -107,16 +99,13 @@ class CustomerController extends Controller
     /**
      * Show the form for editing the specified customer.
      */
-    public function edit(Request $request, Customer $customer): Response
+    public function edit(Customer $customer): Response
     {
         Gate::authorize('update', $customer);
 
-        $customer->load(['preferredShop', 'addresses']);
+        $customer = $this->customerService->getForEdit($customer);
 
-        $shops = $request->user()->tenant->shops()
-            ->select('id', 'name', 'slug')
-            ->where('is_active', true)
-            ->get();
+        $shops = $this->customerService->getActiveShops();
 
         return Inertia::render('Customers/Edit', [
             'customer' => $customer,
@@ -129,6 +118,8 @@ class CustomerController extends Controller
      */
     public function update(UpdateCustomerRequest $request, Customer $customer): RedirectResponse
     {
+        Gate::authorize('update', $customer);
+
         $this->customerService->update($customer, $request->validated());
 
         return Redirect::route('customers.show', $customer)
@@ -144,7 +135,12 @@ class CustomerController extends Controller
 
         $customerName = $customer->full_name;
 
-        $this->customerService->delete($customer);
+        try {
+            $this->customerService->delete($customer);
+        } catch (\Throwable $e) {
+            return Redirect::back()
+                ->with('error', "Failed to delete customer '{$customerName}'. Please try again.");
+        }
 
         return Redirect::route('customers.index')
             ->with('success', "Customer '{$customerName}' has been deleted successfully.");
@@ -157,7 +153,7 @@ class CustomerController extends Controller
     {
         Gate::authorize('update', $customer);
 
-        $newStatus = !$customer->is_active;
+        $newStatus = ! $customer->is_active;
         $this->customerService->toggleActive($customer, $newStatus);
 
         $statusLabel = $newStatus ? 'activated' : 'deactivated';

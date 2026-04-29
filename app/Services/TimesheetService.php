@@ -172,7 +172,7 @@ class TimesheetService
             ];
         }
 
-        $totalMinutes = $timesheet->clock_out->diffInMinutes($timesheet->clock_in);
+        $totalMinutes = $timesheet->clock_in->diffInMinutes($timesheet->clock_out);
         $workMinutes = max(0, $totalMinutes - $timesheet->break_duration_minutes);
         $workHours = round($workMinutes / 60, 2);
 
@@ -269,7 +269,7 @@ class TimesheetService
      */
     public function rejectTimesheet(Timesheet $timesheet, User $approver, string $reason): Timesheet
     {
-        if (! $timesheet->status->canApprove()) {
+        if (! $timesheet->status->canReject()) {
             throw new \RuntimeException('Timesheet cannot be rejected in current status');
         }
 
@@ -296,10 +296,31 @@ class TimesheetService
      */
     public function updateTimesheet(Timesheet $timesheet, array $validated): Timesheet
     {
-        $timesheet->update($validated);
-        $this->clearTimesheetCache($timesheet->tenant_id);
+        if (! $timesheet->status->canEdit()) {
+            throw new \RuntimeException("Timesheet cannot be edited in current status: {$timesheet->status->value}");
+        }
 
-        return $timesheet->fresh();
+        $clockFieldsChanged = isset($validated['clock_in']) || isset($validated['clock_out'])
+            || isset($validated['break_start']) || isset($validated['break_end'])
+            || isset($validated['break_duration_minutes']);
+
+        return DB::transaction(function () use ($timesheet, $validated, $clockFieldsChanged) {
+            $timesheet->update($validated);
+            $timesheet->syncOriginal();
+
+            if ($clockFieldsChanged && $timesheet->clock_in && $timesheet->clock_out) {
+                $hours = $this->calculateHours($timesheet);
+                $timesheet->update([
+                    'regular_hours' => $hours['regular'],
+                    'overtime_hours' => $hours['overtime'],
+                    'total_hours' => $hours['total'],
+                ]);
+            }
+
+            $this->clearTimesheetCache($timesheet->tenant_id);
+
+            return $timesheet->refresh();
+        });
     }
 
     /**
@@ -325,7 +346,7 @@ class TimesheetService
     {
         $query = Timesheet::query()->where('tenant_id', $manager->tenant_id)
             ->where('status', TimesheetStatus::SUBMITTED)
-            ->with(['user', 'shop']);
+            ->with(['user.role', 'shop']);
 
         if ($shop) {
             $query->where('shop_id', $shop->id);
@@ -362,7 +383,8 @@ class TimesheetService
         User $employee,
         ?Carbon $startDate = null,
         ?Carbon $endDate = null,
-        ?Shop $shop = null
+        ?Shop $shop = null,
+        ?TimesheetStatus $status = null
     ): Collection {
         $query = Timesheet::query()->where('user_id', $employee->id)
             ->where('tenant_id', $employee->tenant_id)
@@ -378,6 +400,10 @@ class TimesheetService
 
         if ($shop) {
             $query->where('shop_id', $shop->id);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
         }
 
         return $query->orderBy('date', 'desc')->get();
@@ -423,6 +449,14 @@ class TimesheetService
             ->whereNotNull('clock_in')
             ->whereNull('clock_out')
             ->first();
+    }
+
+    /**
+     * Resolve a Shop by ID for timesheet operations.
+     */
+    public function resolveShop(int $shopId): Shop
+    {
+        return Shop::query()->findOrFail($shopId);
     }
 
     /**

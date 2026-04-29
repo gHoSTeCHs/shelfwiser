@@ -11,10 +11,7 @@ class UpdateServiceVariantRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $variant = $this->route('variant');
-        $service = $variant->service;
-
-        return $this->user()->can('manage', $service);
+        return true;
     }
 
     /**

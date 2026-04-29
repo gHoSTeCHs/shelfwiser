@@ -46,7 +46,8 @@ export default function Show({ service, category_addons, can_manage }: Props) {
     const handleDeleteService = async () => {
         const confirmed = await confirm({
             title: 'Delete Service',
-            message: 'Are you sure you want to delete this service? This action cannot be undone.',
+            message:
+                'Are you sure you want to delete this service? This action cannot be undone.',
             variant: 'danger',
             confirmLabel: 'Delete',
             cancelLabel: 'Cancel',
@@ -66,10 +67,12 @@ export default function Show({ service, category_addons, can_manage }: Props) {
         });
         if (!confirmed) return;
 
-        router.delete(ServiceVariantController.destroy.url({
-            service: service.id,
-            variant: variantId,
-        }));
+        router.delete(
+            ServiceVariantController.destroy.url({
+                service: service.id,
+                variant: variantId,
+            }),
+        );
     };
 
     const handleDeleteAddon = async (addonId: number) => {
@@ -123,7 +126,7 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-start gap-4">
-                        <Link href={'/services'}>
+                        <Link href={ServiceController.index.url()}>
                             <Button variant="outline" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                                 Back
@@ -142,7 +145,11 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                     <div className="flex gap-2">
                         {can_manage && (
                             <>
-                                <Link href={`/services/${service.id}/edit`}>
+                                <Link
+                                    href={ServiceController.edit.url({
+                                        service: service.id,
+                                    })}
+                                >
                                     <Button variant="outline">
                                         <Edit className="mr-2 h-4 w-4" />
                                         Edit
@@ -286,14 +293,16 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                                 </span>
                                             </div>
                                             <p className="text-info-600 dark:text-info-400 mt-1 text-lg font-bold">
-                                                {formatCurrency(Math.min(
-                                                    ...service.variants.map(
-                                                        (v) =>
-                                                            parseFloat(
-                                                                v.base_price.toString(),
-                                                            ),
+                                                {formatCurrency(
+                                                    Math.min(
+                                                        ...service.variants.map(
+                                                            (v) =>
+                                                                parseFloat(
+                                                                    v.base_price.toString(),
+                                                                ),
+                                                        ),
                                                     ),
-                                                ))}
+                                                )}
                                             </p>
                                         </div>
                                     )}
@@ -392,7 +401,9 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                                 Base Price
                                             </p>
                                             <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-                                                {formatCurrency(variant.base_price)}
+                                                {formatCurrency(
+                                                    variant.base_price,
+                                                )}
                                             </p>
                                         </div>
 
@@ -403,7 +414,9 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                                         Customer Materials
                                                     </p>
                                                     <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-                                                        {formatCurrency(variant.customer_materials_price)}
+                                                        {formatCurrency(
+                                                            variant.customer_materials_price,
+                                                        )}
                                                     </p>
                                                 </div>
                                             )}
@@ -415,7 +428,9 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                                         Shop Materials
                                                     </p>
                                                     <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-                                                        {formatCurrency(variant.shop_materials_price)}
+                                                        {formatCurrency(
+                                                            variant.shop_materials_price,
+                                                        )}
                                                     </p>
                                                 </div>
                                             )}
@@ -517,7 +532,9 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                             </div>
                                             <div className="mt-2 flex items-center justify-between">
                                                 <span className="font-semibold text-gray-900 dark:text-white">
-                                                    {formatCurrency(addon.price)}
+                                                    {formatCurrency(
+                                                        addon.price,
+                                                    )}
                                                 </span>
                                                 {addon.allows_quantity && (
                                                     <Badge
@@ -562,7 +579,9 @@ export default function Show({ service, category_addons, can_manage }: Props) {
                                             </div>
                                             <div className="mt-2 flex items-center justify-between">
                                                 <span className="font-semibold text-gray-900 dark:text-white">
-                                                    {formatCurrency(addon.price)}
+                                                    {formatCurrency(
+                                                        addon.price,
+                                                    )}
                                                 </span>
                                                 {addon.allows_quantity && (
                                                     <Badge

@@ -1,3 +1,4 @@
+import { create, index, show } from '@/actions/App/Http/Controllers/OrderController';
 import Select from '@/components/form/Select';
 import Input from '@/components/form/input/InputField';
 import EmptyState from '@/components/ui/EmptyState';
@@ -6,9 +7,12 @@ import Button from '@/components/ui/button/Button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout';
 import { formatCurrency, formatDateShort } from '@/lib/formatters';
-import { getOrderStatusColor, getPaymentStatusColor } from '@/lib/status-configs';
+import {
+    getOrderStatusColor,
+    getPaymentStatusColor,
+} from '@/lib/status-configs';
 import { OrderListResponse, OrderStats } from '@/types/order';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     CheckCircle,
     Clock,
@@ -19,13 +23,20 @@ import {
     ShoppingCart,
     TrendingUp,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+interface OrderFilters {
+    search: string | null;
+    status: string | null;
+    payment_status: string | null;
+}
 
 interface Props {
     orders: OrderListResponse;
     stats: OrderStats;
     order_statuses: Record<string, string>;
     payment_statuses: Record<string, string>;
+    filters: OrderFilters;
 }
 
 export default function Index({
@@ -33,28 +44,31 @@ export default function Index({
     stats,
     order_statuses,
     payment_statuses,
+    filters,
 }: Props) {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedStatus, setSelectedStatus] = useState('');
-    const [selectedPaymentStatus, setSelectedPaymentStatus] = useState('');
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [selectedStatus, setSelectedStatus] = useState(filters.status ?? '');
+    const [selectedPaymentStatus, setSelectedPaymentStatus] = useState(
+        filters.payment_status ?? '',
+    );
 
-    const filteredOrders = orders.data.filter((order) => {
-        const matchesSearch =
-            order.order_number
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-            order.customer?.full_name
-                ?.toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-            order.shop?.name?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus =
-            !selectedStatus || order.status === selectedStatus;
-        const matchesPaymentStatus =
-            !selectedPaymentStatus ||
-            order.payment_status === selectedPaymentStatus;
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            router.get(
+                index.url(),
+                {
+                    search: search || undefined,
+                    status: selectedStatus || undefined,
+                    payment_status: selectedPaymentStatus || undefined,
+                },
+                { preserveState: true, replace: true },
+            );
+        }, 300);
 
-        return matchesSearch && matchesStatus && matchesPaymentStatus;
-    });
+        return () => clearTimeout(timer);
+    }, [search, selectedStatus, selectedPaymentStatus]);
+
+    const hasActiveFilters = search || selectedStatus || selectedPaymentStatus;
 
     return (
         <>
@@ -70,7 +84,7 @@ export default function Index({
                             Manage sales orders and track fulfillment
                         </p>
                     </div>
-                    <Link href={'/orders/create'}>
+                    <Link href={create.url()}>
                         <Button>
                             <Plus className="mr-2 h-4 w-4" />
                             Create Order
@@ -150,8 +164,8 @@ export default function Index({
                         <Input
                             type="text"
                             placeholder="Search orders..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
                             className="pl-10"
                         />
                     </div>
@@ -168,7 +182,7 @@ export default function Index({
                             ]}
                             placeholder="All Statuses"
                             onChange={(value) => setSelectedStatus(value)}
-                            defaultValue=""
+                            defaultValue={selectedStatus}
                         />
                     </div>
                     <div className="sm:w-48">
@@ -186,27 +200,23 @@ export default function Index({
                             onChange={(value) =>
                                 setSelectedPaymentStatus(value)
                             }
-                            defaultValue=""
+                            defaultValue={selectedPaymentStatus}
                         />
                     </div>
                 </div>
 
-                {filteredOrders.length === 0 ? (
+                {orders.data.length === 0 ? (
                     <EmptyState
                         icon={<Package className="h-12 w-12" />}
                         title="No orders found"
                         description={
-                            searchTerm ||
-                            selectedStatus ||
-                            selectedPaymentStatus
+                            hasActiveFilters
                                 ? 'Try adjusting your search criteria'
                                 : 'Get started by creating your first order'
                         }
                         action={
-                            !searchTerm &&
-                            !selectedStatus &&
-                            !selectedPaymentStatus ? (
-                                <Link href={'/orders/create'}>
+                            !hasActiveFilters ? (
+                                <Link href={create.url()}>
                                     <Button>
                                         <Plus className="mr-2 h-4 w-4" />
                                         Create Order
@@ -217,7 +227,7 @@ export default function Index({
                     />
                 ) : (
                     <div className="space-y-4">
-                        {filteredOrders.map((order) => (
+                        {orders.data.map((order) => (
                             <Card key={order.id} className="p-6">
                                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                                     <div className="flex-1 space-y-2">
@@ -254,7 +264,10 @@ export default function Index({
                                                         Customer:
                                                     </span>
                                                     <span>
-                                                        {order.customer.full_name}
+                                                        {
+                                                            order.customer
+                                                                .full_name
+                                                        }
                                                     </span>
                                                 </div>
                                             )}
@@ -294,7 +307,9 @@ export default function Index({
                                                 )}
                                             </p>
                                         </div>
-                                        <Link href={`/orders/${order.id}`}>
+                                        <Link
+                                            href={show.url({ order: order.id })}
+                                        >
                                             <Button variant="outline" size="sm">
                                                 <Eye className="mr-2 h-4 w-4" />
                                                 View
