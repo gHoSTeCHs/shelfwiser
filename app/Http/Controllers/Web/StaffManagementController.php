@@ -38,7 +38,7 @@ class StaffManagementController extends Controller
         return Inertia::render('StaffManagement/Index', [
             'staff' => $this->staffService->list($request->user()->tenant, $request->user(), $filters),
             'statistics' => $this->staffService->getStatistics($request->user()->tenant),
-            'shops' => $this->staffService->getShopsForIndex(),
+            'shops' => $this->staffService->getShopsForIndex($request->user()->tenant),
             'roles' => UserRole::forSelect(),
             'filters' => $filters,
         ]);
@@ -50,7 +50,7 @@ class StaffManagementController extends Controller
 
         return Inertia::render('StaffManagement/Create', [
             'roles' => $this->staffService->getAssignableRoles($request->user()),
-            'shops' => $this->staffService->getShopsForForm(),
+            'shops' => $this->staffService->getShopsForForm($request->user()->tenant),
             'payCalendars' => $this->staffService->getPayCalendars(),
             'employmentTypes' => EmploymentType::options(),
             'payTypes' => PayType::options(),
@@ -122,7 +122,7 @@ class StaffManagementController extends Controller
         return Inertia::render('StaffManagement/Edit', [
             'staff' => $staff,
             'roles' => $this->staffService->getAssignableRoles($request->user()),
-            'shops' => $this->staffService->getShopsForForm(),
+            'shops' => $this->staffService->getShopsForForm($request->user()->tenant),
             'payCalendars' => $this->staffService->getPayCalendars(),
             'employmentTypes' => EmploymentType::options(),
             'payTypes' => PayType::options(),

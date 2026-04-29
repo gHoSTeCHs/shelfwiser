@@ -180,35 +180,25 @@ class StaffManagementService
 
     /**
      * Delete a staff member (soft delete by deactivating).
+     *
+     * @throws Throwable
      */
-    public function delete(User $staff): bool
+    public function delete(User $staff): void
     {
         Log::info('Staff deletion process started.', ['staff_id' => $staff->id]);
 
-        try {
-            DB::transaction(function () use ($staff) {
-                $staff->shops()->detach();
+        DB::transaction(function () use ($staff) {
+            $staff->shops()->detach();
 
-                $staff->forceFill(['is_active' => false])->save();
+            $staff->forceFill(['is_active' => false])->save();
 
-                // Invalidate specific staff cache and list cache
-                Cache::tags([
-                    "tenant:$staff->tenant_id:staff:list",
-                    "tenant:$staff->tenant_id:staff:$staff->id",
-                ])->flush();
-            });
+            Cache::tags([
+                "tenant:$staff->tenant_id:staff:list",
+                "tenant:$staff->tenant_id:staff:$staff->id",
+            ])->flush();
+        });
 
-            Log::info('Staff member deleted successfully.', ['staff_id' => $staff->id]);
-
-            return true;
-        } catch (Throwable $e) {
-            Log::error('Staff deletion failed.', [
-                'staff_id' => $staff->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
+        Log::info('Staff member deleted successfully.', ['staff_id' => $staff->id]);
     }
 
     /**
@@ -303,17 +293,19 @@ class StaffManagementService
             ->values();
     }
 
-    public function getShopsForForm(): Collection
+    public function getShopsForForm(Tenant $tenant): Collection
     {
         return Shop::query()
+            ->where('tenant_id', $tenant->id)
             ->where('is_active', true)
             ->select('id', 'name', 'slug', 'city', 'state')
             ->get();
     }
 
-    public function getShopsForIndex(): Collection
+    public function getShopsForIndex(Tenant $tenant): Collection
     {
         return Shop::query()
+            ->where('tenant_id', $tenant->id)
             ->select('id', 'name', 'slug')
             ->get();
     }

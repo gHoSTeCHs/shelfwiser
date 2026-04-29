@@ -322,7 +322,7 @@ class ProductTemplateService
         $slug = $base;
         $counter = 1;
 
-        while (Product::query()->where('tenant_id', $tenantId)->where('slug', $slug)->exists()) {
+        while (Product::query()->where('tenant_id', $tenantId)->where('slug', $slug)->lockForUpdate()->exists()) {
             $slug = $base.'-'.$counter;
             $counter++;
         }

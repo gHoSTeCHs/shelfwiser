@@ -292,8 +292,15 @@ class Order extends Model
     }
 
     /**
-     * Update payment status based on paid_amount
-     * Called automatically by OrderPayment model events
+     * Recalculates and persists `payment_status` from the current `paid_amount`.
+     *
+     * Called by three `OrderPayment` model events defined in `OrderPayment::booted()`:
+     * `created`, `deleted`, and `restored`. Each event first updates `paid_amount`
+     * by summing `order_payments.amount` for this order, then calls this method.
+     *
+     * Note: `OrderService::updatePaymentStatus()` and `CheckoutService::updatePaymentStatus()`
+     * are separate service-layer helpers that update payment status via `forceFill` and do NOT
+     * call this model method. They operate independently on different code paths.
      */
     public function updatePaymentStatus(): void
     {

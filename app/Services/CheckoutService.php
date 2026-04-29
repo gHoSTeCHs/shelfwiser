@@ -446,11 +446,18 @@ class CheckoutService
 
     private function saveAddress(Customer $customer, array $addressData, string $type): void
     {
-        $customer->addresses()->create([
-            ...$addressData,
-            'type' => $type,
-            'is_default' => $customer->addresses()->where('type', $type)->doesntExist(),
-        ]);
+        DB::transaction(function () use ($customer, $addressData, $type) {
+            $isDefault = $customer->addresses()
+                ->where('type', $type)
+                ->lockForUpdate()
+                ->doesntExist();
+
+            $customer->addresses()->create([
+                ...$addressData,
+                'type' => $type,
+                'is_default' => $isDefault,
+            ]);
+        });
     }
 
     /**

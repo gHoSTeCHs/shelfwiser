@@ -806,7 +806,7 @@ class PayRunService
 
         $payrollDetail = $employee->employeePayrollDetail;
         $standardHours = $payrollDetail->standard_hours_per_week ?? 40;
-        $weeksInPeriod = $start->diffInWeeks($end) ?: 1;
+        $weeksInPeriod = $start->diffInDays($end) / 7 ?: 1;
 
         return $standardHours * $weeksInPeriod;
     }

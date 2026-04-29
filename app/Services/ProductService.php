@@ -185,11 +185,11 @@ class ProductService
         DB::transaction(function () use ($product) {
             $product->variants()->delete();
             $product->delete();
+
+            Cache::tags(["tenant:{$product->tenant_id}:products:list"])->flush();
         });
 
         Log::info('Product deleted', ['product_id' => $product->id, 'name' => $product->name]);
-
-        Cache::tags(["tenant:{$product->tenant_id}:products:list"])->flush();
     }
 
     public function getProductsForIndex(): LengthAwarePaginator

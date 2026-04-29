@@ -211,6 +211,10 @@ class FundRequestService
      */
     public function markReceiptUploaded(FundRequest $fundRequest): FundRequest
     {
+        if (! in_array($fundRequest->status, [FundRequestStatus::PENDING, FundRequestStatus::APPROVED])) {
+            throw new \RuntimeException('Cannot modify a fund request that has been finalised.');
+        }
+
         $fundRequest->update(['receipt_uploaded' => true]);
 
         $this->clearCache($fundRequest->tenant_id);
@@ -223,6 +227,10 @@ class FundRequestService
      */
     public function updateDescription(FundRequest $fundRequest, string $description): FundRequest
     {
+        if (! in_array($fundRequest->status, [FundRequestStatus::PENDING, FundRequestStatus::APPROVED])) {
+            throw new \RuntimeException('Cannot modify a fund request that has been finalised.');
+        }
+
         $fundRequest->update(['description' => $description]);
 
         $this->clearCache($fundRequest->tenant_id);

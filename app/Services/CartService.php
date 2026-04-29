@@ -251,10 +251,22 @@ class CartService
 
         $items = $cart->items;
 
-        $subtotal = $items->sum(fn ($item) => $item->price * $item->quantity);
+        $subtotal = 0;
+        $productSubtotal = 0;
 
-        $productSubtotal = $items->filter(fn ($item) => $item->isProduct())
-            ->sum(fn ($item) => $item->price * $item->quantity);
+        foreach ($items as $item) {
+            if ($item->isProduct()) {
+                $livePrice = $item->productVariant?->price ?? $item->price;
+                if ((float) $livePrice !== (float) $item->price) {
+                    $item->update(['price' => $livePrice]);
+                }
+                $lineTotal = $livePrice * $item->quantity;
+                $subtotal += $lineTotal;
+                $productSubtotal += $lineTotal;
+            } else {
+                $subtotal += $item->price * $item->quantity;
+            }
+        }
         $shippingFee = $this->calculateShipping($cart, $productSubtotal);
 
         $tax = $this->calculateTaxFromItems($cart, $items);

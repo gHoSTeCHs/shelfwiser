@@ -172,7 +172,7 @@ class SupplierService
         ]);
     }
 
-    public function getAvailableCatalog(?Tenant $supplierTenant = null, ?Tenant $buyerTenant = null): Collection
+    public function getAvailableCatalog(?Tenant $supplierTenant = null, ?Tenant $buyerTenant = null, int $perPage = 30): LengthAwarePaginator
     {
         $query = SupplierCatalogItem::query()
             ->available()
@@ -188,7 +188,7 @@ class SupplierService
             $query->where('visibility', CatalogVisibility::PUBLIC);
         }
 
-        return $query->get();
+        return $query->paginate($perPage);
     }
 
     public function getCatalogItemWithPrice(int $catalogItemId, int $quantity, ?int $connectionId = null): array

@@ -87,7 +87,8 @@ class SupplierCatalogController extends Controller
             Gate::authorize('catalog.viewCatalog', $supplier);
         }
 
-        $catalogItems = $this->supplierService->getAvailableCatalog($supplier, $request->user()->tenant);
+        $catalogItems = $this->supplierService->getAvailableCatalog($supplier, $request->user()->tenant)
+            ->withQueryString();
 
         return Inertia::render('Supplier/Catalog/Browse', [
             'catalogItems' => $catalogItems,
